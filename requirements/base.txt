@@ -1,0 +1,9 @@
+Django>=1.4
+python-memcached
+South
+django-pipeline>=1.2
+ipdb
+ipython
+django-social-auth
+#python-mysql
+#-e git+git@github.com:10clouds/common.git#egg=10coluds-common.egg

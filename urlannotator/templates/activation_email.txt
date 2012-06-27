@@ -1,0 +1,5 @@
+A new account has been requested on URL annotator using your email.
+It has to be activated within {{expiration_days}} days.
+
+If you wish to activate your account, follow the link {{key}}
+If you didn't create any account, please ignore this message.

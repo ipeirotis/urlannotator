@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<div class="container-fluid">
+  <div class="row-fluid">
+    <h2>Sign up</h2>
+  </div>
+  <div class="row-fluid">
+    <div class="span1">&nbsp;</div>
+    <div class="span4">
+      <form method="POST" action="#" class="form-horizontal">
+        <fieldset>
+        {% csrf_token %}
+          {% include 'form.html' %}
+          <div class="form-actions">
+            <button type="submit">Sign up</button>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <h2>Sign up via other services</h2>
+  </div>
+  <div class="row-fluid">
+    <span>
+      <a href="{% url fb_login %}"><img src="{{STATIC_URL}}img/facebook.png"></a>
+      <a href="{% url twitter_login %}"><img src="{{STATIC_URL}}img/twitter.png"></a>
+      <a href="{% url gplus_login %}"><img src="{{STATIC_URL}}img/google.png"></a>
+      <a href="{% url odesk_login %}"><img style="width:32px;height:32px;" src="{{STATIC_URL}}img/odesk.png"></a>*
+    </span></br>
+    <span style="font-size:70%">
+    * Signing up by/connecting to Odesk will present you with full experience of URL annotator.
+    </span>
+  </div>
+</div>
+{% endblock %}

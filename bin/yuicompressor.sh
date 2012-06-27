@@ -1,0 +1,1 @@
+java -jar $YUI_COMPRESSOR_LIB $*

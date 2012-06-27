@@ -1,0 +1,7 @@
+fabric
+-e git+git@github.com:dcramer/django-devserver#egg=django-devserver
+line_profiler
+https://guppy-pe.svn.sourceforge.net/svnroot/guppy-pe/trunk/guppy
+werkzeug
+sqlparse
+django-debug-toolbar
