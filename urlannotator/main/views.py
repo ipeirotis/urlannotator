@@ -101,6 +101,7 @@ def login_view(request):
 def settings(request):
   profile = request.user.get_profile()
   context = {}
+  
   if profile.email_registered:
     context['general_form'] = GeneralEmailUserForm()
     context['password_form'] = PasswordChangeForm(request.user)
@@ -117,7 +118,42 @@ def settings(request):
   l = request.user.social_auth.filter(provider='twitter')
   if l:
     context['twitter'] = l[0]
-  print context
+  
+  if request.method == "POST":
+    if 'submit' in request.POST:
+      if request.POST['submit'] == 'general':
+        if profile.email_registered:
+          form = GeneralEmailUserForm(request.POST)
+          if context['general_form'].is_valid():
+            request.user.username = form.cleaned_data['full_name']
+            request.user.save()
+            context['success'] = 'Full name has been successfully changed.'
+          else:
+            context['general_form'] = form
+        else:
+          form = GeneralUserForm(request.POST)
+          if form.is_valid():
+            request.user.username = form.cleaned_data['full_name']
+            request.user.save()
+            context['success'] = 'Full name has been successfully changed.'
+          else:
+            context['general_form'] = form
+      elif request.POST['submit'] == 'password':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+          form.save()
+          context['success'] = 'Full name has been successfully changed.'
+        else:
+          context['password_form'] = form
+      elif request.POST['submit'] == 'alerts':
+        form = AlertsSetupForm(request.POST)
+        print request.POST
+        if form.is_valid():
+          profile.alerts = form.cleaned_data['alerts']
+          profile.save()
+          context['success'] = 'Alerts setup has been successfully changed.'
+        else:
+          context['alerts_form'] = form
   return render(request, 'main/settings.html', RequestContext(request, context))
 
 def odesk_login(request):
