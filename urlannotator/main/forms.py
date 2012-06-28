@@ -19,6 +19,15 @@ class NewUserForm(forms.Form):
         raise forms.ValidationError('Passwords do not match.')
     return cleaned
 
+class GeneralUserForm(forms.Form):
+  full_name = forms.CharField(label="Full name")
+
+class GeneralEmailUserForm(GeneralUserForm):
+  email = forms.EmailField(widget=forms.TextInput(attrs={'readonly':True}))
+
+class AlertsSetupForm(forms.Form):
+  alerts = forms.BooleanField(required=False)
+  
 class UserLoginForm(forms.Form):
   email = forms.EmailField(label="E-mail")
   password = forms.CharField(widget=forms.PasswordInput, label="Password")

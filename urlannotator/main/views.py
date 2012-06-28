@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
-from urlannotator.main.forms import NewUserForm, UserLoginForm
+from urlannotator.main.forms import *
 from django.contrib.auth.models import User
 from urlannotator.main.models import UserProfile
 from django.template import RequestContext, Context
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
 from django.template.loader import get_template
@@ -12,6 +14,11 @@ import hashlib
 def pass_recover(request):
     return render(request, 'main/index.html')
 
+def get_activation_key(email, num):
+  key = hashlib.sha1()
+  key.update('%s%s%s%d' % ('thereisn', email, 'ospoon', num))
+  return '%s-%d' % (key.hexdigest(), num)
+        
 @csrf_protect
 def register_view(request):
     if request.method == "GET":
@@ -26,11 +33,12 @@ def register_view(request):
         user.save()
         subjectTemplate = get_template('activation_email_subject.txt')
         bodyTemplate = get_template('activation_email.txt')
-        key = hashlib.sha1()
-        key.update('%s%s%s' % ('thereisn', form.cleaned_data['email'], 'ospoon'))
-        user.get_profile().activation_key = key.hexdigest()
+        key = get_activation_key(form.cleaned_data['email'], user.get_profile().id)
+        print key
+        user.get_profile().activation_key = key
+        user.get_profile().email_registered = True
         user.get_profile().save()
-        cont = Context({'key': key.hexdigest()})
+        cont = Context({'key': key})
         send_mail(subjectTemplate.render(cont).replace('\n', ''), bodyTemplate.render(cont), 'test', ['1kroolik1@gmail.com'])
         return redirect('index')
 
@@ -41,15 +49,24 @@ def logout_view(request):
   return redirect('index')
 
 def activation_view(request, key):
-  prof = UserProfile.objects.filter(activation_key=key)
+  prof_id = key.rsplit('-', 1)
+  try:
+    prof = UserProfile.objects.get(id=int(prof_id[1]))
+  except UserProfile.DoesNotExist:
+    context = {'error': 'Wrong activation key.'}
+    return render(request, 'main/index.html', RequestContext(request, context))
+
   if not prof:
     context = {'error': 'Wrong activation key.'}
     return render(request, 'main/index.html', RequestContext(request, context))
   else:
-    prof[0].user.is_active = True
-    prof[0].user.save()
-    prof[0].activation_key = 'activated'
-    prof[0].save()
+    if prof.activation_key != key:
+      context = {'error': 'Wrong activation key.'}
+      return render(request, 'main/index.html', RequestContext(request, context))
+    prof.user.is_active = True
+    prof.user.save()
+    prof.activation_key = 'activated'
+    prof.save()
     context = {'success': 'Your account has been activated.'}
     return render(request, 'main/index.html', RequestContext(request, context))
   return redirect('index')
@@ -57,7 +74,8 @@ def activation_view(request, key):
 @csrf_protect
 def login_view(request):
   if request.method == "GET":
-    return render(request, 'main/index.html')
+    context = {'form': UserLoginForm()}
+    return render(request, 'main/login.html', RequestContext(request, context))
   else:
     form = UserLoginForm(request.POST)
     if form.is_valid():
@@ -78,15 +96,29 @@ def login_view(request):
       context = {'error': 'Username and/or password is incorrect.'}
       return render(request, 'main/index.html', RequestContext(request, context))
   return redirect('index')
-        
-def facebook_login(request):
-  return redirect('index')
-  
-def gplus_login(request):
-  return redirect('index')
 
-def twitter_login(request):
-  return redirect('index')
+@login_required
+def settings(request):
+  profile = request.user.get_profile()
+  context = {}
+  if profile.email_registered:
+    context['general_form'] = GeneralEmailUserForm()
+    context['password_form'] = PasswordChangeForm(request.user)
+  else:
+    context['general_form'] = GeneralUserForm()
+
+  context['alerts_form'] = AlertsSetupForm({'alerts': profile.alerts})
+  l = request.user.social_auth.filter(provider='facebook')
+  if l:
+    context['facebook'] = l[0]
+  l = request.user.social_auth.filter(provider='google-oauth2')
+  if l:
+    context['google'] = l[0]
+  l = request.user.social_auth.filter(provider='twitter')
+  if l:
+    context['twitter'] = l[0]
+  print context
+  return render(request, 'main/settings.html', RequestContext(request, context))
 
 def odesk_login(request):
   return redirect('index')

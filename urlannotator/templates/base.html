@@ -54,11 +54,11 @@
               <div class="nav-collapse">
                 <ul class="nav pull-right">
                   {% if user.is_authenticated %}
-                  <li><a href="#">Create new inspection</a></li>
+                  <li><a href="#">Create new project</a></li>
                   <li class="dropdown">
                       <a class="dropdown-toggle" data-toggle="dropdown" href="#">{{ user.username }}<b class="caret"></b></a>
                       <ul class="dropdown-menu">
-                          <li><a href="#">Settings</a></li>
+                          <li><a href="{% url settings %}">Settings</a></li>
                           <li><a href="{% url logout %}">Logout</a></li>
                       </ul>
                   </li>
@@ -79,6 +79,7 @@
                                   <input type="checkbox" name="remember">Remember me
                                 </label>
                                 <span style="font-size: 80%">Forgot your password? <a style="display: inline; padding: 0px" href="{% url pass_recover %}">Recover</a></span>
+                                <span style="font-size: 80%"><a href="{% url login %}" style="padding: 0px">More options</a></span>
                               </fieldset>
                             </form>
                           </div>

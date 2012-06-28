@@ -15,14 +15,13 @@ urlpatterns = patterns('urlannotator',
     url(r'^register$', 'main.views.register_view', name='register'),
     url(r'^activation/(?P<key>.+)$', 'main.views.activation_view', name='activation'),
     url(r'^login$', 'main.views.login_view', name='login'),
+    url(r'^settings$', 'main.views.settings', name='settings'),
     url(r'^logout$', 'main.views.logout_view', name='logout'),
-    url(r'^facebook_login$', 'main.views.facebook_login', name='fb_login'),    
-    url(r'^gplus_login$', 'main.views.gplus_login', name='gplus_login'),
-    url(r'^twitter_login$', 'main.views.twitter_login', name='twitter_login'),
     url(r'^odesk_login$', 'main.views.odesk_login', name='odesk_login'),
     url(r'^password_recovery$', 'main.views.pass_recover', name="pass_recover"),
     url(r'^_admin/', include(admin.site.urls)),
-
+    url(r'auth/', include('social_auth.urls')),
+    
     (r'^bad/$', bad),
 )
 

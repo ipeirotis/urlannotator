@@ -1,5 +1,6 @@
 import os
 import tempfile
+from django.core.urlresolvers import reverse_lazy
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -24,13 +25,22 @@ MEDIA_URL = ''
 STATIC_ROOT = os.path.join(ROOT_DIR, '..', 'collected_static')
 
 AUTH_PROFILE_MODULE = 'main.UserProfile'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST = ''
 EMAIL_PORT = '587'
-EMAIL_HOST_USER = '1kroolik1@gmail.com'
-EMAIL_HOST_PASSWORD = 'BOlEK1990'
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = True
 STATIC_URL = '/statics/'
 
+TWITTER_CONSUMER_KEY         = ''
+TWITTER_CONSUMER_SECRET      = ''
+FACEBOOK_APP_ID              = ''
+FACEBOOK_API_SECRET          = ''
+GOOGLE_OAUTH2_CLIENT_ID      = ''
+GOOGLE_OAUTH2_CLIENT_SECRET  = ''
+
+LOGIN_URL          = reverse_lazy('login')
+LOGIN_REDIRECT_URL = reverse_lazy('index')
 
 # Defininig directory for 10clouds commons
 def _tenclouds_directory():
@@ -70,13 +80,30 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+AUTHENTICATION_BACKENDS = (
+    'social_auth.backends.twitter.TwitterBackend',
+    'social_auth.backends.facebook.FacebookBackend',
+    'social_auth.backends.google.GoogleOAuth2Backend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
 ROOT_URLCONF = 'urlannotator.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'urlannotator.wsgi.application'
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+  'django.contrib.auth.context_processors.auth',
+  'django.core.context_processors.debug',
+  'django.core.context_processors.i18n',
+  'django.core.context_processors.media',
+  'django.core.context_processors.static',
+  'django.core.context_processors.tz',
+  'django.contrib.messages.context_processors.messages'
+)
+
 TEMPLATE_DIRS = (
-    "templates",
+    'templates',
     os.path.join(ROOT_DIR, 'templates'),
 )
 
@@ -101,7 +128,7 @@ INSTALLED_APPS = (
     'south',
     'bootstrap',
 
-    'registration',
+    'social_auth',
     'urlannotator.main',
 )
 
@@ -192,7 +219,7 @@ PIPELINE_COMPILERS = (
     'pipeline.compilers.coffee.CoffeeScriptCompiler',
     'pipeline.compilers.less.LessCompiler',
 )
-PIPELINE_LESS_BINARY = "lessc"
+PIPELINE_LESS_BINARY = 'lessc'
 PIPELINE_YUI_BINARY = os.path.join(ROOT_DIR, '..', 'bin', 'yuicompressor.sh')
 PIPELINE_COFFEE_SCRIPT_BINARY = os.path.join(ROOT_DIR, '..', 'bin', 'coffeefinder.sh')
 
