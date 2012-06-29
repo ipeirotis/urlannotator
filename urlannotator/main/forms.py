@@ -20,7 +20,7 @@ class NewUserForm(forms.Form):
     return cleaned
 
 class GeneralUserForm(forms.Form):
-  full_name = forms.CharField(label="Full name")
+  full_name = forms.CharField(label="Full name",required=False)
 
 class GeneralEmailUserForm(GeneralUserForm):
   email = forms.EmailField(widget=forms.TextInput(attrs={'readonly':True}))

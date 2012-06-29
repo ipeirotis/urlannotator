@@ -68,8 +68,12 @@
   <div class="row-fluid" style="margin-bottom:18px">
     <div class="span1">&nbsp;</div>
     <div class="span4">
-      <button class="btn">Connect to Odesk</button></br>
-      <a style="padding:0px">(?) What will I gain by connecting to Odesk service.</a></br>
+      {% if odesk %}
+        <p>Status: Connected as <b>{{ odesk.name }}</b>, <a href="https://www.odesk.com/UserSettings/linked-accounts">administrate</a>, <a href="{% url odesk_disconnect %}">disconnect</a></p>
+      {% else %}
+      <a class="btn" href="{% url odesk_login %}">Connect to Odesk</a></br>
+      <a style="padding:0px" onclick="$('#oDeskModal').modal('show')">(?) What will I gain by connecting to Odesk service.</a></br>
+      {% endif %}
     </div>
   </div>
   <div class="row-fluid">
@@ -84,8 +88,14 @@
       <p>Google</p>
       <p>Status: {% if google %}<b>Connected</b>, {{google.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a>{%else%}<b>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a>{%endif%}</p>
       <p>Facebook</p>
-      <p>Status: {% if facebook %}<b>Connected</b>, {{facebook.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a>{%else%}<B>Not connected</b>, <a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Connect</a>{%endif%}</p>
+      <p>Status: {% if facebook %}<b>Connected</b>, {{facebook.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a>{%else%}<B>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a>{%endif%}</p>
     </div>
+  </div>
+</div>
+<div class="modal hide" id="oDeskModal">
+  <div class="modal-body">Marketing stuff</div>
+  <div class="modal-footer">
+    <a class="btn" data-dismiss="modal" href="#">Close</a>
   </div>
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
 A new account has been requested on URL annotator using your email.
 
-If you wish to activate your account, follow the link <a href="http://127.0.0.1:8000/{%url activation key=key%}">http://127.0.0.1:8000/{%url activation key=key%}</a>
+If you wish to activate your account, follow the link <a href="http://127.0.0.1:8000{%url activation key=key%}">http://127.0.0.1:8000{%url activation key=key%}</a>
 If you didn't create any account, please ignore this message.

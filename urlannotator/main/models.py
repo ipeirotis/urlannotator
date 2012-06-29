@@ -15,3 +15,9 @@ def create_user_profile(sender, instance, created, **kwargs):
         UserProfile.objects.create(user=instance)
 
 post_save.connect(create_user_profile, sender=User)
+
+class UserOdeskAssociation(models.Model):
+  user = models.ForeignKey(User, related_name='odesk')
+  uid = models.CharField(max_length=100)
+  token = models.CharField(max_length=100)
+  full_name = models.CharField(max_length=100)

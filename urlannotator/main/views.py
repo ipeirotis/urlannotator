@@ -1,13 +1,15 @@
 from django.shortcuts import render, redirect
 from urlannotator.main.forms import *
 from django.contrib.auth.models import User
-from urlannotator.main.models import UserProfile
+from urlannotator.main.models import UserProfile, UserOdeskAssociation
 from django.template import RequestContext, Context
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
+import odesk
+from urlannotator.settings.defaults import ODESK_CLIENT_ID, ODESK_CLIENT_SECRET
 from django.template.loader import get_template
 import hashlib
 
@@ -34,12 +36,11 @@ def register_view(request):
         subjectTemplate = get_template('activation_email_subject.txt')
         bodyTemplate = get_template('activation_email.txt')
         key = get_activation_key(form.cleaned_data['email'], user.get_profile().id)
-        print key
         user.get_profile().activation_key = key
         user.get_profile().email_registered = True
         user.get_profile().save()
         cont = Context({'key': key})
-        send_mail(subjectTemplate.render(cont).replace('\n', ''), bodyTemplate.render(cont), 'test', ['1kroolik1@gmail.com'])
+        send_mail(subjectTemplate.render(cont).replace('\n', ''), bodyTemplate.render(cont), 'URL Annotator', [user.email])
         return redirect('index')
 
       return render(request, 'main/register.html', RequestContext(request, context))
@@ -103,10 +104,10 @@ def settings(request):
   context = {}
   
   if profile.email_registered:
-    context['general_form'] = GeneralEmailUserForm()
+    context['general_form'] = GeneralEmailUserForm({'email':request.user.email, 'full_name':profile.full_name})
     context['password_form'] = PasswordChangeForm(request.user)
   else:
-    context['general_form'] = GeneralUserForm()
+    context['general_form'] = GeneralUserForm({'full_name':profile.full_name})
 
   context['alerts_form'] = AlertsSetupForm({'alerts': profile.alerts})
   l = request.user.social_auth.filter(provider='facebook')
@@ -119,22 +120,26 @@ def settings(request):
   if l:
     context['twitter'] = l[0]
   
+  u = UserOdeskAssociation.objects.filter(user=request.user)
+  if u:
+    context['odesk'] = {'name':u[0].full_name}
+
   if request.method == "POST":
     if 'submit' in request.POST:
       if request.POST['submit'] == 'general':
         if profile.email_registered:
           form = GeneralEmailUserForm(request.POST)
-          if context['general_form'].is_valid():
-            request.user.username = form.cleaned_data['full_name']
-            request.user.save()
+          if form.is_valid():
+            profile.full_name = form.cleaned_data['full_name']
+            profile.save()
             context['success'] = 'Full name has been successfully changed.'
           else:
             context['general_form'] = form
         else:
           form = GeneralUserForm(request.POST)
           if form.is_valid():
-            request.user.username = form.cleaned_data['full_name']
-            request.user.save()
+            profile.full_name = form.cleaned_data['full_name']
+            profile.save()
             context['success'] = 'Full name has been successfully changed.'
           else:
             context['general_form'] = form
@@ -147,7 +152,6 @@ def settings(request):
           context['password_form'] = form
       elif request.POST['submit'] == 'alerts':
         form = AlertsSetupForm(request.POST)
-        print request.POST
         if form.is_valid():
           profile.alerts = form.cleaned_data['alerts']
           profile.save()
@@ -156,8 +160,46 @@ def settings(request):
           context['alerts_form'] = form
   return render(request, 'main/settings.html', RequestContext(request, context))
 
-def odesk_login(request):
+@login_required
+def odesk_disconnect(request):
+  assoc = UserOdeskAssociation.objects.filter(user=request.user)
+  if assoc:
+    assoc.delete()
   return redirect('index')
+
+def odesk_complete(request):
+  client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
+  auth, user = client.auth.get_token(request.GET['frob'])
+    
+  if request.user.is_authenticated():
+    print 'a'
+    assoc = UserOdeskAssociation.objects.filter(user=request.user, uid=user['uid'])
+    print assoc
+    if not assoc:
+      u = request.user
+      print 'a'
+      assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=' '.join([user['first_name'], user['last_name']]))
+      assoc.save()
+    return redirect('index')
+  else:
+    assoc = UserOdeskAssociation.objects.filter(uid=user['uid'])
+    u = None
+    if assoc:
+      u = authenticate(username=assoc.user.username, password='1')
+    
+    if u is None:
+      u = User.objects.create_user(email=user['mail'],username=' '.join(['odesk', user['uid']]), password='1')
+      u.get_profile().full_name = ' '.join([user['first_name'], user['last_name']])
+      u.get_profile().save()
+      assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=u.get_profile().full_name)
+      assoc.save()
+      u = authenticate(username=u.username, password='1')
+    login(request, u)
+    return redirect('index')
+
+def odesk_login(request):
+  client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
+  return redirect(client.auth.auth_url())
     
 def index(request):
   context = { }
