@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<div class="row-fluid">
+  <div class="container-fluid status-{{project.get_status|lower}}">
+    <div class="row-fluid">
+      <span class="span3"><h3>{{project.topic}}</h3></span>
+      <span class="span5">&nbsp;</span>
+      <span class="span4" style="text-align:right;">
+        {% if project.is_draft %}
+          <a class="btn" href="#">Activate project</a>
+          <a class="btn" href="#">Settings</a>
+        {% else %}
+          <a class="btn" href="#">Export data</a>
+          <a class="btn" data-toggle="modal" href="#closeProjectModal">Close project</a>
+          <a class="btn" href="#">Settings</a>
+        {% endif %}
+      </span>
+    </div>
+    <div class="row-fluid">
+      <span>{{project.get_status}}</span>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <ul class="nav nav-tabs">
+      <li class="{%block overview_active%}{%endblock%}"><a href="{% url project_view id=project.id %}">Overview</a></li>
+      <li class="{%block workers_active%}{%endblock%}"><a href="{% url project_workers_view id=project.id %}">Workers</a></li>
+      <li class="{%block data_active%}{%endblock%}"><a href="{% url project_data_view id=project.id %}">Data</a></li>
+      <li class="{%block classifier_active%}{%endblock%}"><a href="{% url project_classifier_view id=project.id %}">Classifier</a></li>
+      <li class="{%block btm_active%}{%endblock%}"><a href="{% url project_btm_view id=project.id %}">Beat the Machine</a></li>
+    </ul>
+  </div>
+  {% block project_content %}
+  {% endblock %}
+</div>
+<div id="closeProjectModal" class="modal hide">
+    <div class="modal-body">
+        Are you sure you would like to stop this project? After you stop a project it can not be relaunched anymore.
+    </div>
+    <div class="modal-footer">
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="id" value="{{project.id}}">
+            <input type="submit" name="submit" value="Close project" class="btn btn-primary">
+            <button class="btn" data-dismiss="modal" href="#">Close</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block css %}
+{{ block.super }}
+<style type="text/css">
+div.status-active {
+  background-color: #DFF0D8;
+}
+div.status-completed {
+  background-color: #F7F7F9;
+}
+div.status-draft {
+  background-color: #FCF8E3;
+}
+div.status-stopped {
+  background-color: #F2DEDE;
+}
+div.infobox {
+  text-align: center;
+  border: 1px solid #E1E1E8;
+  border-radius: 4px 4px 4px 4px;
+}
+div.infobox-disabled {
+  background-color: #F7F7F9;
+  color: gray;
+}
+</style>
+{% endblock %}
