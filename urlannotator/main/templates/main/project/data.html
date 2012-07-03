@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<div class="row-fluid">
+  <div class="container-fluid status-{{project.get_status|lower}}">
+    <div class="row-fluid">
+      <span class="span3"><h3>{{project.topic}}</h3></span>
+      <span class="span5">&nbsp;</span>
+      <span class="span4" style="text-align:right;">
+        {% if project.is_draft %}
+          <a class="btn" href="#">Activate project</a>
+          <a class="btn" href="#">Settings</a>
+        {% else %}
+          <a class="btn" href="#">Export data</a>
+          <a class="btn" href="#">Close project</a>
+          <a class="btn" href="#">Settings</a>
+        {% endif %}
+      </span>
+    </div>
+    <div class="row-fluid">
+      <span>{{project.get_status}}</span>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <ul class="nav nav-tabs">
+      <li><a href="{% url project_view id=project.id %}">Overview</a></li>
+      <li><a href="{% url project_workers_view id=project.id %}">Workers</a></li>
+      <li class="active"><a href="{% url project_data_view id=project.id %}">Data</a></li>
+      <li><a href="{% url project_classifier_view id=project.id %}">Classifier</a></li>
+      <li><a href="{% url project_btm_view id=project.id %}">Beat the Machine</a></li>
+    </ul>
+  </div>
+  <div class="row-fluid">
+    <div class="span1">
+      <a href="#">&lt; Back</a>
+    </div>
+    <div class="span11">
+      <h5>URL</h5>
+      <h3>developers.google.com/prediction/ <a href="http://developers.google.com/prediction/" style="font-size:70%">go to link</a></h3>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span9">
+      <iframe style="width:100%;height:500px" src="http://developers.google.com/prediction/"></iframe>
+    </div>
+    <div class="span3">
+      <h3>URL detail</h3>
+      <table id="more-information">
+        <thead></thead>
+        <tbody>
+          <tr><td>Added on</td><td>12-03-2012 4:04:04</td></tr>
+          <tr><td>Uploaded by</td><td>Person</td></tr>
+        </tbody>
+      </table>
+      <hr>
+      <h4>Voting stats</h4>
+      <table id="more-information">
+        <thead></thead>
+        <tbody>
+          <tr><td>Yes</td><td>3</td></tr>
+          <tr><td>No</td><td>2</td></tr>
+          <tr><td>Broken</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <h4>Class probability</h4>
+      <table id="more-information">
+        <thead></thead>
+        <tbody>
+          <tr><td>Yes</td><td>0.8</td></tr>
+          <tr><td>No</td><td>0.1</td></tr>
+          <tr><td>Broken</td><td>0.1</td></tr>
+        </tbody>
+      </table>
+      
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<style type="text/css">
+div.status-active {
+  background-color: #DFF0D8;
+}
+div.status-completed {
+  background-color: #F7F7F9;
+}
+div.status-draft {
+  background-color: #FCF8E3;
+}
+div.status-stopped {
+  background-color: #F2DEDE;
+}
+div.infobox {
+  text-align: center;
+  border: 1px solid #E1E1E8;
+  border-radius: 4px 4px 4px 4px;
+}
+div.infobox-disabled {
+  background-color: #F7F7F9;
+  color: gray;
+}
+table#more-information td:first-child {
+  width: 140px;
+  text-align: right;
+  padding-right: 10px;
+} 
+</style>
+{% endblock %}

@@ -193,6 +193,7 @@ PIPELINE_JS = {
             'js/json2.js',
             'js/backbone.js',
             'js/bootstrap.js',
+            'js/bootstrap-tooltip.js',
         ),
         'output_filename': 'js/core.min.js',
     },

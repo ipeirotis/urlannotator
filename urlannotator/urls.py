@@ -12,14 +12,24 @@ def bad(request):
 urlpatterns = patterns('urlannotator',
 
     url(r'^$', 'main.views.index', name='index'),
+    
     url(r'^register$', 'main.views.register_view', name='register'),
     url(r'^activation/(?P<key>.+)$', 'main.views.activation_view', name='activation'),
-    url(r'^login$', 'main.views.login_view', name='login'),
-    url(r'^settings$', 'main.views.settings', name='settings'),
-    url(r'^logout$', 'main.views.logout_view', name='logout'),
     url(r'^odesk_disconnect$', 'main.views.odesk_disconnect', name='odesk_disconnect'),
     url(r'^odesk_login/complete$', 'main.views.odesk_complete', name='odesk_complete'),
     url(r'^odesk_login$', 'main.views.odesk_login', name='odesk_login'),
+    url(r'^login$', 'main.views.login_view', name='login'),
+    url(r'^settings$', 'main.views.settings', name='settings'),
+    url(r'^logout$', 'main.views.logout_view', name='logout'),
+    
+    url(r'^wizard$', 'main.views.project_wizard', name='project_wizard'),
+    url(r'^project/(?P<id>\d+)$', 'main.views.project_view', name='project_view'),
+    url(r'^project/(?P<id>\d+)/workers$', 'main.views.project_workers_view', name='project_workers_view'),
+    url(r'^project/(?P<id>\d+)/workers/(?P<worker_id>\d+)$', 'main.views.project_worker_view', name='project_worker_view'),
+    url(r'^project/(?P<id>\d+)/data$', 'main.views.project_data_view', name='project_data_view'),
+    url(r'^project/(?P<id>\d+)/btm$', 'main.views.project_btm_view', name='project_btm_view'),
+    url(r'^project/(?P<id>\d+)/classifier$', 'main.views.project_classifier_view', name='project_classifier_view'),
+    
     url(r'^_admin/', include(admin.site.urls)),
     url(r'^auth/', include('social_auth.urls')),
     

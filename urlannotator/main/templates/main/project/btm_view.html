@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<div class="row-fluid">
+  <div class="container-fluid status-{{project.get_status|lower}}">
+    <div class="row-fluid">
+      <span class="span3"><h3>{{project.topic}}</h3></span>
+      <span class="span5">&nbsp;</span>
+      <span class="span4" style="text-align:right;">
+        {% if project.is_draft %}
+          <a class="btn" href="#">Activate project</a>
+          <a class="btn" href="#">Settings</a>
+        {% else %}
+          <a class="btn" href="#">Export data</a>
+          <a class="btn" href="#">Close project</a>
+          <a class="btn" href="#">Settings</a>
+        {% endif %}
+      </span>
+    </div>
+    <div class="row-fluid">
+      <span>{{project.get_status}}</span>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <ul class="nav nav-tabs">
+      <li><a href="{% url project_view id=project.id %}">Overview</a></li>
+      <li><a href="{% url project_workers_view id=project.id %}">Workers</a></li>
+      <li><a href="{% url project_data_view id=project.id %}">Data</a></li>
+      <li><a href="{% url project_classifier_view id=project.id %}">Classifier</a></li>
+      <li class="active"><a href="{% url project_btm_view id=project.id %}">Beat the Machine</a></li>
+    </ul>
+  </div>
+  <div class="row-fluid">
+    <div class="span3">
+      <h3>Beat the Machine</h3>
+    </div>
+  </div>
+  <div class="row-fluid">
+    <div class="span9">
+      Beat the Machine starts a new tagasauris task that will gather urls that may be misjudged by the classifier.
+      If an url is submittable (we don't want urls that category both submiteer and classifier agree on) we send it to actual
+      user validation. Based on the difference on the classifier reslult and user result a bonus will be paid out to the worker
+      that submitted that url. <a href="#">(less)</a>
+      
+      {% include 'main/project/own_workforce_links.html' %}
+    </div>
+    <div class="span3">
+      <h3>BTM Statistics</h3>
+      <table id="btm-statistics">
+        <thead></thead>
+        <tbody>
+          <tr><td>Status: In progress</td><td>1%</td></tr>
+          <tr><td>No. of URLs to gather</td><td>200</td></tr>
+          <tr><td>No. of URLs gathered</td><td>2</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row-fluid" style="margin-top:7px;">
+    <h4>BTM Gathered URLs</h4>
+    <hr>
+  </div>
+  <div class="row-fluid">
+    Beat the machine is still in progress. You can add your results to the classifier data once the status is finished
+  </div>
+  <div class="row-fluid">
+    <table class="table" style="margin-bottom:0px;">
+      <thead>
+        <tr>
+          <th style="width:14px;"><input type="checkbox" name="check-all"></th>
+          <th style="width:20px;">Preview</th>
+          <th>URL</th>
+          <th style="width:120px;">Added on</th>
+          <th style="width:120px;">Calculated Class Probability</th>
+          <th style="width:120px;">Voting</th>
+          <th style="width:14px;">Class</th>
+          <th style="width:14px;">Type</th>
+        </tr>
+      </thead>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<style type="text/css">
+div.status-active {
+  background-color: #DFF0D8;
+}
+div.status-completed {
+  background-color: #F7F7F9;
+}
+div.status-draft {
+  background-color: #FCF8E3;
+}
+div.status-stopped {
+  background-color: #F2DEDE;
+}
+table#btm-statistics td:nth-of-type(2){
+    width: 100px;
+    text-align: right;
+}
+</style>
+{% endblock %}

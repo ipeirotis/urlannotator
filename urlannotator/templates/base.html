@@ -54,7 +54,7 @@
               <div class="nav-collapse">
                 <ul class="nav pull-right">
                   {% if user.is_authenticated %}
-                  <li><a href="#">Create new project</a></li>
+                  <li><a href="{% url project_wizard %}">Create new project</a></li>
                   <li class="dropdown">
                       <a class="dropdown-toggle" data-toggle="dropdown" href="#">{% if user.get_profile.full_name%}{{user.get_profile.full_name}}{%else%}{{ user.username }}{%endif%}<b class="caret"></b></a>
                       <ul class="dropdown-menu">

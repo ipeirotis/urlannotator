@@ -1,7 +1,5 @@
 from django.shortcuts import render, redirect
-from urlannotator.main.forms import *
 from django.contrib.auth.models import User
-from urlannotator.main.models import UserProfile, UserOdeskAssociation
 from django.template import RequestContext, Context
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -9,157 +7,185 @@ from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
 import odesk
-from urlannotator.settings.defaults import ODESK_CLIENT_ID, ODESK_CLIENT_SECRET
 from django.template.loader import get_template
 import hashlib
 
-def pass_recover(request):
-    return render(request, 'main/index.html')
+from urlannotator.main.forms import *
+from urlannotator.main.models import UserProfile, UserOdeskAssociation
+from urlannotator.settings.defaults import ODESK_CLIENT_ID, ODESK_CLIENT_SECRET
 
 def get_activation_key(email, num):
-  key = hashlib.sha1()
-  key.update('%s%s%s%d' % ('thereisn', email, 'ospoon', num))
-  return '%s-%d' % (key.hexdigest(), num)
+    key = hashlib.sha1()
+    key.update('%s%s%s%d' % ('thereisn', email, 'ospoon', num))
+    return '%s-%d' % (key.hexdigest(), num)
         
 @csrf_protect
 def register_view(request):
     if request.method == "GET":
-      context = {'form': NewUserForm()}
-      return render(request, 'main/register.html', RequestContext(request, context))
+        context = {'form': NewUserForm()}
+        return render(request, 'main/register.html', RequestContext(request, context))
     else:
-      form = NewUserForm(request.POST)
-      context = {'form': form}
-      if form.is_valid():
-        user = User.objects.create_user(username=form.cleaned_data['email'],email=form.cleaned_data['email'],password=form.cleaned_data['password1'])
-        user.is_active = False
-        user.save()
-        subjectTemplate = get_template('activation_email_subject.txt')
-        bodyTemplate = get_template('activation_email.txt')
-        key = get_activation_key(form.cleaned_data['email'], user.get_profile().id)
-        user.get_profile().activation_key = key
-        user.get_profile().email_registered = True
-        user.get_profile().save()
-        cont = Context({'key': key})
-        send_mail(subjectTemplate.render(cont).replace('\n', ''), bodyTemplate.render(cont), 'URL Annotator', [user.email])
-        return redirect('index')
+        form = NewUserForm(request.POST)
+        context = {'form': form}
+        if form.is_valid():
+            user = User.objects.create_user(username=form.cleaned_data['email'],email=form.cleaned_data['email'],password=form.cleaned_data['password1'])
+            user.is_active = False
+            user.save()
+            subjectTemplate = get_template('activation_email_subject.txt')
+            bodyTemplate = get_template('activation_email.txt')
+            key = get_activation_key(form.cleaned_data['email'], user.get_profile().id)
+            user.get_profile().activation_key = key
+            user.get_profile().email_registered = True
+            user.get_profile().save()
+            cont = Context({'key': key})
+            send_mail(subjectTemplate.render(cont).replace('\n', ''), bodyTemplate.render(cont), 'URL Annotator', [user.email])
+            return redirect('index')
 
-      return render(request, 'main/register.html', RequestContext(request, context))
+        return render(request, 'main/register.html', RequestContext(request, context))
 
 def logout_view(request):
-  logout(request)
-  return redirect('index')
+    logout(request)
+    return redirect('index')
 
 def activation_view(request, key):
-  prof_id = key.rsplit('-', 1)
-  try:
-    prof = UserProfile.objects.get(id=int(prof_id[1]))
-  except UserProfile.DoesNotExist:
-    context = {'error': 'Wrong activation key.'}
-    return render(request, 'main/index.html', RequestContext(request, context))
+    prof_id = key.rsplit('-', 1)
+    if len(prof_id) != 2:
+        context = {'error': 'Wrong activation key.'}
+        return render(request, 'main/index.html', RequestContext(request, context))
 
-  if not prof:
-    context = {'error': 'Wrong activation key.'}
-    return render(request, 'main/index.html', RequestContext(request, context))
-  else:
-    if prof.activation_key != key:
-      context = {'error': 'Wrong activation key.'}
-      return render(request, 'main/index.html', RequestContext(request, context))
-    prof.user.is_active = True
-    prof.user.save()
-    prof.activation_key = 'activated'
-    prof.save()
-    context = {'success': 'Your account has been activated.'}
-    return render(request, 'main/index.html', RequestContext(request, context))
-  return redirect('index')
+    try:
+        prof = UserProfile.objects.get(id=int(prof_id[1]))
+    except UserProfile.DoesNotExist:
+        context = {'error': 'Wrong activation key.'}
+        return render(request, 'main/index.html', RequestContext(request, context))
+
+    if not prof:
+        context = {'error': 'Wrong activation key.'}
+        return render(request, 'main/index.html', RequestContext(request, context))
+    else:
+        if prof.activation_key != key:
+            context = {'error': 'Wrong activation key.'}
+            return render(request, 'main/index.html', RequestContext(request, context))
+        prof.user.is_active = True
+        prof.user.save()
+        prof.activation_key = 'activated'
+        prof.save()
+        context = {'success': 'Your account has been activated.'}
+        return render(request, 'main/index.html', RequestContext(request, context))
+    return redirect('index')
 
 @csrf_protect
 def login_view(request):
-  if request.method == "GET":
-    context = {'form': UserLoginForm()}
-    return render(request, 'main/login.html', RequestContext(request, context))
-  else:
-    form = UserLoginForm(request.POST)
-    if form.is_valid():
-      user = authenticate(username=form.cleaned_data['email'], password=form.cleaned_data['password'])
-      if user is not None:
-        if user.is_active:
-          login(request,user)
-          if 'remember' in request.POST:
-            request.session.set_expiry(0)
-          return redirect('index')
-        else:
-          context = {'error': 'This account is still inactive.'}
-          return render(request, 'main/index.html', RequestContext(request, context))
-      else:
-        request.session['error'] = 'Username and/or password is incorrect.'
-        return redirect('index')
+    if request.method == "GET":
+        context = {'form': UserLoginForm()}
+        return render(request, 'main/login.html', RequestContext(request, context))
     else:
-      context = {'error': 'Username and/or password is incorrect.'}
-      return render(request, 'main/index.html', RequestContext(request, context))
-  return redirect('index')
+        form = UserLoginForm(request.POST)
+        if form.is_valid():
+            user = authenticate(username=form.cleaned_data['email'], password=form.cleaned_data['password'])
+            if user is not None:
+                if user.is_active:
+                    login(request,user)
+                    if 'remember' in request.POST:
+                        request.session.set_expiry(0)
+                    return redirect('index')
+                else:
+                    context = {'error': 'This account is still inactive.'}
+                    return render(request, 'main/index.html', RequestContext(request, context))
+            else:
+                request.session['error'] = 'Username and/or password is incorrect.'
+                return redirect('index')
+        else:
+          context = {'error': 'Username and/or password is incorrect.'}
+          return render(request, 'main/index.html', RequestContext(request, context))
+    return redirect('index')
 
 @login_required
 def settings(request):
-  profile = request.user.get_profile()
-  context = {}
+    profile = request.user.get_profile()
+    context = {}
+    
+    if profile.email_registered:
+        context['general_form'] = GeneralEmailUserForm({'email':request.user.email, 'full_name':profile.full_name})
+        context['password_form'] = PasswordChangeForm(request.user)
+    else:
+        context['general_form'] = GeneralUserForm({'full_name':profile.full_name})
+
+    context['alerts_form'] = AlertsSetupForm({'alerts': profile.alerts})
+    l = request.user.social_auth.filter(provider='facebook')
+    if l:
+        context['facebook'] = l[0]
+    l = request.user.social_auth.filter(provider='google-oauth2')
+    if l:
+        context['google'] = l[0]
+    l = request.user.social_auth.filter(provider='twitter')
+    if l:
+        context['twitter'] = l[0]
+    
+    u = UserOdeskAssociation.objects.filter(user=request.user)
+    if u:
+        context['odesk'] = {'name':u[0].full_name}
+
+    if request.method == "POST":
+        if 'submit' in request.POST:
+            if request.POST['submit'] == 'general':
+                if profile.email_registered:
+                    form = GeneralEmailUserForm(request.POST)
+                    if form.is_valid():
+                        profile.full_name = form.cleaned_data['full_name']
+                        profile.save()
+                        context['success'] = 'Full name has been successfully changed.'
+                    else:
+                        context['general_form'] = form
+                else:
+                    form = GeneralUserForm(request.POST)
+                    if form.is_valid():
+                        profile.full_name = form.cleaned_data['full_name']
+                        profile.save()
+                        context['success'] = 'Full name has been successfully changed.'
+                    else:
+                        context['general_form'] = form
+            elif request.POST['submit'] == 'password':
+                form = PasswordChangeForm(request.user, request.POST)
+                if form.is_valid():
+                    form.save()
+                    context['success'] = 'Full name has been successfully changed.'
+                else:
+                    context['password_form'] = form
+            elif request.POST['submit'] == 'alerts':
+                form = AlertsSetupForm(request.POST)
+                if form.is_valid():
+                    profile.alerts = form.cleaned_data['alerts']
+                    profile.save()
+                    context['success'] = 'Alerts setup has been successfully changed.'
+                else:
+                    context['alerts_form'] = form
+    return render(request, 'main/settings.html', RequestContext(request, context))
+
+@login_required
+def project_wizard(request):
+    if request.method == "GET":
+        context = {'topic_form': WizardTopicForm(),
+                   'attributes_form': WizardAttributesForm(),
+                   'additional_form': WizardAdditionalForm(),}
+    else:
+        topic_form = WizardTopicForm(request.POST)
+        attr_form = WizardAttributesForm(request.POST)
+        addt_form = WizardAdditionalForm(request.POST)
+        if request.POST['submit'] == 'draft':
+            p_type = 0
+        else:
+            p_type = 1
+        if addt_form.is_valid() and attr_form.is_valid() and topic_form.is_valid():
+            p = Project(author=request.user,topic=topic_form.cleaned_data['topic'],topic_desc=topic_form.cleaned_data['topic_desc'],
+                                            data_source=attr_form.cleaned_data['data_source'],project_type=attr_form.cleaned_data['project_type'],
+                                            no_of_urls=attr_form.cleaned_data['no_of_urls'], hourly_rate=attr_form.cleaned_data['hourly_rate'],
+                                            budget=attr_form.cleaned_data['budget'],same_domain_allowed=addt_form.cleaned_data['same_domain'],
+                                            project_status=p_type)
+            p.save()
+        context = {'topic_form':topic_form,'attributes_form':attr_form,'additional_form':addt_form}
+    return render(request, 'main/project/wizard.html', RequestContext(request, context))
   
-  if profile.email_registered:
-    context['general_form'] = GeneralEmailUserForm({'email':request.user.email, 'full_name':profile.full_name})
-    context['password_form'] = PasswordChangeForm(request.user)
-  else:
-    context['general_form'] = GeneralUserForm({'full_name':profile.full_name})
-
-  context['alerts_form'] = AlertsSetupForm({'alerts': profile.alerts})
-  l = request.user.social_auth.filter(provider='facebook')
-  if l:
-    context['facebook'] = l[0]
-  l = request.user.social_auth.filter(provider='google-oauth2')
-  if l:
-    context['google'] = l[0]
-  l = request.user.social_auth.filter(provider='twitter')
-  if l:
-    context['twitter'] = l[0]
-  
-  u = UserOdeskAssociation.objects.filter(user=request.user)
-  if u:
-    context['odesk'] = {'name':u[0].full_name}
-
-  if request.method == "POST":
-    if 'submit' in request.POST:
-      if request.POST['submit'] == 'general':
-        if profile.email_registered:
-          form = GeneralEmailUserForm(request.POST)
-          if form.is_valid():
-            profile.full_name = form.cleaned_data['full_name']
-            profile.save()
-            context['success'] = 'Full name has been successfully changed.'
-          else:
-            context['general_form'] = form
-        else:
-          form = GeneralUserForm(request.POST)
-          if form.is_valid():
-            profile.full_name = form.cleaned_data['full_name']
-            profile.save()
-            context['success'] = 'Full name has been successfully changed.'
-          else:
-            context['general_form'] = form
-      elif request.POST['submit'] == 'password':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-          form.save()
-          context['success'] = 'Full name has been successfully changed.'
-        else:
-          context['password_form'] = form
-      elif request.POST['submit'] == 'alerts':
-        form = AlertsSetupForm(request.POST)
-        if form.is_valid():
-          profile.alerts = form.cleaned_data['alerts']
-          profile.save()
-          context['success'] = 'Alerts setup has been successfully changed.'
-        else:
-          context['alerts_form'] = form
-  return render(request, 'main/settings.html', RequestContext(request, context))
-
 @login_required
 def odesk_disconnect(request):
   assoc = UserOdeskAssociation.objects.filter(user=request.user)
@@ -168,46 +194,116 @@ def odesk_disconnect(request):
   return redirect('index')
 
 def odesk_complete(request):
-  client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
-  auth, user = client.auth.get_token(request.GET['frob'])
-    
-  if request.user.is_authenticated():
-    print 'a'
-    assoc = UserOdeskAssociation.objects.filter(user=request.user, uid=user['uid'])
-    print assoc
-    if not assoc:
-      u = request.user
-      print 'a'
-      assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=' '.join([user['first_name'], user['last_name']]))
-      assoc.save()
-    return redirect('index')
-  else:
-    assoc = UserOdeskAssociation.objects.filter(uid=user['uid'])
-    u = None
-    if assoc:
-      u = authenticate(username=assoc.user.username, password='1')
-    
-    if u is None:
-      u = User.objects.create_user(email=user['mail'],username=' '.join(['odesk', user['uid']]), password='1')
-      u.get_profile().full_name = ' '.join([user['first_name'], user['last_name']])
-      u.get_profile().save()
-      assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=u.get_profile().full_name)
-      assoc.save()
-      u = authenticate(username=u.username, password='1')
-    login(request, u)
-    return redirect('index')
+    client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
+    auth, user = client.auth.get_token(request.GET['frob'])
+      
+    if request.user.is_authenticated():
+        assoc = UserOdeskAssociation.objects.filter(user=request.user, uid=user['uid'])
+        if not assoc:
+            u = request.user
+            assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=' '.join([user['first_name'], user['last_name']]))
+            assoc.save()
+        return redirect('index')
+    else:
+        assoc = UserOdeskAssociation.objects.filter(uid=user['uid'])
+        u = None
+        if assoc:
+            u = authenticate(username=assoc[0].user.username, password='1')
+        
+        if u is None:
+            u = User.objects.create_user(email=user['mail'],username=' '.join(['odesk', user['uid']]), password='1')
+            u.get_profile().full_name = ' '.join([user['first_name'], user['last_name']])
+            u.get_profile().save()
+            assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=u.get_profile().full_name)
+            assoc.save()
+            u = authenticate(username=u.username, password='1')
+        login(request, u)
+        return redirect('index')
 
 def odesk_login(request):
-  client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
-  return redirect(client.auth.auth_url())
+    client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
+    return redirect(client.auth.auth_url())
+
+@login_required
+def project_view(request, id):
+    context = { }
+    try:
+        proj = Project.objects.get(id=id)
+    except Project.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
     
+    context['project'] = proj
+    return render(request, 'main/project/overview.html', RequestContext(request, context)) 
+
+@login_required
+def project_workers_view(request, id):
+    context = { }
+    try:
+        proj = Project.objects.get(id=id)
+    except Project.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+    
+    context['project'] = proj
+    return render(request, 'main/project/workers.html', RequestContext(request, context))
+
+@login_required
+def project_worker_view(request, id, worker_id):
+    context = { }
+    try:
+        proj = Project.objects.get(id=id)
+    except Project.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+    
+    context['project'] = proj
+    return render(request, 'main/project/worker.html', RequestContext(request, context))
+
+@login_required
+def project_btm_view(request, id):
+    context = { }
+    try:
+        proj = Project.objects.get(id=id)
+    except Project.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+    
+    context['project'] = proj
+    return render(request, 'main/project/btm_view.html', RequestContext(request, context))
+
+@login_required
+def project_data_view(request, id):
+    context = { }
+    try:
+        proj = Project.objects.get(id=id)
+    except Project.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+    
+    context['project'] = proj
+    return render(request, 'main/project/data.html', RequestContext(request, context)) 
+
+@login_required
+def project_classifier_view(request, id):
+    context = { }
+    try:
+        proj = Project.objects.get(id=id)
+    except Project.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+    
+    context['project'] = proj
+    return render(request, 'main/project/classifier.html', RequestContext(request, context)) 
+
 def index(request):
-  context = { }
-  if 'error' in request.session:
-    context['error'] = request.session['error']
-    request.session.pop('error')
-  if 'success' in request.session:
-    context['success'] = request.session['success']
-    request.session.pop('success')
-       
-  return render(request, 'main/index.html', RequestContext(request, context))
+    context = { }
+    if 'error' in request.session:
+        context['error'] = request.session['error']
+        request.session.pop('error')
+    if 'success' in request.session:
+        context['success'] = request.session['success']
+        request.session.pop('success')
+    if request.user.is_authenticated():
+        context['projects'] = Project.objects.filter(author=request.user) 
+    return render(request, 'main/index.html', RequestContext(request, context))
