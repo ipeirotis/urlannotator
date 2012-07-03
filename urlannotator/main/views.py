@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
+from django.core.urlresolvers import reverse
 import odesk
 from django.template.loader import get_template
 import hashlib
@@ -43,6 +44,14 @@ def register_view(request):
 
         return render(request, 'main/register.html', RequestContext(request, context))
 
+def register_service(request, service):
+    request.session['registration'] = service
+    return redirect('socialauth_begin', service)
+
+def odesk_register(request):
+    request.session['registration'] = 'odesk'
+    return redirect('odesk_login')    
+    
 def logout_view(request):
     logout(request)
     return redirect('index')
@@ -164,26 +173,40 @@ def settings(request):
 
 @login_required
 def project_wizard(request):
+    odeskLogged = UserOdeskAssociation.objects.filter(user=request.user).count() != 0
     if request.method == "GET":
         context = {'topic_form': WizardTopicForm(),
-                   'attributes_form': WizardAttributesForm(),
+                   'attributes_form': WizardAttributesForm(odeskLogged),
                    'additional_form': WizardAdditionalForm(),}
+        if not odeskLogged:
+            context['wizard_alert'] = '''Your account is not connected to Odesk.
+                                         If you want to have more options connect to Odesk at 
+                                         <a href="%s">settings</a> page.''' % reverse('settings')
     else:
         topic_form = WizardTopicForm(request.POST)
-        attr_form = WizardAttributesForm(request.POST)
+        attr_form = WizardAttributesForm(odeskLogged, request.POST)
         addt_form = WizardAdditionalForm(request.POST)
         if request.POST['submit'] == 'draft':
             p_type = 0
         else:
             p_type = 1
         if addt_form.is_valid() and attr_form.is_valid() and topic_form.is_valid():
-            p = Project(author=request.user,topic=topic_form.cleaned_data['topic'],topic_desc=topic_form.cleaned_data['topic_desc'],
-                                            data_source=attr_form.cleaned_data['data_source'],project_type=attr_form.cleaned_data['project_type'],
-                                            no_of_urls=attr_form.cleaned_data['no_of_urls'], hourly_rate=attr_form.cleaned_data['hourly_rate'],
-                                            budget=attr_form.cleaned_data['budget'],same_domain_allowed=addt_form.cleaned_data['same_domain'],
-                                            project_status=p_type)
+            p = Project(author=request.user,
+                        topic=topic_form.cleaned_data['topic'],
+                        topic_desc=topic_form.cleaned_data['topic_desc'],
+                        data_source=attr_form.cleaned_data['data_source'],
+                        project_type=attr_form.cleaned_data['project_type'],
+                        no_of_urls=attr_form.cleaned_data['no_of_urls'], 
+                        hourly_rate=attr_form.cleaned_data['hourly_rate'],
+                        budget=attr_form.cleaned_data['budget'],
+                        same_domain_allowed=addt_form.cleaned_data['same_domain'],
+                        project_status=p_type)
             p.save()
-        context = {'topic_form':topic_form,'attributes_form':attr_form,'additional_form':addt_form}
+        context = {'topic_form': topic_form,
+                   'attributes_form': attr_form,
+                   'additional_form': addt_form,}
+        if not odeskLogged:
+            context['wizard_alert'] = "Your account is not connected to Odesk. If you want to have more options connect to Odesk at settings page."
     return render(request, 'main/project/wizard.html', RequestContext(request, context))
   
 @login_required
@@ -201,6 +224,7 @@ def odesk_complete(request):
         assoc = UserOdeskAssociation.objects.filter(user=request.user, uid=user['uid'])
         if not assoc:
             u = request.user
+            # Logged user odesk account association
             assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=' '.join([user['first_name'], user['last_name']]))
             assoc.save()
         return redirect('index')
@@ -209,10 +233,17 @@ def odesk_complete(request):
         u = None
         if assoc:
             u = authenticate(username=assoc[0].user.username, password='1')
-        
+        else:
+            # if the user is registering, create a new association, otherwise show alert that the account
+            # has not been registered with
+            if not 'registration' in request.session:
+                request.session['error'] = "Account for that social media doesn't exist. Please register first."
+                return redirect('index')
+            request.session.pop('registration')
+            
         if u is None:
             u = User.objects.create_user(email=user['mail'],username=' '.join(['odesk', user['uid']]), password='1')
-            u.get_profile().full_name = ' '.join([user['first_name'], user['last_name']])
+            u.get_profile().full_name = '%s %s' % (user['first_name'], user['last_name'])
             u.get_profile().save()
             assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=u.get_profile().full_name)
             assoc.save()

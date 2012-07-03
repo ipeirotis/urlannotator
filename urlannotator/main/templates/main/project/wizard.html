@@ -18,6 +18,12 @@
         {{ wizard_success }}
       </div>
     {% endif %}
+    {% if wizard_alert %}
+      <div class="alert">
+        <button class="close" data-dismiss="alert">×</button>
+        {{ wizard_alert|safe }}
+      </div>
+    {% endif %}
     {% include 'main/project/wizard-form-error.html' with form=topic_form %}
     {% include 'main/project/wizard-form-error.html' with form=attributes_form %}
     {% include 'main/project/wizard-form-error.html' with form=additional_form %}
@@ -105,5 +111,6 @@ $('#id_project_type').change(function(obj){
         }
     }
 );
+$('#id_data_source').change();
 </script>
 {% endblock %}

@@ -40,6 +40,15 @@ GOOGLE_OAUTH2_CLIENT_ID      = '906829868245-hnom86rdj8nujbmpq4jku7232ri14e05.ap
 GOOGLE_OAUTH2_CLIENT_SECRET  = 'pcAdU11M4terfSumniGCCg1a'
 ODESK_CLIENT_ID      = '09138bf5ccb445137dc9f207ffde96db'
 ODESK_CLIENT_SECRET  = '0edc5cb4c97ae729'
+SOCIAL_AUTH_CREATE_USERS = False
+
+SOCIAL_AUTH_PIPELINE = (
+    'social_auth.backends.pipeline.social.social_auth_user',
+    'urlannotator.main.backends.pipeline.create_user',
+    'social_auth.backends.pipeline.social.associate_user',
+    'social_auth.backends.pipeline.social.load_extra_data',
+    'social_auth.backends.pipeline.user.update_user_details',
+)
 
 LOGIN_URL          = reverse_lazy('login')
 LOGIN_REDIRECT_URL = reverse_lazy('index')

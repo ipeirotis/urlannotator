@@ -35,18 +35,34 @@ class UserLoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput, label="Password")
 
 class WizardTopicForm(forms.Form):
-    topic = forms.CharField(label="Topic", help_text="E.g Identify pages that contain hate speech on the web")
-    topic_desc = forms.CharField(widget=forms.Textarea,label="Topic description", help_text='''E.g Find sites which advocate hostility or aggression</br>
+    topic = forms.CharField(required=False, label="Topic", help_text="E.g Identify pages that contain hate speech on the web")
+    topic_desc = forms.CharField(required=False, widget=forms.Textarea,label="Topic description", help_text='''E.g Find sites which advocate hostility or aggression</br>
                                                                                                toward individuals or groups on the basis of race,</br>
                                                                                                religion, gender, nationality, ethnic origni, or other</br>
                                                                                                involuntary characteristic.''')
+    def clean_topic(self):
+        topic = self.cleaned_data['topic']
+        if not topic:
+            raise forms.ValidationError('Please input project topic.')
+        return topic
+    
+    def clean_topic_desc(self):
+        topic_desc = self.cleaned_data['topic_desc']
+        if not topic_desc:
+            raise forms.ValidationError('Please input project topic description.')
+        return topic_desc
 
 class WizardAttributesForm(forms.Form):
-    data_source = forms.ChoiceField(PROJECT_DATA_SOURCE_CHOICES, label="Data source", help_text="You have 800 free URL quota provided by Odesk")
-    project_type = forms.ChoiceField(PROJECT_TYPE_CHOICES, label="Project type")
-    no_of_urls = forms.IntegerField(label="No. of URLs to collect")
-    hourly_rate = forms.DecimalField(decimal_places=2,max_digits=10,label="Hourly rate (US$)")
-    budget = forms.DecimalField(decimal_places=2,max_digits=10,label="Declared budget")
+    data_source = forms.ChoiceField(PROJECT_BASIC_DATA_SOURCE_CHOICES, label="Data source", help_text="You have 800 free URL quota provided by Odesk")
+    project_type = forms.ChoiceField(PROJECT_TYPE_CHOICES, required=False, label="Project type")
+    no_of_urls = forms.IntegerField(required=False,label="No. of URLs to collect")
+    hourly_rate = forms.DecimalField(required=False,decimal_places=2,max_digits=10,label="Hourly rate (US$)")
+    budget = forms.DecimalField(required=False,decimal_places=2,max_digits=10,label="Declared budget")
+    
+    def __init__(self, odeskConnected=False, *args, **kwargs):
+        super(WizardAttributesForm, self).__init__(*args, **kwargs)
+        if odeskConnected:
+            self.fields['data_source'].choices = PROJECT_DATA_SOURCE_CHOICES
 
 class WizardAdditionalForm(forms.Form):
     same_domain = forms.IntegerField(required=False,label="No. of allowed multiple URLs from the same domain")

@@ -24,10 +24,10 @@
   </div>
   <div class="row-fluid">
     <span>
-      <a href="{% url socialauth_begin 'google-oauth2'%}">Google</a>
-      <a href="{% url socialauth_begin 'twitter'%}">Twitter</a>
-      <a href="{% url socialauth_begin 'facebook'%}">Facebook</a>
-      <a href="{% url odesk_login %}"><img style="width:32px;height:32px;" src="{{STATIC_URL}}img/odesk.png"></a>*
+      <a href="{% url register_service 'google-oauth2'%}">Google</a>
+      <a href="{% url register_service 'twitter'%}">Twitter</a>
+      <a href="{% url register_service 'facebook'%}">Facebook</a>
+      <a href="{% url odesk_register %}"><img style="width:32px;height:32px;" src="{{STATIC_URL}}img/odesk.png"></a>*
     </span></br>
     <span style="font-size:70%">
     * Signing up by/connecting to Odesk will present you with full experience of URL annotator.
