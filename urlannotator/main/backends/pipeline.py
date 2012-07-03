@@ -16,7 +16,7 @@ def create_user(request, user, details, *args, **kwargs):
         is_new = True
         request.session.pop('registration')
     elif user is None:
-        request.session['error'] = 'This account has not been registered with.'
+        request.session['error'] = "Account for that social media doesn't exist. Please register first."
         return redirect('index')
     
     return {

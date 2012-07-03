@@ -64,6 +64,19 @@ class WizardAttributesForm(forms.Form):
         if odeskConnected:
             self.fields['data_source'].choices = PROJECT_DATA_SOURCE_CHOICES
 
+    def clean(self):
+        cleaned_data = super(WizardAttributesForm, self).clean()
+        if cleaned_data['data_source'] != 0:
+            cleaned_data['no_of_urls'] = 0
+            cleaned_data['hourly_rate'] = 0
+            cleaned_data['budget'] = 0
+        else:
+            if cleaned_data['project_type'] == 0:
+                cleaned_data['budget'] = 0
+            else:
+                cleaned_data['no_of_urls'] = 0
+                cleaned_data['hourly_rate'] = 0
+        return cleaned_data
 class WizardAdditionalForm(forms.Form):
     same_domain = forms.IntegerField(required=False,label="No. of allowed multiple URLs from the same domain")
     file_gold_urls = forms.FileField(required=False,label="Upload gold, (preclassified) urls", help_text="(i)")

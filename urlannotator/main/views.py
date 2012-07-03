@@ -292,6 +292,28 @@ def project_worker_view(request, id, worker_id):
     return render(request, 'main/project/worker.html', RequestContext(request, context))
 
 @login_required
+def project_debug(request, id, debug):
+    try:
+        proj = Project.objects.get(id=id)
+    except Project.DoesNotExist:
+        request.session['error'] = "Such project doesn't exist."
+        return redirect('index')
+    
+    if debug == 'draft':
+        proj.project_status = 0
+    elif debug == 'active':
+        proj.project_status = 1
+    elif debug == 'completed':
+        proj.project_status = 2
+    else:
+        request.session['error'] = "Wrong debug parameter."
+        return redirect('index')
+    
+    proj.save()
+    request.session['success'] = 'Project status successfully changed.'
+    return redirect('index')
+    
+@login_required
 def project_btm_view(request, id):
     context = { }
     try:

@@ -23,7 +23,7 @@
     <tbody>
     {% for p in projects %}
       <tr>
-        <td><a href="{% url project_view id=p.id %}">{{p.topic}}</a> <a rel="tooltip" href="#" data-original-title="Project description">(i)</a></td>
+        <td><a href="{% url project_view id=p.id %}">{{p.topic}}</a> <a rel="tooltip" href="#" data-original-title="{{p.topic_desc}}">(i)</a></td>
         <td class="statusCol">{{p.project_status}}</td>
         <td class="beatMachineCol">--</td>
         <td class="linksCol">0</td>
