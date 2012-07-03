@@ -77,7 +77,8 @@ class WizardAttributesForm(forms.Form):
                 cleaned_data['no_of_urls'] = 0
                 cleaned_data['hourly_rate'] = 0
         return cleaned_data
+
 class WizardAdditionalForm(forms.Form):
-    same_domain = forms.IntegerField(required=False,label="No. of allowed multiple URLs from the same domain")
+    same_domain = forms.IntegerField(label="No. of allowed multiple URLs from the same domain")
     file_gold_urls = forms.FileField(required=False,label="Upload gold, (preclassified) urls", help_text="(i)")
     file_norm_urls = forms.FileField(required=False,label="Upload additional non classified URLs", help_text="(i)")
