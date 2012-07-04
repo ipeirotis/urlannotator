@@ -56,4 +56,4 @@ class BaseNotLoggedInTests(TestCase):
     self.assertFormError(resp, 'form', 'email', 'Email is already in use.')
     
     resp = c.post('/login', {'email': 'test@test.test', 'password': 'test'})
-    self.assertTemplateUsed(resp, 'main/index.html')
+    self.assertEqual(resp.status_code, 302) # redirection
