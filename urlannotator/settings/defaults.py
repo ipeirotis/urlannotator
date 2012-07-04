@@ -137,6 +137,7 @@ INSTALLED_APPS = (
 
     'pipeline',
     'south',
+    'django_jenkins',
     'bootstrap',
 
     'social_auth',

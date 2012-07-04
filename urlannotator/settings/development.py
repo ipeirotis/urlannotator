@@ -11,6 +11,13 @@ DATABASES = {
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 #EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
+JENKINS_TASKS = (
+    'django_jenkins.tasks.run_pyflakes',
+    'django_jenkins.tasks.run_pep8',
+    'django_jenkins.tasks.with_coverage',
+    'django_jenkins.tasks.django_tests',
+)
+
 try:
     import devserver
 
@@ -28,7 +35,7 @@ try:
 
     DEVSERVER_IGNORED_PREFIXES = ['/__debug__']
     INSTALLED_APPS = tuple(list(INSTALLED_APPS) + [
-        'devserver'
+        'devserver',
     ])
     MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
         'devserver.middleware.DevServerMiddleware'

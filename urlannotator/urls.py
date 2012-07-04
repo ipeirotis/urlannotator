@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
-from registration import backends
 from django.contrib import admin, auth
 admin.autodiscover()
 
