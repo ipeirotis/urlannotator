@@ -24,7 +24,6 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 STATIC_ROOT = os.path.join(ROOT_DIR, '..', 'collected_static')
 
-AUTH_PROFILE_MODULE = 'main.UserProfile'
 EMAIL_HOST = ''
 EMAIL_PORT = '587'
 EMAIL_HOST_USER = ''
@@ -145,6 +144,9 @@ INSTALLED_APPS = (
     'urlannotator.main',
 )
 
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/login/'
+AUTH_PROFILE_MODULE = 'main.UserProfile'
 SOUTH_TESTS_MIGRATE = False
 
 LOGGING = {
