@@ -2,5 +2,5 @@ django-jenkins
 pylint
 coverage
 pyflakes
-pep8
+pep8==1.2
 mock

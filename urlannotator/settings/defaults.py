@@ -125,7 +125,7 @@ CACHES = {
 }
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
-INSTALLED_APPS = (
+BASE_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -141,8 +141,13 @@ INSTALLED_APPS = (
 
     'social_auth',
     'odesk',
+)
+
+PROJECT_APPS = (
     'urlannotator.main',
 )
+
+INSTALLED_APPS = BASE_APPS + PROJECT_APPS
 
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
