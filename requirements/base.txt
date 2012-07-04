@@ -8,4 +8,4 @@ django-social-auth
 python-odesk
 bootstrap
 #python-mysql
-#-e git+git@github.com:10clouds/common.git#egg=10coluds-common.egg
+-e git+git@github.com:10clouds/common.git#egg=10clouds-common.egg
