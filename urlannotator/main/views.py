@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.template import RequestContext, Context
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordResetForm
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
@@ -15,7 +15,7 @@ from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
                                     WizardAdditionalForm, NewUserForm,\
                                     UserLoginForm, AlertsSetupForm,\
                                     GeneralEmailUserForm, GeneralUserForm
-from urlannotator.main.models import UserProfile, UserOdeskAssociation
+from urlannotator.main.models import UserProfile, UserOdeskAssociation, Project
 from urlannotator.settings.defaults import ODESK_CLIENT_ID, ODESK_CLIENT_SECRET
 
 def get_activation_key(email, num):
