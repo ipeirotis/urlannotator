@@ -43,7 +43,7 @@ Every object that is listening on a bus implements **EventListener** interface (
 
 
 Important Events
----------------
+----------------
 
 Global:
 
@@ -112,6 +112,8 @@ It is used to generate HIT in validation stage and to generate training sample f
 
 SampleFactory or SampleContentGenerator
 ---------------------------------------
+
+Two ways are now possible - make it a component of URLGathering stage or another EventListener ... TODO
 
 This object (one for whole system?) given the URL will create sample. It will delegate two tasks (each can be separate job / MachineTask on Tagasauris?):
 
@@ -223,7 +225,7 @@ returns payback or
 BeatTheMahine
 -------------
 
-TODO: It will be designed.
+TODO: It will be designed later on. Probably very later on...
 
 
 Notes & TODO's
