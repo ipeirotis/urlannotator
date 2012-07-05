@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import (PROJECT_BASIC_DATA_SOURCE_CHOICES ,
+from urlannotator.main.models import (PROJECT_BASIC_DATA_SOURCE_CHOICES,
                                     PROJECT_DATA_SOURCE_CHOICES, PROJECT_TYPE_CHOICES)
 
 class NewUserForm(forms.Form):
@@ -26,7 +26,7 @@ class GeneralUserForm(forms.Form):
     full_name = forms.CharField(label="Full name", required=False)
 
 class GeneralEmailUserForm(GeneralUserForm):
-    email = forms.EmailField(widget=forms.TextInput(attrs={'readonly':True}))
+    email = forms.EmailField(widget=forms.TextInput(attrs={'readonly': True}))
 
 class AlertsSetupForm(forms.Form):
     alerts = forms.BooleanField(required=False)

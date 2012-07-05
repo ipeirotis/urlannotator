@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 class BaseNotLoggedInTests(TestCase):
     def testLoginNotRestrictedPages(self):
         url_list = [('', 'main/index.html'), ('/login', 'main/login.html'),
-                    ('/register', 'main/register.html'),]
+                    ('/register', 'main/register.html')]
         for url, template in url_list:
             c = Client()
             resp = c.get(url)

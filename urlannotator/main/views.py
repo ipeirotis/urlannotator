@@ -266,7 +266,7 @@ def project_view(request, id):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
     
-    context= {'project': proj}
+    context = {'project': proj}
     return render(request, 'main/project/overview.html', RequestContext(request, context)) 
 
 @login_required
