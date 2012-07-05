@@ -34,10 +34,10 @@ Cron setup:
 -----------
 <CRON_SETUP>
 
-`More about DB setup <10clouds/urlannotator/blob/master/docs/dbsetup>`_
+`More about DB setup <https://github.com/10clouds/urlannotator/blob/master/docs/dbsetup>`_
 ====================================
 
-`More about Cron setup <10clouds/urlannotator/blob/master/docs/cronsetup>`_
+`More about Cron setup <https://github.com/10clouds/urlannotator/blob/master/docs/cronsetup>`_
 ========================================
 
 
