@@ -1,46 +1,64 @@
-"This is a proposed stable environment settings file."
-# Import common settings. DO NOT REMOVE.
+import os
 from defaults import *
 
-# Set up logging
-import logging
-from os.path import join as pjoin
-
-LOG_DIRECTORY = "%(log_dir)s"
-
-DEBUG = False
-
-# Overriding default logger settings
-LOG_LEVEL = 'DEBUG' if DEBUG else 'INFO'
-log = logging.getLogger(__name__)
-
-# sudo -u postgres psql
-# CREATE USER %(db_user)s WITH CREATEDB NOCREATEUSER ENCRYPTED PASSWORD
-# E'%(db_password)s';
-# CREATE DATABASE %(db_name)s' WITH OWNER %(db_user)s;
-DATABASES.update({
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'HOME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-        'USER': '%(db_user)s',
-        'PASSWORD': '%(db_password)s',
-        'HOST': '%(db_host)s',
-        'PORT': '%(db_port)s',
-    },
-})
+        'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
+    }
+}
 
-RUN_DATA_PATH = "%(service_dir)s"
-DEBUG = False
-TEMPLATE_DEBUG = False
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-KEEP_LOGGED_DURATION = 31 * 24 * 60 * 60
+JENKINS_TASKS = (
+    'django_jenkins.tasks.run_pyflakes',
+    'django_jenkins.tasks.run_pep8',
+    'django_jenkins.tasks.with_coverage',
+    'django_jenkins.tasks.django_tests',
+)
 
-################## NO SETTINGS UNDER THIS LINE |#################
-# Import local (custom for dev machine) settings file if exists.
-# Instead of importing this module in try/except block, import this file only
-# if exists. This will allow us to make sure, that code in local.py is correct
-# and loads properly
+try:
+    import devserver
+
+    DEVSERVER_MODULES = (
+        'devserver.modules.sql.SQLRealTimeModule',
+        'devserver.modules.sql.SQLSummaryModule',
+        'devserver.modules.profile.ProfileSummaryModule',
+
+        # Modules not enabled by default
+        'devserver.modules.ajax.AjaxDumpModule',
+        'devserver.modules.profile.MemoryUseModule',
+        'devserver.modules.cache.CacheSummaryModule',
+        'devserver.modules.profile.LineProfilerModule',
+    )
+
+    DEVSERVER_IGNORED_PREFIXES = ['/__debug__']
+    INSTALLED_APPS = tuple(list(INSTALLED_APPS) + [
+        'devserver',
+    ])
+    MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
+        'devserver.middleware.DevServerMiddleware'
+    ])
+except:
+    pass
+
+try:
+    import debug_toolbar
+
+    MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
+        'debug_toolbar.middleware.DebugToolbarMiddleware',
+    ])
+    INSTALLED_APPS = tuple(list(INSTALLED_APPS) + [
+        'debug_toolbar',
+    ])
+    INTERNAL_IPS = ('127.0.0.1',)
+    DEBUG_TOOLBAR_CONFIG = {
+        'INTERCEPT_REDIRECTS': False,
+    }
+except ImportError:
+    pass
+
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
-################## NO SETTINGS UNDER THIS LINE |#################
