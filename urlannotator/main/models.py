@@ -23,7 +23,7 @@ class UserOdeskAssociation(models.Model):
     full_name = models.CharField(max_length=100)
 
 PROJECT_BASIC_DATA_SOURCE_CHOICES = ((1, 'Own workforce'),)
-PROJECT_DATA_SOURCE_CHOICES = tuple(list(PROJECT_BASIC_DATA_SOURCE_CHOICES) + [(0, 'Odesk free'), (2, 'Odesk paid')])
+PROJECT_DATA_SOURCE_CHOICES = PROJECT_BASIC_DATA_SOURCE_CHOICES + ((0, 'Odesk free'), (2, 'Odesk paid'))
 PROJECT_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
 PROJECT_STATUS_CHOICES = ((0, 'Draft'), (1, 'Active'), (2, 'Completed'), (3, 'Stopped'))
 
@@ -44,6 +44,10 @@ class Project(models.Model):
 
     def is_draft(self):
         return self.project_status == 0
+
+    @staticmethod
+    def is_odesk_required_for_source(source):
+        return int(source) != 1
 
 class ProjectInfo(models.Model):
     project = models.ForeignKey(Project)

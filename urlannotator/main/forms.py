@@ -2,7 +2,8 @@ from django import forms
 from django.contrib.auth.models import User
 
 from urlannotator.main.models import (PROJECT_BASIC_DATA_SOURCE_CHOICES,
-                                    PROJECT_DATA_SOURCE_CHOICES, PROJECT_TYPE_CHOICES)
+                                    PROJECT_DATA_SOURCE_CHOICES, PROJECT_TYPE_CHOICES,
+                                    Project)
 
 class NewUserForm(forms.Form):
     email = forms.EmailField(label="E-mail")
@@ -60,14 +61,19 @@ class WizardAttributesForm(forms.Form):
     no_of_urls = forms.IntegerField(required=False, label="No. of URLs to collect")
     hourly_rate = forms.DecimalField(required=False, decimal_places=2, max_digits=10, label="Hourly rate (US$)")
     budget = forms.DecimalField(required=False, decimal_places=2, max_digits=10, label="Declared budget")
-    
+    odesk_connect = False
+
     def __init__(self, odeskConnected=False, *args, **kwargs):
         super(WizardAttributesForm, self).__init__(*args, **kwargs)
         if odeskConnected:
             self.fields['data_source'].choices = PROJECT_DATA_SOURCE_CHOICES
+            self.odesk_connect = True
 
     def clean(self):
         cleaned_data = super(WizardAttributesForm, self).clean()
+        print Project.is_odesk_required_for_source(cleaned_data['data_source']), self.odesk_connect, cleaned_data['data_source']
+        if Project.is_odesk_required_for_source(cleaned_data['data_source']) and not self.odesk_connect:
+            raise forms.ValidationError('You have to be connected to odesk to use this option')
         if cleaned_data['data_source'] != 0:
             cleaned_data['no_of_urls'] = 0
             cleaned_data['hourly_rate'] = 0

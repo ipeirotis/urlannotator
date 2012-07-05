@@ -1,41 +1,46 @@
+=============
 URL Annotator
 =============
 <LAST_MODIFIFED>
 
 
 Source/How to get it
---------------------
+====================
 <SOURCE>
 
 What's new
-----------
+==========
 <WHATSNEW>
 
 How it works
-------------
+============
 <HOWITWORKS>
 
 Setup
------
-### Required libraries:
+=====
+Required libraries:
+-------------------
 <LIBRARIES>
 
-### Basic setup:
+Basic setup:
+------------
 <BASIC_SETUP>
 
-### DB setup:
+DB setup:
+---------
 <DB_SETUP>
 
-### Cron setup:
+Cron setup:
+-----------
 <CRON_SETUP>
 
-[More about DB setup](/docs/dbsetup)
-------------------------------------
+`More about DB setup </docs/dbsetup>`_
+====================================
 
-[More about Cron setup](/docs/cronsetup)
-----------------------------------------
+`More about Cron setup </docs/cronsetup>`_
+========================================
 
 
 Support
--------
+=======
 <SUPPORT>
