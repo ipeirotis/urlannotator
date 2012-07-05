@@ -18,18 +18,80 @@ Core components/services:
 - *BeatTheMachine* - mechanism for constant validation of classifier with some new data - using crowdsourcing
 
 
-Service oriented
-----------------
+EventBus
+========
 
-We c
-
-
+We might use at this point some existing library. Currently there are some assumptions that we hope that will work.
 
 
+Event
+-----
+**Event** contains:
+
+- job_id (read *Think about* section later on)
+- type
+- data
+
+
+EventListener
+-------------
+
+Every object that is listening on a bus implements **EventListener** interface (I know this is not java - name is convenient) which has:
+
+- method *matches(event)*
+- notify(event)
+
+
+ImportantEvents
+---------------
+
+Global:
+
+- NewJobStarted
+- JobFinished
+
+Job related:
+
+- CollectedSomeTrainingSamples
+- TrainingSamplesCollection{Started/Ended} (start is to make other components prepare for taking this samples - in this case is Validator)
+- ValidatedSomeSamples
+- ..TODO..
+- Classifier{Created/Updated}
+
+
+Elements plugged into the *EventBus* (described later):
+
+- ClassificatorFactory(or Manager?)
+- SamplesCollectionManager
+- SamplesValidationManager
+- BeatTheMachineStartManager
+
+and also this elements registered on all kind of events:
+
+- BusLogger
+- BusErrorReporter (to sent errors to Sentry-like service, email etc)
+
+
+Think about:
+------------
+
+- Maybe we would like to set separate **EventBus** for every job? and have one global to handle creating and destroying of others. That way we wouldn't have to have dispatcher on jobs in every event listener ... but this can be achieved by subclassing class InterJobEventListener ...
 
 
 Component specification
 =======================
+
+Job
+---
+
+It contains:
+
+- description
+- expected cost (maybe with distribution on separate parts)
+- classifier parameters (like to use Google Prediction API or anything else)
+- golden data - sample urls matching description provided by job creator
+- additional parameters ?
+
 
 Sample
 ------
@@ -45,7 +107,7 @@ Optionally also:
 - added_by - Worker
 - added_on - date it was added
 
-It is used to generate HIT in validation stage and to generate training sample for *Classifier*
+It is used to generate HIT in validation stage and to generate training sample for **Classifier**
 
 
 Classifier
@@ -80,10 +142,17 @@ https://developers.google.com/prediction/docs/developer-guide
 I'm still not sure if we can use long texts as samples...
 
 
-BeatTheMahine
--------------
+ClassifierManager/Factory
+-------------------------
 
-It will be designed.
+This object is responsible for creating **Classifier** when new job is created based on its parameters. It also creates **ClassifierEventListener** and plugs it to proper event bus and just created classifier.
+
+
+
+TagasaurisJobMonitor
+--------------------
+
+This component will be responsible for checking whether given job has finished on Tagasauris makes proper event on such situation. Maybe there is a chance that this can also send job results as soon as they get back?
 
 
 
@@ -111,7 +180,7 @@ Revenue
 ~~~~~~~
 Defines how much do we pay users for their jobs.
 
-*RevenueDefinition* is mapping from (*WorkerAction*, *result*) into *Money*?
+*RevenueDefinition* is mapping from (**WorkerAction**, **result**) into **Money**?
 This should be stored in some csv or json file so that it can be configured.
 
 
@@ -119,7 +188,7 @@ BeatTheMachineRevenueMechanics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Defines how much revenue will be given to worker for proving given sample. Components:
 
-- *RevenueType* - describes whether we are satisfied with sample provided by user or not. Examples:
+- **RevenueType** - describes whether we are satisfied with sample provided by user or not. Examples:
 
  - TP or TN - no error - useless sample for us
  - FP
@@ -135,16 +204,15 @@ method *reporterRevenue(classifier_difference ...)*
 returns payback or
 
 
+
+BeatTheMahine
+-------------
+
+TODO: It will be designed.
+
+
 Notes & TODO's
 ==============
-
-EventBus Notes
---------------
-
-Known EventListeners registered on all kind of events:
-
-- BusLogger
-- BusErrorReporter (to sent errors to Sentry-like service, email etc)
 
 
 Other Notes
@@ -155,3 +223,4 @@ Other Notes
 - Storage for votes given to samples by Workers
 - Storage for samples and their rating in BeatTheMachine
 -
+
