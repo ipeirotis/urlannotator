@@ -169,7 +169,13 @@ This object is responsible for creating **Classifier** when new job is created b
 TagasaurisJobMonitor
 --------------------
 
-This component will be responsible for checking whether given job has finished on Tagasauris makes proper event on such situation. Maybe there is a chance that this can also send job results as soon as they get back?
+This component will be responsible for checking whether given job has finished on Tagasauris makes proper event on such situation.
+
+Maybe there is a chance that this can also send job results as soon as they get back?
+^^^^^ Currently I don't think so.
+
+We could use MachineTask to do this - sending just processed images...
+
 
 
 
