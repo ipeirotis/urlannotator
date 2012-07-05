@@ -1,0 +1,31 @@
+{
+    "projects_dir": "",
+    "settings_name": "testing",
+    "instance": "staging",
+    "branch": "master",
+    "db_name": "database.sqlite3.db",
+    "db_user": "",
+    "db_password": "",
+    "db_port": "",
+    "pip_cache": "/tmp/urlannotator_pip",
+    "pip_requirements": [
+        "base.txt", "devel.txt", "production.txt", "tests.txt"
+    ],
+    "system_requirements": [
+        "system_requirements.txt"
+    ],
+    "ssh_files": [
+        "config", "10clouds-dev.pem"
+    ],
+    "branch": "new",
+    "locals_path": "files/django/settings/local.py",
+    "supervisor_files": [
+        "supervisord.conf", "project.conf", "solr.conf"
+    ],
+    "nginx_sites_enabled": [
+        "urlannotator"
+    ],
+    "cron_files": [
+        "cron.d", "cron.daily"
+    ]    
+}

@@ -1,0 +1,11 @@
+{
+    "project_inner": "urlannotator",
+    "django_project_name": "urlannotator",
+    "manage_py_dir": "",
+    "settings_name": "defaults",
+    "source_url": "https://github.com/10clouds/urlannotator.git",
+    "default_prefix": "urlannotator",
+    "projects_dir": "/home/maciek/projects",
+    "project_display_name": "URLAnnotator",
+    "autodoc_excluded_apps": []
+}

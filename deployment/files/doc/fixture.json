@@ -1,0 +1,1 @@
+[{"pk": 1, "model": "sphinxdoc.project", "fields": {"path": "%(doc_dir)s/source/", "name": "%(project_display_name)s", "slug": "%(project_display_name_slug)s"}}]

@@ -1,0 +1,1 @@
+pg_dump -h localhost -U postgres -b -C -Z5 mturk_crawl > mturk.backup

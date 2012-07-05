@@ -1,0 +1,5 @@
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/10clouds-dev.pem
+    StrictHostKeyChecking no
