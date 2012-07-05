@@ -2,8 +2,8 @@ server {
         listen   0.0.0.0;
         server_name localhost urlannotator.10clouds.com;
 
-        access_log  %(log_dir)s/nginx/mturk.access.log;
-        error_log   %(log_dir)s/nginx/mturk.error.log;
+        access_log  %(log_dir)s/nginx/urlannotator.access.log;
+        error_log   %(log_dir)s/nginx/urlannotator.error.log;
 
 	#rewrite ^/s/(.*)$ /media/$1 last;
 
@@ -13,13 +13,6 @@ server {
 		autoindex  off;
                 expires 60d;
         }
-
-	#location /admin/media {
-	#	gzip on;
-	#	root /home/mtracker/mturk/src/libs/django/contrib/;
-	#	autoindex off;
-	#	expires 60d;
-	#}
 
         location / {
 

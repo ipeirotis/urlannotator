@@ -17,7 +17,7 @@
         "config", "id_rsa", "id_rsa.pub"
     ],
     "supervisor_files": [
-        "supervisord.conf", "project.conf", "solr.conf"
+        "supervisord.conf", "project.conf"
     ],
     "nginx_sites_enabled": [
         "urlannotator"

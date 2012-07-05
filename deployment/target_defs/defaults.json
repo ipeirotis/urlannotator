@@ -5,7 +5,7 @@
     "settings_name": "defaults",
     "source_url": "https://github.com/10clouds/urlannotator.git",
     "default_prefix": "urlannotator",
-    "projects_dir": "/home/maciek/projects",
+    "projects_dir": "/home/urlannotator/",
     "project_display_name": "URLAnnotator",
     "autodoc_excluded_apps": []
 }
