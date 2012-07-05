@@ -42,7 +42,7 @@ Every object that is listening on a bus implements **EventListener** interface (
 - notify(event)
 
 
-ImportantEvents
+Important Events
 ---------------
 
 Global:
@@ -108,6 +108,21 @@ Optionally also:
 - added_on - date it was added
 
 It is used to generate HIT in validation stage and to generate training sample for **Classifier**
+
+
+SampleFactory or SampleContentGenerator
+---------------------------------------
+
+This object (one for whole system?) given the URL will create sample. It will delegate two tasks (each can be separate job / MachineTask on Tagasauris?):
+
+- getting content of the website
+- making screen-shot of the website, uploading it somewhere (S3?), returning it url
+
+XXX: How do we want this to do:
+
+- in Tagasauris in the same job as in **TrainingDataCollector**
+- in separate jobs on Tagasauris (each in separate or all in one)
+- delegate this to some service
 
 
 Classifier
