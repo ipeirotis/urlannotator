@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.template import RequestContext, Context
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
@@ -11,8 +11,10 @@ import odesk
 from django.template.loader import get_template
 import hashlib
 
-from urlannotator.main.forms import *
-from urlannotator.main.models import UserProfile, UserOdeskAssociation
+from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
+    WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
+    GeneralEmailUserForm, GeneralUserForm
+from urlannotator.main.models import UserProfile, UserOdeskAssociation, Project
 from urlannotator.settings.defaults import ODESK_CLIENT_ID, ODESK_CLIENT_SECRET
 
 def get_activation_key(email, num):
@@ -29,7 +31,7 @@ def register_view(request):
         form = NewUserForm(request.POST)
         context = {'form': form}
         if form.is_valid():
-            user = User.objects.create_user(username=form.cleaned_data['email'],email=form.cleaned_data['email'],password=form.cleaned_data['password1'])
+            user = User.objects.create_user(username=form.cleaned_data['email'], email=form.cleaned_data['email'], password=form.cleaned_data['password1'])
             user.is_active = False
             user.save()
             subjectTemplate = get_template('activation_email_subject.txt')
@@ -94,7 +96,7 @@ def login_view(request):
             user = authenticate(username=form.cleaned_data['email'], password=form.cleaned_data['password'])
             if user is not None:
                 if user.is_active:
-                    login(request,user)
+                    login(request, user)
                     if 'remember' in request.POST:
                         request.session.set_expiry(0)
                     return redirect('index')
@@ -105,8 +107,8 @@ def login_view(request):
                 request.session['error'] = 'Username and/or password is incorrect.'
                 return redirect('index')
         else:
-          context = {'error': 'Username and/or password is incorrect.'}
-          return render(request, 'main/index.html', RequestContext(request, context))
+            context = {'error': 'Username and/or password is incorrect.'}
+            return render(request, 'main/index.html', RequestContext(request, context))
     return redirect('index')
 
 @login_required
@@ -115,10 +117,10 @@ def settings(request):
     context = {}
     
     if profile.email_registered:
-        context['general_form'] = GeneralEmailUserForm({'email':request.user.email, 'full_name':profile.full_name})
+        context['general_form'] = GeneralEmailUserForm({'email': request.user.email, 'full_name': profile.full_name})
         context['password_form'] = PasswordChangeForm(request.user)
     else:
-        context['general_form'] = GeneralUserForm({'full_name':profile.full_name})
+        context['general_form'] = GeneralUserForm({'full_name': profile.full_name})
 
     context['alerts_form'] = AlertsSetupForm({'alerts': profile.alerts})
     l = request.user.social_auth.filter(provider='facebook')
@@ -133,7 +135,7 @@ def settings(request):
     
     u = UserOdeskAssociation.objects.filter(user=request.user)
     if u:
-        context['odesk'] = {'name':u[0].full_name}
+        context['odesk'] = {'name': u[0].full_name}
 
     if request.method == "POST":
         if 'submit' in request.POST:
@@ -177,7 +179,7 @@ def project_wizard(request):
     if request.method == "GET":
         context = {'topic_form': WizardTopicForm(),
                    'attributes_form': WizardAttributesForm(odeskLogged),
-                   'additional_form': WizardAdditionalForm(),}
+                   'additional_form': WizardAdditionalForm()}
         if not odeskLogged:
             context['wizard_alert'] = '''Your account is not connected to Odesk.
                                          If you want to have more options connect to Odesk at 
@@ -204,17 +206,17 @@ def project_wizard(request):
             p.save()
         context = {'topic_form': topic_form,
                    'attributes_form': attr_form,
-                   'additional_form': addt_form,}
+                   'additional_form': addt_form}
         if not odeskLogged:
             context['wizard_alert'] = "Your account is not connected to Odesk. If you want to have more options connect to Odesk at settings page."
     return render(request, 'main/project/wizard.html', RequestContext(request, context))
   
 @login_required
 def odesk_disconnect(request):
-  assoc = UserOdeskAssociation.objects.filter(user=request.user)
-  if assoc:
-    assoc.delete()
-  return redirect('index')
+    assoc = UserOdeskAssociation.objects.filter(user=request.user)
+    if assoc:
+        assoc.delete()
+    return redirect('index')
 
 def odesk_complete(request):
     client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
@@ -225,8 +227,9 @@ def odesk_complete(request):
         if not assoc:
             u = request.user
             # Logged user odesk account association
-            assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=' '.join([user['first_name'], user['last_name']]))
+            assoc = UserOdeskAssociation(user=u, uid=user['uid'], token=auth, full_name=' '.join([user['first_name'], user['last_name']]))
             assoc.save()
+            request.session['success'] = 'You have successfully logged in.'
         return redirect('index')
     else:
         assoc = UserOdeskAssociation.objects.filter(uid=user['uid'])
@@ -240,16 +243,30 @@ def odesk_complete(request):
                 request.session['error'] = "Account for that social media doesn't exist. Please register first."
                 return redirect('index')
             request.session.pop('registration')
-            
+
         if u is None:
-            u = User.objects.create_user(email=user['mail'],username=' '.join(['odesk', user['uid']]), password='1')
+            u = User.objects.create_user(email=user['mail'], username=' '.join(['odesk', user['uid']]), password='1')
             u.get_profile().full_name = '%s %s' % (user['first_name'], user['last_name'])
             u.get_profile().save()
-            assoc = UserOdeskAssociation(user=u, uid=user['uid'],token=auth, full_name=u.get_profile().full_name)
+            assoc = UserOdeskAssociation(user=u, uid=user['uid'], token=auth, full_name=u.get_profile().full_name)
             assoc.save()
             u = authenticate(username=u.username, password='1')
+            request.session['success'] = 'You have successfuly registered'
         login(request, u)
         return redirect('index')
+
+def debug_login(request):
+    user = authenticate(username='test', password='test')
+    if user is None:
+        user = User.objects.create_user(username='test', email='test@test.com', password='test')
+        prof = user.get_profile()
+        prof.email_registered = True
+        prof.activation_key = 'activated'
+        prof.save()
+    user = authenticate(username='test', password='test')
+    login(request, user)
+    request.session['success'] = 'You have successfully logged in.'
+    return redirect('index')
 
 def odesk_login(request):
     client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
@@ -257,38 +274,35 @@ def odesk_login(request):
 
 @login_required
 def project_view(request, id):
-    context = { }
     try:
         proj = Project.objects.get(id=id)
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
     
-    context['project'] = proj
+    context = {'project': proj}
     return render(request, 'main/project/overview.html', RequestContext(request, context)) 
 
 @login_required
 def project_workers_view(request, id):
-    context = { }
     try:
         proj = Project.objects.get(id=id)
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
     
-    context['project'] = proj
+    context = {'project': proj}
     return render(request, 'main/project/workers.html', RequestContext(request, context))
 
 @login_required
 def project_worker_view(request, id, worker_id):
-    context = { }
     try:
         proj = Project.objects.get(id=id)
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
     
-    context['project'] = proj
+    context = {'project': proj}
     return render(request, 'main/project/worker.html', RequestContext(request, context))
 
 @login_required
@@ -315,42 +329,39 @@ def project_debug(request, id, debug):
     
 @login_required
 def project_btm_view(request, id):
-    context = { }
     try:
         proj = Project.objects.get(id=id)
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
     
-    context['project'] = proj
+    context = {'project': proj}
     return render(request, 'main/project/btm_view.html', RequestContext(request, context))
 
 @login_required
 def project_data_view(request, id):
-    context = { }
     try:
         proj = Project.objects.get(id=id)
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
     
-    context['project'] = proj
+    context = {'project': proj}
     return render(request, 'main/project/data.html', RequestContext(request, context)) 
 
 @login_required
 def project_classifier_view(request, id):
-    context = { }
     try:
         proj = Project.objects.get(id=id)
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
     
-    context['project'] = proj
+    context = {'project': proj}
     return render(request, 'main/project/classifier.html', RequestContext(request, context)) 
 
 def index(request):
-    context = { }
+    context = {}
     if 'error' in request.session:
         context['error'] = request.session['error']
         request.session.pop('error')

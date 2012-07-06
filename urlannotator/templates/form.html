@@ -4,21 +4,21 @@
   {% endfor%}
 {% endif %}
 {% for field in form %}
-  <div class="control-group {%if field.errors%}error{%endif%}">
+<div class="control-group {%if field.errors%}error{%endif%}">
     <label class="control-label" for="id_{{ field.html_name }}">{{ field.label }} </label>
     <div class="controls">
-      {{ field }}
-      
-      {% if field.errors or field.help_text %}
-      <span class="help-inline">
-      {% for err in field.errors %}
+    {{ field }}
+  
+    {% if field.errors or field.help_text %}
+        <span class="help-inline">
+        {% for err in field.errors %}
         {{err}}<br>
-      {% endfor %}
-      {% if field.help_text %}
-        {{ field.help_text|safe }}<br>
-      {% endif %}
-      </span>
-      {% endif %}
+        {% endfor %}
+        {% if field.help_text %}
+            {{ field.help_text|safe }}<br>
+        {% endif %}
+        </span>
+    {% endif %}
     </div>
-  </div>
+</div>
 {% endfor %}

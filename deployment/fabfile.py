@@ -4,12 +4,13 @@ import json
 from fabric.colors import red, yellow, green, blue, magenta
 from fabric.api import abort, task, env, hide, settings, sudo, cd
 
-from modules.virtualenv import (update_virtualenv, create_virtualenv,
-    setup_virtualenv)
-from modules.utils import (show, put_file_with_perms,
-    dir_exists, PROPER_SUDO_PREFIX as SUDO_PREFIX, cget, cset, print_context,
-    run_django_cmd, upload_template_with_perms, local_files_dir, get_boolean,
-    install_without_prompt, create_target_directories, confirm_or_abort)
+from modules import nginx, supervisor
+from modules.virtualenv import update_virtualenv, create_virtualenv,\
+    setup_virtualenv
+from modules.utils import show, put_file_with_perms,\
+    dir_exists, PROPER_SUDO_PREFIX as SUDO_PREFIX, cget, cset, print_context,\
+    run_django_cmd, upload_template_with_perms, local_files_dir, get_boolean,\
+    install_without_prompt, create_target_directories, confirm_or_abort
 
 
 PARENT_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -48,6 +49,7 @@ def prepare_global_env():
     install_system_requirements()
     setup_ssh()
     setup_virtualenv()
+    nginx.provision()
 
 
 def setup_ssh():
@@ -186,19 +188,13 @@ def sync_db():
 
 def configure_services():
     """Ensures correct init and running scripts for services are installed."""
-    pass
-
-def setup_database():
-    # Ensure we have database and user set up.
-    show(yellow("Setting database up"))
-    ensure_user(cget("db_user"), cget("db_password"))
-    ensure_database(cget("db_name"), cget("db_user"))
-    ensure_language(cget("db_name"), 'plpgsql')
-
+    supervisor.configure()
+    nginx.configure()
 
 def __reload_services():
     """Reloads previously configured services"""
-    pass
+    nginx.reload()
+    supervisor.reload()
 
 
 def set_instance_conf():
@@ -370,9 +366,6 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     # Upload target specific Django settings.
     upload_settings_files()
 
-    # Setup database (this relies on settings)
-    setup_database()
-
     if get_boolean(requirements):
         # Update Virtualenv packages.
         update_virtualenv()
@@ -390,6 +383,6 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     __reload_services()
 
     # Configure and build documentation
-    doc.configure()
-    doc.build()
+    #doc.configure()
+    #doc.build()
 

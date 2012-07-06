@@ -24,7 +24,6 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 STATIC_ROOT = os.path.join(ROOT_DIR, '..', 'collected_static')
 
-AUTH_PROFILE_MODULE = 'main.UserProfile'
 EMAIL_HOST = ''
 EMAIL_PORT = '587'
 EMAIL_HOST_USER = ''
@@ -124,9 +123,9 @@ CACHES = {
         'LOCATION': os.path.join(_tempdir, 'urlannotator__file_based_cache'),
     }
 }
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+#SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
-INSTALLED_APPS = (
+BASE_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -137,13 +136,22 @@ INSTALLED_APPS = (
 
     'pipeline',
     'south',
+    'django_jenkins',
     'bootstrap',
 
     'social_auth',
     'odesk',
+)
+
+PROJECT_APPS = (
     'urlannotator.main',
 )
 
+INSTALLED_APPS = BASE_APPS + PROJECT_APPS
+
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/login/'
+AUTH_PROFILE_MODULE = 'main.UserProfile'
 SOUTH_TESTS_MIGRATE = False
 
 LOGGING = {

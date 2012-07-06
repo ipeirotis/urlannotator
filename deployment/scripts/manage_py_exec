@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#
+# manage_py_exec
+#
+# Run django management commands for anywhere with the correct settings and
+# active environment. Shorthand for running any commands manually on the host.
+#
+
+
+CMD=$1
+
+. %(virtualenv_dir)s/bin/activate
+cd "%(manage_py_dir)s"
+
+shift 1
+ARGUMENTS=$*
+
+exec python manage.py $CMD $ARGUMENTS --settings="%(settings_full_name)s"

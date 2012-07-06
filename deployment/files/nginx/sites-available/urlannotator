@@ -1,0 +1,60 @@
+server {
+        listen   0.0.0.0;
+        server_name localhost urlannotator.10clouds.com;
+
+        access_log  %(log_dir)s/nginx/urlannotator.access.log;
+        error_log   %(log_dir)s/nginx/urlannotator.error.log;
+
+	#rewrite ^/s/(.*)$ /media/$1 last;
+
+        location /media  {
+                gzip on;
+                root %(project_dir)s;
+		autoindex  off;
+                expires 60d;
+        }
+
+        location /statics  {
+                gzip on;
+                root %(project_dir)s/code/collected_static;
+                rewrite ^/statics/(.*)$ /$1 break;
+                autoindex  off;
+                expires 60d;
+        }
+
+        location / {
+
+		gzip on;
+
+		expires -1;
+
+                #auth_basic            "Restricted";
+                #auth_basic_user_file  /etc/nginx/htpasswd;
+
+		proxy_read_timeout 300;
+		proxy_connect_timeout 300;
+
+                # host and port to fastcgi server
+                #fastcgi_pass unix:%(service_dir)s/nginx/fastcgi.socket;
+                fastcgi_pass 127.0.0.1:8081;
+                fastcgi_param PATH_INFO $fastcgi_script_name;
+                fastcgi_param REQUEST_METHOD $request_method;
+                fastcgi_param QUERY_STRING $query_string;
+                fastcgi_param CONTENT_TYPE $content_type;
+                fastcgi_param CONTENT_LENGTH $content_length;
+                fastcgi_param SERVER_PROTOCOL $server_protocol;
+                fastcgi_param SERVER_PORT $server_port;
+                fastcgi_param SERVER_NAME $server_name;
+                fastcgi_pass_header Authorization;
+                fastcgi_intercept_errors off;
+
+        }
+
+        location = /robots.txt {
+                root   %(project_dir)s/templates/;
+        }
+
+
+        error_page  404  /404.html;
+}
+

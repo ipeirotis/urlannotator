@@ -1,0 +1,41 @@
+{
+    // Default fabric configuration file
+    "settings_name": "defaults",
+
+    // Hostname is connected with a setting in SSH client config.
+    "source_url": "git@github.com:10clouds/Mturk-Tracker.git",
+
+    // Namespace prefix for a lot of things:
+    "default_prefix": "mturktracker",
+
+    // "instance": "staging/testing",
+
+    //// DATABASE SUPERUSER
+    // "db_user": "username"
+    // "db_password": "password_hash",
+
+    //// DEPLOYMENT FILES
+    "files_dir": "../files",
+    // Requirements file(s) to use
+    //"requirements": ["requirements.txt", "/another/path/to/file/"]
+
+    //// SYSTEM
+    // Where we keep projects on the server.
+    "projects_dir": "/home/projects",
+    // System user, used for sudo, file perms.
+    // "user": "mturktracker",
+    // ""
+    // "pip_cache": "/tmp/mturktracker_pip",
+    // "settings_name": "staging",
+
+    // SSH
+    // Set true to have ssh keys uploaded from local machine
+    // "upload_ssh_keys_from_local": True (default and the ONLY implemented)
+    // "ssh_files": ['list', 'of', 'filenames']
+    // "ssh_target": "/home/{user}/.ssh"
+
+    //// REPOSITORY
+    // "commit": "123asd",
+    // "branch": "12312",
+
+}

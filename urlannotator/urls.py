@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
-from registration import backends
 from django.contrib import admin, auth
 admin.autodiscover()
 
@@ -55,5 +54,6 @@ if settings.DEBUG:
         (r'^%s/(?P<path>.*)$' % media_url, 'django.views.static.serve',
          {'document_root': settings.MEDIA_ROOT}),
         url(r'^project/(?P<id>\d+)/debug/(?P<debug>[^/]+)$', 'urlannotator.main.views.project_debug', name='project_debug'),
+        url(r'debug/user', 'urlannotator.main.views.debug_login', name='debug_login'),
      
     )

@@ -1,0 +1,27 @@
+{
+    "settings_name": "testing",
+    "instance": "staging",
+    "db_name": "database.sqlite3.db",
+    "db_user": "",
+    "db_password": "",
+    "db_port": "",
+    "pip_cache": "/tmp/urlannotator_pip",
+    "pip_requirements": [
+        "base.txt", "devel.txt", "production.txt"
+    ],
+    "system_requirements": [
+        "system_requirements.txt"
+    ],
+    "upload_ssh_keys_from_local": true,
+    "ssh_files": [
+        "config", "id_rsa", "id_rsa.pub"
+    ],
+    "supervisor_files": [
+        "supervisord.conf", "project.conf"
+    ],
+    "nginx_sites_enabled": [
+        "urlannotator"
+    ],
+    "branch": "master",
+    "locals_path": "files/django/local.py"
+}

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#
+# manage_py_exec_silent
+#
+# Run django management commands for anywhere with the correct settings and
+# active environment.
+#
+# All output is redirected to logdir/cron/$CMD.log which is handy for use with
+# any automated processes, like cron.
+#
+
+CMD=$1
+
+LOGDIR="%(log_dir)s/cron"
+
+. %(virtualenv_dir)s/bin/activate
+cd "%(manage_py_dir)s"
+
+shift 1
+ARGUMENTS=$*
+
+exec python manage.py $CMD $ARGUMENTS --settings="%(settings_full_name)s" >> "$LOGDIR/$CMD.log"
