@@ -5,12 +5,12 @@ from fabric.colors import red, yellow, green, blue, magenta
 from fabric.api import abort, task, env, hide, settings, sudo, cd
 
 from modules import nginx, supervisor
-from modules.virtualenv import (update_virtualenv, create_virtualenv,
-    setup_virtualenv)
-from modules.utils import (show, put_file_with_perms,
-    dir_exists, PROPER_SUDO_PREFIX as SUDO_PREFIX, cget, cset, print_context,
-    run_django_cmd, upload_template_with_perms, local_files_dir, get_boolean,
-    install_without_prompt, create_target_directories, confirm_or_abort)
+from modules.virtualenv import update_virtualenv, create_virtualenv,\
+    setup_virtualenv
+from modules.utils import show, put_file_with_perms,\
+    dir_exists, PROPER_SUDO_PREFIX as SUDO_PREFIX, cget, cset, print_context,\
+    run_django_cmd, upload_template_with_perms, local_files_dir, get_boolean,\
+    install_without_prompt, create_target_directories, confirm_or_abort
 
 
 PARENT_DIR = os.path.abspath(os.path.dirname(__file__))
