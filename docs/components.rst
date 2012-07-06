@@ -86,10 +86,14 @@ Job
 
 It contains:
 
+- title
 - description
 - expected cost (maybe with distribution on separate parts)
 - classifier parameters (like to use Google Prediction API or anything else)
 - golden data - sample urls matching description provided by job creator
+- status
+- progress
+- amount of URLs we want to collect ?
 - additional parameters ?
 
 
@@ -129,11 +133,10 @@ XXX: How do we want this to do:
 
 Classifier
 ----------
-Class abstract with methods (sample is of class *Sample*:
+Class abstract with methods (sample is of class *Sample*):
 
 - new(description, classes)
-- addTrainingSample(sample, class)
-- addTrainingSamples([(sample, class)]) default implementation uses addTrainingSample
+- train(samples)
 - classify(sample) -> class
 - classify_with_info(sample) -> json? class and probability distribution over classes etc.
 
