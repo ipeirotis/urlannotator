@@ -256,6 +256,19 @@ def odesk_complete(request):
         login(request, u)
         return redirect('index')
 
+def debug_login(request):
+    user = authenticate(username='test', password='test')
+    if user is None:
+        user = User.objects.create_user(username='test', email='test@test.com', password='test')
+        prof = user.get_profile()
+        prof.email_registered = True
+        prof.activation_key = 'activated'
+        prof.save()
+    user = authenticate(username='test', password='test')
+    login(request, user)
+    request.session['success'] = 'You have successfully logged in.'
+    return redirect('index')
+
 def odesk_login(request):
     client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
     return redirect(client.auth.auth_url())
