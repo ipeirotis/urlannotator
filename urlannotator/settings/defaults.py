@@ -123,7 +123,7 @@ CACHES = {
         'LOCATION': os.path.join(_tempdir, 'urlannotator__file_based_cache'),
     }
 }
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+#SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 BASE_APPS = (
     'django.contrib.auth',
