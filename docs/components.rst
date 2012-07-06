@@ -138,13 +138,36 @@ Class abstract with methods (sample is of class *Sample*):
 - new(description, classes)
 - train(samples)
 - classify(sample) -> class
-- classify_with_info(sample) -> json? class and probability distribution over classes etc.
+- classify_with_info(sample) -> dict with class and probability distribution over classes etc.
 
 Implemented with:
 
 - Google Prediction API
 - some simple test classifier? (Orange library?)
 
+
+Important notes
+~~~~~~~~~~~~~~~
+It should be implemented so that we could run multiple classify methods at the same time (thread-safety).
+
+SynchronisedClassifier
+~~~~~~~~~~~~~~~~~~~~~~
+This class will be a wrapper around Classifier to make it synchronized in read/write kind:
+
+- many calls can be done on *classify* methods at the same time
+- only one *train* method can be called at the time and at this point no *classify* can be run/called
+
+It should work that way:
+
+- we allow *classify* normally
+- when *train* comes we doesn't allow any *classify* and wait until all *classify* are gone
+- do *train* and be gone
+
+We might also prioritize *train* to always push it to be done before any *classify* but this shouldn't be needed
+
+
+ClassifierExternalApi
+~~~~~~~~~~~~~~~~~~~~~
 
 What can go wrong:
 ~~~~~~~~~~~~~~~~~~
