@@ -12,9 +12,8 @@ from django.template.loader import get_template
 import hashlib
 
 from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
-                                    WizardAdditionalForm, NewUserForm,\
-                                    UserLoginForm, AlertsSetupForm,\
-                                    GeneralEmailUserForm, GeneralUserForm
+    WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
+    GeneralEmailUserForm, GeneralUserForm
 from urlannotator.main.models import UserProfile, UserOdeskAssociation, Project
 from urlannotator.settings.defaults import ODESK_CLIENT_ID, ODESK_CLIENT_SECRET
 

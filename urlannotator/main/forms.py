@@ -1,9 +1,8 @@
 from django import forms
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import (PROJECT_BASIC_DATA_SOURCE_CHOICES,
-                                    PROJECT_DATA_SOURCE_CHOICES, PROJECT_TYPE_CHOICES,
-                                    Project)
+from urlannotator.main.models import PROJECT_BASIC_DATA_SOURCE_CHOICES,\
+    PROJECT_DATA_SOURCE_CHOICES, PROJECT_TYPE_CHOICES, Project
 
 class NewUserForm(forms.Form):
     email = forms.EmailField(label="E-mail")
