@@ -163,11 +163,16 @@ It should work that way:
 - when *train* comes we doesn't allow any *classify* and wait until all *classify* are gone
 - do *train* and be gone
 
-We might also prioritize *train* to always push it to be done before any *classify* but this shouldn't be needed
+Optionally we could prioritize *train* to always push it to be done before any *classify* but this shouldn't be needed and could lead to starvation of *classify*
 
 
 ClassifierExternalApi
 ~~~~~~~~~~~~~~~~~~~~~
+
+This will use **SynchronizedClassifier** and **SampleFactory**.
+Probably this will be done using REST.
+We will need to make locking queries with some timeout so that we can return with status "Currently unavailable - try again in few minutes"
+
 
 What can go wrong:
 ~~~~~~~~~~~~~~~~~~
