@@ -114,12 +114,12 @@ Optionally also:
 It is used to generate HIT in validation stage and to generate training sample for **Classifier**
 
 
-SampleFactory or SampleContentGenerator
----------------------------------------
+SampleFactory
+-------------
 
-Two ways are now possible - make it a component of URLGathering stage or another EventListener ... TODO
+**SampleFactor** will be used after URLGathering stage and in Classifier External API. Probably this will be an EvenListener or wrapped by such.
 
-This object (one for whole system?) given the URL will create sample. It will delegate two tasks (each can be separate job / MachineTask on Tagasauris?):
+This object (one for whole system?) given the URL will create **Sample**. It will delegate two tasks (each can be separate job / MachineTask on Tagasauris?):
 
 - getting content of the website
 - making screen-shot of the website, uploading it somewhere (S3?), returning it url
@@ -210,6 +210,7 @@ We could use MachineTask to do this - sending just processed images...
 
 
 
+
 TrainingSamplesCollector
 ------------------------
 
@@ -223,6 +224,42 @@ Useful small elements
 
 - exception QuotaLimitExceeded
 
+
+
+SamplesQualityEstimation
+========================
+
+We will make this work in two stages
+
+HumanValidation
+---------------
+
+We will create job on Tagasauris and try to collect votes in some periodical maner.
+
+As we get some samples we raise event of *SamplesPartialValidated*.
+
+Resulting votes are in form:
+WorkerVote which will be named tuple mapping to:
+[(sample, worker_id, correct/incorrect), ...]
+
+
+AlgorithmicValidation
+---------------------
+After we get event *SamplesPartialyValidated* we get samples ALL samples from HumanValidation and run given algorithm on them.
+
+At this point we can use:
+
+- majority voting
+- DS
+- GAL
+- DSaS
+
+Result will consist of two elements:
+
+- estimated workers quality (even for majority voting we can estimate this)
+- estimated samples labels
+
+Samples with labels are proper input to classifier
 
 
 Smaller components
@@ -278,3 +315,12 @@ Other Notes
 - Storage for samples and their rating in BeatTheMachine
 -
 
+FOR ME NOTES:
+=============
+
+- Module with only Managers close to Events ...
+
+Questions
+=========
+
+- Scope of worker blocking?
