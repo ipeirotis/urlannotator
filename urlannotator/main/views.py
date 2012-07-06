@@ -230,6 +230,7 @@ def odesk_complete(request):
             # Logged user odesk account association
             assoc = UserOdeskAssociation(user=u, uid=user['uid'], token=auth, full_name=' '.join([user['first_name'], user['last_name']]))
             assoc.save()
+            request.session['success'] = 'You have successfully logged in.'
         return redirect('index')
     else:
         assoc = UserOdeskAssociation.objects.filter(uid=user['uid'])
@@ -243,7 +244,7 @@ def odesk_complete(request):
                 request.session['error'] = "Account for that social media doesn't exist. Please register first."
                 return redirect('index')
             request.session.pop('registration')
-            
+
         if u is None:
             u = User.objects.create_user(email=user['mail'], username=' '.join(['odesk', user['uid']]), password='1')
             u.get_profile().full_name = '%s %s' % (user['first_name'], user['last_name'])
@@ -251,6 +252,7 @@ def odesk_complete(request):
             assoc = UserOdeskAssociation(user=u, uid=user['uid'], token=auth, full_name=u.get_profile().full_name)
             assoc.save()
             u = authenticate(username=u.username, password='1')
+            request.session['success'] = 'You have successfuly registered'
         login(request, u)
         return redirect('index')
 
