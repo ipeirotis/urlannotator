@@ -33,7 +33,8 @@ urlpatterns = patterns('urlannotator',
     
     url(r'^_admin/', include(admin.site.urls)),
     url(r'^auth/', include('social_auth.urls')),
-    
+
+    url(r'^docs$', 'main.views.docs_view', name='docs_view'), 
     (r'^bad/$', bad),
 )
 
