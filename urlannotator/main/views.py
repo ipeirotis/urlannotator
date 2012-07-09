@@ -216,7 +216,9 @@ def project_wizard(request):
                    'attributes_form': attr_form,
                    'additional_form': addt_form}
         if not odeskLogged:
-            context['wizard_alert'] = "Your account is not connected to Odesk. If you want to have more options connect to Odesk at settings page."
+            context['wizard_alert'] = '''Your account is not connected to Odesk.
+                                         If you want to have more options connect to Odesk at 
+                                         <a href="%s">settings</a> page.''' % reverse('settings')
     return render(request, 'main/project/wizard.html', RequestContext(request, context))
   
 @login_required
