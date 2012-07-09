@@ -323,6 +323,12 @@ def reload_services():
 
 
 @task
+def deploy_ci():
+    env.user = 'urlannotator'
+    env.host_string = 'ci.10clouds.com'
+    deploy(conf_file="target_defs/testing.json", requirements=False)
+
+@task
 def deploy(conf_file=None, instance=None, branch=None, commit=None,
         locals_path=None, setup_environment=False, requirements=True):
     u"""Does a full deployment of the project code.
