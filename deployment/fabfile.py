@@ -149,6 +149,9 @@ def upload_settings_files():
     # We could be deploying from different directory.
     # Try our best to find correct path.
     # First - direct, absolute match.
+    if not locals_path:
+        return
+
     if not os.path.isfile(locals_path):
         # Try relative to deployment directory.
         this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -326,11 +329,12 @@ def reload_services():
 def deploy_ci():
     env.user = 'urlannotator'
     env.host_string = 'ci.10clouds.com'
-    deploy(conf_file="target_defs/testing.json", requirements=False)
+    env.forward_agent = True
+    deploy(conf_file="target_defs/testing.json", prompt=False, requirements=False)
 
 @task
 def deploy(conf_file=None, instance=None, branch=None, commit=None,
-        locals_path=None, setup_environment=False, requirements=True):
+        locals_path=None, setup_environment=False, prompt=True, requirements=True):
     u"""Does a full deployment of the project code.
         You have to supply an ``instance`` name (the name of deployment
         target in colocation environment).
@@ -356,7 +360,8 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     print_context()
 
     # Give user a chance to abort deployment.
-    confirm_or_abort(red("\nDo you want to continue?"))
+    if prompt:
+        confirm_or_abort(red("\nDo you want to continue?"))
 
     # Prepare server environment for deployment.
     show(yellow("Preparing project environment"))
