@@ -7,6 +7,6 @@ ipython
 django-social-auth
 python-odesk
 bootstrap
-markdown
+docutils
 #python-mysql
 -e git+git@github.com:10clouds/common.git#egg=10clouds-common.egg

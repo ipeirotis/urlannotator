@@ -18,7 +18,7 @@ from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
     GeneralEmailUserForm, GeneralUserForm
 from urlannotator.main.models import UserProfile, UserOdeskAssociation, Project
 from urlannotator.settings.defaults import ODESK_CLIENT_ID, ODESK_CLIENT_SECRET,\
-    ROOT_DIR
+    ROOT_DIR, SITE_URL
 
 def get_activation_key(email, num):
     key = hashlib.sha1()
@@ -43,7 +43,7 @@ def register_view(request):
             user.get_profile().activation_key = key
             user.get_profile().email_registered = True
             user.get_profile().save()
-            cont = Context({'key': key})
+            cont = Context({'key': key, 'site': SITE_URL})
             send_mail(subjectTemplate.render(cont).replace('\n', ''), bodyTemplate.render(cont), 'URL Annotator', [user.email])
             return redirect('index')
 
@@ -98,6 +98,10 @@ def login_view(request):
         if form.is_valid():
             user = authenticate(username=form.cleaned_data['email'], password=form.cleaned_data['password'])
             if user is not None:
+                if not user.got_profile().email_registered:
+                    request.session['error'] = 'Username and/or password is incorrect.'
+                    return redirect('index')
+
                 if user.is_active:
                     login(request, user)
                     if 'remember' in request.POST:
@@ -207,6 +211,7 @@ def project_wizard(request):
                         same_domain_allowed=addt_form.cleaned_data['same_domain'],
                         project_status=p_type)
             p.save()
+            return redirect('project_view', id=p.id)
         context = {'topic_form': topic_form,
                    'attributes_form': attr_form,
                    'additional_form': addt_form}

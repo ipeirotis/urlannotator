@@ -8,8 +8,8 @@ DATABASES = {
     }
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'urlannotator.main.backends.email.EmailBackend'
 
 JENKINS_TASKS = (
     'django_jenkins.tasks.run_pyflakes',
