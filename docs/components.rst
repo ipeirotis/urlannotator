@@ -118,13 +118,14 @@ EventJobStarted
 EventTrainingSetUpdated
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-- **ClassifierManager** calls **Classifier** to update it self on new data. **ClassifierManager** afterwards pushes *EventClassifierUpdated*
+- **ClassifierManager** calls **Classifier** to update itself on new data. **ClassifierManager** afterwards pushes *EventClassifierUpdated*
 
 
 EventTrainingSetCompleated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **ClassifierManager** calls **Classifier** to update it self on new data. **ClassifierManager** afterwards pushes *EventClassifierUpdated*
+- **ClassifierManager** calls **Classifier** to update itself on new data. **ClassifierManager** afterwards pushes *EventClassifierUpdated*
+- **JobManager** destroys **TrainingSetCreator** or does it destroys itself by unregistering from the bus?
 
 
 NOTE:
