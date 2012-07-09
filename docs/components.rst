@@ -345,6 +345,13 @@ This will use Tagasauris.
 As input it takes job description and creates proper tasks using Tagasauris.
 
 
+SamplesCollector
+---------------
+This component is responsible for collecting samples that after validation will be used to train classifier.
+
+.. image:: sample_collector.png
+
+
 
 Useful small elements
 ----------------------
