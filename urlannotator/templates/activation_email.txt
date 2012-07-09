@@ -1,4 +1,4 @@
 A new account has been requested on URL annotator using your email.
 
-If you wish to activate your account, follow the link http://{{ SITE_URL }}/{%url activation key=key%}
+If you wish to activate your account, follow the link http://{{ site }}{%url activation key=key%}
 If you didn't create any account, please ignore this message.
