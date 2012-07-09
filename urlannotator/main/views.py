@@ -401,7 +401,7 @@ def project_classifier_view(request, id):
     return render(request, 'main/project/classifier.html', RequestContext(request, context)) 
 
 def docs_view(request):
-    file_path = os.path.join(ROOT_DIR, '../docs/', 'readme.rst')    
+    file_path = os.path.join(ROOT_DIR, '..', 'readme.rst')    
     file = open(file_path, 'r')
     content = gfm(file.read())
     content = markdown.markdown(content)
