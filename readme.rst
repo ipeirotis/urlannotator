@@ -1,32 +1,46 @@
-# URL Annotator
+=============
+URL Annotator
+=============
 <LAST_MODIFIFED>
 
 
-## Source/How to get it
+Source/How to get it
+====================
 <SOURCE>
 
-## What's new
+What's new
+==========
 <WHATSNEW>
 
-## How it works
+How it works
+============
 <HOWITWORKS>
 
-## Setup
-### Required libraries:
+Setup
+=====
+Required libraries:
+-------------------
 <LIBRARIES>
 
-### Basic setup:
+Basic setup:
+------------
 <BASIC_SETUP>
 
-### DB setup:
+DB setup:
+---------
 <DB_SETUP>
 
-### Cron setup:
+Cron setup:
+-----------
 <CRON_SETUP>
 
-## [More about DB setup](https://github.com/10clouds/urlannotator/blob/master/docs/dbsetup)
+`More about DB setup <https://github.com/10clouds/urlannotator/blob/master/docs/dbsetup>`_
+==========================================================================================
 
-## [More about Cron setup](https://github.com/10clouds/urlannotator/blob/master/docs/cronsetup)
+`More about Cron setup <https://github.com/10clouds/urlannotator/blob/master/docs/cronsetup>`_
+==============================================================================================
 
-## Support
+
+Support
+=======
 <SUPPORT>

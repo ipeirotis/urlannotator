@@ -11,7 +11,8 @@ from django.http import HttpResponse
 import odesk
 from django.template.loader import get_template
 import hashlib
-import markdown
+from docutils.parsers import rst
+from docutils.utils import new_document
 import os
 import re
 
@@ -401,11 +402,9 @@ def project_classifier_view(request, id):
     return render(request, 'main/project/classifier.html', RequestContext(request, context)) 
 
 def docs_view(request):
-    file_path = os.path.join(ROOT_DIR, '..', 'readme.rst')    
+    file_path = os.path.join(ROOT_DIR, '..', 'readme.html')    
     file = open(file_path, 'r')
-    content = gfm(file.read())
-    content = markdown.markdown(content)
-    return render(request, 'main/docs.html', RequestContext(request, {'content': content}))
+    return HttpResponse(file.read(), mimetype="text/html")
 
 def index(request):
     context = {}
@@ -418,3 +417,4 @@ def index(request):
     if request.user.is_authenticated():
         context['projects'] = Project.objects.filter(author=request.user) 
     return render(request, 'main/index.html', RequestContext(request, context))
+1
