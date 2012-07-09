@@ -1,9 +1,6 @@
 URLAnnotator architecture proposal
 ==================================
 
-We will define here possible architectures for this project, with their pros and cons to enable us to choose the best one.
-
-
 Core components/services:
 -------------------------
 
@@ -72,14 +69,12 @@ and also this elements registered on all kind of events:
 - BusErrorReporter (to sent errors to Sentry-like service, email etc)
 
 
-Think about:
-------------
 
-- Maybe we would like to set separate **EventBus** for every job? and have one global to handle creating and destroying of others. That way we wouldn't have to have dispatcher on jobs in every event listener ... but this can be achieved by subclassing class InterJobEventListener ...
+Database models
+===============
 
-
-Component specification
-=======================
+To minimalise overhead we decide to make access to DB non event based.
+**Think if this will be thread safe?!**
 
 Job
 ---
@@ -100,8 +95,7 @@ It contains:
 Sample
 ------
 
-Created by *TrainingDataCollector*. It contains:
-
+- Job
 - url
 - text / content of the website
 - screen-shot (probably some url address to S3)
@@ -111,7 +105,50 @@ Optionally also:
 - added_by - Worker
 - added_on - date it was added
 
-It is used to generate HIT in validation stage and to generate training sample for **Classifier**
+
+Worker
+------
+
+- name etc.
+- estimated quality
+
+
+WorkerQualityVotes
+------------------
+
+- worker
+- sample
+- vote/label ('correct', 'incorrect')
+- added_on
+
+
+GoldenSamples
+-------------
+
+- Job
+- Sample
+- vote/label
+
+
+Classifier
+----------
+
+- Job
+- type (like "Google API", etc.)
+- parameters
+
+
+BeatTheMachineSamples
+---------------------
+Subclass of **Sample**?
+
+- expected_output
+- classifier_output
+- error_ratio (maybe 1 - classifierProbab(sample_cls = expected_output) ?)
+
+
+Component specification
+=======================
 
 
 SampleFactory
@@ -188,6 +225,12 @@ We will have to use Google Cloud Storage.
 Good source of information can be found:
 https://developers.google.com/prediction/docs/developer-guide
 I'm still not sure if we can use long texts as samples...
+
+
+UML diagram
+~~~~~~~~~~~
+
+.. image:: classifier_diagram.png
 
 
 ClassifierManager/Factory
