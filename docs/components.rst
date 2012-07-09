@@ -346,11 +346,15 @@ As input it takes job description and creates proper tasks using Tagasauris.
 
 
 SamplesCollector
----------------
+----------------
+
 This component is responsible for collecting samples that after validation will be used to train classifier.
 
 .. image:: sample_collector.png
 
+That way collected samples will be processed in SampleFactory
+
+TODO NOTE maybe better name is with Simple? because we would like to distinguish it from **Sample** in terms of our DB.
 
 
 Useful small elements
@@ -358,6 +362,13 @@ Useful small elements
 
 - exception QuotaLimitExceeded
 
+
+Crowdsourcing package
+=====================
+
+This package provides tools that we will use in few parts of this system
+
+.. image:: crowdsourcing_package.png
 
 
 SamplesQualityEstimation
