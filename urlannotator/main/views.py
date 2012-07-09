@@ -98,7 +98,7 @@ def login_view(request):
         if form.is_valid():
             user = authenticate(username=form.cleaned_data['email'], password=form.cleaned_data['password'])
             if user is not None:
-                if not user.got_profile().email_registered:
+                if not user.get_profile().email_registered:
                     request.session['error'] = 'Username and/or password is incorrect.'
                     return redirect('index')
 
