@@ -69,6 +69,74 @@ and also this elements registered on all kind of events:
 - BusErrorReporter (to sent errors to Sentry-like service, email etc)
 
 
+Events handling and flow
+------------------------
+
+EventCreateNewJob
+~~~~~~~~~~~~~~~~~
+
+- **JobFactoryManager** passes job details to **JobFactory** and it creates **Job** and its **JobManager**. Afterwards it pushes **EventNewJobCreated**.
+
+
+EventNewJobCreated
+~~~~~~~~~~~~~~~~~~
+
+Mostly we create Factories at this point.
+
+It looks like this:
+
+     **A_FactoryManager** creates **A_Manager**, pases B details to **A_Factory** which creates **A** and plugs it into **A_Manager**. Afterwards it pushes *EventNew_A_Created*
+
+
+In this fashion we work with:
+
+- **ClassifierFactoryManager** with classifier details passed
+- **SampleFactoriesFactoryManager** with job details
+
+* QualityAlgorithm
+* SampleCollector
+
+
+- **BeatTheMachineAutomaticStarterFactoryManager** checks if given job want to use automatic start of **BeatTheMachine** and if so creates **BeatTheMachineAutomaticStarterManager** and passes proper parameters to **BeatTheMachineAutomaticStarterFactory** which creates **BeatTheMachineAutomaticStarter** and plugs it into **BeatTheMachineAutomaticStarterManager**
+
+
+- TODO XXX What else
+
+
+EventNewSampleFactoryCreated, EventNewClassifierCreated, ...?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **JobManager** - after seeing this events it changes Job status to ready and sends **EventJobReady**
+
+
+EventJobStarted
+~~~~~~~~~~~~~~~
+
+- **TrainingSetCreatorManager** calls **TrainingSetCreator** to start collecting training samples.
+
+
+EventTrainingSetUpdated
+~~~~~~~~~~~~~~~~~~~~~~~
+
+- **ClassifierManager** calls **Classifier** to update it self on new data. **ClassifierManager** afterwards pushes *EventClassifierUpdated*
+
+
+EventTrainingSetCompleated
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **ClassifierManager** calls **Classifier** to update it self on new data. **ClassifierManager** afterwards pushes *EventClassifierUpdated*
+
+
+NOTE:
+Maybe this *EventTrainingSetCompleated* and *EventTrainingSetUpdated* should be the same type so that **ClassifierManager** would be registered on one of theme?
+
+
+EventClassifierUpdated
+~~~~~~~~~~~~~~~~~~~~~~
+
+- **StatisticsCollector** collects stats and stores them in StatisticStorage, so that we could present some charts to the user.
+
+
 
 Database models
 ===============
@@ -79,9 +147,8 @@ To minimalise overhead we decide to make access to DB non event based.
 Job
 ---
 
-It contains:
-
 - title
+- owner
 - description
 - expected cost (maybe with distribution on separate parts)
 - classifier parameters (like to use Google Prediction API or anything else)
@@ -122,7 +189,7 @@ WorkerQualityVotes
 - added_on
 
 
-GoldenSamples
+GoldSamples
 -------------
 
 - Job
@@ -136,6 +203,13 @@ Classifier
 - Job
 - type (like "Google API", etc.)
 - parameters
+
+
+Statistics
+----------
+
+- stores some data about classifier performance
+- date at which this statistics were calculated
 
 
 BeatTheMachineSamples
@@ -174,6 +248,7 @@ Class abstract with methods (sample is of class *Sample*):
 
 - new(description, classes)
 - train(samples)
+- update(samples) (optional - implemented with train if not provided by normal implementation)
 - classify(sample) -> class
 - classify_with_info(sample) -> dict with class and probability distribution over classes etc.
 
