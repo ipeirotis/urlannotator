@@ -371,6 +371,9 @@ This package provides tools that we will use in few parts of this system
 .. image:: crowdsourcing_package.png
 
 
+**CrowdsourcingProgressMonitor** sends events about any progress.
+
+
 SamplesQualityEstimation
 ========================
 
