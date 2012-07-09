@@ -8,6 +8,11 @@ This diagram presents general flow of the data
 
 .. image:: overal_data_flow_diagram.png
 
+**TrainingSetCreator** generates mainly two events:
+
+- TrainingSetCompleated
+- TrainingSetUpdated
+
 
 Core components/services:
 -------------------------
@@ -132,7 +137,6 @@ EventTrainingSetUpdated
 EventTrainingSetCompleated
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **ClassifierManager** calls **Classifier** to update itself on new data. **ClassifierManager** afterwards pushes *EventClassifierUpdated*
 - **JobManager** destroys **TrainingSetCreator** or does it destroys itself by unregistering from the bus?
 
 
