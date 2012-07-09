@@ -1,6 +1,14 @@
 URLAnnotator architecture proposal
 ==================================
 
+Overall view
+------------
+
+This diagram presents general flow of the data
+
+.. image:: overal_data_flow_diagram.png
+
+
 Core components/services:
 -------------------------
 
