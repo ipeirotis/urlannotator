@@ -52,6 +52,9 @@
               </a>
               <a class="brand" href="{% url index %}">URL annotator</a>
               <div class="nav-collapse">
+                <ul class="nav">
+                  <li class="active"><a href="{% url docs_view %}">Docs</a></li>
+                </ul>
                 <ul class="nav pull-right">
                   {% if user.is_authenticated %}
                   <li><a href="{% url project_wizard %}">Create new project</a></li>
