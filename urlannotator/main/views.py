@@ -7,12 +7,11 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
 import odesk
 from django.template.loader import get_template
 import hashlib
 import os
-from docutils import core, io
+from docutils import core
 from django.views.decorators.cache import cache_page
 
 from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
