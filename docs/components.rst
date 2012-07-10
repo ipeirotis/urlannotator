@@ -229,12 +229,21 @@ This component will be responsible for checking Tagasauris whether:
 
 and makes proper event on such situations.
 
+It also have to store mapping between Tagasauris job id's and our system ids.
+
+Parameters
+~~~~~~~~~~
+
+How often do we check and propagate changes.
+
+
 
 TrainingSamplesCollector
 ------------------------
 
-This will use Tagasauris.
-As input it takes job description and creates proper tasks using Tagasauris.
+This will use Tagasauris to collect samples and verify them also with Tagasauris and some qualityAlgorithm.
+
+As input it takes job description be able to create proper Tagasauris tasks.
 
 
 SamplesCollector
