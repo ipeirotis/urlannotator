@@ -342,6 +342,12 @@ UML diagram
 .. image:: classifier_diagram.png
 
 
+Caching note
+~~~~~~~~~~~~
+
+We could cache classifier classification requests. We will have to invalidate them as classifier gets retrained.
+
+
 ClassifierManager/Factory
 -------------------------
 
@@ -427,12 +433,6 @@ Result will consist of two elements:
 - estimated samples labels
 
 Samples with labels are proper input to classifier
-
-
-Smaller components
-------------------
-
-*WorkerAction*,
 
 
 BeatTheMahine
