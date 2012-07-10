@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.test.client import Client
 from urlannotator.main.views import get_activation_key
-from urlannotator.main.models import UserProfile, UserOdeskAssociation
+from urlannotator.main.models import UserProfile, UserOdeskAssociation,\
+    Project
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 
@@ -61,6 +62,37 @@ class BaseNotLoggedInTests(TestCase):
         resp = c.post(reverse('login'), {'email': 'test@test.test', 'password': 'test'})
         # Redirection
         self.assertEqual(resp.status_code, 302)
+
+class LoggedInTests(TestCase):
+    def createProject(self, user):
+        p = Project(author=user,
+                    topic='test',
+                    topic_desc='test desc',
+                    data_source=1,
+                    project_status=1)  # Active
+        p.save()
+
+    def testDashboard(self):
+        c = Client()
+        u = User.objects.create_user(username='test', password='test', email='test@test.org')
+        c.login(username='test', password='test')
+
+        resp = c.get(reverse('index'))
+
+        # Empty projects list
+        self.assertTrue('projects' in resp.context)
+        self.assertTrue(not resp.context['projects'])
+
+        # Populate projects
+        self.createProject(u)
+        self.createProject(u)
+
+        self.assertTrue(Project.objects.all().count() == 2)
+        resp = c.get(reverse('index'))
+
+        self.assertTrue('projects' in resp.context)
+        self.assertTrue(len(resp.context['projects']) == 2)
+        self.assertFalse('Nothing to display' in resp.content)
 
 class SettingsTests(TestCase):
     def testBasic(self):
