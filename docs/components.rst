@@ -303,6 +303,8 @@ Notes:
 - there is a lock on classification classifier with model readers-writer - writer does only swapping between classifiers
 
 
+**As someone noticed - this might be overkill. We could also create new one instead of using previous and swap with it.**
+
 
 ClassifierExternalApi
 ~~~~~~~~~~~~~~~~~~~~~
@@ -371,7 +373,7 @@ TODO NOTE maybe better name is with Simple? because we would like to distinguish
 Useful small elements
 ----------------------
 
-- exception QuotaLimitExceeded
+- exception QuotaLimitExceeded or/and event
 
 
 Crowdsourcing package
@@ -427,7 +429,10 @@ Smaller components
 BeatTheMahine
 -------------
 
-TODO: It will be designed later on. Probably very later on...
+This is just module **SamplesCollector** with **Hit:TextualInput** given different:
+
+- **Schema/Template**
+- **EndCriteria**
 
 
 Notes
