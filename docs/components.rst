@@ -243,9 +243,9 @@ SampleFactory
 
 **SampleFactor** will be used after URLGathering stage and in Classifier External API. Probably this will be an EvenListener or wrapped by such.
 
-This object (one for whole system?) given the URL will create **Sample**. It will delegate two tasks (each can be separate job / MachineTask on Tagasauris?):
+This object given the URL will create **Sample**. It will delegate two tasks (each can be separate job / MachineTask on Tagasauris?):
 
-- getting content of the website
+- getting text content of the website
 - making screen-shot of the website, uploading it somewhere (S3?), returning it url
 
 XXX: How do we want this to do:
@@ -346,9 +346,12 @@ This object is responsible for creating **Classifier** when new job is created b
 TagasaurisJobMonitor
 --------------------
 
-This component will be responsible for checking whether given job has finished on Tagasauris makes proper event on such situation.
+This component will be responsible for checking Tagasauris whether:
 
-Also publishes events when new results arrive from Tagasauris.
+- given job has finished
+- some job results "arrived"
+
+and makes proper event on such situations.
 
 
 TrainingSamplesCollector
@@ -371,7 +374,7 @@ TODO NOTE maybe better name is with Simple? because we would like to distinguish
 
 
 Useful small elements
-----------------------
+---------------------
 
 - exception QuotaLimitExceeded or/and event
 
