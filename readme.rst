@@ -74,6 +74,11 @@ On local machine:
 
     ./manage.py syncdb
 
+- Install less
+
+    sudo apt-get install npm
+    sudo npm -g install less
+
 On remote machine:
 
 - Follow steps from local machine setup up to the point ``Install basic requirements``
