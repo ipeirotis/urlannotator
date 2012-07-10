@@ -182,6 +182,7 @@ Sample
 
 Optionally also:
 
+- source - normal_collecting / BTM etc.
 - added_by - Worker
 - added_on - date it was added
 
@@ -205,7 +206,6 @@ WorkerQualityVotes
 GoldSamples
 -------------
 
-- Job
 - Sample
 - vote/label
 
