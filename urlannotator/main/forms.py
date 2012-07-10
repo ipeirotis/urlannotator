@@ -68,21 +68,35 @@ class WizardAttributesForm(forms.Form):
             self.fields['data_source'].choices = PROJECT_DATA_SOURCE_CHOICES
             self.odesk_connect = True
 
+    def _clean_value(self, dict, key, val):
+        var = dict.get(key, val)
+        if not var:
+            var = val
+        dict[key] = var
+
     def clean(self):
         cleaned_data = super(WizardAttributesForm, self).clean()
-        print Project.is_odesk_required_for_source(cleaned_data['data_source']), self.odesk_connect, cleaned_data['data_source']
+        
+        self._clean_value(cleaned_data, 'data_source', '0')
+        
         if Project.is_odesk_required_for_source(cleaned_data['data_source']) and not self.odesk_connect:
-            raise forms.ValidationError('You have to be connected to odesk to use this option')
-        if cleaned_data['data_source'] != 0:
+            raise forms.ValidationError('You have to be connected to Odesk to use this option.')
+        
+        if cleaned_data['data_source'] != '0':
             cleaned_data['no_of_urls'] = 0
             cleaned_data['hourly_rate'] = 0
             cleaned_data['budget'] = 0
         else:
-            if cleaned_data['project_type'] == 0:
+            self._clean_value(cleaned_data, 'project_type', '0')
+        
+            if cleaned_data['project_type'] == '0':
                 cleaned_data['budget'] = 0
+                self._clean_value(cleaned_data, 'no_of_urls', '0')
+                self._clean_value(cleaned_data, 'hourly_rate', '0')
             else:
                 cleaned_data['no_of_urls'] = 0
                 cleaned_data['hourly_rate'] = 0
+                self._clean_value(cleaned_data, 'budget', '0')
         return cleaned_data
 
 class WizardAdditionalForm(forms.Form):
