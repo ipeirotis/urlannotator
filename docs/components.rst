@@ -455,7 +455,21 @@ Sample that we use in our system has all fields that mentioned above have
 TODO's
 ======
 
+General TODOS
+-------------
+
 - Storage of training set and choosing samples ...
+
+
+Readers/Writer access
+---------------------
+
+There are some parts where we would like to have such synchronization or maybe copying.
+Problem is that we have evolving data structure and we would like to freeze it for the moment ..
+
+- TrainingSamplesStorage
+- Classifier
+- WorkerVotesStorage
 
 
 Implementation notes:
@@ -467,6 +481,8 @@ Questions
 =========
 
 - Scope of worker blocking?
+- How to deal with "Readers/Writer access"
+- smartly parts listen on events or we have some flow control which sends proper events as reaction to others?
 
 
 Optional parts - mostly not finished
