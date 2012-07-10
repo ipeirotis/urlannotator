@@ -20,6 +20,8 @@ class NewUserForm(forms.Form):
         if 'password1' in cleaned and 'password2' in cleaned:
             if cleaned['password1'] != cleaned['password2']:
                 raise forms.ValidationError('Passwords do not match.')
+        else:
+            raise forms.ValidationError('Enter password twice.')
         return cleaned
 
 class GeneralUserForm(forms.Form):

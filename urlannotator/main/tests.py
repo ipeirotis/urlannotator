@@ -1,10 +1,11 @@
 from django.test import TestCase
 from django.test.client import Client
+from django.contrib.auth.models import User
+from django.core.urlresolvers import reverse
+
 from urlannotator.main.views import get_activation_key
 from urlannotator.main.models import UserProfile, UserOdeskAssociation,\
     Project
-from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
 
 class BaseNotLoggedInTests(TestCase):
     def testLoginNotRestrictedPages(self):
@@ -181,16 +182,43 @@ class SettingsTests(TestCase):
             self.assertTemplateUsed(resp, 'main/project/overview.html')
         
         # Full values provided
-        for submit in ['draft', 'active']:
-            data = {'topic': 'Test',
-                    'topic_desc': 'Test desc',
-                    'data_source': '0',
-                    'project_type': '0',
-                    'no_of_urls': '0',
-                    'hourly_rate': '1.0',
-                    'budget': '1.0',
-                    'same_domain': '0',
-                    'submit': submit}
+        for source in ['0', '1', '2']:
+            for submit in ['draft', 'active']:
+                data = {'topic': 'Test',
+                        'topic_desc': 'Test desc',
+                        'data_source': source,
+                        'project_type': '0',
+                        'no_of_urls': '0',
+                        'hourly_rate': '1.0',
+                        'budget': '1.0',
+                        'same_domain': '0',
+                        'submit': submit}
 
-            resp = c.post(reverse('project_wizard'), data, follow=True)
-            self.assertTemplateUsed(resp, 'main/project/overview.html')
+                resp = c.post(reverse('project_wizard'), data, follow=True)
+                self.assertTemplateUsed(resp, 'main/project/overview.html')
+
+        # Check project topic and description
+        data = {'topic_desc': 'Test desc',
+                'data_source': '1',
+                'project_type': '0',
+                'no_of_urls': '0',
+                'hourly_rate': '1.0',
+                'budget': '1.0',
+                'same_domain': '0',
+                'submit': 'draft'}
+
+        resp = c.post(reverse('project_wizard'), data)
+        self.assertFormError(resp, 'topic_form', 'topic', 'Please input project topic.')
+
+        data = {'topic': 'Test',
+                'data_source': '1',
+                'project_type': '0',
+                'no_of_urls': '0',
+                'hourly_rate': '1.0',
+                'budget': '1.0',
+                'same_domain': '0',
+                'submit': 'draft'}
+
+        resp = c.post(reverse('project_wizard'), data)
+        self.assertFormError(resp, 'topic_form', 'topic_desc', 'Please input project topic description.')
+    
