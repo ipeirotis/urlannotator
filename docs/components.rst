@@ -151,6 +151,12 @@ EventClassifierUpdated
 
 
 
+Simple event flow diagram
+-------------------------
+
+.. image:: big_picture.png
+
+
 Database models
 ===============
 
