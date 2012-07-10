@@ -275,8 +275,8 @@ Important notes
 ~~~~~~~~~~~~~~~
 It should be implemented so that we could run multiple classify methods at the same time (thread-safety).
 
-SynchronisedClassifier
-~~~~~~~~~~~~~~~~~~~~~~
+SynchronisedClassifier (optional due to Classifier247)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This class will be a wrapper around Classifier to make it synchronized in read/write kind:
 
 - many calls can be done on *classify* methods at the same time
@@ -289,6 +289,19 @@ It should work that way:
 - do *train* and be gone
 
 Optionally we could prioritize *train* to always push it to be done before any *classify* but this shouldn't be needed and could lead to starvation of *classify*
+
+
+Classifier247
+~~~~~~~~~~~~~
+
+This classifier has two inner classifiers. Always one of them is providing methods related to classification. When trained we train this backup classifier and when ready it will be swapped with the one that is responsible for classification.
+
+
+Notes:
+
+- It must have lock on training classifier (we protect data, not methods).
+- there is a lock on classification classifier with model readers-writer - writer does only swapping between classifiers
+
 
 
 ClassifierExternalApi
