@@ -346,13 +346,7 @@ TagasaurisJobMonitor
 
 This component will be responsible for checking whether given job has finished on Tagasauris makes proper event on such situation.
 
-Maybe there is a chance that this can also send job results as soon as they get back?
-^^^^^ Currently I don't think so.
-
-We could use MachineTask to do this - sending just processed images...
-
-
-
+Also publishes events when new results arrive from Tagasauris.
 
 
 TrainingSamplesCollector
@@ -467,21 +461,28 @@ BeatTheMahine
 TODO: It will be designed later on. Probably very later on...
 
 
-Notes & TODO's
-==============
+Notes
+=====
+
+Samples
+-------
+We have few kind of samples:
+
+- RawSample - url, source (BTM, normal), label/None
+- HitSample - url, picture
+- ClassifierSample - url, text
+
+Sample that we use in our system has all fields that mentioned above have
 
 
-Other Notes
------------
+TODO's
+======
 
-- Storage for samples given to train classificator?
-- Storage for samples given by Workers
-- Storage for votes given to samples by Workers
-- Storage for samples and their rating in BeatTheMachine
--
+- Storage of training set and choosing samples ...
 
-FOR ME NOTES:
-=============
+
+Implementation notes:
+=====================
 
 - Module with only Managers close to Events ...
 
