@@ -385,21 +385,18 @@ This package provides tools that we will use in few parts of this system
 **CrowdsourcingProgressMonitor** sends events about any progress.
 
 
-SamplesQualityEstimation
-========================
+SamplesValidation
+=================
 
-We will make this work in two stages
+We will make this work in two stages.
 
-HumanValidation
----------------
+Voting
+------
 
-We will create job on Tagasauris and try to collect votes in some periodical maner.
+We will create voting job on Tagasauris and try to collect votes in chunks.
+As we get some samples we propagate *EventSomeSamplesVoted*.
 
-As we get some samples we raise event of *SamplesPartialValidated*.
-
-Resulting votes are in form:
-WorkerVote which will be named tuple mapping to:
-[(sample, worker_id, correct/incorrect), ...]
+Resulting votes are in form of WorkerQualityVotes - every entry contains sample, worker and label correct/incorrect/broken.
 
 
 AlgorithmicValidation
@@ -425,34 +422,6 @@ Smaller components
 ------------------
 
 *WorkerAction*,
-
-Revenue
-~~~~~~~
-Defines how much do we pay users for their jobs.
-
-*RevenueDefinition* is mapping from (**WorkerAction**, **result**) into **Money**?
-This should be stored in some csv or json file so that it can be configured.
-
-
-BeatTheMachineRevenueMechanics
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Defines how much revenue will be given to worker for proving given sample. Components:
-
-- **RevenueType** - describes whether we are satisfied with sample provided by user or not. Examples:
-
- - TP or TN - no error - useless sample for us
- - FP
- - FN
- - low confidence but correct
-
- etc
-
--
-- RevenueDefinition - mapping from
-
-method *reporterRevenue(classifier_difference ...)*
-returns payback or
-
 
 
 BeatTheMahine
@@ -490,3 +459,35 @@ Questions
 =========
 
 - Scope of worker blocking?
+
+
+Optional parts - mostly not finished
+====================================
+
+Revenue
+-------
+Defines how much do we pay users for their jobs.
+
+*RevenueDefinition* is mapping from (**WorkerAction**, **result**) into **Money**?
+This should be stored in some csv or json file so that it can be configured.
+
+
+BeatTheMachineRevenueMechanics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Defines how much revenue will be given to worker for proving given sample. Components:
+
+- **RevenueType** - describes whether we are satisfied with sample provided by user or not. Examples:
+
+ - TP or TN - no error - useless sample for us
+ - FP
+ - FN
+ - low confidence but correct
+
+ etc
+
+-
+- RevenueDefinition - mapping from
+
+method *reporterRevenue(classifier_difference ...)*
+returns payback or
+
