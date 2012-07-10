@@ -221,4 +221,3 @@ class SettingsTests(TestCase):
 
         resp = c.post(reverse('project_wizard'), data)
         self.assertFormError(resp, 'topic_form', 'topic_desc', 'Please input project topic description.')
-    
