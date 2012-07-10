@@ -101,6 +101,30 @@ class SettingsTests(TestCase):
         u = User.objects.create_user(username='test', password='test', email='test@test.org')
         c.login(username='test', password='test')
 
+        resp = c.get(reverse('settings'))
+        # User not registered via email
+        self.assertFalse('email' in resp.content)
+        self.assertFalse('password' in resp.content)
+
+        u.get_profile().email_registered = True
+        u.get_profile().save()
+
+        resp = c.get(reverse('settings'))
+        # User registered via email
+        self.assertTrue('email' in resp.content)
+        self.assertTrue('password' in resp.content)
+
+        resp = c.post(reverse('settings'), {'full_name': 'test', 'email': 'test@test.org', 'submit': 'general'})
+        self.assertTrue('success' in resp.context)
+        self.assertEqual(resp.context['success'], 'Full name has been successfully changed.')
+
+
+class ProjectTests(TestCase):
+    def testBasic(self):
+        c = Client()
+        u = User.objects.create_user(username='test', password='test', email='test@test.org')
+        c.login(username='test', password='test')
+
         # No odesk association - display alert
         resp = c.get(reverse('project_wizard'))
 
