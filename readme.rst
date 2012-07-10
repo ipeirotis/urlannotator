@@ -8,7 +8,7 @@ Source/How to get it
 ====================
 From github:
 
-    git clone https://github.com/10clouds/urlannotator
+    git clone git@github.com:10clouds/urlannotator.git
 
 What's new
 ==========
@@ -66,7 +66,7 @@ On local machine:
 
 - Install basic requirements
 
-	sudo pip install -r urlannotator/deployment/files/requirements/basic.txt
+	sudo pip install -r urlannotator/deployment/files/requirements/base.txt
 
 - Create database
 
