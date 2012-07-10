@@ -2,7 +2,7 @@ import os
 from os.path import join as pjoin
 import json
 from fabric.colors import red, yellow, green, blue, magenta
-from fabric.api import abort, task, env, hide, settings, sudo, cd, prefix
+from fabric.api import abort, task, env, hide, settings, sudo, cd
 
 from modules import nginx, supervisor
 from modules.virtualenv import update_virtualenv, create_virtualenv,\
@@ -284,21 +284,6 @@ def load_config_files(conf_file, default_conf=DEFAULT_CONF_FILE,
     env["ctx"] = dctx
     return dctx
 
-def build_readme():
-    project_dir = cget("project_dir")
-    repo_dir = pjoin(project_dir, "code")
-    ve_dir = cget("virtualenv_dir")
-    activate = pjoin(ve_dir, "bin", "activate")
-    user = cget("user")
-
-    show(yellow("Building readme doc."))
-
-    with settings(sudo_prefix=SUDO_PREFIX):
-        with prefix("source %s" % activate):
-            with cd(repo_dir):
-                sudo("rst2html.py readme.rst --stylesheet=collected_static/css/doc.css > readme.html", user=cget("user"))
-
-
 def update_args(ctx, instance, branch, commit, locals_path, requirements,
         setup_environment):
     """Check args and update ctx."""
@@ -402,7 +387,6 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     # compile_messages()
     # Update database schema.
     sync_db()
-    build_readme()
     
     # Uploads settings and scripts for services.
     configure_services()

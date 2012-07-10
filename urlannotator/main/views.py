@@ -12,6 +12,8 @@ import odesk
 from django.template.loader import get_template
 import hashlib
 import os
+from docutils import core, io
+from django.views.decorators.cache import cache_page
 
 from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
@@ -45,6 +47,7 @@ def register_view(request):
             user.get_profile().save()
             cont = Context({'key': key, 'site': SITE_URL})
             send_mail(subjectTemplate.render(cont).replace('\n', ''), bodyTemplate.render(cont), 'URL Annotator', [user.email])
+            request.session['success'] = 'Thanks for registering. An activation email has been sent to %s with further instructions.' % user.email
             return redirect('index')
 
         return render(request, 'main/register.html', RequestContext(request, context))
@@ -370,10 +373,17 @@ def project_classifier_view(request, id):
     context = {'project': proj}
     return render(request, 'main/project/classifier.html', RequestContext(request, context)) 
 
+def doc_parts(input_string):
+    parts = core.publish_parts(source=input_string, writer_name='html')
+    return parts
+
+@cache_page(10 * 60)
 def docs_view(request):
-    file_path = os.path.join(ROOT_DIR, '..', 'readme.html')    
+    file_path = os.path.join(ROOT_DIR, '..', 'readme.rst')    
     file = open(file_path, 'r')
-    return HttpResponse(file.read(), mimetype="text/html")
+    parts = doc_parts(file.read())
+    context = {'content': parts['html_body']}
+    return render(request, 'main/docs.html', RequestContext(request, context))
 
 def index(request):
     context = {}
