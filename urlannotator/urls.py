@@ -35,6 +35,7 @@ urlpatterns = patterns('urlannotator',
     url(r'^auth/', include('social_auth.urls')),
 
     url(r'^docs$', 'main.views.docs_view', name='docs_view'), 
+    url(r'^debug/user$', 'main.views.debug_login', name='debug_login'),
     (r'^bad/$', bad),
 )
 
@@ -55,6 +56,5 @@ if settings.DEBUG:
         (r'^%s/(?P<path>.*)$' % media_url, 'django.views.static.serve',
          {'document_root': settings.MEDIA_ROOT}),
         url(r'^project/(?P<id>\d+)/debug/(?P<debug>[^/]+)$', 'urlannotator.main.views.project_debug', name='project_debug'),
-        url(r'debug/user', 'urlannotator.main.views.debug_login', name='debug_login'),
-     
+        
     )
