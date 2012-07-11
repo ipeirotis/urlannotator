@@ -77,6 +77,7 @@ On local machine:
 - Install less
 
     sudo apt-get install npm
+
     sudo npm -g install less
 
 On remote machine:
