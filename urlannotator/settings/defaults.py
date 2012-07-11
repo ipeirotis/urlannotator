@@ -149,8 +149,6 @@ BASE_APPS = (
 
     'social_auth',
     'odesk',
-
-    'urlannotator.celerytest'
 )
 
 PROJECT_APPS = (
@@ -260,8 +258,15 @@ PIPELINE_TEMPLATE_NAMESPACE = 'window.Template'
 PIPELINE_TEMPLATE_EXT = '.ejs'
 
 # Celery
+# FIXME: there is issue with admin monitor:
+# http://stackoverflow.com/questions/8744953/why-doesnt-celerycam-work-with-amazon-sqs?rq=1
 import djcelery
 djcelery.setup_loader()
+
+# Celery tasks. INSTALLED_APPS also will be scanned so this is optional.
+CELERY_IMPORTS = (
+    'urlannotator.celerytest.tasks'
+)
 
 # Broker for celery
 # WARN: Do not use the amqp backend with SQS.
@@ -269,8 +274,18 @@ BROKER_URL = 'sqs://%s:%s@' % (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 
 # Do we need this config?
 BROKER_TRANSPORT_OPTIONS = {
-    # 'region': 'eu-west-1',
+    'region': 'eu-west-1',
     # 'visibility_timeout': 3600,
     # 'polling_interval': 0.3,
-    # 'queue_name_prefix': 'celery-',
+    'queue_name_prefix': 'urlannotator-',
 }
+
+# Celery database backend
+# By default celery stores state in django db.
+# CELERY_RESULT_BACKEND = "database"
+# CELERY_RESULT_DBURI = "sqlite:///celerydb.sqlite"
+# CELERY_RESULT_DBURI = "mysql://scott:tiger@localhost/foo"
+
+# We can ignore results from celery tasks (no need for db backend)
+# We can also do this by: @celery.task(ignore_result=True)
+# CELERY_IGNORE_RESULT = True
