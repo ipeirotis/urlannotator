@@ -111,18 +111,16 @@ Component specification
 SampleFactory
 -------------
 
-**SampleFactor** will be used after URLGathering stage and in Classifier External API. Probably this will be an EvenListener or wrapped by such.
+**SampleFactor** will be used after URLGathering stage and in Classifier External API.
 
-This object given the URL will create **Sample**. It will delegate two tasks (each can be separate job / MachineTask on Tagasauris?):
+**QUESTION - do we need screenshot for classification?**
+
+This object given the URL will create **Sample**. It will delegate two tasks using celery:
 
 - getting text content of the website
-- making screen-shot of the website, uploading it somewhere (S3?), returning it url
+- making screen-shot of the website, uploading it somewhere (S3?), returning its url
 
-XXX: How do we want this to do:
-
-- in Tagasauris in the same job as in **TrainingDataCollector**
-- in separate jobs on Tagasauris (each in separate or all in one)
-- delegate this to some service
+we can do this tasks using external API or just implement.
 
 
 Classifier
