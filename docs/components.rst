@@ -21,6 +21,43 @@ Simple event flow diagram
 .. image:: big_picture.png
 
 
+Django Apps
+-----------
+
+- flow_control
+
+  - event_system
+
+- classification
+
+  - classifier
+  - classifier_statistics
+
+- sample_gathering
+
+  - training_set_creation
+  - beat_the_machine
+  - crowdsourcing_sample_gathering
+
+- sample_factory
+
+- crowdsourcing
+
+  - hit_definition/template
+
+    - voting
+    - url entering
+
+  - sample_gathering
+  - sample and workers quality
+
+- tagasauris_api_client
+
+  - job/results monitoring
+  - hit creation etc.
+
+
+
 Database models
 ===============
 
@@ -49,6 +86,7 @@ Sample
 - url
 - text / content of the website
 - screen-shot (probably some url address to S3)
+- label / None
 
 Optionally also:
 
@@ -113,14 +151,19 @@ SampleFactory
 
 **SampleFactor** will be used after URLGathering stage and in Classifier External API.
 
-**QUESTION - do we need screenshot for classification?**
+**QUESTION - do we need screenshot for classification? This might be waste of quota**
 
 This object given the URL will create **Sample**. It will delegate two tasks using celery:
 
 - getting text content of the website
 - making screen-shot of the website, uploading it somewhere (S3?), returning its url
 
-we can do this tasks using external API or just implement.
+They should be done in parallel.
+We can do this tasks using external API or just implement.
+
+If at any point api will fail we would like to retry it with exponential back-off.
+
+QUESTION: If at some point website will be broken we should notice this somehow and skip using it?
 
 
 Classifier
