@@ -317,6 +317,21 @@ This is just module **SamplesCollector** with **Hit:TextualInput** given differe
 - **EndCriteria**
 
 
+WorkerBlockingMechanics
+-----------------------
+
+It will require two DB tables:
+
+- WorkersJobBlocked where we keep pairs (Worker, Job) which means that Worker is not allowed to participate in Job
+- GloballyBlockedWorkers just list of workers which are blocked. This table is superior to previous so that if worker is in this table than we don't check the other one
+
+Listens on events:
+
+- EventBlockWorkerInJob(worker, job)
+- EventBlockGloballyWorker(worker)
+- EventWorkerGotContract(worker, job, contract_id) - if matches than sends *EventCancelWorkerContract(contract_id)*
+
+
 Notes
 =====
 
