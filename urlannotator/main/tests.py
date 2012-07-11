@@ -155,6 +155,7 @@ class ProjectTests(TestCase):
 
         # Invalid option - odesk chosen, account not connected
         odesk_sources = ['0', '2']
+        error_text = 'You have to be connected to Odesk to use this option.'
         for source in odesk_sources:
             data = {'topic': 'Test',
                     'topic_desc': 'Test desc',
@@ -167,9 +168,7 @@ class ProjectTests(TestCase):
                     'submit': 'draft'}
 
             resp = c.post(reverse('project_wizard'), data)
-            self.assertFormError(resp, 'attributes_form', None,
-                                 'You have to be connected to Odesk to use\
-                                  this option.')
+            self.assertFormError(resp, 'attributes_form', None, error_text)
 
         uoa = UserOdeskAssociation(user=u)
         uoa.save()
