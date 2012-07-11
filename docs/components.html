@@ -1,0 +1,799 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.7: http://docutils.sourceforge.net/" />
+<title></title>
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 6253 2010-03-02 00:24:53Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: left }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document">
+
+
+<div class="section" id="urlannotator-architecture-proposal">
+<h1>URLAnnotator architecture proposal</h1>
+<div class="section" id="overall-view">
+<h2>Overall view</h2>
+<p>This diagram presents general flow of the data</p>
+<img alt="overal_data_flow_diagram.png" src="overal_data_flow_diagram.png" />
+<p><strong>TrainingSetCreator</strong> generates mainly two events:</p>
+<ul class="simple">
+<li>TrainingSetCompleated</li>
+<li>TrainingSetUpdated</li>
+</ul>
+</div>
+<div class="section" id="simple-event-flow-diagram">
+<h2>Simple event flow diagram</h2>
+<img alt="big_picture.png" src="big_picture.png" />
+</div>
+</div>
+<div class="section" id="database-models">
+<h1>Database models</h1>
+<p>To minimalise overhead we decide to make access to DB non event based.
+<strong>Think if this will be thread safe?!</strong></p>
+<div class="section" id="job">
+<h2>Job</h2>
+<ul class="simple">
+<li>title</li>
+<li>owner</li>
+<li>description</li>
+<li>expected cost (maybe with distribution on separate parts)</li>
+<li>classifier parameters (like to use Google Prediction API or anything else)</li>
+<li>golden data - sample urls matching description provided by job creator</li>
+<li>status</li>
+<li>progress</li>
+<li>amount of URLs we want to collect ?</li>
+<li>additional parameters ?</li>
+</ul>
+</div>
+<div class="section" id="sample">
+<h2>Sample</h2>
+<ul class="simple">
+<li>Job</li>
+<li>url</li>
+<li>text / content of the website</li>
+<li>screen-shot (probably some url address to S3)</li>
+</ul>
+<p>Optionally also:</p>
+<ul class="simple">
+<li>source - normal_collecting / BTM etc.</li>
+<li>added_by - Worker</li>
+<li>added_on - date it was added</li>
+</ul>
+</div>
+<div class="section" id="worker">
+<h2>Worker</h2>
+<ul class="simple">
+<li>name etc.</li>
+<li>estimated quality</li>
+</ul>
+</div>
+<div class="section" id="workerqualityvotes">
+<h2>WorkerQualityVotes</h2>
+<ul class="simple">
+<li>worker</li>
+<li>sample</li>
+<li>vote/label ('correct', 'incorrect')</li>
+<li>added_on</li>
+</ul>
+</div>
+<div class="section" id="goldsamples">
+<h2>GoldSamples</h2>
+<ul class="simple">
+<li>Sample</li>
+<li>vote/label</li>
+</ul>
+</div>
+<div class="section" id="classifier">
+<h2>Classifier</h2>
+<ul class="simple">
+<li>Job</li>
+<li>type (like &quot;Google API&quot;, etc.)</li>
+<li>parameters</li>
+</ul>
+</div>
+<div class="section" id="statistics">
+<h2>Statistics</h2>
+<ul class="simple">
+<li>stores some data about classifier performance</li>
+<li>date at which this statistics were calculated</li>
+</ul>
+</div>
+<div class="section" id="beatthemachinesamples">
+<h2>BeatTheMachineSamples</h2>
+<p>Subclass of <strong>Sample</strong>?</p>
+<ul class="simple">
+<li>expected_output</li>
+<li>classifier_output</li>
+<li>error_ratio (maybe 1 - classifierProbab(sample_cls = expected_output) ?)</li>
+</ul>
+</div>
+</div>
+<div class="section" id="component-specification">
+<h1>Component specification</h1>
+<div class="section" id="samplefactory">
+<h2>SampleFactory</h2>
+<p><strong>SampleFactor</strong> will be used after URLGathering stage and in Classifier External API. Probably this will be an EvenListener or wrapped by such.</p>
+<p>This object given the URL will create <strong>Sample</strong>. It will delegate two tasks (each can be separate job / MachineTask on Tagasauris?):</p>
+<ul class="simple">
+<li>getting text content of the website</li>
+<li>making screen-shot of the website, uploading it somewhere (S3?), returning it url</li>
+</ul>
+<p>XXX: How do we want this to do:</p>
+<ul class="simple">
+<li>in Tagasauris in the same job as in <strong>TrainingDataCollector</strong></li>
+<li>in separate jobs on Tagasauris (each in separate or all in one)</li>
+<li>delegate this to some service</li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2>Classifier</h2>
+<p>Class abstract with methods (sample is of class <em>Sample</em>):</p>
+<ul class="simple">
+<li>new(description, classes)</li>
+<li>train(samples)</li>
+<li>update(samples) (optional - implemented with train if not provided by normal implementation)</li>
+<li>classify(sample) -&gt; class</li>
+<li>classify_with_info(sample) -&gt; dict with class and probability distribution over classes etc.</li>
+</ul>
+<p>Implemented with:</p>
+<ul class="simple">
+<li>Google Prediction API</li>
+<li>some simple test classifier? (Orange library?)</li>
+</ul>
+<div class="section" id="important-notes">
+<h3>Important notes</h3>
+<p>It should be implemented so that we could run multiple classify methods at the same time (thread-safety).</p>
+</div>
+<div class="section" id="synchronisedclassifier-optional-due-to-classifier247">
+<h3>SynchronisedClassifier (optional due to Classifier247)</h3>
+<p>This class will be a wrapper around Classifier to make it synchronized in read/write kind:</p>
+<ul class="simple">
+<li>many calls can be done on <em>classify</em> methods at the same time</li>
+<li>only one <em>train</em> method can be called at the time and at this point no <em>classify</em> can be run/called</li>
+</ul>
+<p>It should work that way:</p>
+<ul class="simple">
+<li>we allow <em>classify</em> normally</li>
+<li>when <em>train</em> comes we doesn't allow any <em>classify</em> and wait until all <em>classify</em> are gone</li>
+<li>do <em>train</em> and be gone</li>
+</ul>
+<p>Optionally we could prioritize <em>train</em> to always push it to be done before any <em>classify</em> but this shouldn't be needed and could lead to starvation of <em>classify</em></p>
+</div>
+<div class="section" id="classifier247">
+<h3>Classifier247</h3>
+<p>This classifier has two inner classifiers. Always one of them is providing methods related to classification. When trained we train this backup classifier and when ready it will be swapped with the one that is responsible for classification.</p>
+<p>Notes:</p>
+<ul class="simple">
+<li>It must have lock on training classifier (we protect data, not methods).</li>
+<li>there is a lock on classification classifier with model readers-writer - writer does only swapping between classifiers</li>
+</ul>
+<p><strong>As someone noticed - this might be overkill. We could also create new one instead of using previous and swap with it.</strong></p>
+</div>
+<div class="section" id="classifierexternalapi">
+<h3>ClassifierExternalApi</h3>
+<p>This will use <strong>SynchronizedClassifier</strong> and <strong>SampleFactory</strong>.
+Probably this will be done using REST.
+We will need to make locking queries with some timeout so that we can return with status &quot;Currently unavailable - try again in few minutes&quot;</p>
+</div>
+<div class="section" id="what-can-go-wrong">
+<h3>What can go wrong:</h3>
+<ul class="simple">
+<li>quota exceeded - we throw exception and depending on situation handle it properly. When we are at stage of collecting samples for training we should buffer them. If we are classifying for user some of his samples we will just present to him this information.</li>
+<li>Internal fail: like out of memory, dead service (when using Google Prediction) or just some crash due to some internal bug etc.</li>
+</ul>
+</div>
+<div class="section" id="classifier-based-on-google-prediction-api">
+<h3>Classifier based on Google Prediction API</h3>
+<p>We will have to use Google Cloud Storage.
+Good source of information can be found:
+<a class="reference external" href="https://developers.google.com/prediction/docs/developer-guide">https://developers.google.com/prediction/docs/developer-guide</a>
+I'm still not sure if we can use long texts as samples...</p>
+</div>
+<div class="section" id="uml-diagram">
+<h3>UML diagram</h3>
+<img alt="classifier_diagram.png" src="classifier_diagram.png" />
+</div>
+<div class="section" id="caching-note">
+<h3>Caching note</h3>
+<p>We could cache classifier classification requests. We will have to invalidate them as classifier gets retrained.</p>
+</div>
+</div>
+<div class="section" id="classifiermanager-factory">
+<h2>ClassifierManager/Factory</h2>
+<p>This object is responsible for creating <strong>Classifier</strong> when new job is created based on its parameters. It also creates <strong>ClassifierEventListener</strong> and plugs it to proper event bus and just created classifier.</p>
+</div>
+<div class="section" id="tagasaurisjobmonitor">
+<h2>TagasaurisJobMonitor</h2>
+<p>This component will be responsible for checking Tagasauris whether:</p>
+<ul class="simple">
+<li>given job has finished</li>
+<li>some job results &quot;arrived&quot;</li>
+</ul>
+<p>and makes proper event on such situations.</p>
+<p>It also have to store mapping between Tagasauris job id's and our system ids.</p>
+<div class="section" id="parameters">
+<h3>Parameters</h3>
+<p>How often do we check and propagate changes.</p>
+</div>
+</div>
+<div class="section" id="trainingsamplescollector">
+<h2>TrainingSamplesCollector</h2>
+<p>This will use Tagasauris to collect samples and verify them also with Tagasauris and some qualityAlgorithm.</p>
+<p>As input it takes job description be able to create proper Tagasauris tasks.</p>
+</div>
+<div class="section" id="samplescollector">
+<h2>SamplesCollector</h2>
+<p>This component is responsible for collecting samples that after validation will be used to train classifier.</p>
+<img alt="sample_collector.png" src="sample_collector.png" />
+<p>That way collected samples will be processed in SampleFactory</p>
+<p>TODO NOTE maybe better name is with Simple? because we would like to distinguish it from <strong>Sample</strong> in terms of our DB.</p>
+</div>
+<div class="section" id="useful-small-elements">
+<h2>Useful small elements</h2>
+<ul class="simple">
+<li>exception QuotaLimitExceeded or/and event</li>
+</ul>
+</div>
+</div>
+<div class="section" id="crowdsourcing-package">
+<h1>Crowdsourcing package</h1>
+<p>This package provides tools that we will use in few parts of this system</p>
+<img alt="crowdsourcing_package.png" src="crowdsourcing_package.png" />
+<p><strong>CrowdsourcingProgressMonitor</strong> sends events about any progress.</p>
+</div>
+<div class="section" id="samplesvalidation">
+<h1>SamplesValidation</h1>
+<p>We will make this work in two stages.</p>
+<div class="section" id="voting">
+<h2>Voting</h2>
+<p>We will create voting job on Tagasauris and try to collect votes in chunks.
+As we get some samples we propagate <em>EventSomeSamplesVoted</em>.</p>
+<p>Resulting votes are in form of WorkerQualityVotes - every entry contains sample, worker and label correct/incorrect/broken.</p>
+</div>
+<div class="section" id="algorithmicvalidation">
+<h2>AlgorithmicValidation</h2>
+<p>After we get event <em>SamplesPartialyValidated</em> we get samples ALL samples from HumanValidation and run given algorithm on them.</p>
+<p>At this point we can use:</p>
+<ul class="simple">
+<li>majority voting</li>
+<li>DS</li>
+<li>GAL</li>
+<li>DSaS</li>
+</ul>
+<p>Result will consist of two elements:</p>
+<ul class="simple">
+<li>estimated workers quality (even for majority voting we can estimate this)</li>
+<li>estimated samples labels</li>
+</ul>
+<p>Samples with labels are proper input to classifier</p>
+</div>
+<div class="section" id="beatthemahine">
+<h2>BeatTheMahine</h2>
+<p>This is just module <strong>SamplesCollector</strong> with <strong>Hit:TextualInput</strong> given different:</p>
+<ul class="simple">
+<li><strong>Schema/Template</strong></li>
+<li><strong>EndCriteria</strong></li>
+</ul>
+</div>
+<div class="section" id="workerblockingmechanics">
+<h2>WorkerBlockingMechanics</h2>
+<p>It will require two DB tables:</p>
+<ul class="simple">
+<li>WorkersJobBlocked where we keep pairs (Worker, Job) which means that Worker is not allowed to participate in Job</li>
+<li>GloballyBlockedWorkers just list of workers which are blocked. This table is superior to previous so that if worker is in this table than we don't check the other one</li>
+</ul>
+<p>Listens on events:</p>
+<ul class="simple">
+<li>EventBlockWorkerInJob(worker, job)</li>
+<li>EventBlockGloballyWorker(worker)</li>
+<li>EventWorkerGotContract(worker, job, contract_id) - if matches than sends <em>EventCancelWorkerContract(contract_id)</em></li>
+</ul>
+</div>
+</div>
+<div class="section" id="notes">
+<h1>Notes</h1>
+<div class="section" id="samples">
+<h2>Samples</h2>
+<p>We have few kind of samples:</p>
+<ul class="simple">
+<li>RawSample - url, source (BTM, normal), label/None</li>
+<li>HitSample - url, picture</li>
+<li>ClassifierSample - url, text</li>
+</ul>
+<p>Sample that we use in our system has all fields that mentioned above have</p>
+</div>
+</div>
+<div class="section" id="todo-s">
+<h1>TODO's</h1>
+<div class="section" id="general-todos">
+<h2>General TODOS</h2>
+<ul class="simple">
+<li>Storage of training set and choosing samples ...</li>
+</ul>
+</div>
+<div class="section" id="readers-writer-access">
+<h2>Readers/Writer access</h2>
+<p>There are some parts where we would like to have such synchronization or maybe copying.
+Problem is that we have evolving data structure and we would like to freeze it for the moment ..</p>
+<ul class="simple">
+<li>TrainingSamplesStorage</li>
+<li>Classifier</li>
+<li>WorkerVotesStorage</li>
+</ul>
+</div>
+</div>
+<div class="section" id="implementation-notes">
+<h1>Implementation notes:</h1>
+<ul class="simple">
+<li>Module with only Managers close to Events ...</li>
+</ul>
+</div>
+<div class="section" id="questions">
+<h1>Questions</h1>
+<ul class="simple">
+<li>Scope of worker blocking?</li>
+<li>How to deal with &quot;Readers/Writer access&quot;</li>
+<li>smartly parts listen on events or we have some flow control which sends proper events as reaction to others?</li>
+</ul>
+</div>
+<div class="section" id="optional-parts-mostly-not-finished">
+<h1>Optional parts - mostly not finished</h1>
+<div class="section" id="revenue">
+<h2>Revenue</h2>
+<p>Defines how much do we pay users for their jobs.</p>
+<p><em>RevenueDefinition</em> is mapping from (<strong>WorkerAction</strong>, <strong>result</strong>) into <strong>Money</strong>?
+This should be stored in some csv or json file so that it can be configured.</p>
+<div class="section" id="beatthemachinerevenuemechanics">
+<h3>BeatTheMachineRevenueMechanics</h3>
+<p>Defines how much revenue will be given to worker for proving given sample. Components:</p>
+<ul class="simple">
+<li><strong>RevenueType</strong> - describes whether we are satisfied with sample provided by user or not. Examples:</li>
+</ul>
+<blockquote>
+<ul class="simple">
+<li>TP or TN - no error - useless sample for us</li>
+<li>FP</li>
+<li>FN</li>
+<li>low confidence but correct</li>
+</ul>
+<p>etc</p>
+</blockquote>
+<ul class="simple">
+<li></li>
+<li>RevenueDefinition - mapping from</li>
+</ul>
+<p>method <em>reporterRevenue(classifier_difference ...)</em>
+returns payback or</p>
+</div>
+</div>
+</div>
+<div class="section" id="old-needs-checking-what-is-still-actual">
+<h1>OLD - Needs checking what is still actual</h1>
+<div class="section" id="core-components-services">
+<h2>Core components/services:</h2>
+<ul class="simple">
+<li><em>JobPoster</em> - Place which creates <em>Job</em> s with their descriptions, manages accounts, their balances etc.</li>
+<li><em>TrainingDataCollector</em> - component that given description collects matching samples (in this case urls). It will do this by using crowdsourcing platform like oDesk</li>
+<li><em>DataValidator</em> - it is mechanism that takes given url and label that it was assigned and checks whether this label is right. It will be used on data generated by <em>TrainingDataCollector</em> and potentially to measure <em>classifier</em> performance</li>
+<li><em>Classifier</em> - binary classifier which will decide whether website given by url matches description attached to this <em>Job</em></li>
+<li><em>BeatTheMachine</em> - mechanism for constant validation of classifier with some new data - using crowdsourcing</li>
+</ul>
+</div>
+</div>
+<div class="section" id="eventbus">
+<h1>EventBus</h1>
+<p>We might use at this point some existing library. Currently there are some assumptions that we hope that will work.</p>
+<div class="section" id="event">
+<h2>Event</h2>
+<p><strong>Event</strong> contains:</p>
+<ul class="simple">
+<li>job_id</li>
+<li>type</li>
+<li>data</li>
+</ul>
+</div>
+<div class="section" id="eventlistener">
+<h2>EventListener</h2>
+<p>Every object that is listening on a bus implements <strong>EventListener</strong> interface (I know this is not java - name is convenient) which has:</p>
+<ul class="simple">
+<li>method <em>matches(event)</em></li>
+<li>notify(event)</li>
+</ul>
+</div>
+<div class="section" id="important-events">
+<h2>Important Events</h2>
+<p>Global:</p>
+<ul class="simple">
+<li>NewJobStarted</li>
+<li>JobFinished</li>
+</ul>
+<p>Job related:</p>
+<ul class="simple">
+<li>CollectedSomeTrainingSamples</li>
+<li>TrainingSamplesCollection{Started/Ended} (start is to make other components prepare for taking this samples - in this case is Validator)</li>
+<li>ValidatedSomeSamples</li>
+<li>..TODO..</li>
+<li>Classifier{Created/Updated}</li>
+</ul>
+<p>Elements plugged into the <em>EventBus</em> (described later):</p>
+<ul class="simple">
+<li>ClassificatorFactory(or Manager?)</li>
+<li>SamplesCollectionManager</li>
+<li>SamplesValidationManager</li>
+<li>BeatTheMachineStartManager</li>
+</ul>
+<p>and also this elements registered on all kind of events:</p>
+<ul class="simple">
+<li>BusLogger</li>
+<li>BusErrorReporter (to sent errors to Sentry-like service, email etc)</li>
+</ul>
+</div>
+<div class="section" id="events-handling-and-flow">
+<h2>Events handling and flow</h2>
+<div class="section" id="eventcreatenewjob">
+<h3>EventCreateNewJob</h3>
+<ul class="simple">
+<li><strong>JobFactoryManager</strong> passes job details to <strong>JobFactory</strong> and it creates <strong>Job</strong> and its <strong>JobManager</strong>. Afterwards it pushes <strong>EventNewJobCreated</strong>.</li>
+</ul>
+</div>
+<div class="section" id="eventnewjobcreated">
+<h3>EventNewJobCreated</h3>
+<p>Mostly we create Factories at this point.</p>
+<p>It looks like this:</p>
+<blockquote>
+<strong>A_FactoryManager</strong> creates <strong>A_Manager</strong>, pases B details to <strong>A_Factory</strong> which creates <strong>A</strong> and plugs it into <strong>A_Manager</strong>. Afterwards it pushes <em>EventNew_A_Created</em></blockquote>
+<p>In this fashion we work with:</p>
+<ul class="simple">
+<li><strong>ClassifierFactoryManager</strong> with classifier details passed</li>
+<li><strong>SampleFactoriesFactoryManager</strong> with job details</li>
+</ul>
+<ul class="simple">
+<li>QualityAlgorithm</li>
+<li>SampleCollector</li>
+</ul>
+<ul class="simple">
+<li><strong>BeatTheMachineAutomaticStarterFactoryManager</strong> checks if given job want to use automatic start of <strong>BeatTheMachine</strong> and if so creates <strong>BeatTheMachineAutomaticStarterManager</strong> and passes proper parameters to <strong>BeatTheMachineAutomaticStarterFactory</strong> which creates <strong>BeatTheMachineAutomaticStarter</strong> and plugs it into <strong>BeatTheMachineAutomaticStarterManager</strong></li>
+<li>TODO XXX What else</li>
+</ul>
+</div>
+<div class="section" id="eventnewsamplefactorycreated-eventnewclassifiercreated">
+<h3>EventNewSampleFactoryCreated, EventNewClassifierCreated, ...?</h3>
+<ul class="simple">
+<li><strong>JobManager</strong> - after seeing this events it changes Job status to ready and sends <strong>EventJobReady</strong></li>
+</ul>
+</div>
+<div class="section" id="eventjobstarted">
+<h3>EventJobStarted</h3>
+<ul class="simple">
+<li><strong>TrainingSetCreatorManager</strong> calls <strong>TrainingSetCreator</strong> to start collecting training samples.</li>
+</ul>
+</div>
+<div class="section" id="eventtrainingsetupdated">
+<h3>EventTrainingSetUpdated</h3>
+<ul class="simple">
+<li><strong>ClassifierManager</strong> calls <strong>Classifier</strong> to update itself on new data. <strong>ClassifierManager</strong> afterwards pushes <em>EventClassifierUpdated</em></li>
+</ul>
+</div>
+<div class="section" id="eventtrainingsetcompleated">
+<h3>EventTrainingSetCompleated</h3>
+<ul class="simple">
+<li><strong>JobManager</strong> destroys <strong>TrainingSetCreator</strong> or does it destroys itself by unregistering from the bus?</li>
+</ul>
+<p>NOTE:
+Maybe this <em>EventTrainingSetCompleated</em> and <em>EventTrainingSetUpdated</em> should be the same type so that <strong>ClassifierManager</strong> would be registered on one of theme?</p>
+</div>
+<div class="section" id="eventclassifierupdated">
+<h3>EventClassifierUpdated</h3>
+<ul class="simple">
+<li><strong>StatisticsCollector</strong> collects stats and stores them in StatisticStorage, so that we could present some charts to the user.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
