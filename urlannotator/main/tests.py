@@ -50,7 +50,7 @@ class BaseNotLoggedInTests(TestCase):
                                      'password2': 'test'})
         self.assertFormError(resp, 'form', None, 'Passwords do not match.')
         self.assertFormError(resp, 'form', 'email',
-                                            'Enter a valid e-mail address.')
+                             'Enter a valid e-mail address.')
 
         resp = c.post(register_url, {'email': 'test@test.test',
                                      'password1': 'test',
@@ -68,7 +68,7 @@ class BaseNotLoggedInTests(TestCase):
         resp = c.get('/activation/%s' % key)
         self.assertTrue('success' in resp.context)
         self.assertEqual(UserProfile.objects.get(id=1).activation_key,
-                                                                'activated')
+                         'activated')
 
         resp = c.get('/activation/%s' % key)
         self.assertTrue('error' in resp.context)
@@ -97,7 +97,7 @@ class LoggedInTests(TestCase):
     def testDashboard(self):
         c = Client()
         u = User.objects.create_user(username='test', password='test',
-                                                        email='test@test.org')
+                                     email='test@test.org')
         c.login(username='test', password='test')
 
         resp = c.get(reverse('index'))
@@ -121,7 +121,7 @@ class SettingsTests(TestCase):
     def testBasic(self):
         c = Client()
         u = User.objects.create_user(username='test', password='test',
-                                                        email='test@test.org')
+                                     email='test@test.org')
         c.login(username='test', password='test')
 
         resp = c.get(reverse('settings'))
@@ -137,14 +137,14 @@ class SettingsTests(TestCase):
                                             'submit': 'general'})
         self.assertTrue('success' in resp.context)
         self.assertEqual(resp.context['success'],
-                                    'Full name has been successfully changed.')
+                         'Full name has been successfully changed.')
 
 
 class ProjectTests(TestCase):
     def testBasic(self):
         c = Client()
         u = User.objects.create_user(username='test', password='test',
-                                                        email='test@test.org')
+                                     email='test@test.org')
         c.login(username='test', password='test')
 
         # No odesk association - display alert
@@ -168,7 +168,9 @@ class ProjectTests(TestCase):
 
             resp = c.post(reverse('project_wizard'), data)
             self.assertFormError(resp, 'attributes_form', None,
-                    'You have to be connected to Odesk to use this option.')
+                                 'You have to be connected to Odesk to use\
+                                  this option.')
+
         uoa = UserOdeskAssociation(user=u)
         uoa.save()
 
@@ -256,7 +258,7 @@ class ProjectTests(TestCase):
 
         resp = c.post(reverse('project_wizard'), data)
         self.assertFormError(resp, 'topic_form', 'topic',
-                                                'Please input project topic.')
+                             'Please input project topic.')
 
         data = {'topic': 'Test',
                 'data_source': '1',
@@ -269,7 +271,7 @@ class ProjectTests(TestCase):
 
         resp = c.post(reverse('project_wizard'), data)
         self.assertFormError(resp, 'topic_form', 'topic_desc',
-                                    'Please input project topic description.')
+                             'Please input project topic description.')
 
 
 class DebugSeleniumTests(LiveServerTestCase):
@@ -285,7 +287,7 @@ class DebugSeleniumTests(LiveServerTestCase):
 
     def test_login(self):
         self.selenium.get('%s%s'
-                            % (self.live_server_url, reverse('debug_login')))
+                          % (self.live_server_url, reverse('debug_login')))
         self.assertTrue(User.objects.all())
         alert = self.selenium.find_element_by_class_name('alert-success')
         self.assertTrue(alert)
@@ -318,7 +320,7 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
 
     def test_formLayout(self):
         self.selenium.get('%s%s'
-                            % (self.live_server_url, reverse('debug_login')))
+                          % (self.live_server_url, reverse('debug_login')))
         self.selenium.get('%s%s'
                           % (self.live_server_url, reverse('project_wizard')))
 
@@ -326,12 +328,13 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
         self.assertTrue(self.selenium.find_element_by_id('id_topic_desc'))
         self.assertTrue(self.selenium.find_element_by_id('id_data_source'))
 
+        selector_free = 'select#id_data_source option[value="0"]'
+        selector_paid = 'select#id_data_source option[value="2"]'
+
         # NoSuchElementException - missing odesk options
         with self.assertRaises(exceptions.NoSuchElementException):
-            self.selenium.find_element_by_css_selector(
-                                    'select#id_data_source option[value="0"]')
-            self.selenium.find_element_by_css_selector(
-                                    'select#id_data_source option[value="2"]')
+            self.selenium.find_element_by_css_selector(selector_free)
+            self.selenium.find_element_by_css_selector(selector_paid)
 
         hidden_elements = ['id_project_type',
                            'id_no_of_urls',
@@ -346,10 +349,8 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
         self.selenium.get('%s%s'
                           % (self.live_server_url, reverse('project_wizard')))
         # User connected to odesk - diplay odesk options
-        self.selenium.find_element_by_css_selector(
-                                    'select#id_data_source option[value="0"]')
-        self.selenium.find_element_by_css_selector(
-                                    'select#id_data_source option[value="2"]')
+        self.selenium.find_element_by_css_selector(selector_free)
+        self.selenium.find_element_by_css_selector(selector_paid)
 
         # Data source changing - change displayed project types etc.
         data_source = self.selenium.find_element_by_id('id_data_source')
@@ -365,8 +366,8 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
         self.assertHiddenElements(hidden_elements)
 
         # Fixed price
-        project_opt = project_type.find_element_by_xpath(
-                                                    './/option[@value="1"]')
+        selector = './/option[@value="1"]'
+        project_opt = project_type.find_element_by_xpath(selector)
         project_opt.click()
 
         shown_elements = ['id_project_type', 'id_budget']
@@ -376,7 +377,7 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
         self.assertHiddenElements(hidden_elements)
 
         # Own workforce
-        opt = data_source.find_element_by_xpath('.//option[@value="1"]')
+        opt = data_source.find_element_by_xpath(selector)
         opt.click()
 
         hidden_elements = ['id_project_type',
@@ -413,7 +414,7 @@ class DashboardSeleniumTests(LiveServerTestCase):
             self.selenium.find_element_by_id('nothing-to-display')
 
         self.selenium.get('%s%s'
-                            % (self.live_server_url, reverse('debug_login')))
+                          % (self.live_server_url, reverse('debug_login')))
         self.selenium.find_element_by_id('nothing-to-display')
 
 
@@ -430,7 +431,7 @@ class SettingsSeleniumTests(LiveServerTestCase):
 
     def test_formLayout(self):
         self.selenium.get('%s%s'
-                            % (self.live_server_url, reverse('debug_login')))
+                          % (self.live_server_url, reverse('debug_login')))
         self.selenium.get('%s%s' % (self.live_server_url, reverse('settings')))
         self.assertTrue(self.selenium.find_element_by_id('id_full_name'))
         self.assertTrue(self.selenium.find_element_by_id('id_email'))
