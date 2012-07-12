@@ -41,6 +41,9 @@ Django Apps
 
 - sample_factory
 
+  - collecting website screen-shots
+  - collecting website content
+
 - crowdsourcing
 
   - hit_definition/template
