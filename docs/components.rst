@@ -68,15 +68,24 @@ Job
 ---
 
 - title
-- owner
+- Account
 - description
 - expected cost (maybe with distribution on separate parts)
-- classifier parameters (like to use Google Prediction API or anything else)
-- golden data - sample urls matching description provided by job creator
+- Classifier
 - status
 - progress
-- amount of URLs we want to collect ?
+- amount of URLs we want to collect ? (or related in expected cost)
+- sample_gathering mechanism and its parameters (like which quality algorithm should be used)
 - additional parameters ?
+
+
+Account
+-------
+
+- name
+- type
+- oauth key
+- etc.
 
 
 Sample
@@ -86,7 +95,6 @@ Sample
 - url
 - text / content of the website
 - screen-shot (probably some url address to S3)
-- label / None
 
 Optionally also:
 
@@ -112,10 +120,10 @@ WorkerQualityVotes
 
 
 GoldSamples
--------------
+-----------
 
 - Sample
-- vote/label
+- Label
 
 
 Classifier
@@ -123,7 +131,7 @@ Classifier
 
 - Job
 - type (like "Google API", etc.)
-- parameters
+- parameters - json
 
 
 Statistics
