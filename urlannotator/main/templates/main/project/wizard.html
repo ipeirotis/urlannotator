@@ -87,13 +87,14 @@
 <script type="text/javascript">
 $('#id_data_source').change(function(obj){
         var index = $('#id_data_source').val();
-        if (index != 0) {
+        if (index == 1) {
             $('#id_project_type').parent().parent().css('display', 'none')
-            $('#id_no_of_urls').parent().parent().css('display', 'none')
+            $('#id_no_of_urls').parent().parent().css('display', '')
             $('#id_hourly_rate').parent().parent().css('display', 'none')
             $('#id_budget').parent().parent().css('display', 'none')
         } else {
             $('#id_project_type').parent().parent().css('display', '')
+            $('#id_project_type').val(0)
             $('#id_project_type').change()
         }
     }

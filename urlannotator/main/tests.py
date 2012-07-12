@@ -9,8 +9,7 @@ import os
 import re
 
 from urlannotator.main.views import get_activation_key
-from urlannotator.main.models import UserProfile, UserOdeskAssociation,\
-    Project
+from urlannotator.main.models import Account, Job
 
 os.environ['DJANGO_LIVE_TEST_SERVER_ADDRESS'] = 'localhost:8082'
 
@@ -67,13 +66,23 @@ class BaseNotLoggedInTests(TestCase):
         self.assertEqual(user.get_profile().activation_key, key)
         self.assertTrue(user.get_profile().email_registered)
 
+        # Account not activated
+        resp = c.post(reverse('login'), {'email': 'test@test.test',
+                                         'password': 'test'}, follow=True)
+
+        self.assertIn('error', resp.context)
+
         bad_key = 'thisisabadkey'
         resp = c.get('/activation/%s' % bad_key)
         self.assertTrue('error' in resp.context)
 
-        resp = c.get('/activation/%s' % key)
+        bad_key = 'thisisabadkey-20'
+        resp = c.get('/activation/%s' % bad_key)
+        self.assertTrue('error' in resp.context)
+
+        resp = c.get('/activation/%s' % key, follow=True)
         self.assertTrue('success' in resp.context)
-        self.assertEqual(UserProfile.objects.get(id=1).activation_key,
+        self.assertEqual(Account.objects.get(id=1).activation_key,
                          'activated')
 
         resp = c.get('/activation/%s' % key)
@@ -90,14 +99,25 @@ class BaseNotLoggedInTests(TestCase):
         # Redirection
         self.assertEqual(resp.status_code, 302)
 
+        resp = c.post(reverse('login'), {'email': 'test@test.test',
+                                         'password': 'test',
+                                         'remember': 'remember'})
+        # Redirection
+        self.assertEqual(resp.status_code, 302)
+
+        resp = c.post(reverse('login'), {'email': 'test@test.test',
+                                         'password': 'test2'})
+        # Redirection
+        self.assertEqual(resp.status_code, 302)
+
 
 class LoggedInTests(TestCase):
     def createProject(self, user):
-        p = Project(author=user,
-                    topic='test',
-                    topic_desc='test desc',
-                    data_source=1,
-                    project_status=1)  # Active
+        p = Job(account=user.get_profile(),
+                title='test',
+                description='test desc',
+                data_source=1,
+                status=1)  # Active
         p.save()
 
     def testDashboard(self):
@@ -116,7 +136,7 @@ class LoggedInTests(TestCase):
         self.createProject(u)
         self.createProject(u)
 
-        self.assertTrue(Project.objects.all().count() == 2)
+        self.assertTrue(Job.objects.all().count() == 2)
         resp = c.get(reverse('index'))
 
         self.assertTrue('projects' in resp.context)
@@ -176,8 +196,9 @@ class ProjectTests(TestCase):
             resp = c.post(reverse('project_wizard'), data)
             self.assertFormError(resp, 'attributes_form', None, error_text)
 
-        uoa = UserOdeskAssociation(user=u)
-        uoa.save()
+        prof = u.get_profile()
+        prof.odesk_uid = 'test'
+        prof.save()
 
         # Odesk is associated
         resp = c.get(reverse('project_wizard'))
@@ -279,6 +300,44 @@ class ProjectTests(TestCase):
                              'Please input project topic description.')
 
 
+class RegistrationSeleniumTests(LiveServerTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.selenium = WebDriver()
+        super(RegistrationSeleniumTests, cls).setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(RegistrationSeleniumTests, cls).tearDownClass()
+        cls.selenium.quit()
+
+    def test_registerServices(self):
+        services = [('google-oauth2', 'google.com'),
+                    ('twitter', 'twitter.com'),
+                    ('facebook', 'facebook.com')]
+        for name, url_part in services:
+            self.selenium.get('%s%s'
+                              % (self.live_server_url,
+                                 reverse('register_service', args=[name])))
+            self.assertIn(url_part, self.selenium.current_url)
+
+        self.selenium.get('%s%s'
+                          % (self.live_server_url, reverse('odesk_register')))
+        self.assertIn('odesk.com', self.selenium.current_url)
+
+    def test_logInAndOut(self):
+        self.selenium.get('%s%s'
+                          % (self.live_server_url, reverse('debug_login')))
+        alert = self.selenium.find_element_by_class_name('alert-success')
+        self.assertTrue(alert)
+
+        self.selenium.get('%s%s'
+                          % (self.live_server_url, reverse('logout')))
+        selector = '//ul[@class="nav pull-right"]//li[@class="dropdown"]/a[@class="dropdown-toggle"]'
+        el = self.selenium.find_element_by_xpath(selector)
+        self.assertTrue(el)
+
+
 class DebugSeleniumTests(LiveServerTestCase):
     @classmethod
     def setUpClass(cls):
@@ -341,15 +400,18 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
             self.selenium.find_element_by_css_selector(selector_free)
             self.selenium.find_element_by_css_selector(selector_paid)
 
+        shown_elements = ['id_no_of_urls']
+        self.assertShownElements(shown_elements)
+
         hidden_elements = ['id_project_type',
-                           'id_no_of_urls',
                            'id_hourly_rate',
                            'id_budget']
         self.assertHiddenElements(hidden_elements)
 
         user = User.objects.all()[0]
-        uoa = UserOdeskAssociation(user=user)
-        uoa.save()
+        prof = user.get_profile()
+        prof.odesk_uid = 'test'
+        prof.save()
 
         self.selenium.get('%s%s'
                           % (self.live_server_url, reverse('project_wizard')))
@@ -385,8 +447,10 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
         opt = data_source.find_element_by_xpath(selector)
         opt.click()
 
+        shown_elements = ['id_no_of_urls']
+        self.assertShownElements(shown_elements)
+
         hidden_elements = ['id_project_type',
-                           'id_no_of_urls',
                            'id_hourly_rate',
                            'id_budget']
         self.assertHiddenElements(hidden_elements)
@@ -395,10 +459,20 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
         opt = data_source.find_element_by_xpath('.//option[@value="2"]')
         opt.click()
 
-        hidden_elements = ['id_project_type',
-                           'id_no_of_urls',
-                           'id_hourly_rate',
-                           'id_budget']
+        shown_elements = ['id_project_type',
+                          'id_no_of_urls',
+                          'id_hourly_rate']
+        self.assertShownElements(shown_elements)
+
+        hidden_elements = ['id_budget']
+        self.assertHiddenElements(hidden_elements)
+
+        project_opt.click()
+
+        shown_elements = ['id_project_type', 'id_budget']
+        self.assertShownElements(shown_elements)
+
+        hidden_elements = ['id_no_of_urls', 'id_hourly_rate']
         self.assertHiddenElements(hidden_elements)
 
 

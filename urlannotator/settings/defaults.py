@@ -147,6 +147,8 @@ BASE_APPS = (
 
 PROJECT_APPS = (
     'urlannotator.main',
+    'urlannotator.classification',
+    'urlannotator.crowdsourcing',
 )
 
 INSTALLED_APPS = BASE_APPS + PROJECT_APPS
@@ -154,7 +156,7 @@ INSTALLED_APPS = BASE_APPS + PROJECT_APPS
 SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/settings/'
 LOGIN_REDIRECT_URL = ''
 LOGIN_URL = '/login/'
-AUTH_PROFILE_MODULE = 'main.UserProfile'
+AUTH_PROFILE_MODULE = 'main.Account'
 SOUTH_TESTS_MIGRATE = False
 
 LOGGING = {
