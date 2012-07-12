@@ -143,6 +143,8 @@ BASE_APPS = (
 
     'social_auth',
     'odesk',
+
+    'urlannotator.crowdsourcing',
 )
 
 PROJECT_APPS = (
