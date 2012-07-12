@@ -10,6 +10,8 @@ from django.core.urlresolvers import reverse
 import odesk
 from django.template.loader import get_template
 import hashlib
+import string
+import random
 import os
 from docutils import core
 from django.views.decorators.cache import cache_page
@@ -18,14 +20,18 @@ from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
     GeneralEmailUserForm, GeneralUserForm
 from urlannotator.main.models import UserProfile, UserOdeskAssociation, Project
-from urlannotator.settings.defaults import ODESK_CLIENT_ID, ODESK_CLIENT_SECRET,\
-    ROOT_DIR, SITE_URL
+from urlannotator.settings.defaults import ODESK_CLIENT_ID, ROOT_DIR,\
+    ODESK_CLIENT_SECRET, SITE_URL
 
-def get_activation_key(email, num):
+
+def get_activation_key(email, num, salt_size=10,
+                       salt_chars=string.ascii_uppercase + string.digits):
     key = hashlib.sha1()
-    key.update('%s%s%s%d' % ('thereisn', email, 'ospoon', num))
+    salt = ''.join(random.choice(salt_chars) for x in range(salt_size))
+    key.update('%s%s%d' % (salt, email, num))
     return '%s-%d' % (key.hexdigest(), num)
-        
+
+
 @csrf_protect
 def register_view(request):
     if request.method == "GET":
@@ -51,17 +57,21 @@ def register_view(request):
 
         return render(request, 'main/register.html', RequestContext(request, context))
 
+
 def register_service(request, service):
     request.session['registration'] = service
     return redirect('socialauth_begin', service)
 
+
 def odesk_register(request):
     request.session['registration'] = 'odesk'
-    return redirect('odesk_login')    
-    
+    return redirect('odesk_login')
+
+
 def logout_view(request):
     logout(request)
     return redirect('index')
+
 
 def activation_view(request, key):
     prof_id = key.rsplit('-', 1)
@@ -89,6 +99,7 @@ def activation_view(request, key):
         context = {'success': 'Your account has been activated.'}
         return render(request, 'main/index.html', RequestContext(request, context))
     return redirect('index')
+
 
 @csrf_protect
 def login_view(request):
@@ -120,11 +131,12 @@ def login_view(request):
             return render(request, 'main/index.html', RequestContext(request, context))
     return redirect('index')
 
+
 @login_required
 def settings(request):
     profile = request.user.get_profile()
     context = {}
-    
+
     if profile.email_registered:
         context['general_form'] = GeneralEmailUserForm({'email': request.user.email, 'full_name': profile.full_name})
         context['password_form'] = PasswordChangeForm(request.user)
@@ -141,7 +153,7 @@ def settings(request):
     l = request.user.social_auth.filter(provider='twitter')
     if l:
         context['twitter'] = l[0]
-    
+
     u = UserOdeskAssociation.objects.filter(user=request.user)
     if u:
         context['odesk'] = {'name': u[0].full_name}
@@ -181,6 +193,7 @@ def settings(request):
                 else:
                     context['alerts_form'] = form
     return render(request, 'main/settings.html', RequestContext(request, context))
+
 
 @login_required
 def project_wizard(request):
@@ -222,7 +235,8 @@ def project_wizard(request):
                                          If you want to have more options connect to Odesk at 
                                          <a href="%s">settings</a> page.''' % reverse('settings')
     return render(request, 'main/project/wizard.html', RequestContext(request, context))
-  
+
+
 @login_required
 def odesk_disconnect(request):
     assoc = UserOdeskAssociation.objects.filter(user=request.user)
@@ -230,10 +244,11 @@ def odesk_disconnect(request):
         assoc.delete()
     return redirect('index')
 
+
 def odesk_complete(request):
     client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
     auth, user = client.auth.get_token(request.GET['frob'])
-      
+
     if request.user.is_authenticated():
         assoc = UserOdeskAssociation.objects.filter(user=request.user, uid=user['uid'])
         if not assoc:
@@ -267,6 +282,7 @@ def odesk_complete(request):
         login(request, u)
         return redirect('index')
 
+
 def debug_login(request):
     user = authenticate(username='test', password='test')
     if user is None:
@@ -280,9 +296,11 @@ def debug_login(request):
     request.session['success'] = 'You have successfully logged in.'
     return redirect('index')
 
+
 def odesk_login(request):
     client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
     return redirect(client.auth.auth_url())
+
 
 @login_required
 def project_view(request, id):
@@ -291,9 +309,10 @@ def project_view(request, id):
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
-    
+
     context = {'project': proj}
     return render(request, 'main/project/overview.html', RequestContext(request, context)) 
+
 
 @login_required
 def project_workers_view(request, id):
@@ -302,9 +321,10 @@ def project_workers_view(request, id):
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
-    
+
     context = {'project': proj}
     return render(request, 'main/project/workers.html', RequestContext(request, context))
+
 
 @login_required
 def project_worker_view(request, id, worker_id):
@@ -313,9 +333,10 @@ def project_worker_view(request, id, worker_id):
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
-    
+
     context = {'project': proj}
     return render(request, 'main/project/worker.html', RequestContext(request, context))
+
 
 @login_required
 def project_debug(request, id, debug):
@@ -324,7 +345,7 @@ def project_debug(request, id, debug):
     except Project.DoesNotExist:
         request.session['error'] = "Such project doesn't exist."
         return redirect('index')
-    
+
     if debug == 'draft':
         proj.project_status = 0
     elif debug == 'active':
@@ -334,11 +355,12 @@ def project_debug(request, id, debug):
     else:
         request.session['error'] = "Wrong debug parameter."
         return redirect('index')
-    
+
     proj.save()
     request.session['success'] = 'Project status successfully changed.'
     return redirect('index')
-    
+
+
 @login_required
 def project_btm_view(request, id):
     try:
@@ -346,9 +368,10 @@ def project_btm_view(request, id):
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
-    
+
     context = {'project': proj}
     return render(request, 'main/project/btm_view.html', RequestContext(request, context))
+
 
 @login_required
 def project_data_view(request, id):
@@ -357,9 +380,10 @@ def project_data_view(request, id):
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
-    
+
     context = {'project': proj}
     return render(request, 'main/project/data.html', RequestContext(request, context)) 
+
 
 @login_required
 def project_classifier_view(request, id):
@@ -368,13 +392,15 @@ def project_classifier_view(request, id):
     except Project.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
-    
+
     context = {'project': proj}
     return render(request, 'main/project/classifier.html', RequestContext(request, context)) 
+
 
 def doc_parts(input_string):
     parts = core.publish_parts(source=input_string, writer_name='html')
     return parts
+
 
 @cache_page(10 * 60)
 def docs_view(request):
@@ -383,6 +409,7 @@ def docs_view(request):
     parts = doc_parts(file.read())
     context = {'content': parts['html_body']}
     return render(request, 'main/docs.html', RequestContext(request, context))
+
 
 def index(request):
     context = {}

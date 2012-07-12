@@ -2,9 +2,11 @@ from django.test import TestCase, LiveServerTestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.core import mail
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.common import exceptions
 import os
+import re
 
 from urlannotator.main.views import get_activation_key
 from urlannotator.main.models import UserProfile, UserOdeskAssociation,\
@@ -56,7 +58,11 @@ class BaseNotLoggedInTests(TestCase):
                                      'password1': 'test',
                                      'password2': 'test'})
         user = User.objects.get(email='test@test.test')
-        key = get_activation_key(user.email, user.id)
+        # Email backend used for tests
+        self.assertTrue(mail.outbox)
+
+        key = re.search(r'/activation/(.+-\d+)', mail.outbox[0].body)
+        key = key.group(1)
         self.assertFalse(user.is_active)
         self.assertEqual(user.get_profile().activation_key, key)
         self.assertTrue(user.get_profile().email_registered)
