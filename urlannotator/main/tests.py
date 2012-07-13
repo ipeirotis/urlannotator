@@ -144,7 +144,7 @@ class LoggedInTests(TestCase):
 
     def testLogIn(self):
         c = Client()
-        u = User.objects.create_user(username='test', password='test',
+        User.objects.create_user(username='test', password='test',
             email='test@test.org')
         resp = c.post(reverse('login'),
             {'email': 'test@test.org', 'password': 'test'}, follow=True)
