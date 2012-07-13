@@ -80,6 +80,10 @@ On local machine:
 
     sudo npm -g install less
 
+- Install web extracting apps
+
+    sudo apt-get install cutycapt lynx links
+
 On remote machine:
 
 - Follow steps from local machine setup up to the point ``Install basic requirements``
