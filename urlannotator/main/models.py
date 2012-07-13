@@ -39,11 +39,11 @@ class Job(models.Model):
     progress = models.IntegerField(default=0)
     no_of_urls = models.PositiveIntegerField(default=0)
     data_source = models.IntegerField(default=1,
-                                      choices=JOB_DATA_SOURCE_CHOICES)
+        choices=JOB_DATA_SOURCE_CHOICES)
     project_type = models.IntegerField(default=0, choices=JOB_TYPE_CHOICES)
     same_domain_allowed = models.PositiveIntegerField(default=0)
     hourly_rate = models.DecimalField(default=0, decimal_places=2,
-                                      max_digits=10)
+        max_digits=10)
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
 
     def get_status(self):
@@ -62,7 +62,7 @@ class Worker(models.Model):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     estimated_quality = models.DecimalField(default=0, decimal_places=5,
-                                            max_digits=7)
+        max_digits=7)
 
 
 class Sample(models.Model):

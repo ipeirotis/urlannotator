@@ -48,11 +48,11 @@ class WizardTopicForm(forms.Form):
     topic = forms.CharField(required=False, label="Topic",
             help_text="E.g Identify pages that contain hate speech on the web")
     topic_desc = forms.CharField(required=False, widget=forms.Textarea,
-                                 label="Topic description",
-      help_text='''E.g Find sites which advocate hostility or aggression</br>
-                   toward individuals or groups on the basis of race,</br>
-                   religion, gender, nationality, ethnic origni, or other</br>
-                   involuntary characteristic.''')
+        label="Topic description",
+        help_text='E.g Find sites which advocate hostility or aggression</br>'
+        'toward individuals or groups on the basis of race,</br>'
+        'religion, gender, nationality, ethnic origni, or other</br>'
+        'involuntary characteristic.')
 
     def clean_topic(self):
         topic = self.cleaned_data['topic']
@@ -64,22 +64,22 @@ class WizardTopicForm(forms.Form):
         topic_desc = self.cleaned_data['topic_desc']
         if not topic_desc:
             raise forms.ValidationError(
-                                    'Please input project topic description.')
+                'Please input project topic description.')
         return topic_desc
 
 
 class WizardAttributesForm(forms.Form):
     data_source = forms.ChoiceField(JOB_BASIC_DATA_SOURCE_CHOICES,
-                    label="Data source",
-                    help_text="You have 800 free URL quota provided by Odesk")
+        label="Data source",
+        help_text="You have 800 free URL quota provided by Odesk")
     project_type = forms.ChoiceField(JOB_TYPE_CHOICES, required=False,
-                                     label="Project type")
+        label="Project type")
     no_of_urls = forms.IntegerField(required=False,
-                                    label="No. of URLs to collect")
+        label="No. of URLs to collect")
     hourly_rate = forms.DecimalField(required=False, decimal_places=2,
-                                     max_digits=10, label="Hourly rate (US$)")
+        max_digits=10, label="Hourly rate (US$)")
     budget = forms.DecimalField(required=False, decimal_places=2,
-                                max_digits=10, label="Declared budget")
+        max_digits=10, label="Declared budget")
     odesk_connect = False
 
     def __init__(self, odeskConnected=False, *args, **kwargs):
@@ -102,7 +102,7 @@ class WizardAttributesForm(forms.Form):
         if (Job.is_odesk_required_for_source(cleaned_data['data_source']) and
             not self.odesk_connect):
             raise forms.ValidationError(
-                      'You have to be connected to Odesk to use this option.')
+              'You have to be connected to Odesk to use this option.')
 
         if cleaned_data['data_source'] == '1':
             cleaned_data['hourly_rate'] = 0
@@ -123,8 +123,8 @@ class WizardAttributesForm(forms.Form):
 
 class WizardAdditionalForm(forms.Form):
     same_domain = forms.IntegerField(
-                    label="No. of allowed multiple URLs from the same domain")
+        label="No. of allowed multiple URLs from the same domain")
     file_gold_urls = forms.FileField(required=False,
-                    label="Upload gold, (preclassified) urls", help_text="(i)")
+        label="Upload gold, (preclassified) urls", help_text="(i)")
     file_norm_urls = forms.FileField(required=False,
-                label="Upload additional non classified URLs", help_text="(i)")
+        label="Upload additional non classified URLs", help_text="(i)")

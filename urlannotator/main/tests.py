@@ -5,10 +5,10 @@ from django.core.urlresolvers import reverse
 from django.core import mail
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.common import exceptions
+from social_auth.models import UserSocialAuth
 import os
 import re
 
-from urlannotator.main.views import get_activation_key
 from urlannotator.main.models import Account, Job
 
 os.environ['DJANGO_LIVE_TEST_SERVER_ADDRESS'] = 'localhost:8082'
@@ -123,7 +123,7 @@ class LoggedInTests(TestCase):
     def testDashboard(self):
         c = Client()
         u = User.objects.create_user(username='test', password='test',
-                                     email='test@test.org')
+            email='test@test.org')
         c.login(username='test', password='test')
 
         resp = c.get(reverse('index'))
@@ -142,6 +142,20 @@ class LoggedInTests(TestCase):
         self.assertTrue('projects' in resp.context)
         self.assertTrue(len(resp.context['projects']) == 2)
 
+    def testLogIn(self):
+        c = Client()
+        u = User.objects.create_user(username='test', password='test',
+            email='test@test.org')
+        resp = c.post(reverse('login'),
+            {'email': 'test@test.org', 'password': 'test'}, follow=True)
+        self.assertTemplateUsed(resp, 'main/index.html')
+        self.assertIn('error', resp.context)
+
+        resp = c.post(reverse('login'),
+            {'email': 'testtest.org', 'password': 'test'}, follow=True)
+        self.assertTemplateUsed(resp, 'main/index.html')
+        self.assertIn('error', resp.context)
+
 
 class SettingsTests(TestCase):
     def testBasic(self):
@@ -155,15 +169,89 @@ class SettingsTests(TestCase):
         self.assertFalse('email' in resp.content)
         self.assertFalse('password' in resp.content)
 
+        resp = c.post(reverse('settings'), {'full_name': 'test',
+            'submit': 'general'})
+        self.assertTrue('success' in resp.context)
+        self.assertEqual(resp.context['success'],
+                         'Full name has been successfully changed.')
+
         u.get_profile().email_registered = True
         u.get_profile().save()
 
         resp = c.post(reverse('settings'), {'full_name': 'test',
-                                            'email': 'test@test.org',
-                                            'submit': 'general'})
+            'email': 'test@test.org', 'submit': 'general'})
         self.assertTrue('success' in resp.context)
         self.assertEqual(resp.context['success'],
                          'Full name has been successfully changed.')
+
+        # Password change
+        resp = c.post(reverse('settings'), {'old_password': 'test2',
+            'submit': 'password'})
+        self.assertFormError(resp, 'password_form', 'old_password',
+            'Your old password was entered incorrectly. '
+            'Please enter it again.')
+
+        resp = c.post(reverse('settings'), {'old_password': 'test',
+            'submit': 'password', 'new_password1': 'test2',
+            'new_password2': 'test2'},
+            follow=True)
+        self.assertIn('success', resp.context)
+
+        # Alerts
+        resp = c.post(reverse('settings'), {'alerts': None,
+            'submit': 'alerts'})
+        self.assertFormError(resp, 'alerts_form', 'alerts', [])
+
+        resp = c.post(reverse('settings'), {'alerts': 'alerts',
+            'submit': 'alerts'},
+            follow=True)
+        self.assertIn('success', resp.context)
+
+        resp = c.post(reverse('settings'), {'submit': 'wrongsubmit'})
+        self.assertTemplateUsed(resp, 'main/settings.html')
+        self.assertNotIn('error', resp.context)
+        self.assertNotIn('success', resp.context)
+
+    def testAssociation(self):
+        c = Client()
+        u = User.objects.create_user(username='test', password='test',
+                                     email='test@test.org')
+        c.login(username='test', password='test')
+
+        resp = c.get(reverse('settings'))
+        self.assertNotIn('facebook', resp.context)
+        self.assertNotIn('google', resp.context)
+        self.assertNotIn('twitter', resp.context)
+        self.assertNotIn('odesk', resp.context)
+
+        u.get_profile().odesk_uid = 1
+        u.get_profile().full_name = "Testing Test"
+        u.get_profile().save()
+
+        # Odesk assoc
+        resp = c.get(reverse('settings'))
+        self.assertIn('odesk', resp.context)
+
+        # Facebook assoc
+        usa = UserSocialAuth(user=u, provider='facebook', uid='Tester')
+        usa.save()
+
+        resp = c.get(reverse('settings'))
+        self.assertIn('facebook', resp.context)
+
+        # Google assoc
+        usa = UserSocialAuth(user=u, provider='google-oauth2', uid='Tester')
+        usa.save()
+
+        resp = c.get(reverse('settings'))
+        self.assertIn('google', resp.context)
+
+        # Twitter assoc
+        usa = UserSocialAuth(user=u, provider='twitter', uid='Tester')
+        usa.save()
+
+        resp = c.get(reverse('settings'))
+        self.assertIn('twitter', resp.context)
 
 
 class ProjectTests(TestCase):
@@ -333,7 +421,8 @@ class RegistrationSeleniumTests(LiveServerTestCase):
 
         self.selenium.get('%s%s'
                           % (self.live_server_url, reverse('logout')))
-        selector = '//ul[@class="nav pull-right"]//li[@class="dropdown"]/a[@class="dropdown-toggle"]'
+        selector = '//ul[@class="nav pull-right"]//li[@class="dropdown"]'\
+        '/a[@class="dropdown-toggle"]'
         el = self.selenium.find_element_by_xpath(selector)
         self.assertTrue(el)
 
