@@ -37,14 +37,15 @@ STATIC_URL = '/statics/'
 AWS_ACCESS_KEY_ID = 'AKIAIDLOOYJOOWG6OMVA'
 AWS_SECRET_ACCESS_KEY = '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'
 
-TWITTER_CONSUMER_KEY         = 'K7546vywvLOq8c4UTq9lfg'
-TWITTER_CONSUMER_SECRET      = 'rQlVEKdjpFuo2apsQv6qRtMGllxVPno2yn6exbZ7TA'
-FACEBOOK_APP_ID              = '257507524355077'
-FACEBOOK_API_SECRET          = 'f93a5baf067744023c9981b18366b4ca'
-GOOGLE_OAUTH2_CLIENT_ID      = '906829868245-hnom86rdj8nujbmpq4jku7232ri14e05.apps.googleusercontent.com'
-GOOGLE_OAUTH2_CLIENT_SECRET  = 'pcAdU11M4terfSumniGCCg1a'
-ODESK_CLIENT_ID      = '09138bf5ccb445137dc9f207ffde96db'
-ODESK_CLIENT_SECRET  = '0edc5cb4c97ae729'
+TWITTER_CONSUMER_KEY = 'K7546vywvLOq8c4UTq9lfg'
+TWITTER_CONSUMER_SECRET = 'rQlVEKdjpFuo2apsQv6qRtMGllxVPno2yn6exbZ7TA'
+FACEBOOK_APP_ID = '257507524355077'
+FACEBOOK_API_SECRET = 'f93a5baf067744023c9981b18366b4ca'
+GOOGLE_OAUTH2_CLIENT_ID =\
+    '906829868245-hnom86rdj8nujbmpq4jku7232ri14e05.apps.googleusercontent.com'
+GOOGLE_OAUTH2_CLIENT_SECRET = 'pcAdU11M4terfSumniGCCg1a'
+ODESK_CLIENT_ID = '09138bf5ccb445137dc9f207ffde96db'
+ODESK_CLIENT_SECRET = '0edc5cb4c97ae729'
 SOCIAL_AUTH_CREATE_USERS = False
 
 SOCIAL_AUTH_PIPELINE = (
@@ -55,11 +56,12 @@ SOCIAL_AUTH_PIPELINE = (
     'social_auth.backends.pipeline.user.update_user_details',
 )
 
-LOGIN_URL          = reverse_lazy('login')
+LOGIN_URL = reverse_lazy('login')
 LOGIN_REDIRECT_URL = reverse_lazy('index')
 
+
 # Defininig directory for 10clouds commons
-def _tenclouds_directory():
+def tenclouds_directory():
     import tenclouds
     return os.path.abspath(os.path.dirname(os.path.dirname(tenclouds.__file__)))
 
@@ -67,7 +69,6 @@ def _tenclouds_directory():
 STATICFILES_DIRS = (
     os.path.join(ROOT_DIR, 'statics'),
     _tenclouds_directory(),
-
 )
 
 # List of finder classes that know how to find static files in
