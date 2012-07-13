@@ -61,7 +61,7 @@ LOGIN_REDIRECT_URL = reverse_lazy('index')
 
 
 # Defininig directory for 10clouds commons
-def tenclouds_directory():
+def _tenclouds_directory():
     import tenclouds
     return os.path.abspath(os.path.dirname(os.path.dirname(tenclouds.__file__)))
 
