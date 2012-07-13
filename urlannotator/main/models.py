@@ -39,7 +39,6 @@ class Job(models.Model):
                                       choices=JOB_DATA_SOURCE_CHOICES)
     project_type = models.IntegerField(default=0, choices=JOB_TYPE_CHOICES)
     same_domain_allowed = models.PositiveIntegerField(default=0)
-    # project_status = models.IntegerField(default=0, choices=JOB_STATUS_CHOICES)
     hourly_rate = models.DecimalField(default=0, decimal_places=2,
                                       max_digits=10)
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
