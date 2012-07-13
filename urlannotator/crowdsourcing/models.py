@@ -1,18 +1,5 @@
 from django.db import models
-from urlannotator.main.models import Job, Worker
-
-LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
-
-
-class Sample(models.Model):
-    job = models.ForeignKey(Job)
-    url = models.URLField()
-    text = models.TextField()
-    screenshot = models.URLField()
-    label = models.CharField(max_length=10, choices=LABEL_CHOICES)
-    source = models.CharField(max_length=100)
-    added_by = models.ForeignKey(Worker)
-    added_on = models.DateField()
+from urlannotator.main.models import Worker, Sample, LABEL_CHOICES
 
 
 class WorkerQualityVote(models.Model):

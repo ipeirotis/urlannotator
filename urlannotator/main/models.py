@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 
 
+LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
+
+
 # Create your models here.
 class Account(models.Model):
     user = models.ForeignKey(User)
@@ -55,7 +58,19 @@ class Job(models.Model):
 
 
 class Worker(models.Model):
+    external_id = models.CharField(max_length=100)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     estimated_quality = models.DecimalField(default=0, decimal_places=5,
                                             max_digits=7)
+
+
+class Sample(models.Model):
+    job = models.ForeignKey(Job)
+    url = models.URLField()
+    text = models.TextField()
+    screenshot = models.URLField()
+    label = models.CharField(max_length=10, choices=LABEL_CHOICES)
+    source = models.CharField(max_length=100)
+    added_by = models.ForeignKey(Worker)
+    added_on = models.DateField()
