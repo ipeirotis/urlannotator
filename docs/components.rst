@@ -431,6 +431,24 @@ Questions
 - smartly parts listen on events or we have some flow control which sends proper events as reaction to others?
 
 
+
+Scope of objects
+================
+
+One in system
+-------------
+
+- SystemFlowControl
+- Job factory
+
+One per job
+-----------
+
+- Classifier
+- SamplesFactory
+- JobFlowControl
+
+
 Optional parts - mostly not finished
 ====================================
 
