@@ -1,3 +1,6 @@
+from collections import Counter
+
+
 class MajorityVoting(object):
     """
     Simple majority voting algorithm.
@@ -16,16 +19,20 @@ class MajorityVoting(object):
         self.votes = []
 
     def get_majority(self):
-        counter = 0
-        candidate = None
+        if self.votes != []:
+            return Counter(self.votes).most_common(1)[0][0]
+        return None
 
-        for v in self.votes:
-            if counter == 0:
-                candidate = v
-                counter += 1
-            elif v == candidate:
-                counter += 1
-            else:
-                counter -= 1
+        # counter = 0
+        # candidate = None
 
-        return candidate
+        # for v in self.votes:
+        #     if counter == 0:
+        #         candidate = v
+        #         counter += 1
+        #     elif v == candidate:
+        #         counter += 1
+        #     else:
+        #         counter -= 1
+
+        # return candidate
