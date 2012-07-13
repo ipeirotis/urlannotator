@@ -32,6 +32,11 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = True
 STATIC_URL = '/statics/'
 
+# Amazon credentials for sqs broker url.
+# Dont change naming - it is required by celery.
+AWS_ACCESS_KEY_ID = 'AKIAIDLOOYJOOWG6OMVA'
+AWS_SECRET_ACCESS_KEY = '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'
+
 TWITTER_CONSUMER_KEY         = 'K7546vywvLOq8c4UTq9lfg'
 TWITTER_CONSUMER_SECRET      = 'rQlVEKdjpFuo2apsQv6qRtMGllxVPno2yn6exbZ7TA'
 FACEBOOK_APP_ID              = '257507524355077'
@@ -140,6 +145,7 @@ BASE_APPS = (
     'south',
     'django_jenkins',
     'bootstrap',
+    'djcelery',
 
     'social_auth',
     'odesk',
@@ -252,3 +258,36 @@ PIPELINE_COFFEE_SCRIPT_BINARY = os.path.join(ROOT_DIR, '..', 'bin', 'coffeefinde
 PIPELINE_TEMPLATE_FUNC = 'new EJS'
 PIPELINE_TEMPLATE_NAMESPACE = 'window.Template'
 PIPELINE_TEMPLATE_EXT = '.ejs'
+
+# Celery
+# FIXME: there is issue with admin monitor:
+# http://stackoverflow.com/questions/8744953/why-doesnt-celerycam-work-with-amazon-sqs?rq=1
+import djcelery
+djcelery.setup_loader()
+
+# Celery tasks. INSTALLED_APPS also will be scanned so this is optional.
+CELERY_IMPORTS = (
+    'urlannotator.celerytest.tasks'
+)
+
+# Broker for celery
+# WARN: Do not use the amqp backend with SQS.
+BROKER_URL = 'sqs://%s:%s@' % (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+
+# Do we need this config?
+BROKER_TRANSPORT_OPTIONS = {
+    'region': 'eu-west-1',
+    # 'visibility_timeout': 3600,
+    # 'polling_interval': 0.3,
+    'queue_name_prefix': 'urlannotator-',
+}
+
+# Celery database backend
+# By default celery stores state in django db.
+# CELERY_RESULT_BACKEND = "database"
+# CELERY_RESULT_DBURI = "sqlite:///celerydb.sqlite"
+# CELERY_RESULT_DBURI = "mysql://scott:tiger@localhost/foo"
+
+# We can ignore results from celery tasks (no need for db backend)
+# We can also do this by: @celery.task(ignore_result=True)
+# CELERY_IGNORE_RESULT = True
