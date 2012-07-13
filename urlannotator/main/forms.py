@@ -9,7 +9,7 @@ class NewUserForm(forms.Form):
     email = forms.EmailField(label="E-mail")
     password1 = forms.CharField(widget=forms.PasswordInput, label="Password")
     password2 = forms.CharField(widget=forms.PasswordInput,
-                                label="Confirm password")
+        label="Confirm password")
 
     def clean_email(self):
         cleaned = self.cleaned_data['email']

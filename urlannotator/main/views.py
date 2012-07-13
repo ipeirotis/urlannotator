@@ -198,7 +198,7 @@ def project_wizard(request):
                    'additional_form': WizardAdditionalForm()}
         if not odeskLogged:
             context['wizard_alert'] = '''Your account is not connected to Odesk.
-                                         If you want to have more options connect to Odesk at 
+                                         If you want to have more options connect to Odesk at
                                          <a href="%s">settings</a> page.''' % reverse('settings')
     else:
         topic_form = WizardTopicForm(request.POST)
@@ -226,7 +226,7 @@ def project_wizard(request):
                    'additional_form': addt_form}
         if not odeskLogged:
             context['wizard_alert'] = '''Your account is not connected to Odesk.
-                                         If you want to have more options connect to Odesk at 
+                                         If you want to have more options connect to Odesk at
                                          <a href="%s">settings</a> page.''' % reverse('settings')
     return render(request, 'main/project/wizard.html', RequestContext(request, context))
 
@@ -301,7 +301,7 @@ def project_view(request, id):
         return redirect('index')
 
     context = {'project': proj}
-    return render(request, 'main/project/overview.html', RequestContext(request, context)) 
+    return render(request, 'main/project/overview.html', RequestContext(request, context))
 
 
 @login_required
@@ -372,7 +372,7 @@ def project_data_view(request, id):
         return redirect('index')
 
     context = {'project': proj}
-    return render(request, 'main/project/data.html', RequestContext(request, context)) 
+    return render(request, 'main/project/data.html', RequestContext(request, context))
 
 
 @login_required
@@ -384,7 +384,7 @@ def project_classifier_view(request, id):
         return redirect('index')
 
     context = {'project': proj}
-    return render(request, 'main/project/classifier.html', RequestContext(request, context)) 
+    return render(request, 'main/project/classifier.html', RequestContext(request, context))
 
 
 def doc_parts(input_string):
