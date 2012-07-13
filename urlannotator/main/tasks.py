@@ -8,15 +8,10 @@ from celery import task
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 
-from urlannotator.main.models import Sample
+from urlannotator.main.models import TemporarySample, Sample, Job, Worker
 
 SCREEN_DUMPS_BUCKET_NAME = "urlannotator_web_screenshot"
 S3_SERVER_NAME = "https://s3.amazonaws.com/"
-
-
-@task()
-def add(x, y):
-    return x + y
 
 
 @task()
@@ -24,10 +19,10 @@ def web_content_extraction(sample_id, url=None):
     """ Links/lynx required. Generates html output from those browsers.
     """
     if url is None:
-        url = Sample.objects.get(id=sample_id).url
+        url = TemporarySample.objects.get(id=sample_id).url
 
     text = subprocess.check_output(["links", "-dump", url])
-    Sample.objects.get(id=sample_id).update(text=text)
+    TemporarySample.objects.get(id=sample_id).update(text=text)
 
     return True
 
@@ -37,7 +32,7 @@ def web_screenshot_extraction(sample_id, url=None):
     """ CutyCapt required. Generates html output from those browsers.
     """
     if url is None:
-        url = Sample.objects.get(id=sample_id).url
+        url = TemporarySample.objects.get(id=sample_id).url
 
     slugified_url = slugify(url)
     screen_dir = "urlannotator_web_screenshot"
@@ -59,6 +54,32 @@ def web_screenshot_extraction(sample_id, url=None):
     # Url for public screen (without any expiration date)
     screenshot_url = S3_SERVER_NAME + SCREEN_DUMPS_BUCKET_NAME + '/' + k.name
 
-    Sample.objects.get(id=sample_id).update(screenshot=screenshot_url)
+    TemporarySample.objects.get(id=sample_id).update(screenshot=screenshot_url)
+
+    return True
+
+
+@task()
+def create_sample(temp_sample_id, job_id, worker_id, url):
+    """
+    Creates real sample using TemporarySample. If error while capturing web
+    propagate it. Finally deletes TemporarySample.
+    """
+
+    temp_sample = TemporarySample.objects.get(id=temp_sample_id)
+    job = Job.objects.get(id=job_id)
+    worker = Worker.objects.get(id=worker_id)
+
+    # Proper sample entry
+    Sample(
+        job=job,
+        url=url,
+        text=temp_sample.text,
+        screenshot=temp_sample.screenshot,
+        added_by=worker,
+    ).save()
+
+    # We don't need this object any more.
+    temp_sample.delete()
 
     return True

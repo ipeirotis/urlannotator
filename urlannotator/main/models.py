@@ -70,7 +70,12 @@ class Sample(models.Model):
     url = models.URLField()
     text = models.TextField()
     screenshot = models.URLField()
-    label = models.CharField(max_length=10, choices=LABEL_CHOICES)
-    source = models.CharField(max_length=100)
+    label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
+    source = models.CharField(max_length=100, blank=False)
     added_by = models.ForeignKey(Worker)
-    added_on = models.DateField()
+    added_on = models.DateField(auto_now_add=True)
+
+
+class TemporarySample(models.Model):
+    text = models.TextField()
+    screenshot = models.URLField()
