@@ -5,3 +5,6 @@ class SampleFactory():
     Result:
         Sample
     """
+
+    def new_sample(job):
+        pass
