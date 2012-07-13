@@ -110,15 +110,16 @@ Worker
 ------
 
 - name etc.
+- external_id
 - estimated quality
 
 
 WorkerQualityVotes
 ------------------
 
-- worker
-- sample
-- vote/label ('correct', 'incorrect')
+- Worker
+- Sample
+- label ('correct', 'incorrect', 'broken')
 - added_on
 
 
@@ -126,7 +127,7 @@ GoldSamples
 -----------
 
 - Sample
-- Label
+- label
 
 
 Classifier
