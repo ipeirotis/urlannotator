@@ -138,6 +138,21 @@ Classifier
 - parameters - json
 
 
+TrainingSet
+-----------
+
+- Job
+- revision (number) / created on?
+- training_samples 1..* with TrainingSample
+
+
+TrainingSample
+--------------
+
+- Sample
+- Label
+
+
 Statistics
 ----------
 
