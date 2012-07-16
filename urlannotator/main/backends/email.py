@@ -5,6 +5,7 @@ import threading
 from django.core.mail.backends.base import BaseEmailBackend
 from subprocess import Popen, PIPE
 
+
 class EmailBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, **kwargs):
         super(EmailBackend, self).__init__(fail_silently=fail_silently)
@@ -38,8 +39,10 @@ class EmailBackend(BaseEmailBackend):
         """A helper method that does the actual sending."""
         if not email_message.recipients():
             return False
+        print 'test'
         try:
-            ps = Popen(["sendmail"] + list(email_message.recipients()), stdin=PIPE)
+            ps = Popen(["sendmail"] + list(email_message.recipients()),
+                       stdin=PIPE)
             ps.stdin.write(email_message.message().as_string())
             ps.stdin.flush()
             ps.stdin.close()
