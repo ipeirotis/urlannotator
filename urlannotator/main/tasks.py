@@ -22,7 +22,7 @@ def web_content_extraction(sample_id, url=None):
         url = TemporarySample.objects.get(id=sample_id).url
 
     text = subprocess.check_output(["links", "-dump", url])
-    TemporarySample.objects.get(id=sample_id).update(text=text)
+    TemporarySample.objects.filter(id=sample_id).update(text=text)
 
     return True
 
@@ -54,32 +54,44 @@ def web_screenshot_extraction(sample_id, url=None):
     # Url for public screen (without any expiration date)
     screenshot_url = S3_SERVER_NAME + SCREEN_DUMPS_BUCKET_NAME + '/' + k.name
 
-    TemporarySample.objects.get(id=sample_id).update(screenshot=screenshot_url)
+    TemporarySample.objects.filter(id=sample_id).update(
+        screenshot=screenshot_url)
+
+    raise Exception
 
     return True
 
 
 @task()
-def create_sample(temp_sample_id, job_id, worker_id, url):
+def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url):
     """
     Creates real sample using TemporarySample. If error while capturing web
     propagate it. Finally deletes TemporarySample.
+    extraction_result should be [True, True] - otherwise chaining failed.
     """
 
-    temp_sample = TemporarySample.objects.get(id=temp_sample_id)
-    job = Job.objects.get(id=job_id)
-    worker = Worker.objects.get(id=worker_id)
+    extracted = all([x is True for x in extraction_result])
+    if extracted:
+        temp_sample = TemporarySample.objects.get(id=temp_sample_id)
+        job = Job.objects.get(id=job_id)
+        worker = Worker.objects.get(id=worker_id)
 
-    # Proper sample entry
-    Sample(
-        job=job,
-        url=url,
-        text=temp_sample.text,
-        screenshot=temp_sample.screenshot,
-        added_by=worker,
-    ).save()
+        # Proper sample entry
+        Sample(
+            job=job,
+            url=url,
+            text=temp_sample.text,
+            screenshot=temp_sample.screenshot,
+            added_by=worker,
+        ).save()
 
     # We don't need this object any more.
     temp_sample.delete()
 
+    return extracted
+
+
+@task()
+def create_sample_error():
+    print "Error occured"
     return True

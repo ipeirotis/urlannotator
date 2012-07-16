@@ -23,9 +23,10 @@ class SampleFactory():
 
         # Groups screensot and content extraction. On both success proceeds to
         # sample creation. Used Celery Chords.
-        (group([
+
+        return (group([
             web_screenshot_extraction.s(temp_sample.id, url=url),
             web_content_extraction.s(temp_sample.id, url=url)])
             |
             create_sample.s(temp_sample.id, job.id, worker.id, url)
-        )().apply_async()
+        )()
