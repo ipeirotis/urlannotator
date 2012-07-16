@@ -182,7 +182,7 @@ Classifier
 ----------
 Class abstract with methods (sample is of class *Sample*):
 
-- new(description, classes)
+- constructor with args: description, classes
 - train(samples)
 - update(samples) (optional - implemented with train if not provided by normal implementation)
 - classify(sample) -> class
