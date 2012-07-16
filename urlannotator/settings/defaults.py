@@ -157,6 +157,7 @@ PROJECT_APPS = (
     'urlannotator.tools',
     'urlannotator.classification',
     'urlannotator.crowdsourcing',
+    'urlannotator.flow_control',
 )
 
 INSTALLED_APPS = BASE_APPS + PROJECT_APPS
@@ -269,5 +270,6 @@ djcelery.setup_loader()
 
 # Celery tasks. INSTALLED_APPS also will be scanned so this is optional.
 CELERY_IMPORTS = (
-    'urlannotator.celerytest.tasks'
+    'urlannotator.celerytest.tasks',
+    'urlannotator.flow_control.event_system'
 )
