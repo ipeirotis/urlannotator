@@ -82,13 +82,13 @@ On local machine:
 
     sudo npm -g install less
 
-- Install web extracting apps
+- Run RabbitMQ if not running
 
-    sudo apt-get install cutycapt lynx links
+    sudo rabbitmq-server -detached
 
-- Install RabbitMQ
+- Run celery worker
 
-    sudo apt-get install rabbitmq-server
+    ./manage.py celery worker
 
 On remote machine:
 

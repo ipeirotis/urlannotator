@@ -271,6 +271,3 @@ djcelery.setup_loader()
 CELERY_IMPORTS = (
     'urlannotator.celerytest.tasks'
 )
-
-# Broker for celery
-BROKER_URL = 'amqp://'
