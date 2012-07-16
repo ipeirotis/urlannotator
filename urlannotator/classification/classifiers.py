@@ -19,7 +19,7 @@ class Classifier(object):
 
 class SimpleClassifier(Classifier):
     """
-        Simple url classifier using NaiveBayesClassificator
+        Simple url classifier using Decision Tree
     """
 
     def __init__(self, *args, **kwargs):
