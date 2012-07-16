@@ -1,7 +1,9 @@
 from django.test import TestCase
+from django.contrib.auth.models import User
 
-from urlannotator.main.models import Sample
+from urlannotator.main.models import Sample, Job
 from urlannotator.classification.classifiers import SimpleClassifier
+from urlannotator.classification.models import TrainingSet
 
 
 class SimpleClassifierTests(TestCase):
@@ -22,3 +24,18 @@ class SimpleClassifierTests(TestCase):
         self.assertEqual(sc.classify_with_info(test_sample), None)
         sc.train(train_data)
         self.assertNotEqual(sc.classify(test_sample), None)
+
+
+class TrainingSetManagerTests(TestCase):
+    def testTrainingSet(self):
+        job = Job()
+        self.assertEqual(TrainingSet.objects.newest_for_job(job), None)
+
+        u = User.objects.create_user(username='test', password='test')
+        job = Job(account=u.get_profile())
+        job.save()
+
+        ts = TrainingSet(job=job)
+        ts.save()
+        self.assertEqual(TrainingSet.objects.newest_for_job(job).job.id,
+            job.id)
