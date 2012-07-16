@@ -1,17 +1,48 @@
+import urllib2
+import os
+import re
+
 from django.test import TestCase, LiveServerTestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core import mail
+
 from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.common import exceptions
 from social_auth.models import UserSocialAuth
-import os
-import re
 
-from urlannotator.main.models import Account, Job
+from urlannotator.main.models import Account, Job, Worker, Sample
+from urlannotator.main.factories import SampleFactory
 
 os.environ['DJANGO_LIVE_TEST_SERVER_ADDRESS'] = 'localhost:8082'
+
+
+# class SampeFactoryTest(TestCase):
+
+#     def testSimpleSample(self):
+#         job = Job()
+#         job.account_id = 1
+#         job.save()
+
+#         worker = Worker()
+#         worker.save()
+
+#         test_url = 'google.com'
+
+#         sf = SampleFactory()
+#         res = sf.new_sample(job, worker, test_url)
+#         res.get()
+
+#         query = Sample.objects.filter(job=job, worker=worker, url=test_url)
+
+#         self.assertEqual(list(query), 1)
+
+#         sample = query.get()
+#         self.assertTrue('Google' in sample.text)
+
+#         s = urllib2.urlopen(sample.screenshot)
+#         self.assertEqual(s.headers.type, 'image/png')
 
 
 class BaseNotLoggedInTests(TestCase):

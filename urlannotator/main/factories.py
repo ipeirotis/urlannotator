@@ -7,7 +7,7 @@ from urlannotator.main.tasks import (web_content_extraction,
 from celery import group
 
 
-class SampleFactory():
+class SampleFactory(object):
     """
     Gets:
         Job, worker & url.
@@ -15,8 +15,7 @@ class SampleFactory():
         None
     """
 
-    @classmethod
-    def new_sample(cls, job, worker, url):
+    def new_sample(self, job, worker, url):
         """ Produce new sample and starts tasks for screen and text extraction.
         """
 

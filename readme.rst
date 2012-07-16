@@ -86,6 +86,10 @@ On local machine:
 
     sudo apt-get install cutycapt lynx links
 
+- Install RabbitMQ
+
+    sudo apt-get install rabbitmq-server
+
 On remote machine:
 
 - Follow steps from local machine setup up to the point ``Install basic requirements``

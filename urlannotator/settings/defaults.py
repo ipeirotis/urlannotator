@@ -273,4 +273,4 @@ CELERY_IMPORTS = (
 )
 
 # Broker for celery
-BROKER_URL = 'amqp://guest:guest@localhost:5672//'
+BROKER_URL = 'amqp://'
