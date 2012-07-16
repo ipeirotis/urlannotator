@@ -13,3 +13,5 @@ validictory
 -e git+git@github.com:10clouds/common.git#egg=10clouds-common.egg
 django-celery
 boto # amazon sqs support for celery
+numpy
+nltk
