@@ -23,15 +23,29 @@ def url_status(url):
 
 
 def get_web_text(url):
+    """ Using links we extract content from web.
+    """
+
+    # Simply calling links/lynx
     return subprocess.check_output(["links", "-dump", url])
 
 
 def get_web_screenshot(url):
+    """
+    Using CutyCapt application we create new file to which we point creating
+    new s3 object on aws.
+    This screenshot becomes public because we want permanent link for it.
+    Url is put together from s3 server name and object path.
+    As result we return url to screenshot.
+    """
+
     slugified_url = slugify(url)
     screen_dir = "urlannotator_web_screenshot"
     screen_out = "%s/%s.png" % (screen_dir, slugified_url)
 
+    # Lets create dir for temporary screenshots.
     os.system("mkdir -p %s" % screen_dir)
+    # Capturing web.
     os.system('cutycapt --url="%s" --out="%s"' % (url, screen_out))
 
     conn = S3Connection(settings.AWS_ACCESS_KEY_ID,
@@ -39,6 +53,7 @@ def get_web_screenshot(url):
     bucket = conn.create_bucket(SCREEN_DUMPS_BUCKET_NAME)
     k = Key(bucket)
     k.key = url
+    # Set key to desired screenshot.
     k.set_contents_from_filename(screen_out)
 
     # Removing file from disc
