@@ -74,6 +74,8 @@ On local machine:
 
     ./manage.py syncdb
 
+    ./manage.py migrate
+
 - Install less
 
     sudo apt-get install npm
