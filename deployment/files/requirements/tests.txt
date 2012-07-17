@@ -2,6 +2,6 @@ django-jenkins
 pylint
 coverage
 pyflakes
-pep8==1.2
+pep8
 mock
 selenium

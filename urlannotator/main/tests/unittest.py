@@ -1,5 +1,5 @@
-import os
 import re
+import urllib2
 
 from django.test import TestCase
 from django.test.client import Client
@@ -12,34 +12,32 @@ from social_auth.models import UserSocialAuth
 from urlannotator.main.models import Account, Job, Worker, Sample
 from urlannotator.main.factories import SampleFactory
 
-os.environ['DJANGO_LIVE_TEST_SERVER_ADDRESS'] = 'localhost:8082'
 
+class SampleFactoryTest(TestCase):
 
-# class SampeFactoryTest(TestCase):
+    def testSimpleSample(self):
+        job = Job()
+        job.account_id = 1
+        job.save()
 
-#     def testSimpleSample(self):
-#         job = Job()
-#         job.account_id = 1
-#         job.save()
+        worker = Worker()
+        worker.save()
 
-#         worker = Worker()
-#         worker.save()
+        test_url = 'google.com'
 
-#         test_url = 'google.com'
+        sf = SampleFactory()
+        res = sf.new_sample(job, worker, test_url)
+        res.get()
 
-#         sf = SampleFactory()
-#         res = sf.new_sample(job, worker, test_url)
-#         res.get()
+        query = Sample.objects.filter(job=job, url=test_url)
 
-#         query = Sample.objects.filter(job=job, worker=worker, url=test_url)
+        self.assertEqual(query.count(), 1)
 
-#         self.assertEqual(list(query), 1)
+        sample = query.get()
+        self.assertTrue('Google' in sample.text)
 
-#         sample = query.get()
-#         self.assertTrue('Google' in sample.text)
-
-#         s = urllib2.urlopen(sample.screenshot)
-#         self.assertEqual(s.headers.type, 'image/png')
+        s = urllib2.urlopen(sample.screenshot)
+        self.assertEqual(s.headers.type, 'image/png')
 
 
 class BaseNotLoggedInTests(TestCase):
@@ -150,9 +148,9 @@ class LoggedInTests(TestCase):
 
     def testDashboard(self):
         c = Client()
-        u = User.objects.create_user(username='test', password='test',
+        u = User.objects.create_user(username='test2', password='test',
             email='test@test.org')
-        c.login(username='test', password='test')
+        c.login(username='test2', password='test')
 
         resp = c.get(reverse('index'))
 
@@ -172,8 +170,8 @@ class LoggedInTests(TestCase):
 
     def testLogIn(self):
         c = Client()
-        User.objects.create_user(username='test', password='test',
-            email='test@test.org')
+        User.objects.create_user(username='test2', password='test',
+            email='test2@test.org')
         resp = c.post(reverse('login'),
             {'email': 'test@test.org', 'password': 'test'}, follow=True)
         self.assertTemplateUsed(resp, 'main/index.html')
@@ -188,9 +186,9 @@ class LoggedInTests(TestCase):
 class SettingsTests(TestCase):
     def testBasic(self):
         c = Client()
-        u = User.objects.create_user(username='test', password='test',
+        u = User.objects.create_user(username='test2', password='test',
                                      email='test@test.org')
-        c.login(username='test', password='test')
+        c.login(username='test2', password='test')
 
         resp = c.get(reverse('settings'))
         # User not registered via email
@@ -242,9 +240,9 @@ class SettingsTests(TestCase):
 
     def testAssociation(self):
         c = Client()
-        u = User.objects.create_user(username='test', password='test',
+        u = User.objects.create_user(username='test2', password='test',
                                      email='test@test.org')
-        c.login(username='test', password='test')
+        c.login(username='test2', password='test')
 
         resp = c.get(reverse('settings'))
         self.assertNotIn('facebook', resp.context)
@@ -285,9 +283,9 @@ class SettingsTests(TestCase):
 class ProjectTests(TestCase):
     def testBasic(self):
         c = Client()
-        u = User.objects.create_user(username='test', password='test',
+        u = User.objects.create_user(username='test2', password='test',
                                      email='test@test.org')
-        c.login(username='test', password='test')
+        c.login(username='test2', password='test')
 
         # No odesk association - display alert
         resp = c.get(reverse('project_wizard'))
