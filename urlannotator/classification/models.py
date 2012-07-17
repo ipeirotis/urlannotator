@@ -22,6 +22,7 @@ class TrainingSetManager(models.Manager):
 
         return els[0]
 
+
 class TrainingSet(models.Model):
     job = models.ForeignKey(Job)
     revision = models.DateTimeField(auto_now_add=True)
