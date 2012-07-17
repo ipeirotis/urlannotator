@@ -22,7 +22,7 @@ class SimpleClassifier(Classifier):
         Simple url classifier using Decision Tree
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, description, classes, *args, **kwargs):
         self.classifier = None
         super(SimpleClassifier, self).__init__(*args, **kwargs)
 
