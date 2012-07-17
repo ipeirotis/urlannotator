@@ -69,11 +69,14 @@ class JobResource(ModelResource):
 
         if task.ready():
             url = urllib.unquote_plus(request.GET['url'])
-            Sample.objects.filter(url=url, label='').\
-                update(label=random.choice(['Yes', 'No']))
-            s = Sample.objects.filter(url=url)[0]
+            s = Sample.objects.filter(url=url, label='')
+            if s:
+                s = s[0]
+            else:
+                resp['error'] = 'No sample to label.'
+                return self.create_response(request, resp)
             sc = SimpleClassifier()
-            sc.train(Sample.objects.filter(job=job))
+            sc.train(Sample.objects.filter(job=job).exclude(label=''))
             resp['outputLabel'] = sc.classify(s)
             resp['outputMulti'] = sc.classify_with_info(s)
         return self.create_response(request, resp)
