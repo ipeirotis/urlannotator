@@ -59,9 +59,11 @@ try:
 except ImportError:
     pass
 
-local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
-if os.path.isfile(local_settings):
-    from local import *
 
 # Broker for celery
 BROKER_URL = 'amqp://'
+
+
+local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
+if os.path.isfile(local_settings):
+    from local import *

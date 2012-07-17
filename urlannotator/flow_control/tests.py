@@ -1,14 +1,20 @@
+import os
+
 from django.utils import unittest
 
-from urlannotator.flow_control.event_system import EventBusSender
+from urlannotator.flow_control import event_bus
 
 
 class TestEventBusSender(unittest.TestCase):
 
-    def setUp(self):
-        self.ebs = EventBusSender()
+    def test_proper_matching(self):
 
-    def test_all(self):
-        event_name = 'TestEvent'
-        r = self.ebs.delay(event_name, 12, 4)  # , key='keyyy')
-#        self.assertEqual(16, r.get())
+        event_name, file_name, file_content = \
+            'TestEvent', "test_file_name", "success"
+        event_bus.delay(event_name, file_name, file_content)
+        # due to eager celery task evaluation this should work
+        with open(file_name, 'r') as f:
+            self.assertEqual(file_content, f.readline())
+        os.remove(file_name)
+
+

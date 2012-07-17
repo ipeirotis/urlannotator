@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 
 import logging
+import re
 
-from celery import Task
+from celery import task, Task, registry
 
 log = logging.getLogger('EventBus')
 
@@ -29,12 +30,13 @@ def flow_modules():
     return filter(None, (tmp(app) for app in settings.INSTALLED_APPS))
 
 
+@task()
 class EventBusSender(Task):
-    ''' Easy version - no matching on event names - just equality
+    ''' Matching using regexps
     '''
 
     def __init__(self):
-        self.registered = {}
+        self.registered = []
         self.config_yourself()
 
     def config_yourself(self):
@@ -42,22 +44,21 @@ class EventBusSender(Task):
             self.update_config(module.FLOW_DEFINITIONS)
 
     def register(self, event_pattern, fun):
-        print "registered: ", event_pattern
-        self.registered.setdefault(event_pattern, []).append(fun)
+        self.registered.append((re.compile(event_pattern), fun))
 
     def update_config(self, flow_definition):
         for event_pattern, fun in flow_definition:
             self.register(event_pattern, fun)
 
     def run(self, event_name, *args, **kwargs):
-        print "RUN"
         log.debug('Got event: %s(%s, %s)', event_name, args, kwargs)
-        if event_name not in self.registered:
-            log.warning('Event not catched: %s !', event_name)
-        else:
-            self.run_tasks(self.registered[event_name], *args, **kwargs)
 
-    def run_tasks(self, tasks, *args, **kwargs):
-        for task in tasks:
-            task.delay(*args, **kwargs)
-        # TODO this should be called with some error handling
+        matched = False
+        for matcher, task_func in self.registered:
+            if matcher.match(event_name):
+                matched = True
+                task_func.delay(*args, **kwargs)
+        if not matched:
+            log.warning('Event not matched: %s !', event_name)
+
+event_bus = registry.tasks[EventBusSender.name]

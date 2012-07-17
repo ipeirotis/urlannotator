@@ -33,6 +33,11 @@ LOGGING = {
             'handlers': ['console'],
             'propagate': False,
         },
+        'EventBus': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+            'propagate': True,
+        }
     },
     "root": {
         "handlers": ["console"],
