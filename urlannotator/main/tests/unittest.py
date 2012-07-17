@@ -1,11 +1,13 @@
 import re
 import urllib2
+import json
 
 from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core import mail
+from celery.result import AsyncResult
 
 from social_auth.models import UserSocialAuth
 
@@ -412,3 +414,48 @@ class ProjectTests(TestCase):
         resp = c.post(reverse('project_wizard'), data)
         self.assertFormError(resp, 'topic_form', 'topic_desc',
                              'Please input project topic description.')
+
+class ApiTests(TestCase):
+    def setUp(self):
+        self.api_url = '/api/v1/'
+        self.user = User.objects.create_user(username='testing',
+            password='test')
+        self.user.save()
+
+    def testJobs(self):
+        c = Client()
+        resp = c.get('/api/v1/job/?format=json', follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('meta', array)
+
+        Job(account=self.user.get_profile()).save()
+        resp = c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('status', array)
+
+        resp = c.get('%s%s?format=json' % (self.api_url, 'job/1/classify/'),
+            follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('error', array)
+
+        resp = c.get('%s%s?format=json&url=example.com'
+            % (self.api_url, 'job/2/classify/'), follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('error', array)
+
+        resp = c.get('%s%stest/?format=json' % (self.api_url, 'job/1/classify/'),
+            follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('error', array)
+
+        resp = c.get('%s%stest/?format=json' % (self.api_url, 'job/2/classify/'),
+            follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('error', array)
