@@ -7,7 +7,7 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core import mail
-from celery.result import AsyncResult
+from celery.result import EagerResult
 
 from social_auth.models import UserSocialAuth
 
@@ -415,6 +415,7 @@ class ProjectTests(TestCase):
         self.assertFormError(resp, 'topic_form', 'topic_desc',
                              'Please input project topic description.')
 
+
 class ApiTests(TestCase):
     def setUp(self):
         self.api_url = '/api/v1/'
@@ -453,6 +454,13 @@ class ApiTests(TestCase):
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
+
+        resp = c.get('%s%s?format=json&url=google.com' % (self.api_url, 'job/1/classify/'),
+            follow=True)
+
+        array = json.loads(resp.content)
+        task = EagerResult(array['task_id'], True, True)
+        task.get()
 
         resp = c.get('%s%stest/?format=json' % (self.api_url, 'job/2/classify/'),
             follow=True)
