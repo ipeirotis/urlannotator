@@ -17,7 +17,7 @@ class SimpleClassifierTests(TestCase):
             Sample(text='Hippo tree over lagoon', label='No'),
             Sample(text='Green tan with true fox', label='No')]
 
-        sc = SimpleClassifier()
+        sc = SimpleClassifier(description='Test classifier', classes=['label'])
         # Tests without training
         test_sample = Sample(text='Scottish whisky banana apple pinapple')
         self.assertEqual(sc.classify(test_sample), None)
@@ -31,7 +31,7 @@ class TrainingSetManagerTests(TestCase):
         job = Job()
         self.assertEqual(TrainingSet.objects.newest_for_job(job), None)
 
-        u = User.objects.create_user(username='test', password='test')
+        u = User.objects.create_user(username='test2', password='test')
         job = Job(account=u.get_profile())
         job.save()
 
