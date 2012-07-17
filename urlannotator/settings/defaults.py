@@ -147,6 +147,7 @@ BASE_APPS = (
     'django_jenkins',
     'bootstrap',
     'djcelery',
+    'tastypie',
 
     'social_auth',
     'odesk',

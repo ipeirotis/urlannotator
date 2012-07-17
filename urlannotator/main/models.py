@@ -1,3 +1,5 @@
+from tastypie.models import create_api_key
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -22,6 +24,7 @@ def create_user_profile(sender, instance, created, **kwargs):
         Account.objects.create(user=instance)
 
 post_save.connect(create_user_profile, sender=User)
+post_save.connect(create_api_key, sender=User)
 
 JOB_BASIC_DATA_SOURCE_CHOICES = ((1, 'Own workforce'),)
 JOB_DATA_SOURCE_CHOICES = JOB_BASIC_DATA_SOURCE_CHOICES + \

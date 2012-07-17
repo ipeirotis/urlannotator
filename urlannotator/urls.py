@@ -1,7 +1,14 @@
 from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.contrib import admin
+from tastypie.api import Api
+
+from urlannotator.main.api.resources import JobResource
+
 admin.autodiscover()
+
+v1_api = Api(api_name='v1')
+v1_api.register(JobResource())
 
 
 def bad(request):
@@ -45,6 +52,7 @@ urlpatterns = patterns('urlannotator',
     url(r'^_admin/', include(admin.site.urls)),
     url(r'^auth/', include('social_auth.urls')),
 
+    url(r'^api/', include(v1_api.urls)),
     url(r'^docs$', 'main.views.docs_view', name='docs_view'),
     url(r'^debug/user$', 'main.views.debug_login', name='debug_login'),
     (r'^bad/$', bad),
