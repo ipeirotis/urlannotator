@@ -16,5 +16,3 @@ class TestEventBusSender(unittest.TestCase):
         with open(file_name, 'r') as f:
             self.assertEqual(file_content, f.readline())
         os.remove(file_name)
-
-

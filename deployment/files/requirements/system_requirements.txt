@@ -7,3 +7,4 @@ rabbitmq-server
 cutycapt
 lynx
 links
+xvfb
