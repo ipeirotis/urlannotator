@@ -274,3 +274,7 @@ CELERY_IMPORTS = (
     'urlannotator.celerytest.tasks',
     'urlannotator.flow_control.event_system'
 )
+
+# Test runner
+# CELERY_ALWAYS_EAGER = True
+TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'

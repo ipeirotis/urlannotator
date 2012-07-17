@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import logging
 import re
 
-from celery import task, Task, registry
+from celery import task, Task, registry, group
 
 log = logging.getLogger('EventBus')
 
@@ -18,12 +18,12 @@ def flow_modules():
         mod = import_module(app)
         # Attempt to import the app's admin module.
         try:
-            return import_module('%s.flow' % app)
+            return import_module('%s.tasks' % app)
         except:
             # Decide whether to bubble up this error. If the app just
-            # doesn't have an flow module, we can ignore the error
+            # doesn't have an tasks module, we can ignore the error
             # attempting to import it, otherwise we want it to bubble up.
-            if module_has_submodule(mod, 'flow'):
+            if module_has_submodule(mod, 'tasks'):
                 raise
         return None
 
@@ -41,7 +41,8 @@ class EventBusSender(Task):
 
     def config_yourself(self):
         for module in flow_modules():
-            self.update_config(module.FLOW_DEFINITIONS)
+            if hasattr(module, 'FLOW_DEFINITIONS'):
+                self.update_config(module.FLOW_DEFINITIONS)
 
     def register(self, event_pattern, fun):
         self.registered.append((re.compile(event_pattern), fun))
@@ -54,11 +55,16 @@ class EventBusSender(Task):
         log.debug('Got event: %s(%s, %s)', event_name, args, kwargs)
 
         matched = False
+        dispatched = []
         for matcher, task_func in self.registered:
             if matcher.match(event_name):
                 matched = True
-                task_func.delay(*args, **kwargs)
+                dispatched.append(task_func.s(*args, **kwargs))
+                # task_func.delay(*args, **kwargs)
+
         if not matched:
             log.warning('Event not matched: %s !', event_name)
+
+        return group(dispatched).apply_async()
 
 event_bus = registry.tasks[EventBusSender.name]
