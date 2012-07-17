@@ -44,7 +44,7 @@ def web_screenshot_extraction(sample_id, url=None):
 
 
 @task()
-def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url):
+def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url, label=''):
     """
     Creates real sample using TemporarySample. If error while capturing web
     propagate it. Finally deletes TemporarySample.
@@ -60,15 +60,18 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url):
         worker = Worker.objects.get(id=worker_id)
 
         # Proper sample entry
-        Sample(
+        sample = Sample(
             job=job,
             url=url,
             text=temp_sample.text,
             screenshot=temp_sample.screenshot,
             added_by=worker,
-        ).save()
+            label=label
+        )
+        sample.save()
+        return (extracted, sample.id)
 
     # We don't need this object any more.
     temp_sample.delete()
 
-    return extracted
+    return (extracted, None)

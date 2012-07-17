@@ -28,7 +28,7 @@
     {% include 'main/project/wizard-form-error.html' with form=attributes_form %}
     {% include 'main/project/wizard-form-error.html' with form=additional_form %}
   </div>
-  <form method="POST" action="#" class="form form-horizontal">
+  <form method="POST" action="#" class="form form-horizontal" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="row-fluid">
       <h4>Topic</h4>

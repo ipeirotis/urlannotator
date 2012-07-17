@@ -3,12 +3,13 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from tastypie.api import Api
 
-from urlannotator.main.api.resources import JobResource
+from urlannotator.main.api.resources import JobResource, SampleResource
 
 admin.autodiscover()
 
 v1_api = Api(api_name='v1')
 v1_api.register(JobResource())
+v1_api.register(SampleResource())
 
 
 def bad(request):

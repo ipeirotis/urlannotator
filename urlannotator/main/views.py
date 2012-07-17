@@ -13,16 +13,17 @@ import hashlib
 import string
 import random
 import os
+import csv
 from docutils import core
 from django.views.decorators.cache import cache_page
 
 from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
     GeneralEmailUserForm, GeneralUserForm
-from urlannotator.main.models import Account, Job
+from urlannotator.main.models import Account, Job, Worker
 from urlannotator.settings.defaults import ODESK_CLIENT_ID, ROOT_DIR,\
     ODESK_CLIENT_SECRET, SITE_URL
-
+from urlannotator.main.factories import SampleFactory
 
 def get_activation_key(email, num, salt_size=10,
                        salt_chars=string.ascii_uppercase + string.digits):
@@ -246,6 +247,17 @@ def project_wizard(request):
                     same_domain_allowed=addt_form.cleaned_data['same_domain'],
                     status=p_type)
             p.save()
+            if 'file_gold_urls' in request.FILES:
+                try:
+                    urls = csv.reader(request.FILES['file_gold_urls'])
+                    sample_factory = SampleFactory()
+                    w = Worker()
+                    w.save()
+                    for line in urls:
+                        sample_factory.new_sample(p, w, line[0], line[1])
+                except csv.Error, e:
+                    request.session['error'] = e
+                    return redirect('index')
             return redirect('project_view', id=p.id)
         context = {'topic_form': topic_form,
                    'attributes_form': attr_form,
