@@ -9,7 +9,7 @@ from urlannotator.main.models import Sample
 class Classifier247(object):
 
     def __init__(self, classifier_cls, rwlock_cls=MemcachedRWLock,
-            lock_cls=MemcacheLock):
+            lock_cls=MemcacheLock, *args, **kwargs):
         """
         Our permanent (24/7) classifier can be initialized with custom
         classifier class - classifier_cls (which performs real classification) &
@@ -19,8 +19,8 @@ class Classifier247(object):
 
         self.lock = lock_cls()
         self.rwlock = rwlock_cls()
-        self.read_classifier = classifier_cls()
-        self.write_classifier = classifier_cls()
+        self.read_classifier = classifier_cls(*args, **kwargs)
+        self.write_classifier = classifier_cls(*args, **kwargs)
 
     def train(self, *args, **kwargs):
         """

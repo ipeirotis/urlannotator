@@ -2,8 +2,34 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job
-from urlannotator.classification.classifiers import SimpleClassifier
+from urlannotator.classification.classifiers import (SimpleClassifier,
+    Classifier247)
 from urlannotator.classification.models import TrainingSet
+
+
+class Classifier247Tests(TestCase):
+
+    def setUp(self):
+        self.train_data = [
+            Sample(text='Mechanical squirrel screwdriver over car',
+                label='Yes'),
+            Sample(text='Screwdriver fix mechanical bike bolts', label='Yes'),
+            Sample(text='Brown banana apple pinapple potato', label='No'),
+            Sample(text='apple pinapple potato', label='No'),
+            Sample(text='Hippo tree over lagoon', label='No'),
+            Sample(text='Green tan with true fox', label='No')
+        ]
+
+        self.classifier247 = Classifier247(SimpleClassifier,
+            description='Test classifier', classes=['label'])
+
+    def testReadClassifier247(self):
+        test_sample = Sample(text='Scottish whisky banana apple pinapple')
+        self.assertEqual(self.classifier247.classify(test_sample), None)
+        self.assertEqual(self.classifier247.classify_with_info(test_sample),
+            None)
+        self.classifier247.train(self.train_data)
+        self.assertNotEqual(self.classifier247.classify(test_sample), None)
 
 
 class SimpleClassifierTests(TestCase):
@@ -15,7 +41,8 @@ class SimpleClassifierTests(TestCase):
             Sample(text='Brown banana apple pinapple potato', label='No'),
             Sample(text='apple pinapple potato', label='No'),
             Sample(text='Hippo tree over lagoon', label='No'),
-            Sample(text='Green tan with true fox', label='No')]
+            Sample(text='Green tan with true fox', label='No')
+        ]
 
         sc = SimpleClassifier(description='Test classifier', classes=['label'])
         # Tests without training
