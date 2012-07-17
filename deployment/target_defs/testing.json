@@ -22,5 +22,6 @@
     "nginx_sites_enabled": [
         "urlannotator"
     ],
-    "branch": "master"
+    "branch": "master",
+    "locals_path": "files/django/local.py"
 }
