@@ -34,7 +34,7 @@ class SampleResource(ModelResource):
             return self.create_response(request, {'error': 'Wrong job.'})
 
         url = urllib.unquote_plus(request.GET['url'])
-        SampleFactory().new_sample(job, w, url)
+        SampleFactory().new_sample(job.id, w.id, url)
         return self.create_response(request, {'status': 'Sent request'})
 
 
@@ -72,7 +72,7 @@ class JobResource(ModelResource):
         w = Worker()
         w.save()
 
-        task = SampleFactory().new_sample(job, w, url)
+        task = SampleFactory().new_sample(job.id, w.id, url)
         return self.create_response(request, {'task_id': task.id})
 
     def classify_result(self, request, **kwargs):

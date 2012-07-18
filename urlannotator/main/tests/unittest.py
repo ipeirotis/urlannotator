@@ -28,7 +28,7 @@ class SampleFactoryTest(TestCase):
         test_url = 'google.com'
 
         sf = SampleFactory()
-        res = sf.new_sample(job, worker, test_url)
+        res = sf.new_sample(job.id, worker.id, test_url)
         res.get()
 
         query = Sample.objects.filter(job=job, url=test_url)

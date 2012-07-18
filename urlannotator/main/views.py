@@ -256,7 +256,7 @@ def project_wizard(request):
                     w = Worker()
                     w.save()
                     for line in urls:
-                        sample_factory.new_sample(p, w, line[0], line[1])
+                        sample_factory.new_sample(p.id, w.id, line[0], line[1])
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')

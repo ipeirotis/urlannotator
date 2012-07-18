@@ -2,7 +2,7 @@ import os
 
 from django.test import TestCase
 
-from urlannotator.flow_control import event_bus
+from urlannotator.flow_control.event_system import event_bus
 
 
 class TestEventBusSender(TestCase):

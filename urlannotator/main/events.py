@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from celery import task, Task, registry
 from factories import SampleFactory
 
@@ -10,12 +12,12 @@ class EventRawSampleManager(Task):
     def __init__(self):
         self.factory = SampleFactory()
 
-    def run(self, job, worker, url, label=''):
-        self.factory.new_sample(job, worker, url, label)
+    def run(self, *args, **kwargs):
+        self.factory.new_sample(*args, **kwargs)
 
 new_raw_sample_task = registry.tasks[EventRawSampleManager.name]
 
 
-FLOW_DEFINITIONS = [
+settings.FLOW_DEFINITIONS += [
     (r'EventNewRawSample', new_raw_sample_task),
 ]

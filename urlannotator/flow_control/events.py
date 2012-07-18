@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from celery import task
 
 
@@ -15,7 +17,7 @@ def test_task(fname, content):
         f.write(content)
 
 
-FLOW_DEFINITIONS = [
+settings.FLOW_DEFINITIONS += [
     (r'TestEvent', test_task),
     (r'.*', logging_task)
-    ]
+]

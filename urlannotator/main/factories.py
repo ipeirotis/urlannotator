@@ -15,7 +15,7 @@ class SampleFactory(object):
         None
     """
 
-    def new_sample(self, job, worker, url, label=''):
+    def new_sample(self, job_id, worker_id, url, label='', *args, **kwargs):
         """ Produce new sample and starts tasks for screen and text extraction.
         """
 
@@ -28,7 +28,8 @@ class SampleFactory(object):
             web_screenshot_extraction.s(temp_sample.id, url=url),
             web_content_extraction.s(temp_sample.id, url=url)])
             |
-            create_sample.s(temp_sample.id, job.id, worker.id, url, label)
+            create_sample.s(temp_sample.id, job_id, worker_id, url, label,
+                *args, **kwargs)
         ).apply_async(
             expires=datetime.datetime.now() + datetime.timedelta(days=1)
         )

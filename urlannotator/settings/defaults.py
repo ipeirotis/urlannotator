@@ -154,11 +154,11 @@ BASE_APPS = (
 )
 
 PROJECT_APPS = (
-    'urlannotator.main',
-    'urlannotator.tools',
     'urlannotator.classification',
     'urlannotator.crowdsourcing',
     'urlannotator.flow_control',
+    'urlannotator.main',
+    'urlannotator.tools',
 )
 
 INSTALLED_APPS = BASE_APPS + PROJECT_APPS
@@ -271,10 +271,14 @@ djcelery.setup_loader()
 
 # Celery tasks. INSTALLED_APPS also will be scanned so this is optional.
 CELERY_IMPORTS = (
-    'urlannotator.celerytest.tasks',
     'urlannotator.flow_control.event_system'
+    'urlannotator.flow_control.events'
+    'urlannotator.main.events'
 )
 
 # Test runner
 # CELERY_ALWAYS_EAGER = True
 TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
+
+# Events holder - events are appended in events.py modules in each app.
+FLOW_DEFINITIONS = []
