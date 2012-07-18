@@ -22,17 +22,23 @@ Setup
 =====
 Required libraries:
 -------------------
-- Django >= 1.4
+- Django>=1.4
 - python-memcached
 - South
-- django-pipeline >= 1.2
+- django-pipeline>=1.2
 - ipdb
-- python
+- ipython
 - django-social-auth
 - python-odesk
 - bootstrap
 - docutils
+- validictory
 - 10clouds/common
+- django-celery
+- boto
+- numpy
+- nltk
+- django-tastypie
 
 (See deployment/files/requirements/base.txt)
 
@@ -76,11 +82,18 @@ On local machine:
 
     ./manage.py migrate
 
-- Install less
+- Install less (>=1.3.0)
 
-    sudo apt-get install npm
+    sudo apt-get install less
 
-    sudo npm -g install less
+    - If your distribution's repository has outdated version of less (<1.3.0)
+
+        sudo apt-get install npm
+
+        - If your distribution's repository has outdated version of npm (<1.0.0), try compiling it npm from sources
+        - Otherwise (npm>=1.0.0)
+
+            sudo npm -g install less
 
 - Run RabbitMQ if not running
 
