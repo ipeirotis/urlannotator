@@ -17,6 +17,7 @@ import csv
 from docutils import core
 from django.views.decorators.cache import cache_page
 
+from urlannotator.classification.classifiers import SimpleClassifier
 from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
     GeneralEmailUserForm, GeneralUserForm
@@ -425,6 +426,7 @@ def project_data_view(request, id):
         RequestContext(request, context))
 
 
+@csrf_protect
 @login_required
 def project_classifier_view(request, id):
     try:

@@ -44,7 +44,7 @@
                     Input test URL(s):
                 </td>
                 <td>
-                    <textarea cols="40" rows="5">Simple URL</textarea>
+                    <textarea name="test-urls" cols="40" rows="5">Simple URL</textarea>
                 </td>
             </tr>
             <tr class="input-test-texts" style="display:none;">
@@ -52,7 +52,7 @@
                     Input Text:
                 </td>
                 <td>
-                    <textarea cols="40" rows="5"></textarea>
+                    <textarea name="test-texts" cols="40" rows="5"></textarea>
                 </td>
             </tr>
             <tr class="input-test-texts" style="display:none;">
@@ -64,6 +64,7 @@
             <tr>
                 <td></td>
                 <td>
+                    {%csrf_token%}
                     <input type="submit" href="#" class="btn" value="Classify!">      
                 </td>
             </tr>
@@ -91,8 +92,7 @@
           <th style="width: 50px;">Preview</th>
           <th>URL</th>
           <th style="width: 50px;">Class</th>
-          <th style="width: 80px;">Calculated Class</th>
-          <th style="width: 50px;">Probability</th>
+          <th style="width: 130px;">Calculated Class Probability</th>
         </tr>
       </thead>
       <tbody>
@@ -103,9 +103,6 @@
             </td>
             <td>
               <a href="{{ sample.url }}">{{ sample.url }}</a>
-            </td>
-            <td>
-              {{ sample.label }}
             </td>
             <td>
               {{ sample.label }}

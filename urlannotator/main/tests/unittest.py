@@ -283,14 +283,15 @@ class SettingsTests(TestCase):
 
 
 class ProjectTests(TestCase):
-    def testBasic(self):
-        c = Client()
-        u = User.objects.create_user(username='test2', password='test',
+    def setUp(self):
+        self.c = Client()
+        self.u = User.objects.create_user(username='test2', password='test',
                                      email='test@test.org')
-        c.login(username='test2', password='test')
+        self.c.login(username='test2', password='test')
 
+    def testBasic(self):
         # No odesk association - display alert
-        resp = c.get(reverse('project_wizard'))
+        resp = self.c.get(reverse('project_wizard'))
 
         self.assertTrue(resp.status_code in [200, 302])
         self.assertTrue('wizard_alert' in resp.context)
@@ -309,15 +310,15 @@ class ProjectTests(TestCase):
                     'same_domain': '0',
                     'submit': 'draft'}
 
-            resp = c.post(reverse('project_wizard'), data)
+            resp = self.c.post(reverse('project_wizard'), data)
             self.assertFormError(resp, 'attributes_form', None, error_text)
 
-        prof = u.get_profile()
+        prof = self.u.get_profile()
         prof.odesk_uid = 'test'
         prof.save()
 
         # Odesk is associated
-        resp = c.get(reverse('project_wizard'))
+        resp = self.c.get(reverse('project_wizard'))
 
         self.assertTrue(resp.status_code in [200, 302])
         self.assertFalse('wizard_alert' in resp.context)
@@ -333,7 +334,7 @@ class ProjectTests(TestCase):
                     'same_domain': '0',
                     'submit': submit}
 
-            resp = c.post(reverse('project_wizard'), data, follow=True)
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
             self.assertTemplateUsed(resp, 'main/project/overview.html')
 
         # Selected project type, missing values, get defaults
@@ -345,7 +346,7 @@ class ProjectTests(TestCase):
                     'same_domain': '0',
                     'submit': submit}
 
-            resp = c.post(reverse('project_wizard'), data, follow=True)
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
             self.assertTemplateUsed(resp, 'main/project/overview.html')
 
         # Missing one of values from project type
@@ -358,7 +359,7 @@ class ProjectTests(TestCase):
                     'same_domain': '0',
                     'submit': submit}
 
-            resp = c.post(reverse('project_wizard'), data, follow=True)
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
             self.assertTemplateUsed(resp, 'main/project/overview.html')
 
         for submit in ['draft', 'active']:
@@ -369,7 +370,7 @@ class ProjectTests(TestCase):
                     'same_domain': '0',
                     'submit': submit}
 
-            resp = c.post(reverse('project_wizard'), data, follow=True)
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
             self.assertTemplateUsed(resp, 'main/project/overview.html')
 
         # Full values provided
@@ -385,7 +386,7 @@ class ProjectTests(TestCase):
                         'same_domain': '0',
                         'submit': submit}
 
-                resp = c.post(reverse('project_wizard'), data, follow=True)
+                resp = self.c.post(reverse('project_wizard'), data, follow=True)
                 self.assertTemplateUsed(resp, 'main/project/overview.html')
 
         # Check project topic and description
@@ -398,7 +399,7 @@ class ProjectTests(TestCase):
                 'same_domain': '0',
                 'submit': 'draft'}
 
-        resp = c.post(reverse('project_wizard'), data)
+        resp = self.c.post(reverse('project_wizard'), data)
         self.assertFormError(resp, 'topic_form', 'topic',
                              'Please input project topic.')
 
@@ -411,9 +412,45 @@ class ProjectTests(TestCase):
                 'same_domain': '0',
                 'submit': 'draft'}
 
-        resp = c.post(reverse('project_wizard'), data)
+        resp = self.c.post(reverse('project_wizard'), data)
         self.assertFormError(resp, 'topic_form', 'topic_desc',
                              'Please input project topic description.')
+
+    def testOverview(self):
+        job = Job(title='test', description='test',
+            account=self.u.get_profile())
+        job.save()
+
+        project_urls = ['view', 'workers_view', 'data_view',
+            'btm_view', 'classifier_view']
+
+        # Correct display
+        for view in project_urls:
+            resp = self.c.get(reverse('project_%s' % view, args=[1]),
+                follow=True)
+            self.assertEqual(resp.status_code, 200)
+
+        # Wrong job id - missing job
+        for view in project_urls:
+            resp = self.c.get(reverse('project_%s' % view, args=[0]),
+                follow=True)
+            self.assertIn('error', resp.context)
+
+        resp = self.c.get(reverse('project_worker_view', args=[1, 1]),
+            follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.c.get(reverse('project_worker_view', args=[0, 1]),
+            follow=True)
+        self.assertEqual(resp.status_code, 200)
+
+
+class DocsTest(TestCase):
+    def testDocs(self):
+        c = Client()
+
+        resp = c.get(reverse('docs_view'), follow=True)
+        self.assertTemplateUsed(resp, 'main/docs.html')
 
 
 class ApiTests(TestCase):
