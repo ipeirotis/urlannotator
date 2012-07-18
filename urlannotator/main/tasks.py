@@ -5,14 +5,6 @@ from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 
 
 @task()
-def add(a, b):
-    """ Simple queue testing task.
-    """
-
-    return a + b
-
-
-@task()
 def web_content_extraction(sample_id, url=None):
     """ Links/lynx required. Generates html output from those browsers.
     """
