@@ -1,11 +1,10 @@
 import os
 from os.path import join as pjoin
 import json
-import platform
 from fabric.colors import red, yellow, green, blue, magenta
 from fabric.api import abort, task, env, hide, settings, sudo, cd
 
-from modules import nginx, supervisor, rabbitmq
+from modules import nginx, supervisor
 from modules.virtualenv import update_virtualenv, create_virtualenv,\
     setup_virtualenv
 from modules.utils import show, put_file_with_perms,\
@@ -42,13 +41,6 @@ def install_system_requirements():
                 name = 'requirements: {0}'.format(r)
                 with settings(sudo_prefix=SUDO_PREFIX):
                     install_without_prompt(r, name, silent=False)
-        # On Ubuntu, install less via npm
-        linux_distr = platform.linux_distribution()
-        if linux_distr[0] == 'Ubuntu':
-            with settings(sudo_prefix=SUDO_PREFIX):
-                install_without_prompt('npm', 'requirements: npm',
-                    silent=False)
-                sudo('npm install -g less')
 
 
 def prepare_global_env():
