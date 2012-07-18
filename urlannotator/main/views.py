@@ -438,11 +438,11 @@ def project_classifier_view(request, id):
         exclude(label='')
     samples = Sample.objects.filter(job=proj)
     yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
-    yes_perc = int(yes_labels.count() * 100 / samples.count())
+    yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
     no_labels = samples.filter(label=LABEL_CHOICES[1][0])
-    no_perc = int(no_labels.count() * 100 / samples.count())
+    no_perc = int(no_labels.count() * 100 / (samples.count() or 1))
     broken_labels = samples.filter(label=LABEL_CHOICES[2][0])
-    broken_perc = int(broken_labels.count() * 100 / samples.count())
+    broken_perc = int(broken_labels.count() * 100 / (samples.count() or 1))
     context['classifier_stats'] = {
         'count': samples.count(),
         'yes_labels': {'val': yes_labels.count(), 'perc': yes_perc},
