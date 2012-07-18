@@ -271,9 +271,9 @@ djcelery.setup_loader()
 
 # Celery tasks. INSTALLED_APPS also will be scanned so this is optional.
 CELERY_IMPORTS = (
-    'urlannotator.flow_control.event_system'
-    'urlannotator.flow_control.events'
-    'urlannotator.main.events'
+    'urlannotator.flow_control.event_system',
+    'urlannotator.flow_control.events',
+    'urlannotator.main.events',
 )
 
 # Test runner
