@@ -76,10 +76,10 @@
       <table class="table">
         <thead></thead>
         <tbody>
-          <tr><td>URLs collected</td><td>96</td><td>-</td></tr>
-          <tr><td>yes class records</td><td>54</td><td>56%</td></tr>
-          <tr><td>no class records</td><td>32</td><td>33%</td></tr>
-          <tr><td>broken class records</td><td>10</td><td>10%</td></tr>
+          <tr><td>URLs collected</td><td>{{classifier_stats.count}}</td><td>-</td></tr>
+          <tr><td>yes class records</td><td>{{classifier_stats.yes_labels.val}}</td><td>{{classifier_stats.yes_labels.perc}}%</td></tr>
+          <tr><td>no class records</td><td>{{classifier_stats.no_labels.val}}</td><td>{{classifier_stats.no_labels.perc}}%</td></tr>
+          <tr><td>broken class records</td><td>{{classifier_stats.broken_labels.val}}</td><td>{{classifier_stats.broken_labels.perc}}%</td></tr>
         </tbody>
       </table>
     </div>
@@ -96,7 +96,26 @@
         </tr>
       </thead>
       <tbody>
-        
+        {% for sample in classifier_samples %}
+          <tr>
+            <td>
+              <a href="{{ sample.screenshot }}"><img style="width: 40px; height:40px" src="{{ sample.screenshot }}"></a>
+            </td>
+            <td>
+              <a href="{{ sample.url }}">{{ sample.url }}</a>
+            </td>
+            <td>
+              {{ sample.label }}
+            </td>
+            <td>
+              {{ sample.label }}
+            </td>
+            <td>
+              0
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>  
     </table>
   </div>
 {% endblock %}

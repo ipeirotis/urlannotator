@@ -106,5 +106,6 @@ class JobResource(ModelResource):
             sc = SimpleClassifier(description=job.title, classes=[])
             sc.train(Sample.objects.filter(job=job).exclude(label=''))
             resp['outputLabel'] = sc.classify(s)
-            resp['outputMulti'] = sc.classify_with_info(s)
+            if 'with_info' in request.GET:
+                resp['outputMulti'] = sc.classify_with_info(s)
         return self.create_response(request, resp)

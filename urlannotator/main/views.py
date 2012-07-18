@@ -20,10 +20,12 @@ from django.views.decorators.cache import cache_page
 from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
     GeneralEmailUserForm, GeneralUserForm
-from urlannotator.main.models import Account, Job, Worker
+from urlannotator.main.models import Account, Job, Worker, Sample,\
+    LABEL_CHOICES
 from urlannotator.settings.defaults import ODESK_CLIENT_ID, ROOT_DIR,\
     ODESK_CLIENT_SECRET, SITE_URL
 from urlannotator.main.factories import SampleFactory
+
 
 def get_activation_key(email, num, salt_size=10,
                        salt_chars=string.ascii_uppercase + string.digits):
@@ -432,6 +434,21 @@ def project_classifier_view(request, id):
         return redirect('index')
 
     context = {'project': proj}
+    context['classifier_samples'] = Sample.objects.filter(job=proj).\
+        exclude(label='')
+    samples = Sample.objects.filter(job=proj)
+    yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
+    yes_perc = int(yes_labels.count() * 100 / samples.count())
+    no_labels = samples.filter(label=LABEL_CHOICES[1][0])
+    no_perc = int(no_labels.count() * 100 / samples.count())
+    broken_labels = samples.filter(label=LABEL_CHOICES[2][0])
+    broken_perc = int(broken_labels.count() * 100 / samples.count())
+    context['classifier_stats'] = {
+        'count': samples.count(),
+        'yes_labels': {'val': yes_labels.count(), 'perc': yes_perc},
+        'no_labels': {'val': no_labels.count(), 'perc': no_perc},
+        'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
+
     return render(request, 'main/project/classifier.html',
         RequestContext(request, context))
 
