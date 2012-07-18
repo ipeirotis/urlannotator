@@ -17,7 +17,6 @@ import csv
 from docutils import core
 from django.views.decorators.cache import cache_page
 
-from urlannotator.classification.classifiers import SimpleClassifier
 from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
     GeneralEmailUserForm, GeneralUserForm
