@@ -1,18 +1,21 @@
 from celery import task, Task, registry
+from factories import SampleFactory
 
 
 @task()
 class EventRawSampleManager(Task):
+    """ Manage factories to handle creation of new samples.
+    """
 
     def __init__(self):
-        pass
+        self.factory = SampleFactory()
 
-    def run(job, worker, url, label=''):
-        pass
+    def run(self, job, worker, url, label=''):
+        self.factory.new_sample(job, worker, url, label)
 
 new_raw_sample_task = registry.tasks[EventRawSampleManager.name]
 
 
 FLOW_DEFINITIONS = [
-    (r'EventClassifierTrained', new_raw_sample_task),
+    (r'EventNewRawSample', new_raw_sample_task),
 ]

@@ -44,6 +44,7 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
     extraction_result should be [True, True] - otherwise chaining failed.
     """
 
+    sample_id = None
     extracted = all([x is True for x in extraction_result])
     temp_sample = TemporarySample.objects.get(id=temp_sample_id)
 
@@ -62,9 +63,9 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
             label=label
         )
         sample.save()
-        return (extracted, sample.id)
+        sample_id = sample.id
 
     # We don't need this object any more.
     temp_sample.delete()
 
-    return (extracted, None)
+    return (extracted, sample_id)
