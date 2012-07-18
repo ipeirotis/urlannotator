@@ -86,14 +86,14 @@ On local machine:
 
     sudo apt-get install less
 
-    - If your distribution's repository has outdated version of less (<1.3.0)
+- If your distribution's repository has outdated version of less (<1.3.0)
 
-        sudo apt-get install npm
+    sudo apt-get install npm
 
-        - If your distribution's repository has outdated version of npm (<1.0.0), try compiling it npm from sources
-        - Otherwise (npm>=1.0.0)
+- If your distribution's repository has outdated version of npm (<1.0.0), try compiling it npm from sources
+- Otherwise (npm>=1.0.0)
 
-            sudo npm -g install less
+    sudo npm -g install less
 
 - Run RabbitMQ if not running
 
