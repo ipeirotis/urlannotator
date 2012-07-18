@@ -18,12 +18,12 @@ def flow_modules():
         mod = import_module(app)
         # Attempt to import the app's admin module.
         try:
-            return import_module('%s.tasks' % app)
+            return import_module('%s.events' % app)
         except:
             # Decide whether to bubble up this error. If the app just
-            # doesn't have an tasks module, we can ignore the error
+            # doesn't have an events module, we can ignore the error
             # attempting to import it, otherwise we want it to bubble up.
-            if module_has_submodule(mod, 'tasks'):
+            if module_has_submodule(mod, 'events'):
                 raise
         return None
 
