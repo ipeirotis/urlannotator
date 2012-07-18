@@ -73,7 +73,6 @@ class JobResource(ModelResource):
         w.save()
 
         task = SampleFactory().new_sample(job, w, url)
-        print task.id
         return self.create_response(request, {'task_id': task.id})
 
     def classify_result(self, request, **kwargs):
@@ -98,7 +97,6 @@ class JobResource(ModelResource):
 
         if task.ready():
             url = urllib.unquote_plus(request.GET['url'])
-            # print task.get()
             s = Sample.objects.filter(job=job, url=url, label='')
             if s:
                 s = s[0]
