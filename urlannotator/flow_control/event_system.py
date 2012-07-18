@@ -41,7 +41,8 @@ class EventBusSender(Task):
 
         if not matched:
             log.warning('Event not matched: %s !', event_name)
-
-        return group(dispatched).apply_async()
+            return None
+        else:
+            return group(dispatched).apply_async()
 
 event_bus = registry.tasks[EventBusSender.name]
