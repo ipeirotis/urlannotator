@@ -449,21 +449,28 @@ class ApiTests(TestCase):
         array = json.loads(resp.content)
         self.assertIn('error', array)
 
-        resp = c.get('%s%stest/?format=json' % (self.api_url, 'job/1/classify/'),
-            follow=True)
+        resp = c.get('%s%stest/?format=json'
+            % (self.api_url, 'job/1/classify/'), follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
 
-        resp = c.get('%s%s?format=json&url=google.com' % (self.api_url, 'job/1/classify/'),
-            follow=True)
+        resp = c.get('%s%s?format=json&url=google.com'
+            % (self.api_url, 'job/1/classify/'), follow=True)
 
         array = json.loads(resp.content)
-        task = EagerResult(array['task_id'], True, True)
+        task_id = array['task_id']
+        task = EagerResult(task_id, True, True)
         task.get()
 
-        resp = c.get('%s%stest/?format=json' % (self.api_url, 'job/2/classify/'),
-            follow=True)
+        resp = c.get('%s%s%s/?format=json&url=google.com&with_info=true'
+            % (self.api_url, 'job/1/classify/', task_id), follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('state', array)
+
+        resp = c.get('%s%stest/?format=json'
+            % (self.api_url, 'job/2/classify/'), follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
