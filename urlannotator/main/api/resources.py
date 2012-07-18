@@ -73,7 +73,7 @@ class JobResource(ModelResource):
         w.save()
 
         task = SampleFactory().new_sample(job, w, url)
-
+        print task.id
         return self.create_response(request, {'task_id': task.id})
 
     def classify_result(self, request, **kwargs):

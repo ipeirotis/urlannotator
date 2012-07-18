@@ -1,10 +1,11 @@
 import os
 from os.path import join as pjoin
 import json
+import platform
 from fabric.colors import red, yellow, green, blue, magenta
 from fabric.api import abort, task, env, hide, settings, sudo, cd
 
-from modules import nginx, supervisor
+from modules import nginx, supervisor, rabbitmq
 from modules.virtualenv import update_virtualenv, create_virtualenv,\
     setup_virtualenv
 from modules.utils import show, put_file_with_perms,\
@@ -41,6 +42,13 @@ def install_system_requirements():
                 name = 'requirements: {0}'.format(r)
                 with settings(sudo_prefix=SUDO_PREFIX):
                     install_without_prompt(r, name, silent=False)
+        # On Ubuntu, install less via npm
+        linux_distr = platform.linux_distribution()
+        if linux_distr[0] == 'Ubuntu':
+            with settings(sudo_prefix=SUDO_PREFIX):
+                install_without_prompt('npm', 'requirements: npm',
+                    silent=False)
+                sudo('npm install -g less')
 
 
 def prepare_global_env():
@@ -194,6 +202,7 @@ def configure_services():
     supervisor.configure()
     nginx.configure()
 
+
 def __reload_services():
     """Reloads previously configured services"""
     nginx.reload()
@@ -284,6 +293,7 @@ def load_config_files(conf_file, default_conf=DEFAULT_CONF_FILE,
     env["ctx"] = dctx
     return dctx
 
+
 def update_args(ctx, instance, branch, commit, locals_path, requirements,
         setup_environment):
     """Check args and update ctx."""
@@ -329,11 +339,13 @@ def deploy_ci():
     env.user = 'urlannotator'
     env.host_string = 'ci.10clouds.com'
     env.forward_agent = True
-    deploy(conf_file="target_defs/testing.json", prompt=False, requirements=False)
+    deploy(conf_file="target_defs/testing.json", prompt=False)
+
 
 @task
 def deploy(conf_file=None, instance=None, branch=None, commit=None,
-        locals_path=None, setup_environment=False, prompt=True, requirements=True):
+        locals_path=None, setup_environment=False, prompt=True,
+        requirements=True):
     u"""Does a full deployment of the project code.
         You have to supply an ``instance`` name (the name of deployment
         target in colocation environment).
@@ -387,7 +399,7 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     # compile_messages()
     # Update database schema.
     sync_db()
-    
+
     # Uploads settings and scripts for services.
     configure_services()
     # Reload services to load new config.
@@ -396,4 +408,3 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     # Configure and build documentation
     #doc.configure()
     #doc.build()
-

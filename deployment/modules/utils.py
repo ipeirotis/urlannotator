@@ -86,7 +86,8 @@ def get_permissions(path, use_sudo=False):
     return mode, user, group
 
 
-def ensure_permissions(path, mode=None, user=None, group=None, recursive=False):
+def ensure_permissions(path, mode=None, user=None, group=None,
+    recursive=False):
     current = get_permissions(path, use_sudo=True)
     recursive = '--recursive' if recursive else ''
     if mode is not None and current[0] != mode:
@@ -116,8 +117,8 @@ def upload_template_with_perms(source, destination, context=None, mode=None,
         user=None, group=None):
     try:
         with settings(hide("stdout", "running")):
-            upload_template(source, destination, context=context, use_sudo=True,
-                backup=False)
+            upload_template(source, destination, context=context,
+                use_sudo=True, backup=False)
         ensure_permissions(destination, mode=mode, user=user, group=group)
     except TypeError as e:
         msg = "Error uploading settings file: {0}, to {1}: {2}"
