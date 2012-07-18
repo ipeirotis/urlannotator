@@ -60,7 +60,6 @@ class EventBusSender(Task):
             if matcher.match(event_name):
                 matched = True
                 dispatched.append(task_func.s(*args, **kwargs))
-                # task_func.delay(*args, **kwargs)
 
         if not matched:
             log.warning('Event not matched: %s !', event_name)
