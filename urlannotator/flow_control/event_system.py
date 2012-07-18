@@ -60,5 +60,3 @@ class EventBusSender(Task):
                 task_func.delay(*args, **kwargs)
         if not matched:
             log.warning('Event not matched: %s !', event_name)
-
-event_bus = registry.tasks[EventBusSender.name]
