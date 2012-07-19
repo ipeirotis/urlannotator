@@ -4,7 +4,7 @@ import json
 from fabric.colors import red, yellow, green, blue, magenta
 from fabric.api import abort, task, env, hide, settings, sudo, cd
 
-from modules import nginx, supervisor
+from modules import nginx, supervisor, doc
 from modules.virtualenv import update_virtualenv, create_virtualenv,\
     setup_virtualenv
 from modules.utils import show, put_file_with_perms,\
@@ -398,5 +398,5 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     __reload_services()
 
     # Configure and build documentation
-    #doc.configure()
-    #doc.build()
+    doc.configure()
+    doc.build()
