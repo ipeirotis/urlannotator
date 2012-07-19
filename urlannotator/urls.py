@@ -54,7 +54,6 @@ urlpatterns = patterns('urlannotator',
 
     url(r'^api/', include(v1_api.urls)),
     url(r'^readme$', 'main.views.readme_view', name='readme_view'),
-    url(r'^docs/', include('sphinxdoc.urls')),
     url(r'^debug/user$', 'main.views.debug_login', name='debug_login'),
     (r'^bad/$', bad),
 )
