@@ -149,6 +149,7 @@ BASE_APPS = (
     'djcelery',
     'tastypie',
     'sphinxdoc',
+    'haystack',
 
     'social_auth',
     'odesk',

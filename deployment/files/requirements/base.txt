@@ -17,3 +17,4 @@ numpy
 nltk
 django-tastypie
 django-sphinxdoc
+django-haystack
