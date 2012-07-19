@@ -467,7 +467,7 @@ class DocsTest(TestCase):
     def testDocs(self):
         c = Client()
 
-        resp = c.get(reverse('docs_view'), follow=True)
+        resp = c.get(reverse('readme_view'), follow=True)
         self.assertTrue(True)
 
 
