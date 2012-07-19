@@ -9,11 +9,6 @@ class WorkerQualityVote(models.Model):
     added_on = models.DateField()
 
 
-class GoldSample(models.Model):
-    sample = models.ForeignKey(Sample)
-    label = models.CharField(max_length=10, choices=LABEL_CHOICES)
-
-
 class BeatTheMachineSamples(Sample):
     expected_output = models.CharField(max_length=10)
     classifier_output = models.CharField(max_length=10)

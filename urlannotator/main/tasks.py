@@ -1,6 +1,7 @@
 from celery import task
 
-from urlannotator.main.models import TemporarySample, Sample, Job, Worker
+from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job,
+    Worker)
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 from urlannotator.flow_control.event_system import event_bus
 
@@ -38,7 +39,7 @@ def web_screenshot_extraction(sample_id, url=None):
 
 @task()
 def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
-    label='', silent=False):
+    label=None, silent=False):
     """
     Creates real sample using TemporarySample. If error while capturing web
     propagate it. Finally deletes TemporarySample.
@@ -60,17 +61,54 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
             url=url,
             text=temp_sample.text,
             screenshot=temp_sample.screenshot,
-            added_by=worker,
-            label=label
+            added_by=worker
         )
         sample.save()
         sample_id = sample.id
 
         if not silent:
-            # Sample created sucesfully - pushing event.
-            event_bus.delay("EventNewSample", sample_id)
+            # Golden sample
+            if label is not None:
+                # GoldSample created sucesfully - pushing event.
+                gold = GoldSample(
+                    sample=sample,
+                    label=label
+                )
+                gold.save()
+                event_bus.delay("EventNewGoldSample", gold.id)
+
+            # Ordinary sample
+            else:
+                # Sample created sucesfully - pushing event.
+                event_bus.delay("EventNewSample", sample_id)
 
     # We don't need this object any more.
     temp_sample.delete()
 
     return (extracted, sample_id)
+
+
+@task()
+def create_classify_sample(job_id, worker_id, url, text, label=None,
+        silent=False):
+    """
+    Creates sample for job administrator (not workers) therfore we don't need
+    web extraction.
+    """
+
+    job = Job.objects.get(id=job_id)
+    worker = Worker.objects.get(id=worker_id)
+
+    # Proper sample entry
+    sample = Sample(
+        job=job,
+        url=url,
+        text=text,
+        added_by=worker
+    )
+    sample.save()
+
+    # Sample created sucesfully - pushing event.
+    event_bus.delay("EventNewClassifySample", sample.id)
+
+    return (True, sample.id)

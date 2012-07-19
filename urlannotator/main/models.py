@@ -82,3 +82,8 @@ class Sample(models.Model):
 class TemporarySample(models.Model):
     text = models.TextField()
     screenshot = models.URLField()
+
+
+class GoldSample(models.Model):
+    sample = models.ForeignKey(Sample)
+    label = models.CharField(max_length=10, choices=LABEL_CHOICES)
