@@ -1,7 +1,7 @@
 =============
 URL Annotator
 =============
-<LAST_MODIFIFED>
+Last modified: July 18, 2012
 
 
 Source/How to get it
