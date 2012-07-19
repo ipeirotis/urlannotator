@@ -43,7 +43,7 @@ def configure():
 
     # Upload formatted build script
     scripts = ['make_apidoc.sh']
-    local_dir = local_files_dir("docs")
+    local_dir = local_files_dir("doc")
     show(yellow("Uploading doc scripts: {0}.".format(' '.join(scripts))))
     for script_name in scripts:
         source = pjoin(local_dir, script_name)
