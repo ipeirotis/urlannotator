@@ -7,7 +7,7 @@ from tasks import send_validated_samples
 
 @task()
 class SamplesValidationManager(Task):
-    """ Manage factories to handle creation of new samples.
+    """ Manage validation of new samples and batches it for training classifier.
     """
 
     def __init__(self):
