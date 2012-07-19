@@ -11,7 +11,8 @@ from celery.result import EagerResult
 
 from social_auth.models import UserSocialAuth
 
-from urlannotator.main.models import Account, Job, Worker, Sample
+from urlannotator.main.models import (Account, Job, Worker, Sample,
+    ClassifiedSample)
 from urlannotator.main.factories import SampleFactory
 
 
@@ -444,13 +445,30 @@ class ProjectTests(TestCase):
             follow=True)
         self.assertEqual(resp.status_code, 200)
 
+    def testClassifierView(self):
+        job = Job(title='test', description='test',
+            account=self.u.get_profile())
+        job.save()
+
+        w = Worker()
+        w.save()
+        Sample(job=job, label='Yes', added_by=w).save()
+
+        testUrl = 'google.com'
+        self.c.post(reverse('project_classifier_view', args=[1]),
+            {'test-urls': testUrl}, follow=True)
+
+        self.assertEqual(ClassifiedSample.objects.all().count(), 1)
+        self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
+            1)
+
 
 class DocsTest(TestCase):
     def testDocs(self):
         c = Client()
 
         resp = c.get(reverse('docs_view'), follow=True)
-        self.assertTemplateUsed(resp, 'main/docs.html')
+        self.assertTrue(True)
 
 
 class ApiTests(TestCase):
@@ -486,8 +504,8 @@ class ApiTests(TestCase):
         array = json.loads(resp.content)
         self.assertIn('error', array)
 
-        resp = c.get('%s%stest/?format=json'
-            % (self.api_url, 'job/1/classify/'), follow=True)
+        resp = c.get('%s%s?format=json&request=test'
+            % (self.api_url, 'job/1/classify/status/'), follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
@@ -496,17 +514,16 @@ class ApiTests(TestCase):
             % (self.api_url, 'job/1/classify/'), follow=True)
 
         array = json.loads(resp.content)
-        task_id = array['task_id']
-        task = EagerResult(task_id, True, True)
-        task.get()
+        request_id = array['request_id']
 
-        resp = c.get('%s%s%s/?format=json&url=google.com&with_info=true'
-            % (self.api_url, 'job/1/classify/', task_id), follow=True)
+        resp = c.get('%s%s?format=json&url=google.com&request=%s'
+            % (self.api_url, 'job/1/classify/status/', request_id),
+            follow=True)
 
         array = json.loads(resp.content)
-        self.assertIn('state', array)
+        self.assertIn('status', array)
 
-        resp = c.get('%s%stest/?format=json'
+        resp = c.get('%s%s?format=json&request=test'
             % (self.api_url, 'job/2/classify/'), follow=True)
 
         array = json.loads(resp.content)

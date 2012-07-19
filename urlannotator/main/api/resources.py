@@ -4,7 +4,7 @@ import urllib
 from celery.result import AsyncResult
 
 from urlannotator.classification.classifiers import SimpleClassifier
-from urlannotator.main.models import Job, Worker, Sample
+from urlannotator.main.models import Job, Worker, ClassifiedSample
 from urlannotator.flow_control.event_system import event_bus
 
 
@@ -19,9 +19,10 @@ class JobResource(ModelResource):
             url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/classify/$'
                 % self._meta.resource_name,
                 self.wrap_view('classify'), name='api_classify'),
-            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/classify/'
-                '(?P<task_id>[^/]+)/$' % self._meta.resource_name,
-                self.wrap_view('classify_result'), name='api_classify_result'),
+            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/classify/status/$'
+                % self._meta.resource_name,
+                self.wrap_view('get_classify_status'),
+                name='api_classify_status'),
         ]
 
     def classify(self, request, **kwargs):
@@ -42,10 +43,14 @@ class JobResource(ModelResource):
         w = Worker()
         w.save()
 
-        task = event_bus.delay('EventNewRawSample', job.id, w.id, url)
-        return self.create_response(request, {'task_id': task.id})
+        classified_sample = ClassifiedSample(job=job, url=url)
+        classified_sample.save()
+        event_bus.delay('EventNewRawSample', job.id, w.id, url)
 
-    def classify_result(self, request, **kwargs):
+        return self.create_response(request,
+            {'request_id': classified_sample.id})
+
+    def get_classify_status(self, request, **kwargs):
         """
             Checks result of classification task initiated by user.
             On success, returns label given by the classificator
@@ -56,26 +61,28 @@ class JobResource(ModelResource):
         except Job.DoesNotExist:
             return self.create_response(request, {'error': 'Wrong job.'})
 
-        if 'task_id' not in kwargs:
-            return self.create_response(request, {'error': 'Wrong task id.'})
+        if 'request' not in request.GET:
+            return self.create_response(request,
+                {'error': 'Wrong request id.'})
 
-        if 'url' not in request.GET:
-            return self.create_response(request, {'error': 'Wrong url.'})
+        try:
+            request_id = int(request.GET['request'])
+        except:
+            return self.create_response(request,
+                {'error': 'Wrong request id.'})
 
-        task = AsyncResult(id=kwargs['task_id'])
-        resp = {'state': task.state}
+        try:
+            classified_sample = ClassifiedSample.objects.get(job=job,
+                id=request_id)
+        except ClassifiedSample.DoesNotExist:
+            return self.create_response(request,
+                {'error': 'Wrong request id.'})
 
-        if task.ready():
-            url = urllib.unquote_plus(request.GET['url'])
-            s = Sample.objects.filter(job=job, url=url, label='')
-            if s:
-                s = s[0]
-            else:
-                resp['error'] = 'No sample to label.'
-                return self.create_response(request, resp)
-            sc = SimpleClassifier(description=job.title, classes=[])
-            sc.train(Sample.objects.filter(job=job).exclude(label=''))
-            resp['outputLabel'] = sc.classify(s)
-            if 'with_info' in request.GET:
-                resp['outputMulti'] = sc.classify_with_info(s)
+        resp = {}
+        status = 'PENDING'
+        if classified_sample.sample and classified_sample.sample.label:
+            status = 'SUCCESS'
+            resp['outputLabel'] = classified_sample.sample.label
+
+        resp['status'] = status
         return self.create_response(request, resp)

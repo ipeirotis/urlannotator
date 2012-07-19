@@ -1,3 +1,11 @@
+import odesk
+import hashlib
+import string
+import random
+import os
+import csv
+
+from docutils import core
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.template import RequestContext, Context
@@ -7,23 +15,17 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-import odesk
 from django.template.loader import get_template
-import hashlib
-import string
-import random
-import os
-import csv
-from docutils import core
 from django.views.decorators.cache import cache_page
+from celery.result import AsyncResult
 
-from urlannotator.main.forms import WizardTopicForm, WizardAttributesForm,\
-    WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,\
-    GeneralEmailUserForm, GeneralUserForm
-from urlannotator.main.models import Account, Job, Worker, Sample,\
-    LABEL_CHOICES
-from urlannotator.settings.defaults import ODESK_CLIENT_ID, ROOT_DIR,\
-    ODESK_CLIENT_SECRET, SITE_URL
+from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
+    WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
+    GeneralEmailUserForm, GeneralUserForm)
+from urlannotator.main.models import (Account, Job, Worker, Sample,
+    LABEL_CHOICES, ClassifiedSample)
+from urlannotator.settings.defaults import (ODESK_CLIENT_ID, ROOT_DIR,
+    ODESK_CLIENT_SECRET, SITE_URL)
 from urlannotator.flow_control.event_system import event_bus
 
 
@@ -429,15 +431,47 @@ def project_data_view(request, id):
 @login_required
 def project_classifier_view(request, id):
     try:
-        proj = Job.objects.get(id=id)
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
-    context['classifier_samples'] = Sample.objects.filter(job=proj).\
-        exclude(label='')
-    samples = Sample.objects.filter(job=proj)
+    context = {'project': job}
+
+    if request.method == "GET":
+        classified_samples = request.session.get('classified-samples', [])
+        samples_pending = []
+        samples_created = []
+
+        classified_samples = ClassifiedSample.objects.filter(job=job,
+            id__in=classified_samples)
+        for sample in classified_samples:
+            if not sample.sample:
+                samples_pending.append(sample)
+            else:
+                samples_created.append(sample)
+
+        context['samples_pending'] = samples_pending
+        context['samples_created'] = samples_created
+
+    elif request.method == "POST":
+        test_type = request.POST.get('test-type', 'urls')
+        if test_type == 'urls':
+            urls = request.POST.get('test-urls', '')
+            # Split text to lines with urls, and remove duplicates
+            urls = set(urls.splitlines())
+            w = Worker()
+            w.save()
+            classified_samples = []
+            for url in urls:
+                cs = ClassifiedSample(job=job, sample=None, url=url)
+                cs.save()
+                classified_samples.append(cs.id)
+                event_bus.delay('EventNewRawSample', job.id, w.id, url)
+            request.session['classified-samples'] = classified_samples
+        return redirect('project_classifier_view', id)
+
+    samples = Sample.objects.filter(job=job)
     yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
     yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
     no_labels = samples.filter(label=LABEL_CHOICES[1][0])

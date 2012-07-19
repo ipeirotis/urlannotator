@@ -139,10 +139,15 @@ class SimpleClassifier(Classifier):
     def classify(self, sample):
         if self.classifier is None:
             return None
-        return self.classifier.classify(self.get_features(sample))
+        label = self.classifier.classify(self.get_features(sample)) 
+        sample.label = label
+        sample.save()
+        return label
 
     def classify_with_info(self, sample):
         if self.classifier is None:
             return None
         label = self.classifier.classify(self.get_features(sample))
+        sample.label = label
+        sample.save()
         return {'label': label}

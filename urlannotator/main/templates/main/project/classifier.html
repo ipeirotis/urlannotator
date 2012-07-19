@@ -58,7 +58,7 @@
             <tr class="input-test-texts" style="display:none;">
                 <td></td>
                 <td>
-                    <button href="#" class="btn" style="width: 100%">+</button>
+                    <button id="new-text-button" href="#" class="btn" style="width: 100%">+</button>
                 </td>
             </tr>
             <tr>
@@ -85,36 +85,54 @@
       </table>
     </div>
   </div>
-    <h4>Classification Results</h4>
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width: 50px;">Preview</th>
-          <th>URL</th>
-          <th style="width: 50px;">Class</th>
-          <th style="width: 130px;">Calculated Class Probability</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for sample in classifier_samples %}
+    {% if samples_pending or samples_created %}
+      <h4>Classification Results</h4>
+      <table class="table">
+        <thead>
           <tr>
-            <td>
-              <a href="{{ sample.screenshot }}"><img style="width: 40px; height:40px" src="{{ sample.screenshot }}"></a>
-            </td>
-            <td>
-              <a href="{{ sample.url }}">{{ sample.url }}</a>
-            </td>
-            <td>
-              {{ sample.label }}
-            </td>
-            <td>
-              0
-            </td>
+            <th style="width: 50px;">Preview</th>
+            <th>URL</th>
+            <th style="width: 50px;">Class</th>
+            <th style="width: 130px;">Calculated Class Probability</th>
           </tr>
-        {% endfor %}
-      </tbody>  
-    </table>
-  </div>
+        </thead>
+        <tbody>
+          {% for sample in samples_pending %}
+            <tr>
+              <td>
+                <a href=""><img style="width: 40px; height:40px" src=""></a>
+              </td>
+              <td>
+                <a href="{{ sample.url }}">{{ sample.url }}</a>
+              </td>
+              <td>
+                PENDING
+              </td>
+              <td>
+                -
+              </td>
+            </tr>
+          {% endfor %}
+          {% for classified_sample in samples_created %}
+            <tr>
+              <td>
+                <a href="{{ classified_sample.sample.screenshot }}"><img style="width: 40px; height:40px" src="{{ classified_sample.sample.screenshot }}"></a>
+              </td>
+              <td>
+                <a href="{{ classified_sample.url }}">{{ classified_sample.url }}</a>
+              </td>
+              <td>
+                {% if classified_sample.sample.label == '' %}PENDING{%else%}{{ classified_sample.sample.label }}{%endif%}
+              </td>
+              <td>
+                {% if classified_sample.sample.label == '' %}-{%else%}{{ classified_sample.sample.label }}{%endif%}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>  
+      </table>
+    {% endif %}
+</div>
 {% endblock %}
 
 {% block javascript %}

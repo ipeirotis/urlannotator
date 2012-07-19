@@ -87,3 +87,9 @@ class TemporarySample(models.Model):
 class GoldSample(models.Model):
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
+
+
+class ClassifiedSample(models.Model):
+    sample = models.ForeignKey(Sample, blank=True, null=True)
+    url = models.URLField()
+    job = models.ForeignKey(Job)

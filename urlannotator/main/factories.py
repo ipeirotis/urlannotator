@@ -25,8 +25,8 @@ class SampleFactory(object):
         # Injecting administrator classification request (no web extraction
         # needed)
         if text is not None:
-            return create_classify_sample.delay(job_id, worker_id, url, label,
-                *args, **kwargs)
+            return create_classify_sample.delay(job_id, worker_id, url, text,
+                label, *args, **kwargs)
 
         # Ordinary classification or golden sample.
         else:
