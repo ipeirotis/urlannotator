@@ -25,7 +25,7 @@ def configure():
     # Asure the doc folder exists
     user = cget('user')
     ddir = cget('doc_dir')
-    source_doc_dir = pjoin(cget("project_dir"), "code", "doc")
+    source_doc_dir = pjoin(cget("project_dir"), "code", "docs")
     create_target_directories([ddir], "755", user)
 
     # Delete the content of the folder if exist
