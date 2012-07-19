@@ -43,7 +43,7 @@ def configure():
 
     # Upload formatted build script
     scripts = ['make_apidoc.sh']
-    local_dir = local_files_dir("doc")
+    local_dir = local_files_dir("docs")
     show(yellow("Uploading doc scripts: {0}.".format(' '.join(scripts))))
     for script_name in scripts:
         source = pjoin(local_dir, script_name)
@@ -53,7 +53,7 @@ def configure():
     # Upload formatted conf.py file
     show(yellow("Uploading formatted conf.py file."))
     conf_file = "conf_formatted.py"
-    source = pjoin(cget("local_root"), "doc", 'source', conf_file)
+    source = pjoin(cget("local_root"), "docs", 'source', conf_file)
     destination = pjoin(ddir, 'source', conf_file)
     upload_template_with_perms(source, destination, context, mode="755")
 
