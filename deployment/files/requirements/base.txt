@@ -16,3 +16,4 @@ boto # amazon sqs support for celery
 numpy
 nltk
 django-tastypie
+django-sphinxdoc

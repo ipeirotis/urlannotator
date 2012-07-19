@@ -494,7 +494,7 @@ def doc_parts(input_string):
 
 
 @cache_page(10 * 60)
-def docs_view(request):
+def readme_view(request):
     file_path = os.path.join(ROOT_DIR, '..', 'readme.rst')
     file = open(file_path, 'r')
     parts = doc_parts(file.read())
