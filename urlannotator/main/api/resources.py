@@ -5,37 +5,7 @@ from celery.result import AsyncResult
 
 from urlannotator.classification.classifiers import SimpleClassifier
 from urlannotator.main.models import Job, Worker, Sample
-from urlannotator.main.factories import SampleFactory
-
-
-class SampleResource(ModelResource):
-    class Meta:
-        queryset = Sample.objects.all()
-        resource_name = 'sample'
-        list_allowed_methods = ['get']
-
-    def override_urls(self):
-        return [
-            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/create/$'
-                % self._meta.resource_name,
-                self.wrap_view('create'), name='api_new_sample'),
-        ]
-
-    def create(self, request, **kwargs):
-        if 'url' not in request.GET:
-            return self.create_response(request, {'error': 'Wrong url.'})
-
-        w = Worker()
-        w.save()
-
-        try:
-            job = Job.objects.get(id=kwargs['job_id'])
-        except Job.DoesNotExist:
-            return self.create_response(request, {'error': 'Wrong job.'})
-
-        url = urllib.unquote_plus(request.GET['url'])
-        SampleFactory().new_sample(job.id, w.id, url)
-        return self.create_response(request, {'status': 'Sent request'})
+from urlannotator.flow_control.event_system import event_bus
 
 
 class JobResource(ModelResource):
@@ -72,7 +42,7 @@ class JobResource(ModelResource):
         w = Worker()
         w.save()
 
-        task = SampleFactory().new_sample(job.id, w.id, url)
+        task = event_bus.delay('EventNewRawSample', job.id, w.id, url)
         return self.create_response(request, {'task_id': task.id})
 
     def classify_result(self, request, **kwargs):

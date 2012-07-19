@@ -24,7 +24,7 @@ from urlannotator.main.models import Account, Job, Worker, Sample,\
     LABEL_CHOICES
 from urlannotator.settings.defaults import ODESK_CLIENT_ID, ROOT_DIR,\
     ODESK_CLIENT_SECRET, SITE_URL
-from urlannotator.main.factories import SampleFactory
+from urlannotator.flow_control.event_system import event_bus
 
 
 def get_activation_key(email, num, salt_size=10,
@@ -252,11 +252,11 @@ def project_wizard(request):
             if 'file_gold_urls' in request.FILES:
                 try:
                     urls = csv.reader(request.FILES['file_gold_urls'])
-                    sample_factory = SampleFactory()
                     w = Worker()
                     w.save()
                     for line in urls:
-                        sample_factory.new_sample(p.id, w.id, line[0], line[1])
+                        event_bus.delay('EventNewRawSample',
+                            p.id, w.id, line[0], line[1])
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')
