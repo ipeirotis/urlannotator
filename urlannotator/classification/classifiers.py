@@ -3,7 +3,7 @@ import nltk
 from tenclouds.lock.rwlock import MemcachedRWLock
 from tenclouds.lock.locks import MemcacheLock
 
-from urlannotator.main.models import Sample
+from urlannotator.main.models import Sample, GoldSample
 
 
 class Classifier247(object):
@@ -132,6 +132,12 @@ class SimpleClassifier(Classifier):
         for sample in samples:
             if not isinstance(sample, Sample):
                 continue
+            if sample.label == '':
+                try:
+                    gold_sample = GoldSample.objects.get(sample=sample)
+                    sample.label = gold_sample.label
+                except:
+                    continue
             train_set.append((self.get_features(sample), sample.label))
         self.classifier = nltk.classify.DecisionTreeClassifier.train(
             train_set)

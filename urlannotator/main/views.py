@@ -259,7 +259,7 @@ def project_wizard(request):
                     w.save()
                     for line in urls:
                         event_bus.delay('EventNewRawSample',
-                            p.id, w.id, line[0], line[1])
+                            p.id, w.id, line[0], label=line[1])
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')

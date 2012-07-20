@@ -22,7 +22,7 @@ class ClassifierTrainingManager(Task):
             if isinstance(samples, int):
                 samples = [samples]
             job = Sample.objects.get(id=samples[0]).job
-            all_samples = Sample.objects.filter(job=job).exclude(label='')
+            all_samples = Sample.objects.filter(job=job)
             if all_samples:
                 sc.train(all_samples)
                 samples_list = Sample.objects.filter(id__in=samples)
