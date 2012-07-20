@@ -139,8 +139,9 @@ class SimpleClassifier(Classifier):
                 except:
                     continue
             train_set.append((self.get_features(sample), sample.label))
-        self.classifier = nltk.classify.DecisionTreeClassifier.train(
-            train_set)
+        if train_set:
+            self.classifier = nltk.classify.DecisionTreeClassifier.train(
+                train_set)
 
     def classify(self, sample):
         if self.classifier is None:
