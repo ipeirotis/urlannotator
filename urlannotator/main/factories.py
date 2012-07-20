@@ -2,7 +2,8 @@ import datetime
 
 from urlannotator.main.models import TemporarySample
 from urlannotator.main.tasks import (web_content_extraction,
-    web_screenshot_extraction, create_sample, create_classify_sample)
+    web_screenshot_extraction, create_sample, create_classify_sample,
+    create_job)
 
 from celery import group
 
@@ -44,3 +45,24 @@ class SampleFactory(object):
             ).apply_async(
                 expires=datetime.datetime.now() + datetime.timedelta(days=1)
             )
+
+
+class JobFactory(object):
+    """
+    Gets:
+        Job parameters
+    Result:
+        None
+    """
+
+    def new_job(self, job_id, *args, **kwargs):
+        """
+            Creates new job
+        """
+
+        # FIXME: Mock
+        # TODO: Actual job creation handling.
+        #       Move it from views.project_wizard.
+        return create_job.s(job_id, *args, **kwargs).apply_async(
+            expires=datetime.datetime.now() + datetime.timedelta(days=1)
+        )

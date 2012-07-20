@@ -251,6 +251,7 @@ def project_wizard(request):
                     same_domain_allowed=addt_form.cleaned_data['same_domain'],
                     status=p_type)
             p.save()
+            event_bus.delay('EventCreateNewJob', p.id)
             if 'file_gold_urls' in request.FILES:
                 try:
                     urls = csv.reader(request.FILES['file_gold_urls'])
