@@ -12,7 +12,7 @@
 # serve to show the default.
 
 import sys, os
-sys.path.append('%(project_dir)s/code')
+sys.path.append('%(manage_py_dir)s')
 from urlannotator.settings import development
 from django.core.management import setup_environ
 setup_environ(development)
@@ -64,8 +64,6 @@ release = '1'
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
 #today = ''
-# Else, today_fmt is used as the format for a strftime call.
-#today_fmt = '%B %d, %Y'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -126,10 +124,6 @@ html_theme = 'default'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
-
-# If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
-# using the given strftime format.
-#html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.

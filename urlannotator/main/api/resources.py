@@ -1,14 +1,14 @@
 from tastypie.resources import ModelResource
 from django.conf.urls import url
 import urllib
-from celery.result import AsyncResult
 
-from urlannotator.classification.classifiers import SimpleClassifier
 from urlannotator.main.models import Job, Worker, ClassifiedSample
 from urlannotator.flow_control.event_system import event_bus
 
 
 class JobResource(ModelResource):
+    """ Resource allowing API access to Jobs
+    """
     class Meta:
         queryset = Job.objects.all()
         resource_name = 'job'
@@ -43,6 +43,9 @@ class JobResource(ModelResource):
         w = Worker()
         w.save()
 
+        # Create classified sample and raise event to create a new sample.
+        # A classified sample monitor will update classified_sample.sample
+        # as soon as a sample with given url and job is created
         classified_sample = ClassifiedSample(job=job, url=url)
         classified_sample.save()
         event_bus.delay('EventNewRawSample', job.id, w.id, url)
@@ -53,7 +56,7 @@ class JobResource(ModelResource):
     def get_classify_status(self, request, **kwargs):
         """
             Checks result of classification task initiated by user.
-            On success, returns label given by the classificator
+            On success, returns label given by the classificator.
         """
         self.method_check(request, allowed=['get'])
         try:

@@ -35,10 +35,15 @@ add_samples = registry.tasks[ClassifierTrainingManager.name]
 
 @task
 def update_classified_sample(sample_id, *args, **kwargs):
+    """
+        Monitors sample creation and updates classify requests with this sample
+        on match.
+    """
     sample = Sample.objects.get(id=sample_id)
     ClassifiedSample.objects.filter(job=sample.job, url=sample.url,
         sample=None).update(sample=sample)
     return None
+
 
 @task
 def classify(*args, **kwargs):

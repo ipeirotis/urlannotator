@@ -31,6 +31,10 @@ from urlannotator.flow_control.event_system import event_bus
 
 def get_activation_key(email, num, salt_size=10,
                        salt_chars=string.ascii_uppercase + string.digits):
+    """
+        Generates an activation key for email account activation. It is later
+        sent to user's email.
+    """
     key = hashlib.sha1()
     salt = ''.join(random.choice(salt_chars) for x in range(salt_size))
     key.update('%s%s%d' % (salt, email, num))
@@ -39,6 +43,10 @@ def get_activation_key(email, num, salt_size=10,
 
 @csrf_protect
 def register_view(request):
+    """
+        If the request's method is GET - serves all registration forms.
+        POST requests are handling e-mail registration.
+    """
     if request.method == "GET":
         context = {'form': NewUserForm()}
         return render(request, 'main/register.html',

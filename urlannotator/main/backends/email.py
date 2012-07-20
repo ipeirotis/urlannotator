@@ -7,6 +7,9 @@ from subprocess import Popen, PIPE
 
 
 class EmailBackend(BaseEmailBackend):
+    """
+        Email backend allowing sending e-mails by using sendmail process.
+    """
     def __init__(self, fail_silently=False, **kwargs):
         super(EmailBackend, self).__init__(fail_silently=fail_silently)
         self._lock = threading.RLock()
@@ -19,8 +22,8 @@ class EmailBackend(BaseEmailBackend):
 
     def send_messages(self, email_messages):
         """
-        Sends one or more EmailMessage objects and returns the number of email
-        messages sent.
+            Sends one or more EmailMessage objects and returns the number of
+            email messages sent.
         """
         if not email_messages:
             return
@@ -36,7 +39,9 @@ class EmailBackend(BaseEmailBackend):
         return num_sent
 
     def _send(self, email_message):
-        """A helper method that does the actual sending."""
+        """
+            A helper method that does the actual sending.
+        """
         if not email_message.recipients():
             return False
         print 'test'

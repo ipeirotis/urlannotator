@@ -6,6 +6,8 @@ from urlannotator.main.models import JOB_BASIC_DATA_SOURCE_CHOICES,\
 
 
 class NewUserForm(forms.Form):
+    """ Form to create new users.
+    """
     email = forms.EmailField(label="E-mail")
     password1 = forms.CharField(widget=forms.PasswordInput, label="Password")
     password2 = forms.CharField(widget=forms.PasswordInput,
@@ -28,23 +30,33 @@ class NewUserForm(forms.Form):
 
 
 class GeneralUserForm(forms.Form):
+    """ Form displayed in settings for users registered with social accounts.
+    """
     full_name = forms.CharField(label="Full name", required=False)
 
 
 class GeneralEmailUserForm(GeneralUserForm):
+    """ Form displayed in settings for users registered with an email address.
+    """
     email = forms.EmailField(widget=forms.TextInput(attrs={'readonly': True}))
 
 
 class AlertsSetupForm(forms.Form):
+    """ Form allowing setting up user alerts.
+    """
     alerts = forms.BooleanField(required=False)
 
 
 class UserLoginForm(forms.Form):
+    """ Form allowing e-mail registered users to log in.
+    """
     email = forms.EmailField(label="E-mail")
     password = forms.CharField(widget=forms.PasswordInput, label="Password")
 
 
 class WizardTopicForm(forms.Form):
+    """ Form representing project wizard's topic part.
+    """
     topic = forms.CharField(required=False, label="Topic",
             help_text="E.g Identify pages that contain hate speech on the web")
     topic_desc = forms.CharField(required=False, widget=forms.Textarea,
@@ -69,6 +81,8 @@ class WizardTopicForm(forms.Form):
 
 
 class WizardAttributesForm(forms.Form):
+    """ Form representing project wizard's attributes part.
+    """
     data_source = forms.ChoiceField(JOB_BASIC_DATA_SOURCE_CHOICES,
         label="Data source",
         help_text="You have 800 free URL quota provided by Odesk")
@@ -84,6 +98,7 @@ class WizardAttributesForm(forms.Form):
 
     def __init__(self, odeskConnected=False, *args, **kwargs):
         super(WizardAttributesForm, self).__init__(*args, **kwargs)
+        # If user is connected to odesk, add new choices
         if odeskConnected:
             self.fields['data_source'].choices = JOB_DATA_SOURCE_CHOICES
             self.odesk_connect = True
@@ -122,6 +137,8 @@ class WizardAttributesForm(forms.Form):
 
 
 class WizardAdditionalForm(forms.Form):
+    """ Form representing project wizard's additional fields
+    """
     same_domain = forms.IntegerField(
         label="No. of allowed multiple URLs from the same domain")
     file_gold_urls = forms.FileField(required=False,

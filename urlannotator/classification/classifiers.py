@@ -115,11 +115,17 @@ class SimpleClassifier(Classifier):
     """
 
     def __init__(self, description, classes, *args, **kwargs):
+        """
+            Description and classes are not used by this classifier.
+        """
         self.classifier = None
         super(SimpleClassifier, self).__init__(*args, **kwargs)
 
     @staticmethod
     def get_features(sample):
+        """
+            Creates a set of words the sample's text consists of.
+        """
         words = nltk.word_tokenize(sample.text)
         words = set(words)
         feature_set = {}
@@ -128,6 +134,10 @@ class SimpleClassifier(Classifier):
         return feature_set
 
     def train(self, samples):
+        """
+            Trains classifier on gives samples' set. If sample has no label,
+            it's checked for being a GoldSample.
+        """
         train_set = []
         for sample in samples:
             if not isinstance(sample, Sample):
@@ -144,14 +154,21 @@ class SimpleClassifier(Classifier):
                 train_set)
 
     def classify(self, sample):
+        """
+            Classifies gives sample and saves result to the model.
+        """
         if self.classifier is None:
             return None
-        label = self.classifier.classify(self.get_features(sample)) 
+        label = self.classifier.classify(self.get_features(sample))
         sample.label = label
         sample.save()
         return label
 
     def classify_with_info(self, sample):
+        """
+            Classifies given sample and returns more detailed data.
+            Currently only label.
+        """
         if self.classifier is None:
             return None
         label = self.classifier.classify(self.get_features(sample))

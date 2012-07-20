@@ -8,8 +8,10 @@ from django.db.models.signals import post_save
 LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
 
 
-# Create your models here.
 class Account(models.Model):
+    """
+        Model representing additional user data. Used as user profile.
+    """
     user = models.ForeignKey(User)
     activation_key = models.CharField(default='', max_length=100)
     email_registered = models.BooleanField(default=False)
@@ -35,6 +37,10 @@ JOB_STATUS_CHOICES = ((0, 'Draft'), (1, 'Active'), (2, 'Completed'),
 
 
 class Job(models.Model):
+    """
+        Model representing actual project that is start by user, and consists
+        of gathering, verifying and classifying samples.
+    """
     account = models.ForeignKey(Account, related_name='project')
     title = models.CharField(max_length=100)
     description = models.TextField()
@@ -61,6 +67,9 @@ class Job(models.Model):
 
 
 class Worker(models.Model):
+    """
+        Represents the worker who has completed a HIT.
+    """
     external_id = models.CharField(max_length=100)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
@@ -69,6 +78,9 @@ class Worker(models.Model):
 
 
 class Sample(models.Model):
+    """
+        A sample used to classify and verify.
+    """
     job = models.ForeignKey(Job)
     url = models.URLField()
     text = models.TextField()
@@ -80,16 +92,28 @@ class Sample(models.Model):
 
 
 class TemporarySample(models.Model):
+    """
+        Temporary sample used inbetween creating the real sample by processes
+        responsible for each part.
+    """
     text = models.TextField()
     screenshot = models.URLField()
 
 
 class GoldSample(models.Model):
+    """
+        Sample uploaded by project owner. It is already classified and is used
+        to train classifier.
+    """
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
 
 
 class ClassifiedSample(models.Model):
+    """
+        A sample classification request was made for. The sample field is set
+        when corresponding sample is created.
+    """
     sample = models.ForeignKey(Sample, blank=True, null=True)
     url = models.URLField()
     job = models.ForeignKey(Job)
