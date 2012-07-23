@@ -3,11 +3,31 @@ from __future__ import absolute_import
 import logging
 import re
 
-from django.conf import settings
-
-from celery import task, Task, registry, group
+from celery import task, Task, group
 
 log = logging.getLogger('EventBus')
+
+
+def flow_modules():
+    ''' from django admin code '''
+    from django.conf import settings
+    from django.utils.importlib import import_module
+    from django.utils.module_loading import module_has_submodule
+
+    def tmp(app):
+        mod = import_module(app)
+        # Attempt to import the app's admin module.
+        try:
+            return import_module('%s.event_handlers' % app)
+        except:
+            # Decide whether to bubble up this error. If the app just
+            # doesn't have an flow module, we can ignore the error
+            # attempting to import it, otherwise we want it to bubble up.
+            if module_has_submodule(mod, 'event_handlers'):
+                raise
+        return None
+
+    return filter(None, (tmp(app) for app in settings.INSTALLED_APPS))
 
 
 @task()
@@ -16,21 +36,22 @@ class EventBusSender(Task):
     '''
 
     def __init__(self):
-        self.registered = None
+        self.registered = []
+        self.config_yourself()
 
-    def update_config(self):
-        for event_pattern, fun in settings.FLOW_DEFINITIONS:
-            self.register(event_pattern, fun)
+    def config_yourself(self):
+        for module in flow_modules():
+            self.update_config(module.FLOW_DEFINITIONS)
 
     def register(self, event_pattern, fun):
         self.registered.append((re.compile(event_pattern), fun))
 
+    def update_config(self, flow_definition):
+        for event_pattern, fun in flow_definition:
+            self.register(event_pattern, fun)
+
     def run(self, event_name, *args, **kwargs):
         log.debug('Got event: %s(%s, %s)', event_name, args, kwargs)
-
-        if self.registered is None:
-            self.registered = []
-            self.update_config()
 
         matched = False
         dispatched = []
@@ -38,11 +59,8 @@ class EventBusSender(Task):
             if matcher.match(event_name):
                 matched = True
                 dispatched.append(task_func.s(*args, **kwargs))
-
         if not matched:
             log.warning('Event not matched: %s !', event_name)
             return None
         else:
             return group(dispatched).apply_async()
-
-event_bus = registry.tasks[EventBusSender.name]

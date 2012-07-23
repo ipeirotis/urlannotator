@@ -11,6 +11,7 @@ class TestEventBusSender(TestCase):
 
         event_name, file_name, file_content = \
             'TestEvent', "test_file_name", "success"
+
         send_event(event_name, file_name, file_content)
 
         # due to eager celery task evaluation this should work

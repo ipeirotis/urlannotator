@@ -2,6 +2,7 @@ from django.conf import settings
 
 from celery import task, Task, registry
 
+from urlannotator.classification.models import TrainingSet
 from urlannotator.classification.classifiers import SimpleClassifier
 from urlannotator.main.models import Sample, ClassifiedSample
 
@@ -22,9 +23,12 @@ class ClassifierTrainingManager(Task):
             if isinstance(samples, int):
                 samples = [samples]
             job = Sample.objects.get(id=samples[0]).job
-            all_samples = Sample.objects.filter(job=job)
-            if all_samples:
-                sc.train(all_samples)
+            if job.status == 4:
+                registry.tasks[ClassifierTrainingManager.name].retry(countdown=30)
+            train_samples = [train_sample.sample for train_sample in
+                TrainingSet.objects.newest_for_job(job).training_samples.all()]
+            if train_samples:
+                sc.train(train_samples)
                 samples_list = Sample.objects.filter(id__in=samples)
                 for sample in samples_list:
                     sc.classify(sample)
@@ -46,7 +50,21 @@ def update_classified_sample(sample_id, *args, **kwargs):
 
 
 @task
+def train_on_set(set_id):
+    training_set = TrainingSet.objects.get(id=set_id)
+    # Set project status to active
+    training_set.job.status = 1
+    training_set.job.save()
+
+    # FIXME: add actual classifier distinguish
+    pass
+
+
+@task
 def classify(*args, **kwargs):
+    """
+        Classifies given samples
+    """
     pass
 
 
@@ -55,10 +73,11 @@ def update_classifier_stats(*args, **kwargs):
     pass
 
 
-settings.FLOW_DEFINITIONS += [
+FLOW_DEFINITIONS = [
     (r'EventNewSample', update_classified_sample),
     (r'EventSamplesValidated', add_samples),
-    (r'EventNewClassifySample', add_samples),
-    (r'EventTrainClassifier', classify),
+    (r'EventNewClassifySample', classify),
+    # (r'EventTrainClassifier', classify),
+    (r'EventTrainingSetCompleted', train_on_set),
     (r'EventClassifierTrained', update_classifier_stats),
 ]

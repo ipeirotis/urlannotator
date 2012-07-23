@@ -1,5 +1,3 @@
-from django.conf import settings
-
 from celery import task, Task, registry
 
 from tasks import send_validated_samples
@@ -25,7 +23,6 @@ class SamplesValidationManager(Task):
 
 new_sample_task = registry.tasks[SamplesValidationManager.name]
 
-
-settings.FLOW_DEFINITIONS += [
+FLOW_DEFINITIONS = [
     (r'EventNewSample', new_sample_task),
 ]

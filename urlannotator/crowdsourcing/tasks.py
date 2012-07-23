@@ -1,8 +1,8 @@
 from celery import task
 
-from urlannotator.flow_control.event_system import event_bus
+from urlannotator.flow_control import send_event
 
 
 @task()
 def send_validated_samples(samples):
-    event_bus.delay("EventSamplesValidated", samples)
+    send_event("EventSamplesValidated", samples)

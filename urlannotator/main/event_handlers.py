@@ -1,6 +1,10 @@
 from celery import task, Task, registry
 from factories import SampleFactory, JobFactory
 
+from urlannotator.classification.models import TrainingSample, TrainingSet
+from urlannotator.main.models import GoldSample
+from urlannotator.flow_control import send_event
+
 
 @task()
 class EventRawSampleManager(Task):
@@ -20,18 +24,53 @@ new_raw_sample_task = registry.tasks[EventRawSampleManager.name]
 @task()
 class JobFactoryManager(Task):
     """
-        Manages factories handling Job creation.
+        Manages factories handling Job initialization (from db entry).
     """
 
     def __init__(self):
         self.factory = JobFactory()
 
     def run(self, *args, **kwargs):
-        self.factory.new_job(*args, **kwargs)
+        self.factory.initialize_job(*args, **kwargs)
 
 new_job_task = registry.tasks[JobFactoryManager.name]
 
+
+@task()
+class GoldSamplesMonitor(Task):
+    """
+        Monitors gold samples creation, and issues classificator training
+        if a complete set of gold samples has been prepared.
+    """
+
+    def __init__(self):
+        self.samples = []
+
+    def run(self, sample_id, *args, **kwargs):
+        # FIXME: Mock
+        self.samples.append(sample_id)
+
+        gold_sample = GoldSample.objects.get(id=sample_id)
+        job = gold_sample.sample.job
+        training_set = TrainingSet.objects.newest_for_job(job)
+        TrainingSample(
+            set=training_set,
+            sample=gold_sample.sample,
+            label=gold_sample.label
+        ).save()
+
+        # FIXME: Correct event name?
+        # Send training set completed event. Used here as we are certain no
+        # new samples will come in the mean time. In general, you can't
+        # assume that!
+        if len(job.gold_samples) == training_set.training_samples.count():
+            send_event("EventTrainingSetCompleted", training_set.id)
+
+
+new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]
+
 FLOW_DEFINITIONS = [
     (r'EventNewRawSample', new_raw_sample_task),
-    (r'EventCreateNewJob', new_job_task),
+    (r'EventNewJobInitialization', new_job_task),
+    (r'EventNewGoldSample', new_gold_sample_task),
 ]

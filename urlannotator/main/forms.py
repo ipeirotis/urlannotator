@@ -143,5 +143,5 @@ class WizardAdditionalForm(forms.Form):
         label="No. of allowed multiple URLs from the same domain")
     file_gold_urls = forms.FileField(required=False,
         label="Upload gold, (preclassified) urls", help_text="(i)")
-    file_norm_urls = forms.FileField(required=False,
+    file_classify_urls = forms.FileField(required=False,
         label="Upload additional non classified URLs", help_text="(i)")

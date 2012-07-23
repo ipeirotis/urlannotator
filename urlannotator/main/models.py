@@ -3,7 +3,7 @@ from tastypie.models import create_api_key
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
-
+from tenclouds.django.jsonfield.fields import JSONField
 
 LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
 
@@ -32,8 +32,17 @@ JOB_BASIC_DATA_SOURCE_CHOICES = ((1, 'Own workforce'),)
 JOB_DATA_SOURCE_CHOICES = JOB_BASIC_DATA_SOURCE_CHOICES + \
                           ((0, 'Odesk free'), (2, 'Odesk paid'))
 JOB_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
+
+# Job status breakdown:
+# Draft - template of a job, not active yet, can be started.
+# Active - up and running job.
+# Completed - job has reached it's goal. Possible BTM still running.
+# Stopped - job has been stopped by it's owner.
+# Created - job has been just created by user, awaiting initialization of
+#           elements. An active job must've gone through this step.
+#           Drafts DO NOT get this status.
 JOB_STATUS_CHOICES = ((0, 'Draft'), (1, 'Active'), (2, 'Completed'),
-                      (3, 'Stopped'))
+                      (3, 'Stopped'), (4, 'Created'))
 
 
 class Job(models.Model):
@@ -53,6 +62,8 @@ class Job(models.Model):
     same_domain_allowed = models.PositiveIntegerField(default=0)
     hourly_rate = models.DecimalField(default=0, decimal_places=2,
         max_digits=10)
+    gold_samples = JSONField()
+    classify_urls = JSONField()
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
 
     def get_status(self):

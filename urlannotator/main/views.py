@@ -4,6 +4,7 @@ import string
 import random
 import os
 import csv
+import json
 
 from docutils import core
 from django.shortcuts import render, redirect
@@ -25,7 +26,7 @@ from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_CHOICES, ClassifiedSample)
 from urlannotator.settings.defaults import (ODESK_CLIENT_ID, ROOT_DIR,
     ODESK_CLIENT_SECRET, SITE_URL)
-from urlannotator.flow_control.event_system import event_bus
+from urlannotator.flow_control import send_event
 
 
 def get_activation_key(email, num, salt_size=10,
@@ -243,7 +244,7 @@ def project_wizard(request):
         if request.POST['submit'] == 'draft':
             p_type = 0
         else:
-            p_type = 1
+            p_type = 4
         if (addt_form.is_valid() and
             attr_form.is_valid() and
             topic_form.is_valid()):
@@ -257,19 +258,30 @@ def project_wizard(request):
                     budget=attr_form.cleaned_data['budget'],
                     same_domain_allowed=addt_form.cleaned_data['same_domain'],
                     status=p_type)
-            p.save()
-            event_bus.delay('EventCreateNewJob', p.id)
             if 'file_gold_urls' in request.FILES:
                 try:
                     urls = csv.reader(request.FILES['file_gold_urls'])
-                    w = Worker()
-                    w.save()
-                    for line in urls:
-                        event_bus.delay('EventNewRawSample',
-                            p.id, w.id, line[0], label=line[1])
+                    gold_samples = [{'url': line[0], 'label': line[1]}
+                        for line in urls]
+                    p.gold_samples = json.dumps(gold_samples)
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')
+
+            if 'file_classify_urls' in request.FILES:
+                try:
+                    urls = csv.reader(request.FILES['file_classify_urls'])
+                    classify_urls = [line[0] for line in urls]
+                    p.classify_urls = json.dumps(classify_urls)
+                except csv.Error, e:
+                    request.session['error'] = e
+                    return redirect('index')
+            p.save()
+
+            # Create & Activate project has been pushed
+            if p_type == 4:
+                send_event('EventNewJobInitialization', p.id)
+
             return redirect('project_view', id=p.id)
         context = {'topic_form': topic_form,
                    'attributes_form': attr_form,
@@ -475,7 +487,7 @@ def project_classifier_view(request, id):
                 cs = ClassifiedSample(job=job, sample=None, url=url)
                 cs.save()
                 classified_samples.append(cs.id)
-                event_bus.delay('EventNewRawSample', job.id, w.id, url)
+                send_event('EventNewRawSample', job.id, w.id, url)
             request.session['classified-samples'] = classified_samples
         return redirect('project_classifier_view', id)
 

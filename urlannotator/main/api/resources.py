@@ -3,7 +3,7 @@ from django.conf.urls import url
 import urllib
 
 from urlannotator.main.models import Job, Worker, ClassifiedSample
-from urlannotator.flow_control.event_system import event_bus
+from urlannotator.flow_control import send_event
 
 
 class JobResource(ModelResource):
@@ -48,7 +48,7 @@ class JobResource(ModelResource):
         # as soon as a sample with given url and job is created
         classified_sample = ClassifiedSample(job=job, url=url)
         classified_sample.save()
-        event_bus.delay('EventNewRawSample', job.id, w.id, url)
+        send_event('EventNewRawSample', job.id, w.id, url)
 
         return self.create_response(request,
             {'request_id': classified_sample.id})

@@ -47,6 +47,6 @@ class TrainingSample(models.Model):
     """
         A training sample used in TrainingSet to train job's classifier.
     """
-    job = models.ForeignKey(Job, related_name="training_samples")
+    set = models.ForeignKey(TrainingSet, related_name="training_samples")
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=20, choices=LABEL_CHOICES)

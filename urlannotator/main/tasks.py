@@ -3,7 +3,7 @@ from celery import task
 from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job,
     Worker)
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
-from urlannotator.flow_control.event_system import event_bus
+from urlannotator.flow_control import send_event
 
 
 @task()
@@ -75,12 +75,12 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
                     label=label
                 )
                 gold.save()
-                event_bus.delay("EventNewGoldSample", gold.id)
+                send_event("EventNewGoldSample", gold.id)
 
             # Ordinary sample
             else:
                 # Sample created sucesfully - pushing event.
-                event_bus.delay("EventNewSample", sample_id)
+                send_event("EventNewSample", sample_id)
 
     # We don't need this object any more.
     temp_sample.delete()
@@ -109,18 +109,18 @@ def create_classify_sample(job_id, worker_id, url, text, label=None,
     sample.save()
 
     # Sample created sucesfully - pushing event.
-    event_bus.delay("EventNewClassifySample", sample.id)
+    send_event("EventNewClassifySample", sample.id)
 
     return (True, sample.id)
 
 
 @task()
-def create_job(job_id):
+def initialize_classifier(job_id):
     """
     Creates a new job from its parameters
     """
 
     # FIXME: Mock
-    # TODO: Actual job creation, moved from views.project_wizard
-    event_bus.delay("EventNewJobCreated", job_id)
+    # TODO: Add classifier & remaining elements initialization
+    send_event("EventNewJobCreated", job_id)
     return True
