@@ -1,4 +1,7 @@
-import events_loader
+from celery import registry
 
-# Gathering events for EventsBus
-events_loader.load()
+
+def send_event(event_name, *args, **kwargs):
+    from event_system import EventBusSender
+    return registry.tasks[EventBusSender.name].delay(event_name, *args,
+        **kwargs)

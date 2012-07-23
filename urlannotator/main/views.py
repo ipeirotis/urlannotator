@@ -17,7 +17,6 @@ from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.views.decorators.cache import cache_page
-from celery.result import AsyncResult
 
 from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
@@ -351,7 +350,7 @@ def odesk_login(request):
 @login_required
 def project_view(request, id):
     try:
-        proj = Job.objects.get(id=id)
+        proj = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
@@ -364,7 +363,7 @@ def project_view(request, id):
 @login_required
 def project_workers_view(request, id):
     try:
-        proj = Job.objects.get(id=id)
+        proj = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
@@ -377,7 +376,7 @@ def project_workers_view(request, id):
 @login_required
 def project_worker_view(request, id, worker_id):
     try:
-        proj = Job.objects.get(id=id)
+        proj = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
@@ -390,7 +389,7 @@ def project_worker_view(request, id, worker_id):
 @login_required
 def project_debug(request, id, debug):
     try:
-        proj = Job.objects.get(id=id)
+        proj = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = "Such project doesn't exist."
         return redirect('index')
@@ -413,7 +412,7 @@ def project_debug(request, id, debug):
 @login_required
 def project_btm_view(request, id):
     try:
-        proj = Job.objects.get(id=id)
+        proj = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
@@ -426,7 +425,7 @@ def project_btm_view(request, id):
 @login_required
 def project_data_view(request, id):
     try:
-        proj = Job.objects.get(id=id)
+        proj = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
@@ -440,7 +439,7 @@ def project_data_view(request, id):
 @login_required
 def project_classifier_view(request, id):
     try:
-        job = Job.objects.get(id=id)
+        job = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
@@ -480,7 +479,7 @@ def project_classifier_view(request, id):
             request.session['classified-samples'] = classified_samples
         return redirect('project_classifier_view', id)
 
-    samples = Sample.objects.filter(job=job)
+    samples = Sample.objects.filter(job=job).exclude(label='')
     yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
     yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
     no_labels = samples.filter(label=LABEL_CHOICES[1][0])
@@ -521,5 +520,5 @@ def index(request):
         request.session.pop('success')
     if request.user.is_authenticated():
         context['projects'] = Job.objects.filter(
-            account=request.user.get_profile())
+            account=request.user.get_profile()).order_by('-id')
     return render(request, 'main/index.html', RequestContext(request, context))
