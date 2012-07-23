@@ -51,7 +51,6 @@ Django Apps
     - voting
     - url entering
 
-  - sample_gathering
   - sample and workers quality
 
 - tagasauris_api_client
