@@ -36,7 +36,7 @@ STATIC_URL = '/statics/'
 
 # Default classifier used for NEW jobs. Has to be a valid class name from
 # urlannotator.classification.classifiers module
-JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
+JOB_DEFAULT_CLASSIFIER = 'SimpleClassifier'
 
 # Amazon credentials for sqs broker url.
 # Dont change naming - it is required by celery.
@@ -278,8 +278,8 @@ djcelery.setup_loader()
 # Celery tasks. INSTALLED_APPS also will be scanned so this is optional.
 CELERY_IMPORTS = (
     'urlannotator.flow_control.event_system',
-    'urlannotator.flow_control.events',
-    'urlannotator.main.events',
+    'urlannotator.flow_control.event_handlers',
+    'urlannotator.main.event_handlers',
 )
 
 # Test runner

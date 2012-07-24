@@ -52,6 +52,11 @@ class GoldSamplesMonitor(Task):
 
         gold_sample = GoldSample.objects.get(id=sample_id)
         job = gold_sample.sample.job
+
+        # If training set is not prepared, retry later
+        if not job.is_training_set_created():
+            registry.tasks[GoldSamplesMonitor.name].retry(countdown=30)
+
         training_set = TrainingSet.objects.newest_for_job(job)
         TrainingSample(
             set=training_set,
@@ -64,6 +69,7 @@ class GoldSamplesMonitor(Task):
         # new samples will come in the mean time. In general, you can't
         # assume that!
         if len(job.gold_samples) == training_set.training_samples.count():
+            job.set_gold_samples_done()
             send_event("EventTrainingSetCompleted", training_set.id)
 
 

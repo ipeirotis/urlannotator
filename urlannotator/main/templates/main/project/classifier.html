@@ -11,6 +11,13 @@
       <a href="#" class="btn">Export Training Ready Data</a>
     </div>
   </div>
+  {% if project.is_initializing %}
+  <div class="row-fluid">
+    <div class="span2">&nbsp;</div>
+    <div class="span8"><h4>Your classifier is being prepared. Be patient.</h4></div>
+    <div class="span2" style="text-align:right">&nbsp;</div>
+  </div>
+  {% elif project.is_active %}
   <div class="row-fluid">
     <div class="span2">
       <h4>Classifier performance</h4>
@@ -132,6 +139,7 @@
         </tbody>  
       </table>
     {% endif %}
+  {% endif %}
 </div>
 {% endblock %}
 

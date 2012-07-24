@@ -67,8 +67,7 @@ class JobFactory(object):
         w.save()
 
         if not job.gold_samples:
-            job.status = 1
-            job.save()
+            job.set_gold_samples_done()
         else:
             for gold_sample in job.gold_samples:
                 send_event('EventNewRawSample', job_id, w.id,
@@ -95,6 +94,7 @@ class JobFactory(object):
             Creates first training set that will consist of gold samples
         """
         TrainingSet(job=job).save()
+        job.set_training_set_created()
 
     def create_classifier(self, job):
         """
@@ -105,6 +105,7 @@ class JobFactory(object):
             type=settings.JOB_DEFAULT_CLASSIFIER,
             parameters=''
         ).save()
+        job.set_classifier_created()
 
     def initialize_job(self, job_id, *args, **kwargs):
         """

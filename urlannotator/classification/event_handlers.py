@@ -20,8 +20,11 @@ class ClassifierTrainingManager(Task):
             if isinstance(samples, int):
                 samples = [samples]
             job = Sample.objects.get(id=samples[0]).job
-            if job.status == 4:
-                registry.tasks[ClassifierTrainingManager.name].retry(countdown=30)
+
+            # If classifier is not trained, retry later
+            if job.is_classifier_trained():
+                registry.tasks[ClassifierTrainingManager.name].retry(
+                    countdown=30)
 
             classifier = classifier_factory.create_classifier(job.id)
             train_samples = [train_sample.sample for train_sample in
@@ -50,16 +53,21 @@ def update_classified_sample(sample_id, *args, **kwargs):
 
 @task
 def train_on_set(set_id):
+    """
+        Trains classifier on newly created training set
+    """
     training_set = TrainingSet.objects.get(id=set_id)
 
-    # Set project status to active, if initializing
-    if training_set.job.status == 4:
-        training_set.job.status = 1
-        training_set.job.save()
+    # If classifier hasn't been created, retry later
+    if not training_set.job.is_classifier_created():
+        train_on_set.retry(countdown=30)
 
-    # FIXME: add actual classifier distinguish
-    # classifier = classifier_factory.create_classifier(training_set.job.id)
-    pass
+    classifier = classifier_factory.create_classifier(training_set.job.id)
+
+    samples = (training_sample.sample
+        for training_sample in training_set.training_samples.all())
+    classifier.train(samples)
+    training_set.job.set_classifier_trained()
 
 
 @task
