@@ -58,12 +58,14 @@ JOB_FLAGS_ALL = 1 + 2 + 4 + 8
 class JobManager(models.Manager):
     def create_active(self, **kwargs):
         kwargs['status'] = 4
+        kwargs['remaining_urls'] = kwargs.get('no_of_urls', 0)
         job = self.create(**kwargs)
         send_event('EventNewJobInitialization', job.id)
         return job
 
     def create_draft(self, **kwargs):
         kwargs['status'] = 0
+        kwargs['remaining_urls'] = kwargs.get('no_of_urls', 0)
         return self.create(**kwargs)
 
 
@@ -87,6 +89,7 @@ class Job(models.Model):
     gold_samples = JSONField()
     classify_urls = JSONField()
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
+    remaining_urls = models.PositiveIntegerField(default=0)
     initialization_status = models.IntegerField(default=0)
 
     objects = JobManager()
