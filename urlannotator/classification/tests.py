@@ -5,6 +5,7 @@ from urlannotator.main.models import Sample, Job, Worker
 from urlannotator.classification.classifiers import (SimpleClassifier,
     Classifier247)
 from urlannotator.classification.models import TrainingSet
+from urlannotator.classification.factories import classifier_factory
 
 
 class Classifier247Tests(TestCase):
@@ -95,3 +96,18 @@ class TrainingSetManagerTests(TestCase):
         ts.save()
         self.assertEqual(TrainingSet.objects.newest_for_job(job).job.id,
             job.id)
+
+
+class ClassifierFactoryTests(TestCase):
+    def setUp(self):
+        self.u = User.objects.create_user(username='test', password='1')
+
+    def testClassifierFactory(self):
+        Job.objects.create_active(account=self.u.get_profile())
+        classifier_factory.initialize_classifier(1, 'SimpleClassifier')
+        factory = classifier_factory.create_classifier(1)
+        self.assertEqual(factory.__class__, SimpleClassifier)
+
+        # Cached classifier
+        factory_two = classifier_factory.create_classifier(1)
+        self.assertEqual(factory, factory_two)

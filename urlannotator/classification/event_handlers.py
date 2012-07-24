@@ -1,7 +1,7 @@
 from celery import task, Task, registry
 
 from urlannotator.classification.models import TrainingSet
-from urlannotator.classification.classifiers import SimpleClassifier
+from urlannotator.classification.factories import classifier_factory
 from urlannotator.main.models import Sample, ClassifiedSample
 
 
@@ -16,7 +16,6 @@ class ClassifierTrainingManager(Task):
     def run(self, samples, *args, **kwargs):
         # FIXME: Mock
         # TODO: Make proper classifier management
-        sc = SimpleClassifier(description="test", classes=['Yes'])
         if samples:
             if isinstance(samples, int):
                 samples = [samples]
@@ -24,13 +23,14 @@ class ClassifierTrainingManager(Task):
             if job.status == 4:
                 registry.tasks[ClassifierTrainingManager.name].retry(countdown=30)
 
+            classifier = classifier_factory.create_classifier(job.id)
             train_samples = [train_sample.sample for train_sample in
                 TrainingSet.objects.newest_for_job(job).training_samples.all()]
             if train_samples:
-                sc.train(train_samples)
+                classifier.train(train_samples)
                 samples_list = Sample.objects.filter(id__in=samples)
                 for sample in samples_list:
-                    sc.classify(sample)
+                    classifier.classify(sample)
 
 
 add_samples = registry.tasks[ClassifierTrainingManager.name]
@@ -58,6 +58,7 @@ def train_on_set(set_id):
         training_set.job.save()
 
     # FIXME: add actual classifier distinguish
+    # classifier = classifier_factory.create_classifier(training_set.job.id)
     pass
 
 

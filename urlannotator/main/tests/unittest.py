@@ -43,7 +43,7 @@ class SampleFactoryTest(TestCase):
 
 class JobFactoryTest(TestCase):
     def setUp(self):
-        self.u = User.objects.create_user(username='test', password='1')
+        self.u = User.objects.create_user(username='test2', password='1')
 
     def testJobFactory(self):
         Job.objects.create_draft(account=self.u.get_profile())
