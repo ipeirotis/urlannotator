@@ -5,6 +5,8 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from tenclouds.django.jsonfield.fields import JSONField
 
+from urlannotator.flow_control import send_event
+
 LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
 
 
@@ -45,6 +47,18 @@ JOB_STATUS_CHOICES = ((0, 'Draft'), (1, 'Active'), (2, 'Completed'),
                       (3, 'Stopped'), (4, 'Created'))
 
 
+class JobManager(models.Manager):
+    def create_active(self, **kwargs):
+        kwargs['status'] = 4
+        job = self.create(**kwargs)
+        send_event('EventNewJobInitialization', job.id)
+        return job
+
+    def create_draft(self, **kwargs):
+        kwargs['status'] = 0
+        return self.create(**kwargs)
+
+
 class Job(models.Model):
     """
         Model representing actual project that is start by user, and consists
@@ -65,6 +79,8 @@ class Job(models.Model):
     gold_samples = JSONField()
     classify_urls = JSONField()
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
+
+    objects = JobManager()
 
     def get_status(self):
         return JOB_STATUS_CHOICES[self.status][1]

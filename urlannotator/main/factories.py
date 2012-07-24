@@ -1,13 +1,12 @@
 import datetime
+from django.conf import settings
+from celery import group
 
-from urlannotator.classification.models import TrainingSet
+from urlannotator.classification.models import TrainingSet, Classifier
 from urlannotator.main.models import TemporarySample, Job, Worker
 from urlannotator.main.tasks import (web_content_extraction,
-    web_screenshot_extraction, create_sample, create_classify_sample,
-    initialize_classifier)
+    web_screenshot_extraction, create_sample, create_classify_sample)
 from urlannotator.flow_control import send_event
-
-from celery import group
 
 
 class SampleFactory(object):
@@ -67,9 +66,13 @@ class JobFactory(object):
         w = Worker()
         w.save()
 
-        for gold_sample in job.gold_samples:
-            send_event('EventNewRawSample', job_id, w.id, gold_sample['url'],
-                label=gold_sample['label'])
+        if not job.gold_samples:
+            job.status = 1
+            job.save()
+        else:
+            for gold_sample in job.gold_samples:
+                send_event('EventNewRawSample', job_id, w.id,
+                    gold_sample['url'], label=gold_sample['label'])
         return None
 
     def classify_urls(self, job_id):
@@ -93,14 +96,25 @@ class JobFactory(object):
         """
         TrainingSet(job=job).save()
 
+    def create_classifier(self, job):
+        """
+            Creates classifier entry with type equal to JOB_DEFAULT_CLASSIFIER.
+        """
+        Classifier(
+            job=job,
+            type=settings.JOB_DEFAULT_CLASSIFIER,
+            parameters=''
+        ).save()
+
     def initialize_job(self, job_id, *args, **kwargs):
         """
             Initializes new job's elements from given job entry's id.
         """
 
-        # TODO: Add remaining elements of job
+        # TODO: Add remaining elements of a job
         job = Job.objects.get(id=job_id)
 
         self.create_training_set(job)
+        self.create_classifier(job)
         self.prepare_gold_samples(job.id)
         self.classify_urls(job.id)

@@ -25,12 +25,18 @@ MEDIA_URL = ''
 STATIC_ROOT = os.path.join(ROOT_DIR, '..', 'collected_static')
 
 SITE_URL = 'urlannotator.10clouds.com'
+
 EMAIL_HOST = ''
 EMAIL_PORT = '587'
 EMAIL_HOST_USER = ''
 EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = True
+
 STATIC_URL = '/statics/'
+
+# Default classifier used for NEW jobs. Has to be a valid class name from
+# urlannotator.classification.classifiers module
+JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
 # Amazon credentials for sqs broker url.
 # Dont change naming - it is required by celery.
@@ -279,6 +285,3 @@ CELERY_IMPORTS = (
 # Test runner
 # CELERY_ALWAYS_EAGER = True
 TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
-
-# Events holder - events are appended in events.py modules in each app.
-FLOW_DEFINITIONS = []

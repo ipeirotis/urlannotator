@@ -10,29 +10,27 @@ from django.core import mail
 
 from social_auth.models import UserSocialAuth
 
-from urlannotator.classification.models import TrainingSet
-from urlannotator.main.models import (Account, Job, Worker, Sample,
+from urlannotator.main.models import (Account, Job, Worker, Sample, GoldSample,
     ClassifiedSample)
 from urlannotator.main.factories import SampleFactory
 
 
 class SampleFactoryTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='test', password='1')
+        self.job = Job.objects.create_active(account=self.user.get_profile())
 
     def testSimpleSample(self):
-        job = Job()
-        job.account_id = 1
-        job.save()
-
         worker = Worker()
         worker.save()
 
         test_url = 'google.com'
 
         sf = SampleFactory()
-        res = sf.new_sample(job.id, worker.id, test_url)
+        res = sf.new_sample(self.job.id, worker.id, test_url)
         res.get()
 
-        query = Sample.objects.filter(job=job, url=test_url)
+        query = Sample.objects.filter(job=self.job, url=test_url)
 
         self.assertEqual(query.count(), 1)
 
@@ -41,6 +39,27 @@ class SampleFactoryTest(TestCase):
 
         s = urllib2.urlopen(sample.screenshot)
         self.assertEqual(s.headers.type, 'image/png')
+
+
+class JobFactoryTest(TestCase):
+    def setUp(self):
+        self.u = User.objects.create_user(username='test', password='1')
+
+    def testJobFactory(self):
+        Job.objects.create_draft(account=self.u.get_profile())
+
+        # Nothing new added
+        self.assertEqual(Sample.objects.all().count(), 0)
+
+        gold_samples = [{'url': 'google.com', 'label': 'Yes'}]
+        Job.objects.create_active(
+            account=self.u.get_profile(),
+            gold_samples=json.dumps(gold_samples)
+        )
+
+        # New sample created
+        self.assertEqual(Sample.objects.all().count(), 1)
+        self.assertEqual(GoldSample.objects.all().exclude(label='').count(), 1)
 
 
 class BaseNotLoggedInTests(TestCase):
@@ -142,12 +161,13 @@ class BaseNotLoggedInTests(TestCase):
 
 class LoggedInTests(TestCase):
     def createProject(self, user):
-        p = Job(account=user.get_profile(),
-                title='test',
-                description='test desc',
-                data_source=1,
-                status=1)  # Active
-        p.save()
+        Job.objects.create_active(
+            account=user.get_profile(),
+            title='test',
+            description='test desc',
+            data_source=1,
+            status=1
+        )
 
     def testDashboard(self):
         c = Client()
@@ -418,9 +438,11 @@ class ProjectTests(TestCase):
                              'Please input project topic description.')
 
     def testOverview(self):
-        job = Job(title='test', description='test',
-            account=self.u.get_profile())
-        job.save()
+        Job.objects.create_active(
+            title='test',
+            description='test',
+            account=self.u.get_profile()
+        )
 
         project_urls = ['view', 'workers_view', 'data_view',
             'btm_view', 'classifier_view']
@@ -446,9 +468,11 @@ class ProjectTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def testClassifierView(self):
-        job = Job(title='test', description='test',
-            account=self.u.get_profile())
-        job.save()
+        job = Job.objects.create_active(
+            title='test',
+            description='test',
+            account=self.u.get_profile()
+        )
 
         w = Worker()
         w.save()
@@ -485,9 +509,7 @@ class ApiTests(TestCase):
         array = json.loads(resp.content)
         self.assertIn('meta', array)
 
-        job = Job(account=self.user.get_profile())
-        job.save()
-        TrainingSet(job=job).save()
+        Job.objects.create_active(account=self.user.get_profile())
 
         resp = c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
             follow=True)

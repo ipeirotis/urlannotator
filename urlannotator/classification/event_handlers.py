@@ -1,5 +1,3 @@
-from django.conf import settings
-
 from celery import task, Task, registry
 
 from urlannotator.classification.models import TrainingSet
@@ -25,6 +23,7 @@ class ClassifierTrainingManager(Task):
             job = Sample.objects.get(id=samples[0]).job
             if job.status == 4:
                 registry.tasks[ClassifierTrainingManager.name].retry(countdown=30)
+
             train_samples = [train_sample.sample for train_sample in
                 TrainingSet.objects.newest_for_job(job).training_samples.all()]
             if train_samples:
@@ -52,9 +51,11 @@ def update_classified_sample(sample_id, *args, **kwargs):
 @task
 def train_on_set(set_id):
     training_set = TrainingSet.objects.get(id=set_id)
-    # Set project status to active
-    training_set.job.status = 1
-    training_set.job.save()
+
+    # Set project status to active, if initializing
+    if training_set.job.status == 4:
+        training_set.job.status = 1
+        training_set.job.save()
 
     # FIXME: add actual classifier distinguish
     pass

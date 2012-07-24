@@ -241,29 +241,27 @@ def project_wizard(request):
         topic_form = WizardTopicForm(request.POST)
         attr_form = WizardAttributesForm(odeskLogged, request.POST)
         addt_form = WizardAdditionalForm(request.POST)
-        if request.POST['submit'] == 'draft':
-            p_type = 0
-        else:
-            p_type = 4
+        is_draft = request.POST['submit'] == 'draft'
         if (addt_form.is_valid() and
             attr_form.is_valid() and
             topic_form.is_valid()):
-            p = Job(account=request.user.get_profile(),
-                    title=topic_form.cleaned_data['topic'],
-                    description=topic_form.cleaned_data['topic_desc'],
-                    data_source=attr_form.cleaned_data['data_source'],
-                    project_type=attr_form.cleaned_data['project_type'],
-                    no_of_urls=attr_form.cleaned_data['no_of_urls'],
-                    hourly_rate=attr_form.cleaned_data['hourly_rate'],
-                    budget=attr_form.cleaned_data['budget'],
-                    same_domain_allowed=addt_form.cleaned_data['same_domain'],
-                    status=p_type)
+            params = {
+                'account': request.user.get_profile(),
+                'title': topic_form.cleaned_data['topic'],
+                'description': topic_form.cleaned_data['topic_desc'],
+                'data_source': attr_form.cleaned_data['data_source'],
+                'project_type': attr_form.cleaned_data['project_type'],
+                'no_of_urls': attr_form.cleaned_data['no_of_urls'],
+                'hourly_rate': attr_form.cleaned_data['hourly_rate'],
+                'budget': attr_form.cleaned_data['budget'],
+                'same_domain_allowed': addt_form.cleaned_data['same_domain'],
+            }
             if 'file_gold_urls' in request.FILES:
                 try:
                     urls = csv.reader(request.FILES['file_gold_urls'])
                     gold_samples = [{'url': line[0], 'label': line[1]}
                         for line in urls]
-                    p.gold_samples = json.dumps(gold_samples)
+                    params['gold_samples'] = json.dumps(gold_samples)
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')
@@ -272,17 +270,17 @@ def project_wizard(request):
                 try:
                     urls = csv.reader(request.FILES['file_classify_urls'])
                     classify_urls = [line[0] for line in urls]
-                    p.classify_urls = json.dumps(classify_urls)
+                    params['classify_urls'] = json.dumps(classify_urls)
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')
-            p.save()
 
-            # Create & Activate project has been pushed
-            if p_type == 4:
-                send_event('EventNewJobInitialization', p.id)
+            if is_draft:
+                job = Job.objects.create_draft(**params)
+            else:
+                job = Job.objects.create_active(**params)
 
-            return redirect('project_view', id=p.id)
+            return redirect('project_view', id=job.id)
         context = {'topic_form': topic_form,
                    'attributes_form': attr_form,
                    'additional_form': addt_form}

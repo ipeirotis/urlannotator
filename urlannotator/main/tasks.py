@@ -112,15 +112,3 @@ def create_classify_sample(job_id, worker_id, url, text, label=None,
     send_event("EventNewClassifySample", sample.id)
 
     return (True, sample.id)
-
-
-@task()
-def initialize_classifier(job_id):
-    """
-    Creates a new job from its parameters
-    """
-
-    # FIXME: Mock
-    # TODO: Add classifier & remaining elements initialization
-    send_event("EventNewJobCreated", job_id)
-    return True
