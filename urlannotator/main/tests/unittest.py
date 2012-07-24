@@ -7,10 +7,10 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core import mail
-from celery.result import EagerResult
 
 from social_auth.models import UserSocialAuth
 
+from urlannotator.classification.models import TrainingSet
 from urlannotator.main.models import (Account, Job, Worker, Sample,
     ClassifiedSample)
 from urlannotator.main.factories import SampleFactory
@@ -485,7 +485,10 @@ class ApiTests(TestCase):
         array = json.loads(resp.content)
         self.assertIn('meta', array)
 
-        Job(account=self.user.get_profile()).save()
+        job = Job(account=self.user.get_profile())
+        job.save()
+        TrainingSet(job=job).save()
+
         resp = c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
             follow=True)
 
