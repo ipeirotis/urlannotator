@@ -23,9 +23,9 @@ class ClassifierTrainingManager(Task):
             job = Sample.objects.get(id=samples[0]).job
 
             # If classifier is not trained, retry later
-            if job.is_classifier_trained():
+            if not job.is_classifier_trained():
                 registry.tasks[ClassifierTrainingManager.name].retry(
-                    countdown=30)
+                    countdown=3 * 60)
 
             classifier = classifier_factory.create_classifier(job.id)
             train_samples = [train_sample.sample for train_sample in
