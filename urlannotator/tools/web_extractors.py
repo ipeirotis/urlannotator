@@ -32,7 +32,7 @@ def extract_words(text):
         delimiters in the middle.
     """
     # \w matches [a-zA-Z0-9_], and we dont want underscores at both ends
-    words = re.findall(r"[a-zA-Z0-9][\w'\-]*[a-zA-Z0-9]", text)
+    words = re.findall(r"[a-zA-Z0-9][\w'\-\.]*[a-zA-Z0-9]", text)
 
     words = ifilter(lambda line: line not in BLACKLISTED_WORDS, words)
 
@@ -43,6 +43,7 @@ def extract_words(text):
     text = re.sub(r"[']{2,}", "'", text)
     text = re.sub(r'[-]{2,}', '-', text)
     text = re.sub(r'[_]{2,}', '_', text)
+    text = re.sub(r'[\.]{2,}', '.', text)
     return text
 
 
