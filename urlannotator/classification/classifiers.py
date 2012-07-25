@@ -1,5 +1,18 @@
 import nltk
+import apiclient.errors
+import gflags
+import httplib2
+import logging
+import os
+import pprint
+import sys
+import time
 
+from apiclient.discovery import build
+from oauth2client.file import Storage
+from oauth2client.client import AccessTokenRefreshError
+from oauth2client.client import OAuth2WebServerFlow
+from oauth2client.tools import run
 from tenclouds.lock.rwlock import MemcachedRWLock
 from tenclouds.lock.locks import MemcacheLock
 
@@ -175,3 +188,92 @@ class SimpleClassifier(Classifier):
         sample.label = label
         sample.save()
         return {'label': label}
+
+
+class GooglePredictionClassifier(Classifier):
+    """
+        Classifier using Google Prediction API
+    """
+
+    def __init__(self, description, classes, *args, **kwargs):
+        """
+            Description and classes are not used by this classifier.
+        """
+        self.model = None
+        flow = OAuth2WebServerFlow(
+            '382637721312.apps.googleusercontent.com',
+            'Y-MqDvcWxf4em0DrKYKK7CSv',
+            'https://www.googleapis.com/auth/prediction',
+            None,  # user_agent
+            'https://accounts.google.com/o/oauth2/auth',
+            'https://accounts.google.com/o/oauth2/token')
+
+        storage = Storage('prediction.dat')
+        credentials = storage.get()
+
+        # Create an httplib2.Http object to handle our HTTP requests and
+        # authorize it with our good Credentials.
+        http = httplib2.Http()
+        http = credentials.authorize(http)
+
+        # Get access to the Prediction API.
+        service = build("prediction", "v1.5", http=http)
+        self.papi = service.trainedmodels()
+
+    def train(self, samples):
+        """
+            Trains classifier on gives samples' set. If sample has no label,
+            it's checked for being a GoldSample.
+        """
+        train_set = []
+        for sample in samples:
+            if not isinstance(sample, Sample):
+                continue
+            if sample.label == '':
+                try:
+                    gold_sample = GoldSample.objects.get(sample=sample)
+                    sample.label = gold_sample.label
+                except:
+                    continue
+            train_set.append((self.get_features(sample), sample.label))
+        # TODO: Send training set in csv to google storage.
+        # TODO: Request classifier update
+
+    def classify(self, sample):
+        """
+            Classifies gives sample and saves result to the model.
+        """
+        if self.model is None:
+            return None
+
+        # TODO: Uncomment when google storage has been set up and running
+        # body = {'input': {'csvInstance': [sample.text]}}
+        # label = self.papi.predict(body=body, id=self.model).execute()
+        # label = label['outputLabel']
+
+        label = 'Yes'
+        sample.label = label
+        sample.save()
+        return label
+
+    def classify_with_info(self, sample):
+        """
+            Classifies given sample and returns more detailed data.
+            Currently only label.
+        """
+        if self.model is None:
+            return None
+
+        # TODO: Uncomment when google storage has been set up and running
+        # body = {'input': {'csvInstance': [sample.text]}}
+        # label = self.papi.predict(body=body, id=self.model).execute()
+        # result = {
+        #     'outputLabel': label['outputLabel'],
+        #     'outputMulti': label['outputMulti']
+        # }
+
+        label = 'Yes'
+        sample.label = label
+        sample.save()
+        result = {'outputLabel': label, 'outputMulti': {}}
+        return result

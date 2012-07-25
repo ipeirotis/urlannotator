@@ -1,6 +1,9 @@
+import json
+
 from urlannotator.classification.models import Classifier
 from urlannotator.main.models import Job
-from urlannotator.classification.classifiers import SimpleClassifier
+from urlannotator.classification.classifiers import (SimpleClassifier,
+    GooglePredictionClassifier)
 
 
 class ClassifierFactory(object):
@@ -20,7 +23,13 @@ class ClassifierFactory(object):
         if classifier_name == 'SimpleClassifier':
             classifier_entry.type = classifier_name
             classifier_entry.parameters = ''
-
+        elif classifier_name == 'GooglePredictionClassifier':
+            classifier_entry.type = classifier_name
+            params = {'model': 'job-%d' % job_id, 'training': 'RUNNING'}
+            classifier_entry.parameters = json.dumps(params)
+            # TODO: Training status check (separate process?) + csv data upload
+            #       and model training request
+            # send_event('EventNewGoogleClassiferCreated', job_id)
         classifier_entry.save()
 
     def create_classifier(self, job_id):
@@ -29,10 +38,15 @@ class ClassifierFactory(object):
         # Custom classifier initialization
         if not classifier:
             job = Job.objects.get(id=job_id)
-            classifier_type = Classifier.objects.get(job=job).type
+            classifier_entry = Classifier.objects.get(job=job)
 
-            if classifier_type == 'SimpleClassifier':
+            if classifier_entry.type == 'SimpleClassifier':
                 classifier = SimpleClassifier(job.description, ['Yes', 'No'])
+            elif classifier_entry.type == 'GooglePredictionClassifier':
+                classifier = GooglePredictionClassifier(job.description,
+                    ['Yes', 'No'])
+                params = json.loads(classifier_entry.parameters)
+                classifier.model = params['model']
 
             # Cache newly created classifier
             self.cache[str(job_id)] = classifier
