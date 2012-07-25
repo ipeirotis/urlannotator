@@ -1,18 +1,13 @@
 import nltk
-import apiclient.errors
-import gflags
 import httplib2
-import logging
 import os
-import pprint
-import sys
-import time
+import csv
+import boto
 
 from apiclient.discovery import build
+from django.conf import settings
 from oauth2client.file import Storage
-from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2WebServerFlow
-from oauth2client.tools import run
 from tenclouds.lock.rwlock import MemcachedRWLock
 from tenclouds.lock.locks import MemcacheLock
 
@@ -220,6 +215,27 @@ class GooglePredictionClassifier(Classifier):
         service = build("prediction", "v1.5", http=http)
         self.papi = service.trainedmodels()
 
+    def create_and_upload_training_data(self, samples):
+        training_dir = 'urlannotator-training-data'
+        file_name = 'job-%d' % self.model
+        file_out = '%s/%s.csv' % (training_dir, file_name)
+
+        # Write data to csv file
+        writer = csv.writer(open(file_out, 'wb'))
+        for sample in samples:
+            writer.writerow([sample.text, sample.label])
+        writer.close()
+
+        # Upload file to gs
+        training_file = open(file_out, 'r')
+        upload_path = '%s/%s.csv' % (settings.GOOGLE_BUCKET_NAME, file_name)
+        uri = boto.storage_uri(upload_path, settings.GOOGLE_STORAGE_PREFIX)
+        uri.new_key().set_contents_from_file(training_file)
+        training_file.close()
+
+        # Remove file from disc
+        os.system('rm %s' % file_out)
+
     def train(self, samples):
         """
             Trains classifier on gives samples' set. If sample has no label,
@@ -237,6 +253,7 @@ class GooglePredictionClassifier(Classifier):
                     continue
             train_set.append((self.get_features(sample), sample.label))
         # TODO: Send training set in csv to google storage.
+        # self.create_and_upload_training_data(train_set)
         # TODO: Request classifier update
 
     def classify(self, sample):

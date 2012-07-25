@@ -69,7 +69,9 @@ def train_on_set(set_id):
     samples = (training_sample.sample
         for training_sample in training_set.training_samples.all())
     classifier.train(samples)
-    job.set_classifier_trained()
+
+    if not job.is_classifier_trained():
+        job.set_classifier_trained()
 
     # Gold samples created (since we are here), classifier created (checked).
     # Job has been fully initialized

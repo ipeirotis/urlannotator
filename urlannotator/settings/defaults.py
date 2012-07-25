@@ -38,6 +38,10 @@ STATIC_URL = '/statics/'
 # urlannotator.classification.classifiers module
 JOB_DEFAULT_CLASSIFIER = 'SimpleClassifier'
 
+# Google Storage parameters used in GooglePrediction classifier
+GOOGLE_STORAGE_PREFIX = 'gs'
+GOOGLE_BUCKET_NAME = 'urlannotator'
+
 # Amazon credentials for sqs broker url.
 # Dont change naming - it is required by celery.
 AWS_ACCESS_KEY_ID = 'AKIAIDLOOYJOOWG6OMVA'

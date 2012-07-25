@@ -8,8 +8,11 @@
       <span class="span5">&nbsp;</span>
       <span class="span4" style="text-align:right;">
         {% if project.is_draft %}
-          <a class="btn" href="#">Activate project</a>
-          <a class="btn" href="#">Settings</a>
+        <form method="POST" action="{% url project_view id=project.id %}">
+          {% csrf_token %}
+          <input type="submit" name="submit" value="Activate project" class="btn">
+          <input type="submit" name="submit" value="Settings" class="btn">
+        </form>
         {% else %}
           <a class="btn" href="#">Export data</a>
           <a class="btn" data-toggle="modal" href="#closeProjectModal">Close project</a>

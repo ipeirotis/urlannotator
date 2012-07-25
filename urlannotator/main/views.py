@@ -365,6 +365,10 @@ def project_view(request, id):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
+    if request.method == "POST":
+        value = request.POST.get('submit', None)
+        if value == 'Activate project':
+            proj.activate()
     context = {'project': proj}
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
@@ -407,9 +411,9 @@ def project_debug(request, id, debug):
     if debug == 'draft':
         proj.project_status = 0
     elif debug == 'active':
-        proj.project_status = 1
+        proj.activate()
     elif debug == 'completed':
-        proj.project_status = 2
+        proj.stop()
     else:
         request.session['error'] = "Wrong debug parameter."
         return redirect('index')
