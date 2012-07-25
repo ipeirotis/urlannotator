@@ -18,7 +18,10 @@ from urlannotator.main.factories import SampleFactory
 class SampleFactoryTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='test', password='1')
-        self.job = Job.objects.create_active(account=self.user.get_profile())
+        self.job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'example.com', 'label': 'Yes'}])
+        )
 
     def testSimpleSample(self):
         worker = Worker()
@@ -471,7 +474,8 @@ class ProjectTests(TestCase):
         job = Job.objects.create_active(
             title='test',
             description='test',
-            account=self.u.get_profile()
+            account=self.u.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
 
         w = Worker()
@@ -483,8 +487,9 @@ class ProjectTests(TestCase):
             {'test-urls': testUrl}, follow=True)
 
         self.assertEqual(ClassifiedSample.objects.all().count(), 1)
+        # Golden sample + new sample
         self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
-            1)
+            2)
 
 
 class DocsTest(TestCase):
@@ -509,7 +514,10 @@ class ApiTests(TestCase):
         array = json.loads(resp.content)
         self.assertIn('meta', array)
 
-        Job.objects.create_active(account=self.user.get_profile())
+        Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
 
         resp = c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
             follow=True)

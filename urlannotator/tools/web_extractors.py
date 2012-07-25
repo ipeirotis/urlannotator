@@ -2,9 +2,11 @@ import httplib
 import urlparse
 import subprocess
 import os
+import re
 
 from django.conf import settings
 from django.template.defaultfilters import slugify
+from itertools import ifilter
 
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
@@ -20,6 +22,28 @@ def url_status(url):
         urlparse.urlunparse(('', '', path, params, query, fragment)))
     res = conn.getresponse()
     print res.status
+
+BLACKLISTED_WORDS = ['img']
+
+
+def extract_words(text):
+    """
+        Finds all words starting and ending with a character, with possible
+        delimiters in the middle.
+    """
+    # \w matches [a-zA-Z0-9_], and we dont want underscores at both ends
+    words = re.findall(r"[a-zA-Z0-9][\w'\-]*[a-zA-Z0-9]", text)
+
+    words = ifilter(lambda line: line not in BLACKLISTED_WORDS, words)
+
+    # Join found words, and lowercase them
+    text = ' '.join(words).lower()
+
+    # Remove continous delimiters
+    text = re.sub(r"[']{2,}", "'", text)
+    text = re.sub(r'[-]{2,}', '-', text)
+    text = re.sub(r'[_]{2,}', '_', text)
+    return text
 
 
 def get_web_text(url):
