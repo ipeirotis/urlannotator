@@ -12,7 +12,7 @@ class ClassifierFactory(object):
         # cannot change.
         self.cache = {}
 
-    def initialize_classifier(self, job_id, classifier_name):
+    def initialize_classifier(self, job_id, classifier_name, prefix=''):
         """
             Manages initialization of NEW classifier.
         """
@@ -25,7 +25,8 @@ class ClassifierFactory(object):
             classifier_entry.parameters = ''
         elif classifier_name == 'GooglePredictionClassifier':
             classifier_entry.type = classifier_name
-            params = {'model': 'job-%d' % job_id, 'training': 'RUNNING'}
+            params = {'model': '%sjob-%d' % (prefix, job_id),
+                'training': 'RUNNING'}
             classifier_entry.parameters = json.dumps(params)
             # TODO: Training status check (separate process?) + csv data upload
             #       and model training request

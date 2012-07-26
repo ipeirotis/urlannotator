@@ -5,11 +5,13 @@ import csv
 import boto
 
 from apiclient.discovery import build
+from boto.gs.connection import GSConnection
+from boto.gs.bucket import Bucket
 from django.conf import settings
-from oauth2client.file import Storage
-from oauth2client.client import OAuth2WebServerFlow
 from tenclouds.lock.rwlock import MemcachedRWLock
 from tenclouds.lock.locks import MemcacheLock
+from oauth2client.file import Storage
+from boto.s3.key import Key
 
 from urlannotator.main.models import Sample, GoldSample
 
@@ -199,14 +201,6 @@ class GooglePredictionClassifier(Classifier):
             Description and classes are not used by this classifier.
         """
         self.model = None
-        flow = OAuth2WebServerFlow(
-            '382637721312.apps.googleusercontent.com',
-            'Y-MqDvcWxf4em0DrKYKK7CSv',
-            'https://www.googleapis.com/auth/prediction',
-            None,  # user_agent
-            'https://accounts.google.com/o/oauth2/auth',
-            'https://accounts.google.com/o/oauth2/token')
-
         storage = Storage('prediction.dat')
         credentials = storage.get()
 
@@ -228,17 +222,28 @@ class GooglePredictionClassifier(Classifier):
         writer = csv.writer(open(file_out, 'wb'))
         for sample in samples:
             writer.writerow([sample.text, sample.label])
-        writer.close()
 
         # Upload file to gs
         training_file = open(file_out, 'r')
-        upload_path = '%s/%s.csv' % (settings.GOOGLE_BUCKET_NAME, file_name)
-        uri = boto.storage_uri(upload_path, settings.GOOGLE_STORAGE_PREFIX)
-        uri.new_key().set_contents_from_file(training_file)
+        upload_path = '%s/%s.csv' % (GOOGLE_BUCKET_NAME, file_name)
+
+        con = GSConnection(settings.GS_ACCESS_KEY, settings.GS_SECRET)
+        try:
+            bucket = con.create_bucket(GOOGLE_BUCKET_NAME)
+        except:
+            # Bucket exists
+            bucket = Bucket(connection=con, name=GOOGLE_BUCKET_NAME)
+
+        key = Key(bucket)
+        key.key = file_name
+        key.set_contents_from_file(training_file)
         training_file.close()
 
+        key.make_public()
         # Remove file from disc
         os.system('rm %s' % file_out)
+
+        return file_name
 
     def train(self, samples):
         """
@@ -255,10 +260,21 @@ class GooglePredictionClassifier(Classifier):
                     sample.label = gold_sample.label
                 except:
                     continue
-            train_set.append((self.get_features(sample), sample.label))
+            train_set.append(sample)
         # TODO: Send training set in csv to google storage.
-        # self.create_and_upload_training_data(train_set)
-        # TODO: Request classifier update
+        name = self.create_and_upload_training_data(train_set)
+        body = {
+            'id': self.model,
+            'storageDataLocation': 'urlannotator/%s' % name
+        }
+
+        try:
+            status = self.papi.get(id=self.model).execute()
+            if status['trainingStatus'] == 'DONE':
+                self.papi.update(body=body).execute()
+        except:
+            # Model doesnt exist
+            self.papi.insert(body=body).execute()
 
     def classify(self, sample):
         """
@@ -267,14 +283,10 @@ class GooglePredictionClassifier(Classifier):
         if self.model is None:
             return None
 
-        # TODO: Uncomment when google storage has been set up and running
-        # body = {'input': {'csvInstance': [sample.text]}}
-        # label = self.papi.predict(body=body, id=self.model).execute()
-        # label = label['outputLabel']
+        body = {'input': {'csvInstance': [sample.text]}}
+        label = self.papi.predict(body=body, id=self.model).execute()
+        label = label['outputLabel']
 
-        label = 'Yes'
-        sample.label = label
-        sample.save()
         return label
 
     def classify_with_info(self, sample):
@@ -285,16 +297,10 @@ class GooglePredictionClassifier(Classifier):
         if self.model is None:
             return None
 
-        # TODO: Uncomment when google storage has been set up and running
-        # body = {'input': {'csvInstance': [sample.text]}}
-        # label = self.papi.predict(body=body, id=self.model).execute()
-        # result = {
-        #     'outputLabel': label['outputLabel'],
-        #     'outputMulti': label['outputMulti']
-        # }
-
-        label = 'Yes'
-        sample.label = label
-        sample.save()
-        result = {'outputLabel': label, 'outputMulti': {}}
+        body = {'input': {'csvInstance': [sample.text]}}
+        label = self.papi.predict(body=body, id=self.model).execute()
+        result = {
+            'outputLabel': label['outputLabel'],
+            'outputMulti': label['outputMulti']
+        }
         return result

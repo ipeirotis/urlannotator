@@ -19,6 +19,8 @@ from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.views.decorators.cache import cache_page
 from django.conf import settings
+from oauth2client.file import Storage
+from oauth2client.client import OAuth2WebServerFlow
 
 from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
@@ -335,6 +337,44 @@ def odesk_complete(request):
             login(request, u)
             request.session['success'] = 'You have successfuly registered'
             return redirect('settings_view')
+
+
+@login_required
+def debug_prediction_complete(request):
+    storage = Storage('prediction.dat')
+    flow = request.session.get('flow', None)
+    if not flow:
+        return redirect('index')
+
+    print request.GET
+    credentials = flow.step2_exchange(request.GET)
+    storage.put(credentials)
+
+    request.session.pop('flow')
+    request.session['success'] = 'Google Prediction has been added.'
+    return redirect('index')
+
+
+@login_required
+def debug_prediction(request):
+    flow = OAuth2WebServerFlow(
+        settings.GOOGLE_PREDICTION_ID,
+        settings.GOOGLE_PREDICTION_SECRET,
+        'https://www.googleapis.com/auth/prediction',
+        None,  # user_agent
+        'https://accounts.google.com/o/oauth2/auth',
+        'https://accounts.google.com/o/oauth2/token')
+
+    storage = Storage('prediction.dat')
+    credentials = storage.get()
+    if credentials is None or credentials.invalid:
+        request.session['flow'] = flow
+        return redirect(flow.step1_get_authorize_url(
+            redirect_uri='http://%s%s' %
+                (settings.SITE_URL, reverse('debug_prediction_complete'))
+            ))
+    request.session['success'] = 'Google Prediction is still valid.'
+    return redirect('index')
 
 
 def debug_login(request):
