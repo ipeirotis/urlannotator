@@ -3,7 +3,8 @@
 . %(virtualenv_dir)s/bin/activate
 
 rabbitmqctl -n %(project_name)s status
-if [ $? != 0] then
+if [ $? != 0]
+then
     exec rabbitmq_server
 else
     rabbitmqctl -n %(project_name)s stop_app
