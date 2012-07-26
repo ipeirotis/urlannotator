@@ -20,6 +20,7 @@ def create_user(request, user, details, *args, **kwargs):
             % (request.session['registration'], details['username'])
         user = User.objects.create_user(username=username, email=email,
             password='!')
+        print 'new user'
         is_new = True
         request.session.pop('registration')
     elif user is None:
