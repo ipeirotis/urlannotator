@@ -32,7 +32,7 @@ urlpatterns = patterns('urlannotator',
     url(r'^odesk_register/$',
         'main.views.odesk_register', name='odesk_register'),
     url(r'^login/$', 'main.views.login_view', name='login'),
-    url(r'^settings/$', 'main.views.settings', name='settings'),
+    url(r'^settings/$', 'main.views.settings_view', name='settings'),
     url(r'^logout/$', 'main.views.logout_view', name='logout'),
 
     url(r'^wizard$', 'main.views.project_wizard', name='project_wizard'),

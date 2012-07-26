@@ -141,10 +141,10 @@ def upload_settings_files():
     context = dict(env["ctx"])
     context
     # Upload main settings and ensure permissions.
-    source = pjoin(local_files_dir("django"), "settings_template.py")
-    destination = pjoin(base_dir, "settings", "%s.py" % cget("settings_name"))
-    upload_template_with_perms(source, destination, context, mode="644",
-        user=user, group=user)
+    # source = pjoin(local_files_dir("django"), "settings_template.py")
+    # destination = pjoin(base_dir, "settings", "%s.py" % cget("settings_name"))
+    # upload_template_with_perms(source, destination, context, mode="644",
+    #     user=user, group=user)
 
     # We could be deploying from different directory.
     # Try our best to find correct path.

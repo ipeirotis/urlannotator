@@ -184,6 +184,10 @@ class SimpleClassifier(Classifier):
         sample.save()
         return {'label': label}
 
+# Google Storage parameters used in GooglePrediction classifier
+GOOGLE_STORAGE_PREFIX = 'gs'
+GOOGLE_BUCKET_NAME = 'urlannotator'
+
 
 class GooglePredictionClassifier(Classifier):
     """

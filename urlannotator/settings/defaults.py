@@ -38,24 +38,6 @@ STATIC_URL = '/statics/'
 # urlannotator.classification.classifiers module
 JOB_DEFAULT_CLASSIFIER = 'SimpleClassifier'
 
-# Google Storage parameters used in GooglePrediction classifier
-GOOGLE_STORAGE_PREFIX = 'gs'
-GOOGLE_BUCKET_NAME = 'urlannotator'
-
-# Amazon credentials for sqs broker url.
-# Dont change naming - it is required by celery.
-AWS_ACCESS_KEY_ID = 'AKIAIDLOOYJOOWG6OMVA'
-AWS_SECRET_ACCESS_KEY = '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'
-
-TWITTER_CONSUMER_KEY = 'K7546vywvLOq8c4UTq9lfg'
-TWITTER_CONSUMER_SECRET = 'rQlVEKdjpFuo2apsQv6qRtMGllxVPno2yn6exbZ7TA'
-FACEBOOK_APP_ID = '257507524355077'
-FACEBOOK_API_SECRET = 'f93a5baf067744023c9981b18366b4ca'
-GOOGLE_OAUTH2_CLIENT_ID =\
-    '906829868245-hnom86rdj8nujbmpq4jku7232ri14e05.apps.googleusercontent.com'
-GOOGLE_OAUTH2_CLIENT_SECRET = 'pcAdU11M4terfSumniGCCg1a'
-ODESK_CLIENT_ID = '09138bf5ccb445137dc9f207ffde96db'
-ODESK_CLIENT_SECRET = '0edc5cb4c97ae729'
 SOCIAL_AUTH_CREATE_USERS = False
 
 SOCIAL_AUTH_PIPELINE = (
@@ -174,6 +156,8 @@ PROJECT_APPS = (
 INSTALLED_APPS = BASE_APPS + PROJECT_APPS
 
 SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/settings/'
+SOCIAL_AUTH_NEW_ASSOCIATION_REDIRECT_URL = '/settings/'
+SOCIAL_AUTH_DISCONNECT_REDIRECT_URL = '/settings/'
 LOGIN_REDIRECT_URL = ''
 LOGIN_URL = '/login/'
 AUTH_PROFILE_MODULE = 'main.Account'

@@ -18,14 +18,13 @@ from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.views.decorators.cache import cache_page
+from django.conf import settings
 
 from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_CHOICES, ClassifiedSample)
-from urlannotator.settings.defaults import (ODESK_CLIENT_ID, ROOT_DIR,
-    ODESK_CLIENT_SECRET, SITE_URL)
 from urlannotator.flow_control import send_event
 
 
@@ -68,7 +67,7 @@ def register_view(request):
             user.get_profile().activation_key = key
             user.get_profile().email_registered = True
             user.get_profile().save()
-            cont = Context({'key': key, 'site': SITE_URL})
+            cont = Context({'key': key, 'site': settings.SITE_URL})
             send_mail(subjectTemplate.render(cont).replace('\n', ''),
                 bodyTemplate.render(cont), 'URL Annotator', [user.email])
             request.session['success'] = 'Thanks for registering. '\
@@ -158,7 +157,7 @@ def login_view(request):
 
 
 @login_required
-def settings(request):
+def settings_view(request):
     profile = request.user.get_profile()
     context = {}
 
@@ -301,7 +300,8 @@ def odesk_disconnect(request):
 
 
 def odesk_complete(request):
-    client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
+    client = odesk.Client(settings.ODESK_CLIENT_ID,
+        settings.ODESK_CLIENT_SECRET)
     auth, user = client.auth.get_token(request.GET['frob'])
 
     if request.user.is_authenticated():
@@ -334,7 +334,7 @@ def odesk_complete(request):
             u = authenticate(username=u.username, password='1')
             login(request, u)
             request.session['success'] = 'You have successfuly registered'
-            return redirect('settings')
+            return redirect('settings_view')
 
 
 def debug_login(request):
@@ -353,7 +353,8 @@ def debug_login(request):
 
 
 def odesk_login(request):
-    client = odesk.Client(ODESK_CLIENT_ID, ODESK_CLIENT_SECRET)
+    client = odesk.Client(settings.ODESK_CLIENT_ID,
+        settings.ODESK_CLIENT_SECRET)
     return redirect(client.auth.auth_url())
 
 
@@ -517,7 +518,7 @@ def doc_parts(input_string):
 
 @cache_page(10 * 60)
 def readme_view(request):
-    file_path = os.path.join(ROOT_DIR, '..', 'readme.rst')
+    file_path = os.path.join(settings.ROOT_DIR, '..', 'readme.rst')
     file = open(file_path, 'r')
     parts = doc_parts(file.read())
     context = {'content': parts['html_body']}
