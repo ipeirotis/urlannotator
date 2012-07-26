@@ -195,6 +195,7 @@ class TemporarySample(models.Model):
     """
     text = models.TextField()
     screenshot = models.URLField()
+    url = models.URLField()
 
 
 class GoldSample(models.Model):

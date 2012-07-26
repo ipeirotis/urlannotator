@@ -32,7 +32,7 @@ class SampleFactory(object):
 
         # Ordinary classification or golden sample.
         else:
-            temp_sample = TemporarySample()
+            temp_sample = TemporarySample(url=url)
             temp_sample.save()
 
             # Groups screensot and content extraction. On both success proceeds

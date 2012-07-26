@@ -29,7 +29,7 @@ def web_screenshot_extraction(sample_id, url=None):
     try:
         screenshot = get_web_screenshot(url)
     except Exception, e:
-        raise web_content_extraction.retry(exc=e, countdown=60)
+        web_screenshot_extraction.retry(exc=e, countdown=60)
 
     TemporarySample.objects.filter(id=sample_id).update(
         screenshot=screenshot)
