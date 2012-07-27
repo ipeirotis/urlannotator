@@ -229,6 +229,9 @@ class GooglePredictionClassifier(Classifier):
         file_name = 'model-%s' % self.model
         file_out = '%s/%s.csv' % (training_dir, file_name)
 
+        # Lets create dir for temporary training sets.
+        os.system("mkdir -p %s" % training_dir)
+
         # Write data to csv file
         data = open(file_out, 'wb')
         writer = csv.writer(data)
