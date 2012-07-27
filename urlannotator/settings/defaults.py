@@ -149,6 +149,7 @@ PROJECT_APPS = (
     'urlannotator.classification',
     'urlannotator.crowdsourcing',
     'urlannotator.flow_control',
+    'urlannotator.sample_gathering',
     'urlannotator.main',
     'urlannotator.tools',
 )
