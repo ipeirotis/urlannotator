@@ -236,7 +236,7 @@ class GooglePredictionClassifier(Classifier):
         data = open(file_out, 'wb')
         writer = csv.writer(data)
         for sample in samples:
-            writer.writerow([sample.text, sample.label])
+            writer.writerow(['"%s"' % sample.label, '"%s"' % sample.text])
         data.close()
 
         # Upload file to gs

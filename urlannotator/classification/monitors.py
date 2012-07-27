@@ -31,10 +31,10 @@ class GoogleTrainingMonitor(object):
                     job_id=job.id
                 )
 
-                params = json.loads(classifier_entry.parameters)
+                params = classifier_entry.parameters
                 if 'training' in params:
                     status = classifier.get_train_status()
-                    if status is not 'DONE':
+                    if not status == 'DONE':
                         continue
                     params.pop('training')
                     classifier_entry.parameters = json.dumps(params)
