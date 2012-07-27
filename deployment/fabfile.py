@@ -169,8 +169,23 @@ def upload_settings_files():
         put_file_with_perms(locals_path, destination, mode="644", user=user,
             group=user)
 
-    # TODO: Add Google Prediction credentials upload.
-    # show(yellow("Uploading Google Prediction credentials storage."))
+    # Upload Google Prediction credentials
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    cred_file = pjoin(this_dir, '..', 'prediction.dat')
+    base_dir = cget('project_dir')
+    if os.path.isfile(cred_file):
+        show(yellow("Uploading Google Prediction credentials storage."))
+        destination = pjoin(base_dir, 'code', 'prediction.dat')
+        # Main project directory
+        show(yellow("Uploading to %s." % destination))
+        put_file_with_perms(cred_file, destination, mode="644", user=user,
+            group=user)
+        # Classification module
+        destination = pjoin(base_dir, 'code', 'urlannotator', 'classification',
+            'prediction.dat')
+        show(yellow("Uploading to %s." % destination))
+        put_file_with_perms(cred_file, destination, mode="644", user=user,
+            group=user)
 
 
 def collect_staticfiles():
