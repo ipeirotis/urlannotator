@@ -38,7 +38,7 @@ class SampleFactoryTest(TestCase):
         self.assertEqual(query.count(), 1)
 
         sample = query.get()
-        self.assertTrue('Google' in sample.text)
+        self.assertTrue('google' in sample.text)
 
         s = urllib2.urlopen(sample.screenshot)
         self.assertEqual(s.headers.type, 'image/png')

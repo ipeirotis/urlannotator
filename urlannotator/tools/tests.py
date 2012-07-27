@@ -9,7 +9,7 @@ class BaseNotLoggedInTests(TestCase):
 
     def testWebTextExtractor(self):
         text = get_web_text('google.com')
-        self.assertTrue('Google' in text)
+        self.assertTrue('google' in text)
 
         # text = get_web_text('10clouds.com')
         # self.assertTrue('10Clouds' in text)

@@ -36,7 +36,7 @@ STATIC_URL = '/statics/'
 
 # Default classifier used for NEW jobs. Has to be a valid class name from
 # urlannotator.classification.classifiers module
-JOB_DEFAULT_CLASSIFIER = 'SimpleClassifier'
+JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
 SOCIAL_AUTH_CREATE_USERS = False
 

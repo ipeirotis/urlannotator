@@ -3,6 +3,7 @@ from django.conf import settings
 from celery import group
 
 from urlannotator.classification.models import TrainingSet, Classifier
+from urlannotator.classification.factories import classifier_factory
 from urlannotator.main.models import TemporarySample, Job, Worker
 from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample)
@@ -105,7 +106,10 @@ class JobFactory(object):
             type=settings.JOB_DEFAULT_CLASSIFIER,
             parameters=''
         ).save()
-        job.set_classifier_created()
+        classifier_factory.initialize_classifier(
+            job.id,
+            settings.JOB_DEFAULT_CLASSIFIER
+        )
 
     def initialize_job(self, job_id, *args, **kwargs):
         """

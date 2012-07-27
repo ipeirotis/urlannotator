@@ -153,6 +153,7 @@ class SimpleClassifier(Classifier):
         for sample in samples:
             if not isinstance(sample, Sample):
                 continue
+            job = sample.job
             if sample.label == '':
                 try:
                     gold_sample = GoldSample.objects.get(sample=sample)
@@ -161,10 +162,9 @@ class SimpleClassifier(Classifier):
                     continue
             train_set.append((self.get_features(sample), sample.label))
         if train_set:
-            sample = train_set[0]
             self.classifier = nltk.classify.DecisionTreeClassifier.train(
                 train_set)
-            sample.job.set_classifier_trained()
+            job.set_classifier_trained()
 
     def classify(self, sample):
         """
@@ -226,13 +226,15 @@ class GooglePredictionClassifier(Classifier):
 
     def create_and_upload_training_data(self, samples):
         training_dir = 'urlannotator-training-data'
-        file_name = 'job-%d' % self.model
+        file_name = 'model-%s' % self.model
         file_out = '%s/%s.csv' % (training_dir, file_name)
 
         # Write data to csv file
-        writer = csv.writer(open(file_out, 'wb'))
+        data = open(file_out, 'wb')
+        writer = csv.writer(data)
         for sample in samples:
             writer.writerow([sample.text, sample.label])
+        data.close()
 
         # Upload file to gs
         training_file = open(file_out, 'r')
@@ -262,7 +264,8 @@ class GooglePredictionClassifier(Classifier):
         """
         # Turns off classifier for the job. Can't be used until classification
         # is done
-        job = samples[0].job
+        entry = ClassifierModel.objects.get(id=self.id)
+        job = entry.job
         job.unset_classifier_trained()
 
         train_set = []
@@ -295,8 +298,7 @@ class GooglePredictionClassifier(Classifier):
             self.papi.insert(body=body).execute()
 
         # Update classifier entry
-        entry = ClassifierModel.objects.get(id=self.id)
-        params = json.loads(entry.parameters)
+        params = entry.parameters
         params['training'] = 'RUNNING'
         entry.parameters = json.dumps(params)
         entry.save()

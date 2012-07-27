@@ -22,7 +22,7 @@ class ClassifierFactory(object):
         # Custom parameters setup goes here.
         if classifier_name == 'SimpleClassifier':
             classifier_entry.type = classifier_name
-            classifier_entry.parameters = ''
+            classifier_entry.parameters = '{}'
         elif classifier_name == 'GooglePredictionClassifier':
             classifier_entry.type = classifier_name
             params = {'model': '%sjob-%d' % (prefix, job_id),
@@ -30,6 +30,7 @@ class ClassifierFactory(object):
             classifier_entry.parameters = json.dumps(params)
 
         classifier_entry.save()
+        job.set_classifier_created()
 
     def create_classifier(self, job_id):
         classifier = self.cache.get(str(job_id), None)
@@ -44,7 +45,7 @@ class ClassifierFactory(object):
             elif classifier_entry.type == 'GooglePredictionClassifier':
                 classifier = GooglePredictionClassifier(job.description,
                     ['Yes', 'No'])
-                params = json.loads(classifier_entry.parameters)
+                params = classifier_entry.parameters
                 classifier.model = params['model']
                 classifier.id = classifier_entry.id
 
