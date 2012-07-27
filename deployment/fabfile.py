@@ -169,6 +169,9 @@ def upload_settings_files():
         put_file_with_perms(locals_path, destination, mode="644", user=user,
             group=user)
 
+    # TODO: Add Google Prediction credentials upload.
+    # show(yellow("Uploading Google Prediction credentials storage."))
+
 
 def collect_staticfiles():
     """Quietly runs `collectstatic` management command"""
