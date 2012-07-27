@@ -131,6 +131,10 @@ class Job(models.Model):
         else:
             self.save()
 
+    def unset_flag(self, flag):
+        self.initialization_status &= (~flag)
+        self.save()
+
     def is_flag_set(self, flag):
         return self.initialization_status & flag
 
@@ -154,6 +158,9 @@ class Job(models.Model):
 
     def set_classifier_trained(self):
         self.set_flag(JOB_FLAGS_CLASSIFIER_TRAINED)
+
+    def unset_classifier_trained(self):
+        self.unset_flag(JOB_FLAGS_CLASSIFIER_TRAINED)
 
     def is_classifier_trained(self):
         return self.is_flag_set(JOB_FLAGS_CLASSIFIER_TRAINED)

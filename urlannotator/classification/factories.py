@@ -28,9 +28,7 @@ class ClassifierFactory(object):
             params = {'model': '%sjob-%d' % (prefix, job_id),
                 'training': 'RUNNING'}
             classifier_entry.parameters = json.dumps(params)
-            # TODO: Training status check (separate process?) + csv data upload
-            #       and model training request
-            # send_event('EventNewGoogleClassiferCreated', job_id)
+
         classifier_entry.save()
 
     def create_classifier(self, job_id):
@@ -48,6 +46,7 @@ class ClassifierFactory(object):
                     ['Yes', 'No'])
                 params = json.loads(classifier_entry.parameters)
                 classifier.model = params['model']
+                classifier.id = classifier_entry.id
 
             # Cache newly created classifier
             self.cache[str(job_id)] = classifier

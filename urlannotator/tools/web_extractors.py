@@ -52,7 +52,7 @@ def get_web_text(url):
     """
 
     # Simply calling links/lynx
-    return subprocess.check_output(["links", "-dump", url])
+    return extract_words(subprocess.check_output(["links", "-dump", url]))
 
 
 def get_web_screenshot(url):

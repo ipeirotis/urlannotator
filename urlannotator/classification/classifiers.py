@@ -2,7 +2,7 @@ import nltk
 import httplib2
 import os
 import csv
-import boto
+import json
 
 from apiclient.discovery import build
 from boto.gs.connection import GSConnection
@@ -14,6 +14,7 @@ from oauth2client.file import Storage
 from boto.s3.key import Key
 
 from urlannotator.main.models import Sample, GoldSample
+from urlannotator.classification.models import Classifier as ClassifierModel
 
 
 class Classifier247(object):
@@ -160,8 +161,10 @@ class SimpleClassifier(Classifier):
                     continue
             train_set.append((self.get_features(sample), sample.label))
         if train_set:
+            sample = train_set[0]
             self.classifier = nltk.classify.DecisionTreeClassifier.train(
                 train_set)
+            sample.job.set_classifier_trained()
 
     def classify(self, sample):
         """
@@ -213,6 +216,14 @@ class GooglePredictionClassifier(Classifier):
         service = build("prediction", "v1.5", http=http)
         self.papi = service.trainedmodels()
 
+    def get_train_status(self):
+        try:
+            status = self.papi.get(id=self.model).execute()
+            return status['trainingStatus']
+        except:
+            # Model doesn't exist (first training).
+            return 'RUNNING'
+
     def create_and_upload_training_data(self, samples):
         training_dir = 'urlannotator-training-data'
         file_name = 'job-%d' % self.model
@@ -225,7 +236,6 @@ class GooglePredictionClassifier(Classifier):
 
         # Upload file to gs
         training_file = open(file_out, 'r')
-        upload_path = '%s/%s.csv' % (GOOGLE_BUCKET_NAME, file_name)
 
         con = GSConnection(settings.GS_ACCESS_KEY, settings.GS_SECRET)
         try:
@@ -250,6 +260,11 @@ class GooglePredictionClassifier(Classifier):
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample.
         """
+        # Turns off classifier for the job. Can't be used until classification
+        # is done
+        job = samples[0].job
+        job.unset_classifier_trained()
+
         train_set = []
         for sample in samples:
             if not isinstance(sample, Sample):
@@ -261,20 +276,30 @@ class GooglePredictionClassifier(Classifier):
                 except:
                     continue
             train_set.append(sample)
-        # TODO: Send training set in csv to google storage.
+
         name = self.create_and_upload_training_data(train_set)
         body = {
             'id': self.model,
             'storageDataLocation': 'urlannotator/%s' % name
         }
 
+        # We have to always check for training status due to different
+        # instances of the classifier in different threads. YET only one is
+        # used at a time
         try:
             status = self.papi.get(id=self.model).execute()
             if status['trainingStatus'] == 'DONE':
                 self.papi.update(body=body).execute()
         except:
-            # Model doesnt exist
+            # Model doesn't exist (first training).
             self.papi.insert(body=body).execute()
+
+        # Update classifier entry
+        entry = ClassifierModel.objects.get(id=self.id)
+        params = json.loads(entry.parameters)
+        params['training'] = 'RUNNING'
+        entry.parameters = json.dumps(params)
+        entry.save()
 
     def classify(self, sample):
         """
@@ -286,6 +311,8 @@ class GooglePredictionClassifier(Classifier):
         body = {'input': {'csvInstance': [sample.text]}}
         label = self.papi.predict(body=body, id=self.model).execute()
         label = label['outputLabel']
+        sample.label = label
+        sample.save()
 
         return label
 
@@ -299,6 +326,9 @@ class GooglePredictionClassifier(Classifier):
 
         body = {'input': {'csvInstance': [sample.text]}}
         label = self.papi.predict(body=body, id=self.model).execute()
+        sample.label = label['outputLabel']
+        sample.save()
+
         result = {
             'outputLabel': label['outputLabel'],
             'outputMulti': label['outputMulti']
