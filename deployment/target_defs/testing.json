@@ -1,5 +1,5 @@
 {
-    "settings_name": "testing",
+    "settings_name": "development",
     "instance": "staging",
     "db_name": "database.sqlite3.db",
     "db_user": "",
