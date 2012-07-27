@@ -28,13 +28,13 @@ class ClassifierTrainingManager(Task):
                     countdown=3 * 60)
 
             classifier = classifier_factory.create_classifier(job.id)
-            train_samples = [train_sample.sample for train_sample in
-                TrainingSet.objects.newest_for_job(job).training_samples.all()]
-            if train_samples:
-                classifier.train(train_samples)
-                samples_list = Sample.objects.filter(id__in=samples)
-                for sample in samples_list:
-                    classifier.classify(sample)
+            # train_samples = [train_sample.sample for train_sample in
+            #     TrainingSet.objects.newest_for_job(job).training_samples.all()]
+            # if train_samples:
+            #     classifier.train(train_samples)
+            samples_list = Sample.objects.filter(id__in=samples)
+            for sample in samples_list:
+                classifier.classify(sample)
 
 
 add_samples = registry.tasks[ClassifierTrainingManager.name]
