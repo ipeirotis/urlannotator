@@ -138,7 +138,7 @@ class Job(models.Model):
         self.save()
 
     def is_flag_set(self, flag):
-        return self.initialization_status & flag
+        return self.initialization_status & flag != 0
 
     def set_training_set_created(self):
         self.set_flag(JOB_FLAGS_TRAINING_SET_CREATED)

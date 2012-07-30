@@ -1,3 +1,5 @@
+import json
+
 from django.test import TestCase
 from django.contrib.auth.models import User
 
@@ -103,6 +105,8 @@ class TrainingSetManagerTests(TestCase):
 class ClassifierFactoryTests(TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='test', password='1')
+        # # Clean cached classifiers
+        # classifier_factory.cache.clear()
 
     def testClassifierFactory(self):
         Job.objects.create_active(account=self.u.get_profile())
@@ -118,12 +122,17 @@ class ClassifierFactoryTests(TestCase):
 class GoogleMonitorTests(TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='test', password='1')
+        # Clean cached classifiers
+        classifier_factory.cache.clear()
 
-    def testClassifierFactory(self):
+    def testGoogleMonitor(self):
         job = Job.objects.create_active(account=self.u.get_profile())
         monitor = GoogleTrainingMonitor()
 
         entry = Classifier.objects.get(job=job)
+        entry.type = 'GooglePredictionClassifier'
+        entry.parameters = json.dumps({'model': 'test', 'training': 'RUNNING'})
+        entry.save()
         params = entry.parameters
         self.assertIn('training', params)
 
@@ -139,3 +148,6 @@ class GoogleMonitorTests(TestCase):
         self.assertFalse('training' in params)
         job = Job.objects.get(id=job.id)
         self.assertTrue(job.is_classifier_trained())
+
+        # Clean cached classifiers
+        classifier_factory.cache.clear()
