@@ -1,7 +1,7 @@
 =============
 URL Annotator
 =============
-Last modified: July 18, 2012
+Last modified: July 30, 2012
 
 
 Source/How to get it
@@ -39,6 +39,7 @@ Required libraries:
 - numpy
 - nltk
 - django-tastypie
+- google-api-python-client
 
 (See deployment/files/requirements/base.txt)
 
@@ -82,6 +83,12 @@ On local machine:
 
     ./manage.py migrate
 
+- Create Google Prediction credentials
+
+    ./manage.py runserver
+
+    visit http://127.0.0.1:8000/debug/prediction
+
 - Install less (>=1.3.0)
 
     sudo apt-get install less
@@ -105,7 +112,7 @@ On local machine:
 
 On remote machine:
 
-- Follow steps from local machine setup up to the point ``Install basic requirements``
+- Follow steps from local machine setup up to the point ``Create Google Prediction credentials``
 - Install development requirements
 
 	sudo pip install -r urlannotator/deployment/files/requirements/devel.txt
