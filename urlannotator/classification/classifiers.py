@@ -266,7 +266,7 @@ class GooglePredictionClassifier(Classifier):
             it's checked for being a GoldSample.
         """
         # Turns off classifier for the job. Can't be used until classification
-        # is done
+        # is done.
         entry = ClassifierModel.objects.get(id=self.id)
         job = entry.job
         job.unset_classifier_trained()
@@ -291,7 +291,7 @@ class GooglePredictionClassifier(Classifier):
 
         # We have to always check for training status due to different
         # instances of the classifier in different threads. YET only one is
-        # used at a time
+        # used at a time.
         try:
             status = self.papi.get(id=self.model).execute()
             if status['trainingStatus'] == 'DONE':
@@ -300,7 +300,7 @@ class GooglePredictionClassifier(Classifier):
             # Model doesn't exist (first training).
             self.papi.insert(body=body).execute()
 
-        # Update classifier entry
+        # Update classifier entry.
         params = entry.parameters
         params['training'] = 'RUNNING'
         entry.parameters = json.dumps(params)

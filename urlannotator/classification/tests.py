@@ -3,9 +3,11 @@ from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job, Worker
 from urlannotator.classification.classifiers import (SimpleClassifier,
-    Classifier247)
-from urlannotator.classification.models import TrainingSet
+    Classifier247, GooglePredictionClassifier)
+from urlannotator.classification.models import TrainingSet, Classifier
 from urlannotator.classification.factories import classifier_factory
+from urlannotator.classification.management.commands.google_monitor import (
+    GoogleTrainingMonitor)
 
 
 class Classifier247Tests(TestCase):
@@ -111,3 +113,29 @@ class ClassifierFactoryTests(TestCase):
         # Cached classifier
         factory_two = classifier_factory.create_classifier(1)
         self.assertEqual(factory, factory_two)
+
+
+class GoogleMonitorTests(TestCase):
+    def setUp(self):
+        self.u = User.objects.create_user(username='test', password='1')
+
+    def testClassifierFactory(self):
+        job = Job.objects.create_active(account=self.u.get_profile())
+        monitor = GoogleTrainingMonitor()
+
+        entry = Classifier.objects.get(job=job)
+        params = entry.parameters
+        self.assertIn('training', params)
+
+        # Mock classifier's get_train_status. It is async, and we can't really
+        # test it.
+        old_status = GooglePredictionClassifier.get_train_status
+        GooglePredictionClassifier.get_train_status = lambda x: 'DONE'
+        monitor.run()
+
+        GoogleTrainingMonitor.run = old_status
+        entry = Classifier.objects.get(job=job)
+        params = entry.parameters
+        self.assertFalse('training' in params)
+        job = Job.objects.get(id=job.id)
+        self.assertTrue(job.is_classifier_trained())
