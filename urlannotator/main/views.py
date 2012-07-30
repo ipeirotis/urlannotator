@@ -311,6 +311,14 @@ def odesk_complete(request):
             request.user.get_profile().odesk_uid = user['uid']
             request.user.get_profile().odesk_key = auth
             request.user.get_profile().save()
+
+            # Add Worker model on odesk account association
+            if not Worker.objects.filter(external_id=user['uid']):
+                Worker(
+                    external_id=user['uid'],
+                    first_name=user['first_name'],
+                    last_name=user['last_name']
+                ).save()
             request.session['success'] = 'You have successfully logged in.'
         return redirect('index')
     else:
@@ -335,6 +343,14 @@ def odesk_complete(request):
                 user['last_name'])
             u = authenticate(username=u.username, password='1')
             login(request, u)
+
+            # Create Worker model on odesk account registration
+            if not Worker.objects.filter(external_id=user['uid']):
+                Worker(
+                    external_id=user['uid'],
+                    first_name=user['first_name'],
+                    last_name=user['last_name']
+                ).save()
             request.session['success'] = 'You have successfuly registered'
             return redirect('settings_view')
 
