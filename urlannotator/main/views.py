@@ -135,7 +135,7 @@ def login_view(request):
                 password=form.cleaned_data['password'])
             if user is not None:
                 if not user.get_profile().email_registered:
-                    request.session['error'] = 'Username and/or password'
+                    request.session['error'] = 'Username and/or password'\
                     ' is incorrect.'
                     return redirect('index')
 
@@ -145,11 +145,11 @@ def login_view(request):
                         request.session.set_expiry(0)
                     return redirect('index')
                 else:
-                    request.session['error'] = 'This account is '
+                    request.session['error'] = 'This account is '\
                     'still inactive.'
                     return redirect('index')
             else:
-                request.session['error'] = 'Username and/or password '
+                request.session['error'] = 'Username and/or password '\
                 'is incorrect.'
                 return redirect('index')
         else:
