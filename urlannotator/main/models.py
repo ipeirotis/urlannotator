@@ -104,6 +104,8 @@ class Job(models.Model):
         return self.status == 1
 
     def activate(self):
+        if self.is_active():
+            return
         self.status = 1
         self.save()
 
