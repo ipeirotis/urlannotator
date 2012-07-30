@@ -7,5 +7,5 @@ def test_task(fname, content):
         f.write(content)
 
 FLOW_DEFINITIONS = [
-    (r'TestEvent', test_task),
+    (r'^TestEvent$', test_task),
 ]

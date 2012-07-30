@@ -24,5 +24,5 @@ class SamplesValidationManager(Task):
 new_sample_task = registry.tasks[SamplesValidationManager.name]
 
 FLOW_DEFINITIONS = [
-    (r'EventNewSample', new_sample_task),
+    (r'^EventNewSample$', new_sample_task),
 ]

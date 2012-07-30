@@ -76,7 +76,7 @@ class GoldSamplesMonitor(Task):
 new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]
 
 FLOW_DEFINITIONS = [
-    (r'EventNewRawSample', new_raw_sample_task),
+    (r'^EventNewRawSample$', new_raw_sample_task),
     (r'^EventNewJobInitialization$', new_job_task),
-    (r'EventNewGoldSample', new_gold_sample_task),
+    (r'^EventNewGoldSample$', new_gold_sample_task),
 ]

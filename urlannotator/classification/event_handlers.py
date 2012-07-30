@@ -91,10 +91,10 @@ def update_classifier_stats(*args, **kwargs):
 
 
 FLOW_DEFINITIONS = [
-    (r'EventNewSample', update_classified_sample),
-    (r'EventSamplesValidated', add_samples),
-    (r'EventNewClassifySample', classify),
+    (r'^EventNewSample$', update_classified_sample),
+    (r'^EventSamplesValidated$', add_samples),
+    (r'^EventNewClassifySample$', classify),
     # (r'EventTrainClassifier', classify),
-    (r'EventTrainingSetCompleted', train_on_set),
-    (r'EventClassifierTrained', update_classifier_stats),
+    (r'^EventTrainingSetCompleted$', train_on_set),
+    (r'^EventClassifierTrained$', update_classifier_stats),
 ]
