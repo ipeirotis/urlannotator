@@ -545,6 +545,16 @@ def project_classifier_view(request, id):
             classified_samples = []
             for url in urls:
                 cs = ClassifiedSample(job=job, sample=None, url=url)
+                try:
+                    sample = Sample.objects.get(job=job, url=url)
+                    cs.sample = sample
+                    cs.save()
+                    classified_samples.append(cs.id)
+                    send_event("EventNewClassifySample", cs.id)
+                    continue
+                except Sample.DoesNotExist:
+                    pass
+
                 cs.save()
                 classified_samples.append(cs.id)
                 send_event('EventNewRawSample', job.id, w.id, url,
