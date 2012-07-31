@@ -50,6 +50,13 @@ def update_classified_sample(sample_id, *args, **kwargs):
     sample = Sample.objects.get(id=sample_id)
     ClassifiedSample.objects.filter(job=sample.job, url=sample.url,
         sample=None).update(sample=sample)
+    classified = ClassifiedSample.objects.filter(
+        job=sample.job,
+        url=sample.url,
+        sample=sample
+    )
+    for class_sample in classified:
+        send_event("EventNewClassifySample", class_sample.id)
     return None
 
 
@@ -95,7 +102,9 @@ def classify(sample_id, *args, **kwargs):
             60 * 60 * 24))
 
     classifier = classifier_factory.create_classifier(job.id)
-    classifier.classify(class_sample.sample)
+    label = classifier.classify(class_sample.sample)
+    class_sample.label = label
+    class_sample.save()
 
 
 @task
