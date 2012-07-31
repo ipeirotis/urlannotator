@@ -1,8 +1,9 @@
 from celery import task
 from celery.task import current
+from django.db import DatabaseError
 
 from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job,
-    Worker)
+    Worker, ClassifiedSample)
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 from urlannotator.flow_control import send_event
 
@@ -41,7 +42,7 @@ def web_screenshot_extraction(sample_id, url=None):
 
 @task()
 def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
-    label=None, silent=False):
+    label=None, silent=False, *args, **kwargs):
     """
     Creates real sample using TemporarySample. If error while capturing web
     propagate it. Finally deletes TemporarySample.
@@ -52,7 +53,7 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
     extracted = all([x is True for x in extraction_result])
     temp_sample = TemporarySample.objects.get(id=temp_sample_id)
 
-    # Checking if all previuos tasks succeeded.
+    # Checking if all previous tasks succeeded.
     if extracted:
         job = Job.objects.get(id=job_id)
         worker = Worker.objects.get(id=worker_id)
@@ -91,26 +92,59 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
 
 
 @task()
-def create_classify_sample(job_id, worker_id, url, text, label=None,
-        silent=False):
+def create_classify_sample(sample_id, create_classified=True, label='', *args,
+        **kwargs):
     """
-    Creates sample for job administrator (not workers) therfore we don't need
+    Creates classified sample from existing sample, therefore we don't need
     web extraction.
     """
 
-    job = Job.objects.get(id=job_id)
-    worker = Worker.objects.get(id=worker_id)
+    # We are given a tuple with create_sample results
+    if isinstance(sample_id, tuple):
+        sample_id = sample_id[1]
 
-    # Proper sample entry
-    sample = Sample(
-        job=job,
-        url=url,
-        text=text,
-        added_by=worker
-    )
-    sample.save()
+    if create_classified:
+        try:
+            sample = Sample.objects.get(id=sample_id)
 
-    # Sample created sucesfully - pushing event.
-    send_event("EventNewClassifySample", sample.id)
+            # Proper sample entry
+            class_sample = ClassifiedSample(
+                job=sample.job,
+                url=sample.url,
+                sample=sample,
+                label=label
+            )
 
-    return (True, sample.id)
+            class_sample.save()
+
+            # Sample created sucesfully - pushing event.
+            send_event("EventNewClassifySample", class_sample.id)
+
+        except DatabaseError, e:
+            # Retry process on db error, such as 'Database is locked'
+            create_classify_sample.retry(exc=e,
+                countdown=min(60 * 2 ** current.request.retries, 60 * 60 * 24))
+
+    return sample_id
+
+
+@task()
+def copy_sample_to_job(sample_id, job_id, *args, **kwargs):
+    try:
+        old_sample = Sample.objects.get(id=sample_id)
+        job = Job.objects.get(id=job_id)
+        new_sample = Sample.objects.create(
+            job=job,
+            url=old_sample.url,
+            text=old_sample.text,
+            screenshot=old_sample.screenshot,
+            source=old_sample.source,
+            added_by=old_sample.added_by
+        )
+
+    except DatabaseError, e:
+        # Retry process on db error, such as 'Database is locked'
+        copy_sample_to_job.retry(exc=e,
+            countdown=min(60 * 2 ** current.request.retries, 60 * 60 * 24))
+
+    return new_sample.id

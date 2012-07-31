@@ -3,7 +3,7 @@ import json
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import Sample, Job, Worker
+from urlannotator.main.models import Sample, Job, Worker, ClassifiedSample
 from urlannotator.classification.classifiers import (SimpleClassifier,
     Classifier247, GooglePredictionClassifier)
 from urlannotator.classification.models import TrainingSet, Classifier
@@ -25,18 +25,26 @@ class Classifier247Tests(TestCase):
 
         self.train_data = [
             Sample(job=self.job, added_by=self.worker,
-                text='Mechanical squirrel screwdriver over car', label='Yes'),
+                text='Mechanical squirrel screwdriver over car'),
             Sample(job=self.job, added_by=self.worker,
-                text='Screwdriver fix mechanical bike bolts', label='Yes'),
+                text='Screwdriver fix mechanical bike bolts'),
             Sample(job=self.job, added_by=self.worker,
-                text='Brown banana apple pinapple potato', label='No'),
+                text='Brown banana apple pinapple potato'),
             Sample(job=self.job, added_by=self.worker,
-                text='apple pinapple potato', label='No'),
+                text='apple pinapple potato'),
             Sample(job=self.job, added_by=self.worker,
-                text='Hippo tree over lagoon', label='No'),
+                text='Hippo tree over lagoon'),
             Sample(job=self.job, added_by=self.worker,
-                text='Green tan with true fox', label='No')
+                text='Green tan with true fox')
         ]
+        self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
+        self.classified = []
+        for idx, sample in enumerate(self.train_data):
+            self.classified.append(ClassifiedSample.objects.create(
+                job=self.job,
+                sample=sample,
+                label=self.labels[idx]
+            ))
 
         self.classifier247 = Classifier247(SimpleClassifier,
             description='Test classifier', classes=['label'])
@@ -47,7 +55,7 @@ class Classifier247Tests(TestCase):
         self.assertEqual(self.classifier247.classify(test_sample), None)
         self.assertEqual(self.classifier247.classify_with_info(test_sample),
             None)
-        self.classifier247.train(self.train_data)
+        self.classifier247.train(self.classified)
         self.assertNotEqual(self.classifier247.classify(test_sample), None)
 
 
@@ -63,18 +71,26 @@ class SimpleClassifierTests(TestCase):
 
         self.train_data = [
             Sample(job=self.job, added_by=self.worker,
-                text='Mechanical squirrel screwdriver over car', label='Yes'),
+                text='Mechanical squirrel screwdriver over car'),
             Sample(job=self.job, added_by=self.worker,
-                text='Screwdriver fix mechanical bike bolts', label='Yes'),
+                text='Screwdriver fix mechanical bike bolts'),
             Sample(job=self.job, added_by=self.worker,
-                text='Brown banana apple pinapple potato', label='No'),
+                text='Brown banana apple pinapple potato'),
             Sample(job=self.job, added_by=self.worker,
-                text='apple pinapple potato', label='No'),
+                text='apple pinapple potato'),
             Sample(job=self.job, added_by=self.worker,
-                text='Hippo tree over lagoon', label='No'),
+                text='Hippo tree over lagoon'),
             Sample(job=self.job, added_by=self.worker,
-                text='Green tan with true fox', label='No')
+                text='Green tan with true fox')
         ]
+        self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
+        self.classified = []
+        for idx, sample in enumerate(self.train_data):
+            self.classified.append(ClassifiedSample.objects.create(
+                job=self.job,
+                sample=sample,
+                label=self.labels[idx]
+            ))
 
     def testSimpleClassifier(self):
         sc = SimpleClassifier(description='Test classifier', classes=['label'])
@@ -83,7 +99,7 @@ class SimpleClassifierTests(TestCase):
             text='Scottish whisky banana apple pinapple')
         self.assertEqual(sc.classify(test_sample), None)
         self.assertEqual(sc.classify_with_info(test_sample), None)
-        sc.train(self.train_data)
+        sc.train(self.classified)
         self.assertNotEqual(sc.classify(test_sample), None)
 
 

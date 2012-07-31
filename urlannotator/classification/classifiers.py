@@ -137,6 +137,9 @@ class SimpleClassifier(Classifier):
         """
             Creates a set of words the sample's text consists of.
         """
+        if not hasattr(sample, 'text') and hasattr(sample, 'sample'):
+            sample = sample.sample
+
         words = nltk.word_tokenize(sample.text)
         words = set(words)
         feature_set = {}
@@ -151,11 +154,11 @@ class SimpleClassifier(Classifier):
         """
         train_set = []
         for sample in samples:
-            if not isinstance(sample, Sample):
-                continue
             job = sample.job
-            if sample.label == '':
+            if not hasattr(sample, 'label'):
                 try:
+                    if hasattr(sample, 'sample'):
+                        sample = sample.sample
                     gold_sample = GoldSample.objects.get(sample=sample)
                     sample.label = gold_sample.label
                 except:
@@ -273,10 +276,10 @@ class GooglePredictionClassifier(Classifier):
 
         train_set = []
         for sample in samples:
-            if not isinstance(sample, Sample):
-                continue
-            if sample.label == '':
+            if not hasattr(sample, 'label'):
                 try:
+                    if hasattr(sample, 'sample'):
+                        sample = sample.sample
                     gold_sample = GoldSample.objects.get(sample=sample)
                     sample.label = gold_sample.label
                 except:

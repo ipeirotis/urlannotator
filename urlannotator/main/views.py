@@ -362,7 +362,6 @@ def debug_prediction_complete(request):
     if not flow:
         return redirect('index')
 
-    print request.GET
     credentials = flow.step2_exchange(request.GET)
     storage.put(credentials)
 
@@ -546,11 +545,12 @@ def project_classifier_view(request, id):
                 cs = ClassifiedSample(job=job, sample=None, url=url)
                 cs.save()
                 classified_samples.append(cs.id)
-                send_event('EventNewRawSample', job.id, w.id, url)
+                send_event('EventNewRawSample', job.id, w.id, url,
+                    create_classified=False)
             request.session['classified-samples'] = classified_samples
         return redirect('project_classifier_view', id)
 
-    samples = Sample.objects.filter(job=job).exclude(label='')
+    samples = ClassifiedSample.objects.filter(job=job).exclude(label='')
     yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
     yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
     no_labels = samples.filter(label=LABEL_CHOICES[1][0])

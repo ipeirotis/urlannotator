@@ -191,11 +191,12 @@ class Sample(models.Model):
     url = models.URLField()
     text = models.TextField()
     screenshot = models.URLField()
-    label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
     source = models.CharField(max_length=100, blank=False)
     added_by = models.ForeignKey(Worker)
     added_on = models.DateField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ('job', 'url')
 
 class TemporarySample(models.Model):
     """
@@ -224,3 +225,4 @@ class ClassifiedSample(models.Model):
     sample = models.ForeignKey(Sample, blank=True, null=True)
     url = models.URLField()
     job = models.ForeignKey(Job)
+    label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)

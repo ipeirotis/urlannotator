@@ -312,6 +312,9 @@ class ProjectTests(TestCase):
         self.u = User.objects.create_user(username='test2', password='test',
                                      email='test@test.org')
         self.c.login(username='test2', password='test')
+        Sample.objects.all().delete()
+        GoldSample.objects.all().delete()
+        ClassifiedSample.objects.all().delete()
 
     def testBasic(self):
         # No odesk association - display alert
@@ -478,18 +481,44 @@ class ProjectTests(TestCase):
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
 
-        w = Worker()
-        w.save()
-        Sample(job=job, label='Yes', added_by=w).save()
-
         testUrl = 'google.com'
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
-        self.assertEqual(ClassifiedSample.objects.all().count(), 1)
-        # Golden sample + new sample
+        # Gold sample + classification request
+        self.assertEqual(ClassifiedSample.objects.all().count(), 2)
+        # Gold sample + new sample (new sample shares url with gold sample)
         self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
+            1)
+
+        testUrl = 'example.com'
+        self.c.post(reverse('project_classifier_view', args=[1]),
+            {'test-urls': testUrl}, follow=True)
+
+        # classification request + old data
+        self.assertEqual(ClassifiedSample.objects.all().count(), 3)
+        # old data + new sample
+        self.assertEqual(Sample.objects.filter(job=job).count(),
             2)
+
+        # Create a new job and check uniqueness
+        job = Job.objects.create_active(
+            title='test',
+            description='test',
+            account=self.u.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        testUrl = 'example.com'
+        self.c.post(reverse('project_classifier_view', args=[job.id]),
+            {'test-urls': testUrl}, follow=True)
+
+        # classification request + old data
+        self.assertEqual(ClassifiedSample.objects.all().count(), 5)
+        # old data + new sample
+        self.assertEqual(Sample.objects.filter(job=job).count(),
+            2)
+
 
 
 class DocsTest(TestCase):
