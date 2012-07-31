@@ -1,4 +1,5 @@
 from celery import task, Task, registry
+from celery.task import current
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import TrainingSet
@@ -78,11 +79,23 @@ def train_on_set(set_id):
 
 
 @task
-def classify(*args, **kwargs):
+def classify(sample_id, *args, **kwargs):
     """
         Classifies given samples
     """
-    pass
+    class_sample = ClassifiedSample.objects.get(id=sample_id)
+    if class_sample.label:
+        return
+
+    job = class_sample.job
+
+    # If classifier is not trained, retry later
+    if not job.is_classifier_trained():
+        current.retry(countdown=min(60 * 2 ** current.request.retries,
+            60 * 60 * 24))
+
+    classifier = classifier_factory.create_classifier(job.id)
+    classifier.classify(class_sample.sample)
 
 
 @task
