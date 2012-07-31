@@ -34,7 +34,7 @@ def web_screenshot_extraction(sample_id, url=None):
         current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
 
-        TemporarySample.objects.filter(id=sample_id).update(
+    TemporarySample.objects.filter(id=sample_id).update(
         screenshot=screenshot)
 
     return True
