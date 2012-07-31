@@ -121,7 +121,7 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
             class_sample.save()
 
             # Sample created sucesfully - pushing event.
-            send_event("EventNewClassifySample", class_sample.id)
+            send_event("EventNewClassifySample", sample.id)
 
             if label != '':
                 gold = GoldSample.objects.create(
@@ -139,7 +139,7 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
 
 
 @task()
-def copy_sample_to_job(sample_id, job_id, *args, **kwargs):
+def copy_sample_to_job(sample_id, job_id, label='', *args, **kwargs):
     try:
         old_sample = Sample.objects.get(id=sample_id)
         job = Job.objects.get(id=job_id)
@@ -151,6 +151,21 @@ def copy_sample_to_job(sample_id, job_id, *args, **kwargs):
             source=old_sample.source,
             added_by=old_sample.added_by
         )
+
+        # Golden sample
+        if label is not None:
+            # GoldSample created sucesfully - pushing event.
+            gold = GoldSample(
+                sample=new_sample,
+                label=label
+            )
+            gold.save()
+            send_event("EventNewGoldSample", gold.id)
+
+        # Ordinary sample
+        else:
+            # Sample created sucesfully - pushing event.
+            send_event("EventNewSample", new_sample_id)
 
     except DatabaseError, e:
         # Retry process on db error, such as 'Database is locked'
