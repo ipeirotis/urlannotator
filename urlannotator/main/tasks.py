@@ -120,6 +120,13 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
             # Sample created sucesfully - pushing event.
             send_event("EventNewClassifySample", class_sample.id)
 
+            if label != '':
+                gold = GoldSample.objects.create(
+                    sample=sample,
+                    label=label
+                )
+                send_event("EventNewGoldSample", gold.id)
+
         except DatabaseError, e:
             # Retry process on db error, such as 'Database is locked'
             create_classify_sample.retry(exc=e,
