@@ -120,9 +120,6 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
 
             class_sample.save()
 
-            # Sample created sucesfully - pushing event.
-            send_event("EventNewClassifySample", class_sample.id)
-
             if label != '':
                 gold = GoldSample.objects.create(
                     sample=sample,
@@ -134,6 +131,9 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
             # Retry process on db error, such as 'Database is locked'
             create_classify_sample.retry(exc=e,
                 countdown=min(60 * 2 ** current.request.retries, 60 * 60 * 24))
+
+    # Sample created sucesfully - pushing event.
+    send_event("EventNewClassifySample", class_sample.id)
 
     return sample_id
 
