@@ -1,6 +1,6 @@
 import datetime
 from django.conf import settings
-from celery import group
+from celery import group, chain
 
 from urlannotator.classification.models import TrainingSet, Classifier
 from urlannotator.classification.factories import classifier_factory
@@ -29,19 +29,19 @@ class SampleFactory(object):
         # Check if sample with given url exists across the system
         samples = Sample.objects.filter(url=url)
         job = Job.objects.get(id=job_id)
-        
+
         # Create a new sample for the job from existing one (if job is
         # missing it). If the job has that sample, create only classified.
         if samples:
             job_samples = samples.filter(job=job)
             if job_samples:
                 return create_classify_sample.delay(
-                    job_samples[0].id, *args, **kwargs
+                    job_samples[0].id, label=label, *args, **kwargs
                 )
             return (
                 copy_sample_to_job.s(samples[0].id, job.id, *args, **kwargs)
                 |
-                create_classify_sample.s(*args, **kwargs)
+                create_classify_sample.s(label=label, *args, **kwargs)
             ).apply_async()
 
         temp_sample = TemporarySample(url=url)
@@ -49,13 +49,11 @@ class SampleFactory(object):
 
         # Groups screensot and content extraction. On both success proceeds
         # to sample creation. Used Celery Chords.
-        return (group([
+        return chain(group([
             web_screenshot_extraction.s(temp_sample.id, url=url),
-            web_content_extraction.s(temp_sample.id, url=url)])
-            |
+            web_content_extraction.s(temp_sample.id, url=url)]),
             create_sample.s(temp_sample.id, job_id, worker_id, url, label,
-                *args, **kwargs)
-            |
+                *args, **kwargs),
             create_classify_sample.s(*args, **kwargs)
         ).apply_async(
             expires=datetime.datetime.now() + datetime.timedelta(days=1)
