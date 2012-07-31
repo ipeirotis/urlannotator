@@ -150,10 +150,10 @@
                 <a href="{{ classified_sample.url }}">{{ classified_sample.url }}</a>
               </td>
               <td>
-                {% if classified_sample.sample.label == '' %}PENDING{%else%}{{ classified_sample.sample.label }}{%endif%}
+                {% if classified_sample.label == '' %}PENDING{%else%}{{ classified_sample.label }}{%endif%}
               </td>
               <td>
-                {% if classified_sample.sample.label == '' %}-{%else%}{{ classified_sample.sample.label }}{%endif%}
+                {% if classified_sample.label == '' %}-{%else%}{{ classified_sample.label }}{%endif%}
               </td>
             </tr>
           {% endfor %}

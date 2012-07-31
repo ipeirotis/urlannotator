@@ -46,7 +46,7 @@ class JobResource(ModelResource):
         # Create classified sample and raise event to create a new sample.
         # A classified sample monitor will update classified_sample.sample
         # as soon as a sample with given url and job is created
-        classified_sample = ClassifiedSample(job=job, url=url)
+        classified_sample = ClassifiedSample(job=job, url=url, label='')
         classified_sample.save()
         send_event('EventNewRawSample', job.id, w.id, url)
 

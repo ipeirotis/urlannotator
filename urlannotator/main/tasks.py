@@ -34,7 +34,7 @@ def web_screenshot_extraction(sample_id, url=None):
         current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
 
-    TemporarySample.objects.filter(id=sample_id).update(
+        TemporarySample.objects.filter(id=sample_id).update(
         screenshot=screenshot)
 
     return True
@@ -106,6 +106,9 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
     if create_classified:
         try:
             sample = Sample.objects.get(id=sample_id)
+
+            if not label:
+                label = ''
 
             # Proper sample entry
             class_sample = ClassifiedSample(
