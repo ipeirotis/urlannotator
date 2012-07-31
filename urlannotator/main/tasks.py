@@ -1,4 +1,5 @@
 from celery import task
+from celery.task import current
 
 from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job,
     Worker)
@@ -29,7 +30,8 @@ def web_screenshot_extraction(sample_id, url=None):
     try:
         screenshot = get_web_screenshot(url)
     except Exception, e:
-        web_screenshot_extraction.retry(exc=e, countdown=60)
+        current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
+            60 * 60 * 24))
 
     TemporarySample.objects.filter(id=sample_id).update(
         screenshot=screenshot)
