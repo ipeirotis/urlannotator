@@ -2,7 +2,7 @@ from tastypie.resources import ModelResource
 from django.conf.urls import url
 import urllib
 
-from urlannotator.main.models import Job, Worker, ClassifiedSample
+from urlannotator.main.models import Job, Worker, ClassifiedSample, Sample
 from urlannotator.flow_control import send_event
 
 
@@ -47,8 +47,19 @@ class JobResource(ModelResource):
         # A classified sample monitor will update classified_sample.sample
         # as soon as a sample with given url and job is created
         classified_sample = ClassifiedSample(job=job, url=url, label='')
+        try:
+            sample = Sample.objects.get(job=job, url=url)
+            classified_sample.sample = sample
+        except Sample.DoesNotExist:
+            pass
+
         classified_sample.save()
-        send_event('EventNewRawSample', job.id, w.id, url)
+
+        # If sample exists, step immediately to classification
+        if classified_sample.sample:
+            send_event('EventNewClassifySample', classified_sample.id)
+        else:
+            send_event('EventNewRawSample', job.id, w.id, url)
 
         return self.create_response(request,
             {'request_id': classified_sample.id})
@@ -83,9 +94,9 @@ class JobResource(ModelResource):
 
         resp = {}
         status = 'PENDING'
-        if classified_sample.sample and classified_sample.sample.label:
+        if classified_sample.sample and classified_sample.label:
             status = 'SUCCESS'
-            resp['outputLabel'] = classified_sample.sample.label
+            resp['outputLabel'] = classified_sample.label
 
         resp['status'] = status
         return self.create_response(request, resp)

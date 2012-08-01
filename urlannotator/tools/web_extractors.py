@@ -71,8 +71,12 @@ def get_web_screenshot(url):
     # Lets create dir for temporary screenshots.
     os.system("mkdir -p %s" % screen_dir)
     # Capturing web.
-    os.system('xvfb-run --auto-servernum cutycapt --url="%s" --out="%s"'
+    res = os.system('xvfb-run --auto-servernum cutycapt --url="%s" --out="%s"'
         % (url, screen_out))
+
+    # Non-zero result code
+    if res:
+        print "Screenshot capture of", url, "resulted in code", res
 
     conn = S3Connection(settings.AWS_ACCESS_KEY_ID,
         settings.AWS_SECRET_ACCESS_KEY)

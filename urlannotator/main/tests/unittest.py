@@ -40,6 +40,7 @@ class SampleFactoryTest(TestCase):
         sample = query.get()
         self.assertTrue('google' in sample.text)
 
+        print 'ss', sample.screenshot
         s = urllib2.urlopen(sample.screenshot)
         self.assertEqual(s.headers.type, 'image/png')
 
@@ -318,9 +319,8 @@ class ProjectTests(TestCase):
 
     def testBasic(self):
         # No odesk association - display alert
-        resp = self.c.get(reverse('project_wizard'))
+        resp = self.c.get(reverse('project_wizard'), follow=True)
 
-        self.assertTrue(resp.status_code in [200, 302])
         self.assertTrue('wizard_alert' in resp.context)
 
         # Invalid option - odesk chosen, account not connected
@@ -337,7 +337,7 @@ class ProjectTests(TestCase):
                     'same_domain': '0',
                     'submit': 'draft'}
 
-            resp = self.c.post(reverse('project_wizard'), data)
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
             self.assertFormError(resp, 'attributes_form', None, error_text)
 
         prof = self.u.get_profile()
@@ -345,9 +345,8 @@ class ProjectTests(TestCase):
         prof.save()
 
         # Odesk is associated
-        resp = self.c.get(reverse('project_wizard'))
+        resp = self.c.get(reverse('project_wizard'), follow=True)
 
-        self.assertTrue(resp.status_code in [200, 302])
         self.assertFalse('wizard_alert' in resp.context)
 
         # Check project creation
@@ -382,7 +381,6 @@ class ProjectTests(TestCase):
                     'topic_desc': 'Test desc',
                     'data_source': '0',
                     'project_type': '0',
-                    'no_of_urls': '0',
                     'same_domain': '0',
                     'submit': submit}
 
@@ -426,7 +424,7 @@ class ProjectTests(TestCase):
                 'same_domain': '0',
                 'submit': 'draft'}
 
-        resp = self.c.post(reverse('project_wizard'), data)
+        resp = self.c.post(reverse('project_wizard'), data, follow=True)
         self.assertFormError(resp, 'topic_form', 'topic',
                              'Please input project topic.')
 
@@ -439,9 +437,19 @@ class ProjectTests(TestCase):
                 'same_domain': '0',
                 'submit': 'draft'}
 
-        resp = self.c.post(reverse('project_wizard'), data)
+        resp = self.c.post(reverse('project_wizard'), data, follow=True)
         self.assertFormError(resp, 'topic_form', 'topic_desc',
                              'Please input project topic description.')
+
+        data = {'topic': 'Test',
+                'topic_desc': 'a',
+                'data_source': '1',
+                'project_type': '0',
+                'same_domain': '0',
+                'submit': 'active'}
+
+        resp = self.c.post(reverse('project_wizard'), data, follow=True)
+        self.assertEqual(resp.status_code, 200)
 
     def testOverview(self):
         Job.objects.create_active(
@@ -576,6 +584,7 @@ class ApiTests(TestCase):
             % (self.api_url, 'job/1/classify/'), follow=True)
 
         array = json.loads(resp.content)
+        print array
         request_id = array['request_id']
 
         resp = c.get('%s%s?format=json&url=google.com&request=%s'

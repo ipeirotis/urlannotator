@@ -257,6 +257,9 @@ def project_wizard(request):
                 'budget': attr_form.cleaned_data['budget'],
                 'same_domain_allowed': addt_form.cleaned_data['same_domain'],
             }
+            if not params['no_of_urls']:
+                params['no_of_urls'] = 0
+
             if 'file_gold_urls' in request.FILES:
                 try:
                     urls = csv.reader(request.FILES['file_gold_urls'])

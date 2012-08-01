@@ -53,7 +53,8 @@ def update_classified_sample(sample_id, *args, **kwargs):
     classified = ClassifiedSample.objects.filter(
         job=sample.job,
         url=sample.url,
-        sample=sample
+        sample=sample,
+        label=''
     )
     for class_sample in classified:
         send_event("EventNewClassifySample", class_sample.id)
