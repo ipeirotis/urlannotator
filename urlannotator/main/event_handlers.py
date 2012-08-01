@@ -1,7 +1,8 @@
 from celery import task, Task, registry
 from factories import SampleFactory, JobFactory
 
-from tenclouds.lock.locks import ContextMemcacheLock
+from tenclouds.lock.locks import MemcacheLock
+from tenclouds.lock.errors import TimeoutError
 
 from urlannotator.classification.models import TrainingSample, TrainingSet
 from urlannotator.main.models import GoldSample
@@ -71,10 +72,21 @@ class GoldSamplesMonitor(Task):
         # Send training set completed event. Used here as we are certain no
         # new samples will come in the mean time. In general, you can't
         # assume that!
-        with ContextMemcacheLock(key=lock_key):
-            if len(job.gold_samples) == training_set.training_samples.count():
-                job.set_gold_samples_done()
-                send_event("EventTrainingSetCompleted", training_set.id)
+        lock = MemcacheLock(key=lock_key)
+        try:
+            lock.acquire_with_wait(wait_time=30 * 60)
+            if not job.is_gold_samples_done():
+                all_golds = len(job.gold_samples)
+                current_golds = training_set.training_samples.count()
+                if all_golds == current_golds:
+                    job.set_gold_samples_done()
+                    send_event("EventTrainingSetCompleted",
+                        training_set.id)
+            lock.release()
+        except TimeoutError:
+            # Lock taken for too long. Ignore - something is screwed up or
+            # we are unlucky
+            pass
 
 
 new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]
