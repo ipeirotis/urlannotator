@@ -280,8 +280,8 @@ class GooglePredictionClassifier(Classifier):
         samp_num = 0
         for sample in samples:
             samp_num += 1
-            sample.text = sample.sample.text
-            train_set.append(sample)
+            sample.sample.label = sample.label
+            train_set.append(sample.sample)
 
         print self.model, 'received', samp_num, 'to train on. Will train on',\
             len(train_set)

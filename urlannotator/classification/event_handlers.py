@@ -75,7 +75,7 @@ def train_on_set(set_id):
 
     classifier = classifier_factory.create_classifier(job.id)
 
-    samples = (training_sample.sample
+    samples = (training_sample
         for training_sample in training_set.training_samples.all())
     classifier.train(samples)
 
