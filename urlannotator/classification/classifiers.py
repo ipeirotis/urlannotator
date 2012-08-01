@@ -154,16 +154,9 @@ class SimpleClassifier(Classifier):
         """
         train_set = []
         for sample in samples:
-            job = sample.job
-            if not hasattr(sample, 'label'):
-                try:
-                    if hasattr(sample, 'sample'):
-                        sample = sample.sample
-                    gold_sample = GoldSample.objects.get(sample=sample)
-                    sample.label = gold_sample.label
-                except:
-                    continue
-            train_set.append((self.get_features(sample), sample.label))
+            job = sample.sample.job
+            sample.sample.label = sample.label
+            train_set.append((self.get_features(sample.sample), sample.label))
         if train_set:
             self.classifier = nltk.classify.DecisionTreeClassifier.train(
                 train_set)
