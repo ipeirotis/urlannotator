@@ -267,7 +267,8 @@ class GooglePredictionClassifier(Classifier):
     def train(self, samples):
         """
             Trains classifier on gives samples' set. If sample has no label,
-            it's checked for being a GoldSample.
+            it's checked for being a GoldSample. Required model
+            is TrainingSample.
         """
         # Turns off classifier for the job. Can't be used until classification
         # is done.
@@ -276,15 +277,9 @@ class GooglePredictionClassifier(Classifier):
         job.unset_classifier_trained()
 
         train_set = []
+        print self.model, 'received', len(samples), 'to train on'
         for sample in samples:
-            if not hasattr(sample, 'label'):
-                try:
-                    if hasattr(sample, 'sample'):
-                        sample = sample.sample
-                    gold_sample = GoldSample.objects.get(sample=sample)
-                    sample.label = gold_sample.label
-                except:
-                    continue
+            sample.text = sample.sample.text
             train_set.append(sample)
 
         name = self.create_and_upload_training_data(train_set)
