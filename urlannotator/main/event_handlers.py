@@ -68,6 +68,7 @@ class GoldSamplesMonitor(Task):
         # Send training set completed event. Used here as we are certain no
         # new samples will come in the mean time. In general, you can't
         # assume that!
+        print len(job.gold_samples), 'of', training_set.training_samples.count()
         if len(job.gold_samples) == training_set.training_samples.count():
             job.set_gold_samples_done()
             send_event("EventTrainingSetCompleted", training_set.id)

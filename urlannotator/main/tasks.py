@@ -110,13 +110,6 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
             if not label:
                 label = ''
 
-            if label != '':
-                gold = GoldSample.objects.create(
-                    sample=sample,
-                    label=label
-                )
-                send_event("EventNewGoldSample", gold.id)
-
             # Proper sample entry
             class_sample = ClassifiedSample(
                 job=sample.job,
@@ -165,7 +158,7 @@ def copy_sample_to_job(sample_id, job_id, label='', *args, **kwargs):
         # Ordinary sample
         else:
             # Sample created sucesfully - pushing event.
-            send_event("EventNewSample", new_sample_id)
+            send_event("EventNewSample", new_sample.id)
 
     except DatabaseError, e:
         # Retry process on db error, such as 'Database is locked'
