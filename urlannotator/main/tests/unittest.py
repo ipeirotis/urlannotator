@@ -489,6 +489,8 @@ class ProjectTests(TestCase):
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
 
+        self.assertTrue(GoldSample.objects.filter(label='').count() == 0)
+
         testUrl = 'google.com'
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
@@ -528,12 +530,11 @@ class ProjectTests(TestCase):
             2)
 
 
-
 class DocsTest(TestCase):
     def testDocs(self):
         c = Client()
 
-        resp = c.get(reverse('readme_view'), follow=True)
+        c.get(reverse('readme_view'), follow=True)
         self.assertTrue(True)
 
 

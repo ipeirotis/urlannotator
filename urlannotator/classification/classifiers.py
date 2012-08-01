@@ -13,7 +13,6 @@ from tenclouds.lock.locks import MemcacheLock
 from oauth2client.file import Storage
 from boto.s3.key import Key
 
-from urlannotator.main.models import Sample, GoldSample
 from urlannotator.classification.models import Classifier as ClassifierModel
 
 
