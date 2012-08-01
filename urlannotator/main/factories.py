@@ -39,7 +39,8 @@ class SampleFactory(object):
                     job_samples[0].id, label=label, *args, **kwargs
                 )
             return (
-                copy_sample_to_job.s(samples[0].id, job.id, *args, **kwargs)
+                copy_sample_to_job.s(samples[0].id, job.id, label=label,
+                    *args, **kwargs)
                 |
                 create_classify_sample.s(label=label, *args, **kwargs)
             ).apply_async()
