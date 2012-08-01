@@ -551,7 +551,7 @@ def project_classifier_view(request, id):
                     cs.sample = sample
                     cs.save()
                     classified_samples.append(cs.id)
-                    send_event("EventNewClassifySample", cs.id)
+                    send_event("EventNewClassifySample", cs.id, 'view')
                     continue
                 except Sample.DoesNotExist:
                     pass

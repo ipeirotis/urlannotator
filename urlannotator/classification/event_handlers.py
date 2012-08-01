@@ -57,7 +57,7 @@ def update_classified_sample(sample_id, *args, **kwargs):
         label=''
     )
     for class_sample in classified:
-        send_event("EventNewClassifySample", class_sample.id)
+        send_event("EventNewClassifySample", class_sample.id, 'update_classified')
     return None
 
 
@@ -87,10 +87,11 @@ def train_on_set(set_id):
 
 
 @task
-def classify(sample_id, *args, **kwargs):
+def classify(sample_id, from_name='', *args, **kwargs):
     """
         Classifies given samples
     """
+    print 'Classifying sample from', from_name
     class_sample = ClassifiedSample.objects.get(id=sample_id)
     if class_sample.label:
         return

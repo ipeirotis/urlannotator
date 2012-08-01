@@ -128,7 +128,7 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
             class_sample.save()
 
             # Sample created sucesfully - pushing event.
-            send_event("EventNewClassifySample", class_sample.id)
+            send_event("EventNewClassifySample", class_sample.id, 'create_class')
 
         except DatabaseError, e:
             # Retry process on db error, such as 'Database is locked'
