@@ -530,8 +530,6 @@ def project_classifier_view(request, id):
             if not sample.sample:
                 samples_pending.append(sample)
             else:
-                if sample.label == '':
-                    send_event("EventNewClassifySample", sample.id)
                 samples_created.append(sample)
 
         context['samples_pending'] = samples_pending
