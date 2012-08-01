@@ -277,11 +277,14 @@ class GooglePredictionClassifier(Classifier):
         job.unset_classifier_trained()
 
         train_set = []
-        print self.model, 'received', len(samples), 'to train on'
+        samp_num = 0
         for sample in samples:
+            samp_num += 1
             sample.text = sample.sample.text
             train_set.append(sample)
 
+        print self.model, 'received', samp_num, 'to train on. Will train on',\
+            len(train_set)
         name = self.create_and_upload_training_data(train_set)
         body = {
             'id': self.model,
