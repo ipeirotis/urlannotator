@@ -281,6 +281,7 @@ class SettingsTests(TestCase):
         u.get_profile().full_name = "Testing Test"
         u.get_profile().save()
 
+        Worker(external_id=1).save()
         # Odesk assoc
         resp = c.get(reverse('settings'))
         self.assertIn('odesk', resp.context)
