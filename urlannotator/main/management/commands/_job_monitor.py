@@ -11,11 +11,12 @@ class JobMonitor(object):
     """
         Every JOB_MONITOR_INTERVAL queries for jobs requiring statistics
         recomputation and does it.
+        Interval argument has to be an instance of datetime.timedelta.
         Requires model class's manager to implement 'latest_for_job(job)',
         where job is an instance of Job model.
         Inheriting classes MUST define get_value(job) method.
     """
-    def __init__(self, cls, interval=10):
+    def __init__(self, cls, interval=datetime.timedelta(hours=1)):
         self.time_interval = settings.JOB_MONITOR_INTERVAL
         self.interval = interval
         self.model_cls = cls
@@ -52,7 +53,7 @@ class JobMonitor(object):
                 latest = self.model_cls.objects.latest_for_job(job)
                 if not latest:
                     continue
-                handle_time = latest.date + datetime.timedelta(seconds=1)
+                handle_time = latest.date + self.interval
                 print 'handle time for job', job.id, 'is', handle_time
                 print 'now', now()
                 if handle_time <= now():

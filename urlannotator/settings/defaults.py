@@ -37,7 +37,7 @@ STATIC_URL = '/statics/'
 JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
 # Interval between a job monitor check. Defaults to 15 minutes.
-JOB_MONITOR_INTERVAL = 15
+JOB_MONITOR_INTERVAL = 15 * 60
 
 SOCIAL_AUTH_CREATE_USERS = False
 
