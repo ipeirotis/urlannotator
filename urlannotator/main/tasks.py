@@ -148,6 +148,7 @@ def copy_sample_to_job(sample_id, job_id, label='', *args, **kwargs):
         # Golden sample
         if label is not None:
             # GoldSample created sucesfully - pushing event.
+            print 'Copying gold sample with label', label
             gold = GoldSample(
                 sample=new_sample,
                 label=label

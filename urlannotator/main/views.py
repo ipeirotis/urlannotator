@@ -26,8 +26,10 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_CHOICES, ClassifiedSample)
+    LABEL_CHOICES, ClassifiedSample, ProgressStatistics, SpentStatistics,
+    URLStatistics)
 from urlannotator.flow_control import send_event
+from urlannotator.classification.models import ClassifierPerformance
 
 
 def get_activation_key(email, num, salt_size=10,
@@ -417,6 +419,38 @@ def odesk_login(request):
     return redirect(client.auth.auth_url())
 
 
+def format_date_val(val):
+    """
+        Formats a date statistics value into a Date.UTC(y,m,j,H,i,s) format.
+    """
+    arg_string = val.date.strftime('%Y,%m,%d,%H,%M,%S')
+    return '[Date.UTC(%s),%d]' % (arg_string, val.delta)
+
+
+def extract_progress_stats(job, context):
+    stats = ProgressStatistics.objects.filter(job=job).order_by('date')
+    start = stats[0]
+    stats = ','.join([format_date_val(v) for v in stats])
+    context['progress_stats'] = stats
+    context['progress_start'] = start.date
+
+
+def extract_spent_stats(job, context):
+    stats = SpentStatistics.objects.filter(job=job).order_by('date')
+    start = stats[0]
+    stats = ','.join([format_date_val(v) for v in stats])
+    context['spent_stats'] = stats
+    context['spent_start'] = start.date
+
+
+def extract_url_stats(job, context):
+    stats = URLStatistics.objects.filter(job=job).order_by('date')
+    start = stats[0]
+    stats = ','.join([format_date_val(v) for v in stats])
+    context['url_stats'] = stats
+    context['url_start'] = start.date
+
+
 @login_required
 def project_view(request, id):
     try:
@@ -430,6 +464,9 @@ def project_view(request, id):
         if value == 'Activate project':
             proj.activate()
     context = {'project': proj}
+    extract_progress_stats(proj, context)
+    extract_url_stats(proj, context)
+    extract_spent_stats(proj, context)
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
 
@@ -537,33 +574,33 @@ def project_classifier_view(request, id):
         context['samples_created'] = samples_created
 
     elif request.method == "POST":
-        test_type = request.POST.get('test-type', 'urls')
-        if test_type == 'urls':
-            urls = request.POST.get('test-urls', '')
-            # Split text to lines with urls, and remove duplicates
-            urls = set(urls.splitlines())
-            w = Worker()
-            w.save()
-            classified_samples = []
-            for url in urls:
-                cs = ClassifiedSample(job=job, sample=None, url=url)
-                try:
-                    sample = Sample.objects.get(job=job, url=url)
-                    cs.sample = sample
+        '''    test_type = request.POST.get('test-type', 'urls')
+            if test_type == 'urls':
+                urls = request.POST.get('test-urls', '')
+                # Split text to lines with urls, and remove duplicates
+                urls = set(urls.splitlines())
+                w = Worker()
+                w.save()
+                classified_samples = []
+                for url in urls:
+                    cs = ClassifiedSample(job=job, sample=None, url=url)
+                    try:
+                        sample = Sample.objects.get(job=job, url=url)
+                        cs.sample = sample
+                        cs.save()
+                        classified_samples.append(cs.id)
+                        send_event("EventNewClassifySample", cs.id, 'view')
+                        continue
+                    except Sample.DoesNotExist:
+                        pass
+
                     cs.save()
                     classified_samples.append(cs.id)
-                    send_event("EventNewClassifySample", cs.id, 'view')
-                    continue
-                except Sample.DoesNotExist:
-                    pass
-
-                cs.save()
-                classified_samples.append(cs.id)
-                send_event('EventNewRawSample', job.id, w.id, url,
-                    create_classified=False)
-            request.session['classified-samples'] = classified_samples
-        return redirect('project_classifier_view', id)
-
+                    send_event('EventNewRawSample', job.id, w.id, url,
+                        create_classified=False)
+                request.session['classified-samples'] = classified_samples
+            return redirect('project_classifier_view', id)
+        '''
     samples = ClassifiedSample.objects.filter(job=job).exclude(label='')
     yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
     yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
@@ -576,6 +613,9 @@ def project_classifier_view(request, id):
         'yes_labels': {'val': yes_labels.count(), 'perc': yes_perc},
         'no_labels': {'val': no_labels.count(), 'perc': no_perc},
         'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
+
+    stats = ClassifierPerformance.objects.filter(job=job).order_by('date')
+    context['training_stats'] = ','.join(str(ts.value) for ts in stats)
 
     return render(request, 'main/project/classifier.html',
         RequestContext(request, context))

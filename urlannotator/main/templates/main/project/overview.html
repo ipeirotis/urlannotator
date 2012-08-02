@@ -41,17 +41,13 @@
 </div>
 {% else %}
 <div class="row-fluid">
-<div class="span3">
-    Progress per hour
+<div class="span3" id="progressGraph">
 </div>
-<div class="span3">
-    Spent per hour
+<div class="span3" id="spentGraph">
 </div>
-<div class="span3">
-    URLs collected per hour
+<div class="span3" id="urlGraph">
 </div>
-<div class="span3">
-    Classifier performance per hour
+<div class="span3" id="performanceGraph">
 </div>
 </div>
 <div class="row-fluid">
@@ -81,6 +77,129 @@
 </div>
 </div>
 {% endif%}
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
+<script type="text/javascript">
+var progressGraph; // globally available
+$(document).ready(function() {
+      progressGraph = new Highcharts.Chart({
+         chart: {
+            renderTo: 'progressGraph',
+            zoomType: 'x',
+            type: 'line'
+         },
+         title: {
+            text: 'Progress per hour'
+         },
+         xAxis: {
+            type: 'datetime',
+            maxZoom: 1 * 3600 * 1000, // an hour
+         },
+         yAxis: {
+            title: {
+              text: 'Progress'
+            },
+            showFirstLabel: false
+         },
+         series: [{
+            showInLegend: false,
+            name: 'Progress',
+            color: '#FFAAAA',
+            data: [{{progress_stats|safe}}]
+         }]
+      });
+   });
+var spentGraph; // globally available
+$(document).ready(function() {
+      spentGraph = new Highcharts.Chart({
+         chart: {
+            renderTo: 'spentGraph',
+            zoomType: 'x',
+            type: 'line'
+         },
+         title: {
+            text: 'Spent per hour'
+         },
+         xAxis: {
+            type: 'datetime',
+            maxZoom: 1 * 3600 * 1000, // an hour
+         },
+         yAxis: {
+            title: {
+              text: 'Spent'
+            },
+            showFirstLabel: false
+         },
+         series: [{
+            showInLegend: false,
+            name: 'Spent',
+            color: '#AAFFAA',
+            data: [{{spent_stats|safe}}]
+         }]
+      });
+   });
+var urlGraph; // globally available
+$(document).ready(function() {
+      urlGraph = new Highcharts.Chart({
+         chart: {
+            renderTo: 'urlGraph',
+            zoomType: 'x',
+            type: 'line'
+         },
+         title: {
+            text: 'URLs per hour'
+         },
+         xAxis: {
+            type: 'datetime',
+            maxZoom: 1 * 3600 * 1000, // an hour
+         },
+         yAxis: {
+            title: {
+              text: 'URLs'
+            },
+            showFirstLabel: false
+         },
+         series: [{
+            showInLegend: false,
+            name: 'URLs',
+            color: '#AAAAFF',
+            data: [{{url_stats|safe}}]
+         }]
+      });
+   });
+var performanceGraph; // globally available
+$(document).ready(function() {
+      performanceGraph = new Highcharts.Chart({
+         chart: {
+            renderTo: 'performanceGraph',
+            zoomType: 'x',
+            type: 'line'
+         },
+         title: {
+            text: 'Performance per hour'
+         },
+         xAxis: {
+            type: 'datetime',
+            tickInterval: 1
+         },
+         yAxis: {
+            title: {
+              text: 'Performance'
+            },
+            showFirstLabel: false
+         },
+         series: [{
+            showInLegend: false,
+            pointStart: 1,
+            color: '#FFAAFF',
+            data: [{{performance_stats|safe}}]
+         }]
+      });
+   });
+</script>
 {% endblock %}
 
 {% block css %}

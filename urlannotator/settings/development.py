@@ -10,6 +10,8 @@ DATABASES = {
     }
 }
 
+SITE_URL = 'urlannotator.10clouds.com'
+
 EMAIL_BACKEND = 'urlannotator.main.backends.email.EmailBackend'
 
 JENKINS_TASKS = (

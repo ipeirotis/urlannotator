@@ -2,7 +2,8 @@ from celery import task, Task, registry
 from celery.task import current
 
 from urlannotator.flow_control import send_event
-from urlannotator.classification.models import TrainingSet
+from urlannotator.classification.models import (TrainingSet,
+    ClassifierPerformance)
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.main.models import Sample, ClassifiedSample
 
@@ -105,6 +106,10 @@ def classify(sample_id, from_name='', *args, **kwargs):
 
     classifier = classifier_factory.create_classifier(job.id)
     label = classifier.classify(class_sample.sample)
+    ClassifierPerformance.objects.create(
+        job=job,
+        value=ClassifiedSample.objects.filter(job=job).count()
+    )
     class_sample.label = label
     class_sample.save()
 

@@ -68,6 +68,10 @@ class JobManager(models.Manager):
         kwargs['remaining_urls'] = kwargs.get('no_of_urls', 0)
         return self.create(**kwargs)
 
+    def get_active(self, **kwargs):
+        els = super(JobManager, self).get_query_set().filter(status=1)
+        return els
+
 
 class Job(models.Model):
     """
@@ -90,6 +94,7 @@ class Job(models.Model):
     classify_urls = JSONField()
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
     remaining_urls = models.PositiveIntegerField(default=0)
+    collected_urls = models.PositiveIntegerField(default=0)
     initialization_status = models.IntegerField(default=0)
 
     objects = JobManager()
@@ -198,6 +203,7 @@ class Sample(models.Model):
     class Meta:
         unique_together = ('job', 'url')
 
+
 class TemporarySample(models.Model):
     """
         Temporary sample used inbetween creating the real sample by processes
@@ -226,3 +232,90 @@ class ClassifiedSample(models.Model):
     url = models.URLField()
     job = models.ForeignKey(Job)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
+
+
+class ProgressManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns progress statistic for given job.
+        """
+        els = super(ProgressManager, self).get_query_set().filter(job=job).\
+            order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class ProgressStatistics(models.Model):
+    """
+        Keeps track of job progress per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = ProgressManager()
+
+
+class SpentManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns spent statistic for given job.
+        """
+        els = super(SpentManager, self).get_query_set().filter(job=job).\
+            order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class SpentStatistics(models.Model):
+    """
+        Keeps track of job spent amount per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = SpentManager()
+
+
+class URLStatManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns url collected statistic for given job.
+        """
+        els = super(URLStatManager, self).get_query_set().filter(job=job).\
+            order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class URLStatistics(models.Model):
+    """
+        Keeps track of urls collected for a job per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = URLStatManager()
+
+
+def create_stats(sender, instance, created, **kwargs):
+    """
+        Creates a brand new statistics' entry for new job.
+    """
+    if created:
+        ProgressStatistics.objects.create(job=instance, value=0)
+        SpentStatistics.objects.create(job=instance, value=0)
+        URLStatistics.objects.create(job=instance, value=0)
+
+post_save.connect(create_stats, sender=Job)

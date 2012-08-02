@@ -11,34 +11,6 @@
       <a href="#" class="btn">Export Training Ready Data</a>
     </div>
   </div>
-  {% if project.is_initializing %}
-  <div class="row-fluid">
-    <div class="span2">&nbsp;</div>
-    <div class="span8"><h4>Your classifier is being prepared. Be patient.</h4></div>
-    <div class="span2" style="text-align:right">&nbsp;</div>
-  </div>
-  <div class="row-fluid">
-    <div class="span2">&nbsp;</div>
-    <div class="span8"><h4>Training set initialization: {%if project.is_training_set_created%}DONE{%else%}IN PROGRESS{%endif%}.</h4></div>
-    <div class="span2" style="text-align:right">&nbsp;</div>
-  </div>
-  <div class="row-fluid">
-    <div class="span2">&nbsp;</div>
-    <div class="span8"><h4>Gold samples prepared: {%if project.is_gold_samples_done%}DONE{%else%}IN PROGRESS{%endif%}.</h4></div>
-    <div class="span2" style="text-align:right">&nbsp;</div>
-  </div>
-  <div class="row-fluid">
-    <div class="span2">&nbsp;</div>
-    <div class="span8"><h4>Classifier prepared: {%if project.is_classifier_created%}DONE{%else%}IN PROGRESS{%endif%}</h4></div>
-    <div class="span2" style="text-align:right">&nbsp;</div>
-  </div>
-  <div class="row-fluid">
-    <div class="span2">&nbsp;</div>
-    <div class="span8"><h4>Classifier trained: {%if project.is_classifier_trained%}DONE{%else%}IN PROGRESS{%endif%}</h4></div>
-    <div class="span2" style="text-align:right">&nbsp;</div>
-  </div>
-  
-  {% elif project.is_active %}
   <div class="row-fluid">
     <div class="span2">
       <h4>Classifier performance</h4>
@@ -50,7 +22,7 @@
       </select>
     </div>
   </div>
-  <div class="row-fluid">
+  <div class="row-fluid" id="performanceGraph">
     Graph
   </div>
   <div class="row-fluid">
@@ -160,12 +132,13 @@
         </tbody>  
       </table>
     {% endif %}
-  {% endif %}
+  
 </div>
 {% endblock %}
 
 {% block javascript %}
 {{ block.super }}
+<script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
 <script type="text/javascript">
 $('#radio-urls').change(function(obj) {
         $('.input-test-texts').css('display', 'none');
@@ -177,6 +150,33 @@ $('#radio-texts').change(function(obj) {
         $('.input-test-texts').css('display', '');
     }
 );
+
+var performanceGraph; // globally available
+$(document).ready(function() {
+      performanceGraph = new Highcharts.Chart({
+         chart: {
+            renderTo: 'performanceGraph',
+            type: 'line'
+         },
+         title: {
+            text: 'Classifier performance'
+         },
+         xAxis: {
+            tickInterval: 1,
+         },
+         yAxis: {
+            title: {
+              text: 'Samples classified'
+            },
+            showFirstLabel: false
+         },
+         series: [{
+            showInLegend: false,
+            pointStart: 1,
+            data: [{{samples_stats}}]
+         }]
+      });
+   });
 </script>
 {% endblock %}
 

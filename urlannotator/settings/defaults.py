@@ -24,8 +24,6 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 STATIC_ROOT = os.path.join(ROOT_DIR, '..', 'collected_static')
 
-SITE_URL = 'urlannotator.10clouds.com'
-
 EMAIL_HOST = ''
 EMAIL_PORT = '587'
 EMAIL_HOST_USER = ''
@@ -37,6 +35,9 @@ STATIC_URL = '/statics/'
 # Default classifier used for NEW jobs. Has to be a valid class name from
 # urlannotator.classification.classifiers module
 JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
+
+# Interval between a job monitor check. Defaults to 15 minutes.
+JOB_MONITOR_INTERVAL = 15
 
 SOCIAL_AUTH_CREATE_USERS = False
 
