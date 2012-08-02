@@ -183,7 +183,8 @@ def settings_view(request):
         context['twitter'] = l[0]
 
     if profile.odesk_uid:
-        context['odesk'] = {'name': profile.full_name}
+        w = Worker.objects.get(external_id=profile.odesk_uid)
+        context['odesk'] = {'name': '%s %s' % (w.first_name, w.last_name)}
 
     if request.method == "POST":
         if 'submit' in request.POST:

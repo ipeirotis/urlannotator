@@ -1,3 +1,5 @@
+# Settings file for ci deployment target
+
 import os
 from defaults import *
 
@@ -8,7 +10,6 @@ DATABASES = {
     }
 }
 
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_BACKEND = 'urlannotator.main.backends.email.EmailBackend'
 
 JENKINS_TASKS = (
