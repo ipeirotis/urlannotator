@@ -467,6 +467,8 @@ def project_view(request, id):
     extract_progress_stats(proj, context)
     extract_url_stats(proj, context)
     extract_spent_stats(proj, context)
+    context['hours_spent'] = proj.hours_spent()
+
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
 

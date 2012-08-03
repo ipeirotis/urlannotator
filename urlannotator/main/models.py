@@ -1,8 +1,10 @@
 from tastypie.models import create_api_key
 
 from django.db import models
+from django.db.models import F
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
+from django.utils.timezone import now
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.flow_control import send_event
@@ -96,6 +98,7 @@ class Job(models.Model):
     remaining_urls = models.PositiveIntegerField(default=0)
     collected_urls = models.PositiveIntegerField(default=0)
     initialization_status = models.IntegerField(default=0)
+    activated = models.DateTimeField(auto_now_add=True)
 
     objects = JobManager()
 
@@ -112,7 +115,12 @@ class Job(models.Model):
         if self.is_active():
             return
         self.status = 1
+        self.activated = now()
         self.save()
+
+    def hours_spent(self):
+        delta = now() - self.activated
+        return int(delta.total_seconds() / 3600)
 
     def is_completed(self):
         return self.status == 2
@@ -132,11 +140,14 @@ class Job(models.Model):
         return self.status == 4
 
     def set_flag(self, flag):
-        self.initialization_status |= flag
-        if self.initialization_status == JOB_FLAGS_ALL:
-            self.activate()
-        else:
-            self.save()
+        self.initialization_status = F('initialization_status') | flag
+        self.save()
+        job = Job.objects.get(id=self.id)
+        # Possible race condition here, but not harmful since activate does no
+        # harmful changes when executed twice
+        print job.initialization_status
+        if job.initialization_status == JOB_FLAGS_ALL:
+            job.activate()
 
     def unset_flag(self, flag):
         self.initialization_status &= (~flag)

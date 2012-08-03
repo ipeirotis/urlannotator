@@ -45,6 +45,11 @@ class JobMonitor(object):
         return 0
 
     def run(self):
+        """
+            Scans all active jobs for the ones that require stats
+            recomputation. Does it in an infinite loop, after
+            settings.JOB_MONITOR_INTERVAL seconds from previous loop.
+        """
         while True:
             jobs = Job.objects.get_active()
             to_handle = []
