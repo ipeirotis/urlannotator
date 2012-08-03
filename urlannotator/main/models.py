@@ -42,11 +42,22 @@ JOB_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
 # Active - up and running job.
 # Completed - job has reached it's goal. Possible BTM still running.
 # Stopped - job has been stopped by it's owner.
-# Created - job has been just created by user, awaiting initialization of
-#           elements. An active job must've gone through this step.
-#           Drafts DO NOT get this status.
-JOB_STATUS_CHOICES = ((0, 'Draft'), (1, 'Active'), (2, 'Completed'),
-                      (3, 'Stopped'), (4, 'Initializing'))
+# Initializing - job has been just created by user, awaiting initialization of
+#                elements. An active job must've gone through this step.
+#                Drafts DO NOT get this status.
+JOB_STATUS_DRAFT = 0
+JOB_STATUS_ACTIVE = 1
+JOB_STATUS_COMPLETED = 2
+JOB_STATUS_STOPPED = 3
+JOB_STATUS_INIT = 4
+
+JOB_STATUS_CHOICES = (
+    (JOB_STATUS_DRAFT, 'Draft'),
+    (JOB_STATUS_ACTIVE, 'Active'),
+    (JOB_STATUS_COMPLETED, 'Completed'),
+    (JOB_STATUS_STOPPED, 'Stopped'),
+    (JOB_STATUS_INIT, 'Initializing')
+)
 
 # Job initialization progress flags. Set flags means the step is done.
 JOB_FLAGS_TRAINING_SET_CREATED = 1  # Training set creation
@@ -106,38 +117,73 @@ class Job(models.Model):
         return JOB_STATUS_CHOICES[self.status][1]
 
     def is_draft(self):
-        return self.status == 0
+        return self.status == JOB_STATUS_DRAFT
 
     def is_active(self):
-        return self.status == 1
+        return self.status == JOB_STATUS_ACTIVE
 
     def activate(self):
         if self.is_active():
             return
-        self.status = 1
+        self.status = JOB_STATUS_ACTIVE
         self.activated = now()
         self.save()
 
-    def hours_spent(self):
+    def get_hours_spent(self):
+        """
+            Returns number of hours workers have worked on this project
+            altogether.
+        """
+        # FIXME: Returns number of hours since project activation
         delta = now() - self.activated
         return int(delta.total_seconds() / 3600)
 
+    def get_urls_collected(self):
+        """
+            Returns number of urls collected.
+        """
+        # FIXME: Returns number of urls gathered. Should be number of urls
+        #        that has gone through validation and are accepted.
+        return self.no_of_urls - self.remaining_urls
+
+    def get_no_of_workers(self):
+        """
+            Returns number of workers that have worked on this project.
+        """
+        # FIXME: Returns number of all workers.
+        return Worker.objects.all().count()
+
+    def get_cost(self):
+        """
+            Returns amount of money the job has costed so far.
+        """
+        # FIXME: Add proper billing entries?
+        return self.hourly_rate * self.get_hours_spent()
+
+    def get_progress(self):
+        """
+            Returns actual progress (in percents) in the job.
+        """
+        # FIXME: Is it proper way of getting progress?
+        div = self.no_of_urls or 1
+        return self.get_urls_collected() / div * 100
+
     def is_completed(self):
-        return self.status == 2
+        return self.status == JOB_STATUS_COMPLETED
 
     def complete(self):
-        self.status = 2
+        self.status = JOB_STATUS_COMPLETED
         self.save()
 
     def is_stopped(self):
-        return self.status == 3
+        return self.status == JOB_STATUS_STOPPED
 
     def stop(self):
-        self.status = 3
+        self.status = JOB_STATUS_STOPPED
         self.save()
 
     def is_initializing(self):
-        return self.status == 4
+        return self.status == JOB_STATUS_INIT
 
     def set_flag(self, flag):
         self.initialization_status = F('initialization_status') | flag
@@ -145,12 +191,11 @@ class Job(models.Model):
         job = Job.objects.get(id=self.id)
         # Possible race condition here, but not harmful since activate does no
         # harmful changes when executed twice
-        print job.initialization_status
         if job.initialization_status == JOB_FLAGS_ALL:
             job.activate()
 
     def unset_flag(self, flag):
-        self.initialization_status &= (~flag)
+        self.initialization_status = F('initialization_status') & (~flag)
         self.save()
 
     def is_flag_set(self, flag):
@@ -188,17 +233,6 @@ class Job(models.Model):
         return int(source) != 1
 
 
-class Worker(models.Model):
-    """
-        Represents the worker who has completed a HIT.
-    """
-    external_id = models.CharField(max_length=100)
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
-    estimated_quality = models.DecimalField(default=0, decimal_places=5,
-        max_digits=7)
-
-
 class Sample(models.Model):
     """
         A sample used to classify and verify.
@@ -207,12 +241,101 @@ class Sample(models.Model):
     url = models.URLField()
     text = models.TextField()
     screenshot = models.URLField()
-    source = models.CharField(max_length=100, blank=False)
-    added_by = models.ForeignKey(Worker)
+    source_type = models.CharField(max_length=100, blank=False)
+    # source_id = char
+    # added_by = models.ForeignKey('Worker')
     added_on = models.DateField(auto_now_add=True)
 
     class Meta:
         unique_together = ('job', 'url')
+
+    def get_workers(self):
+        """
+            Returns workers that have sent this sample (url).
+        """
+        #  FIXME: Support for multiple workers sending the same url.
+        return [self.added_by]
+
+    def get_yes_votes(self):
+        """
+            Returns amount of YES votes received by this sample.
+        """
+        # FIXME: Actual votes.
+        return 0
+
+    def get_no_votes(self):
+        """
+            Returns amount of NO votes received by this sample.
+        """
+        # FIXME: Actual votes.
+        return 0
+
+    def get_broken_votes(self):
+        """
+            Returns amount of BROKEN votes received by this sample.
+        """
+        # FIXME: Actual votes.
+        return 0
+
+    def get_yes_probability(self):
+        """
+            Returns probability of YES label on this sample.
+        """
+        # FIXME: Actual classifier label percentage.
+        return 0
+
+    def get_no_probability(self):
+        """
+            Returns probability of NO label on this sample.
+        """
+        # FIXME: Actual classifier label percentage.
+        return 0
+
+# --vote--
+# label
+# sample
+# worker
+# is_valid
+
+
+class Worker(models.Model):
+    """
+        Represents the worker who has completed a HIT.
+    """
+    external_id = models.CharField(max_length=100)
+    # worker_type    # type
+    estimated_quality = models.DecimalField(default=0, decimal_places=5,
+        max_digits=7)
+
+    def get_links_collected_for_job(self, job):
+        """
+            Returns links collected by given worker for given job.
+        """
+        # FIXME: Actual links collected query
+        s = Sample.objects.filter(job=job, added_by=self)
+        return s
+
+    def get_hours_spent_for_job(self, job):
+        """
+            Returns hours spent by given worker for given job.
+        """
+        # FIXME: Proper time tracking. Now returns 0.
+        return 0
+
+    def get_votes_added_for_job(self, job):
+        """
+            Returns votes added by given worker for given job.
+        """
+        # FIXME: Proper votes query. Now returns empty set.
+        return []
+
+    def get_earned_for_job(self, job):
+        """
+            Returns total amount of money earned by the given worker during
+            given job.
+        """
+        # FIXME: Proper billing query.
+        return 0
 
 
 class TemporarySample(models.Model):
@@ -243,6 +366,8 @@ class ClassifiedSample(models.Model):
     url = models.URLField()
     job = models.ForeignKey(Job)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
+    # source_type = models.CharField(max_length=100, blank=False)
+    # source_id = char
 
 
 class ProgressManager(models.Manager):

@@ -3,65 +3,29 @@
 {% block workers_active %}active{% endblock %}
 {% block project_content %}
   <div class="row-fluid">
-    <div class="span2">
-      <a href="#">&lt; Back</a>
-    </div>
-    <div class="span8">&nbsp;</div>
-    <div class="span2" style="text-align:right;">
-      <a href="#" class="btn">End contract</a>
-    </div>
-  </div>
-  <div class="row-fluid">
-    <h5>Worker name</h5>
-    <h3>Worker</h3>
-  </div>
-  <div class="row-fluid">
-    <div class="span2 infobox">
-      <h3>0</h3>
-      URLs collected
-    </div>
-    <div class="span2 infobox">
-      <h3>0</h3>
-      Votes
-    </div>
-    <div class="span2 infobox">
-      <h3>0</h3>
-      Hours spent
-    </div>
-    <div class="span2 infobox">
-      <h3>0</h3>
-      Quality
-    </div>
-    <div class="span2 infobox">
-      <h3>0</h3>
-      Money earned (USD)
-    </div>
-  </div>
-  <div class="row-fluid">
-    <hr>
-  </div>
-  <div class="row-fluid">
-    <div class="span3">
-      <h3>Statistics</h3>
-      URLs collected per day
-    </div>
-    <div class="span9">
-      <h3>More information</h3>
-      <table id="more-information">
-        <thead></thead>
-        <tbody>
-          <tr><td>Work since</td><td>12-03-2012</td></tr>
-          <tr><td>Projects worked on</td><td>Project</td></tr>
-          <tr><td>Status</td><td>Legit</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-  <div class="row-fluid">
-    <hr>
-  </div>
-  <div class="row-fluid">
-    Other content
+    <h2>Workers</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Worker name</th>
+          <th style="width: 100px">Quality</th>
+          <th style="width: 100px">Votes added</th>
+          <th style="width: 100px">Links collected</th>
+          <th style="width: 100px">Hours spent</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for worker in workers %}
+          <tr>
+            <td><a href="{% url project_worker_view project.id worker.id%}">{{worker.name}}</a></td>
+            <td>{{worker.quality}}</td>
+            <td>{{worker.votes_added}}</td>
+            <td>{{worker.links_collected}}</td>
+            <td>{{worker.hours_spent}}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 {% endblock %}
 

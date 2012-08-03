@@ -4,7 +4,7 @@
 {% block project_content %}
 <div class="row-fluid">
 <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>0</h3>
+  <h3>{{urls_collected}}</h3>
   <span>URLs collected</span>
 </div>
 <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
@@ -12,19 +12,19 @@
   <span>Hours spend</span>
 </div>
 <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>0</h3>
+  <h3>{{no_of_workers}}</h3>
   <span>Number of workers</span>
 </div>
 <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>0</h3>
+  <h3>{{cost}}</h3>
   <span>Cost (USD)</span>
 </div>
 <div class="span2 infobox">
-  <h3>0</h3>
+  <h3>{{budget}}</h3>
   <span>Budget (USD)</span>
 </div>
 <div class="span1 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>0%</h3>
+  <h3>{{progress}}%</h3>
   <span>Progress</span>
 </div>
 </div>
@@ -154,7 +154,6 @@ $(document).ready(function() {
          },
          xAxis: {
             type: 'datetime',
-            maxZoom: 1 * 3600 * 1000, // an hour
          },
          yAxis: {
             title: {
@@ -183,7 +182,7 @@ $(document).ready(function() {
          },
          xAxis: {
             type: 'datetime',
-            tickInterval: 1
+            maxZoom: 1 * 3600 * 1000, // an hour
          },
          yAxis: {
             title: {
@@ -193,7 +192,7 @@ $(document).ready(function() {
          },
          series: [{
             showInLegend: false,
-            pointStart: 1,
+            name: 'Performance',
             color: '#FFAAFF',
             data: [{{performance_stats|safe}}]
          }]

@@ -1,3 +1,4 @@
+import datetime
 import odesk
 import hashlib
 import string
@@ -8,6 +9,7 @@ import json
 
 from docutils import core
 from django.shortcuts import render, redirect
+from django.utils.timezone import now
 from django.contrib.auth.models import User
 from django.template import RequestContext, Context
 from django.contrib.auth import authenticate, login, logout
@@ -423,32 +425,57 @@ def format_date_val(val):
     """
         Formats a date statistics value into a Date.UTC(y,m,j,H,i,s) format.
     """
-    arg_string = val.date.strftime('%Y,%m,%d,%H,%M,%S')
-    return '[Date.UTC(%s),%d]' % (arg_string, val.delta)
+    arg_string = val['date'].strftime('%Y,%m-1,%d,%H,%M,%S')
+    return '[Date.UTC(%s),%d]' % (arg_string, val['delta'])
+
+
+def extract_stat(cls, job):
+    """
+        Returns a string representing a list of statistics samples formatted
+        for use in Highcharts. The closest, earliest value is always used.
+    """
+    stats = cls.objects.filter(job=job).order_by('date')
+    stats_count = stats.count()
+    list_stats = [{'date': stats[0].date, 'delta': stats[0].value}]
+    now_time = now()
+    idx = 1
+    interval = datetime.timedelta(hours=1)
+    actual_time = stats[0].date + interval
+    actual_value = stats[0].value
+
+    while actual_time <= now_time:
+        # Find next closest sample
+        while idx < stats_count:
+            if stats[idx].date > actual_time:
+                break
+            idx += 1
+
+        stat = stats[idx - 1]
+        list_stats.append({
+            'date': actual_time,
+            'delta': stat.value - actual_value
+        })
+        actual_value = stat.value
+        actual_time += interval
+
+    stats = ','.join([format_date_val(v) for v in list_stats])
+    return stats
 
 
 def extract_progress_stats(job, context):
-    stats = ProgressStatistics.objects.filter(job=job).order_by('date')
-    start = stats[0]
-    stats = ','.join([format_date_val(v) for v in stats])
-    context['progress_stats'] = stats
-    context['progress_start'] = start.date
+    context['progress_stats'] = extract_stat(ProgressStatistics, job)
 
 
 def extract_spent_stats(job, context):
-    stats = SpentStatistics.objects.filter(job=job).order_by('date')
-    start = stats[0]
-    stats = ','.join([format_date_val(v) for v in stats])
-    context['spent_stats'] = stats
-    context['spent_start'] = start.date
+    context['spent_stats'] = extract_stat(SpentStatistics, job)
 
 
 def extract_url_stats(job, context):
-    stats = URLStatistics.objects.filter(job=job).order_by('date')
-    start = stats[0]
-    stats = ','.join([format_date_val(v) for v in stats])
-    context['url_stats'] = stats
-    context['url_start'] = start.date
+    context['url_stats'] = extract_stat(URLStatistics, job)
+
+
+def extract_performance_stats(job, context):
+    context['performance_stats'] = extract_stat(ClassifierPerformance, job)
 
 
 @login_required
@@ -467,7 +494,13 @@ def project_view(request, id):
     extract_progress_stats(proj, context)
     extract_url_stats(proj, context)
     extract_spent_stats(proj, context)
-    context['hours_spent'] = proj.hours_spent()
+    extract_performance_stats(proj, context)
+    context['hours_spent'] = proj.get_hours_spent()
+    context['urls_collected'] = proj.get_urls_collected()
+    context['no_of_workers'] = proj.get_no_of_workers()
+    context['cost'] = proj.get_cost()
+    context['budget'] = proj.budget
+    context['progress'] = proj.get_progress()
 
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
@@ -476,12 +509,27 @@ def project_view(request, id):
 @login_required
 def project_workers_view(request, id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
+    context = {'project': job}
+    # FIXME: Proper worker gathering. We should include multiple addition of
+    #        the same sample by different workers.
+    samples = Sample.objects.filter(job=job)
+    workers = []
+    for sample in samples:
+        worker = sample.added_by
+        workers.append({
+            'id': worker.id,
+            'name': worker.first_name + worker.last_name,
+            'quality': worker.estimated_quality,
+            'votes_added': len(worker.get_votes_added_for_job(job)),
+            'links_collected': worker.get_links_collected_for_job(job).count(),
+            'hours_spent': worker.get_hours_spent_for_job(job)
+        })
+    context['workers'] = workers
     return render(request, 'main/project/workers.html',
         RequestContext(request, context))
 
@@ -489,12 +537,22 @@ def project_workers_view(request, id):
 @login_required
 def project_worker_view(request, id, worker_id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
-    except Job.DoesNotExist:
+        job = Job.objects.get(id=id, account=request.user.get_profile())
+        worker = Worker.objects.get(id=worker_id)
+    except (Job.DoesNotExist, Worker.DoesNotExist):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
+    context = {'project': job}
+    worker = {
+        'name': '%s %s' % (worker.first_name, worker.last_name),
+        'links_collected': worker.get_links_collected_for_job(job),
+        'votes_added': worker.get_votes_added_for_job(job),
+        'hours_spent': worker.get_hours_spent_for_job(job),
+        'quality': worker.estimated_quality,
+        'earned': worker.get_earned_for_job(job),
+        'work_started': worker.get_job_start_time(job),
+    }
     return render(request, 'main/project/worker.html',
         RequestContext(request, context))
 
@@ -538,13 +596,34 @@ def project_btm_view(request, id):
 @login_required
 def project_data_view(request, id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
+    context = {
+        'project': job,
+        'data_set': Sample.objects.filter(job=job)
+    }
+
     return render(request, 'main/project/data.html',
+        RequestContext(request, context))
+
+
+@login_required
+def project_data_detail(request, id, data_id):
+    try:
+        job = Job.objects.get(id=id, account=request.user.get_profile())
+        sample = Sample.objects.get(id=data_id, job=job)
+    except (Job.DoesNotExist, Sample.DoesNotExist):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    context = {
+        'project': job,
+        'sample': sample
+    }
+    return render(request, 'main/project/data_detail.html',
         RequestContext(request, context))
 
 
