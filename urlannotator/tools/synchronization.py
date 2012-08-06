@@ -37,7 +37,7 @@ class RWSynchronize247(object):
     def _new_readers_function(self, function_name):
         def func(self, *args, **kwargs):
             """
-            Reading task. Read classifier is used - aquire reader rwlock.
+            Reading task. Read instance is used - aquire reader rwlock.
             """
 
             self.rwlock.acquire_shared_lock()
@@ -51,7 +51,7 @@ class RWSynchronize247(object):
     def _new_writer_function(self, function_name):
         def func(self, *args, **kwargs):
             """
-            Writing task. Lock write classifier.
+            Writing task. Lock write instance.
             On default after training switch is performed. This can be disabled
             by passing template_switch=False in kwargs.
             """
