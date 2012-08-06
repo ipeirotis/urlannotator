@@ -30,7 +30,7 @@ def flow_modules():
     return filter(None, (tmp(app) for app in settings.INSTALLED_APPS))
 
 
-@task()
+@task(ignore_result=True)
 class EventBusSender(Task):
     ''' Matching using regexps
     '''
@@ -53,14 +53,10 @@ class EventBusSender(Task):
     def run(self, event_name, *args, **kwargs):
         log.debug('Got event: %s(%s, %s)', event_name, args, kwargs)
 
-        matched = False
-        dispatched = []
-        for matcher, task_func in self.registered:
-            if matcher.match(event_name):
-                matched = True
-                dispatched.append(task_func.s(*args, **kwargs))
-        if not matched:
+        dispatched = [task_func.s(*args, **kwargs) for matcher, task_func
+            in self.registered if matcher.match(event_name)]
+
+        if not dispatched:
             log.warning('Event not matched: %s !', event_name)
-            return None
         else:
-            return group(dispatched).apply_async()
+            group(dispatched).apply_async()
