@@ -20,21 +20,18 @@ class Classifier247Tests(TestCase):
         self.job = Job(account=self.u.get_profile())
         self.job.save()
 
-        self.worker = Worker()
-        self.worker.save()
-
         self.train_data = [
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Mechanical squirrel screwdriver over car'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Screwdriver fix mechanical bike bolts'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Brown banana apple pinapple potato'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='apple pinapple potato'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Hippo tree over lagoon'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Green tan with true fox')
         ]
         self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
@@ -50,7 +47,7 @@ class Classifier247Tests(TestCase):
             description='Test classifier', classes=['label'])
 
     def testReadClassifier247(self):
-        test_sample = Sample(job=self.job, added_by=self.worker,
+        test_sample = Sample(job=self.job, source_type='',
             text='Scottish whisky banana apple pinapple')
         self.assertEqual(self.classifier247.classify(test_sample), None)
         self.assertEqual(self.classifier247.classify_with_info(test_sample),
@@ -66,21 +63,18 @@ class SimpleClassifierTests(TestCase):
         self.job = Job(account=self.u.get_profile())
         self.job.save()
 
-        self.worker = Worker()
-        self.worker.save()
-
         self.train_data = [
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Mechanical squirrel screwdriver over car'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Screwdriver fix mechanical bike bolts'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Brown banana apple pinapple potato'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='apple pinapple potato'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Hippo tree over lagoon'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Green tan with true fox')
         ]
         self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
@@ -95,7 +89,7 @@ class SimpleClassifierTests(TestCase):
     def testSimpleClassifier(self):
         sc = SimpleClassifier(description='Test classifier', classes=['label'])
         # Tests without training
-        test_sample = Sample(job=self.job, added_by=self.worker,
+        test_sample = Sample(job=self.job, source_type='',
             text='Scottish whisky banana apple pinapple')
         self.assertEqual(sc.classify(test_sample), None)
         self.assertEqual(sc.classify_with_info(test_sample), None)

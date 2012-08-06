@@ -188,7 +188,7 @@ def settings_view(request):
 
     if profile.odesk_uid:
         w = Worker.objects.get(external_id=profile.odesk_uid)
-        context['odesk'] = {'name': '%s %s' % (w.first_name, w.last_name)}
+        context['odesk'] = {'name': w.get_name_as(request.user)}
 
     if request.method == "POST":
         if 'submit' in request.POST:
@@ -310,29 +310,31 @@ def odesk_disconnect(request):
 
 
 def odesk_complete(request):
-    client = odesk.Client(settings.ODESK_CLIENT_ID,
-        settings.ODESK_CLIENT_SECRET)
+    client = odesk.Client(
+        settings.ODESK_CLIENT_ID,
+        settings.ODESK_CLIENT_SECRET
+    )
     auth, user = client.auth.get_token(request.GET['frob'])
+    # FIXME: Add proper ciphertext support when its ready. Replace uid with
+    #        the ciphertext to use as an identifier.
+    # cipher = client.getciphertext()
+    cipher = user['uid']
 
     if request.user.is_authenticated():
         if request.user.get_profile().odesk_uid == '':
-            request.user.get_profile().odesk_uid = user['uid']
+            request.user.get_profile().odesk_uid = cipher
             request.user.get_profile().odesk_key = auth
             request.user.get_profile().save()
 
             # Add Worker model on odesk account association
-            if not Worker.objects.filter(external_id=user['uid']):
-                Worker(
-                    external_id=user['uid'],
-                    first_name=user['first_name'],
-                    last_name=user['last_name']
-                ).save()
+            if not Worker.objects.filter(external_id=cipher):
+                Worker.objects.create_odesk(external_id=cipher)
             request.session['success'] = 'You have successfully logged in.'
         return redirect('index')
     else:
         try:
-            assoc = Account.objects.get(odesk_uid=user['uid'])
-            u = authenticate(username=assoc[0].user.username, password='1')
+            assoc = Account.objects.get(odesk_uid=cipher)
+            u = authenticate(username=assoc.user.username, password='1')
             login(request, u)
             return redirect('index')
         except Account.DoesNotExist:
@@ -342,10 +344,10 @@ def odesk_complete(request):
                 return redirect('index')
             request.session.pop('registration')
 
-            u = User.objects.create_user(email=user['email'],
-                username=' '.join(['odesk', user['uid']]), password='1')
+            u = User.objects.create_user(email=user['mail'],
+                username=' '.join(['odesk', cipher]), password='1')
             profile = u.get_profile()
-            profile.odesk_uid = user['uid']
+            profile.odesk_uid = cipher
             profile.odesk_key = auth
             profile.full_name = '%s %s' % (user['first_name'],
                 user['last_name'])
@@ -353,14 +355,10 @@ def odesk_complete(request):
             login(request, u)
 
             # Create Worker model on odesk account registration
-            if not Worker.objects.filter(external_id=user['uid']):
-                Worker(
-                    external_id=user['uid'],
-                    first_name=user['first_name'],
-                    last_name=user['last_name']
-                ).save()
+            if not Worker.objects.filter(external_id=cipher):
+                Worker.objects.create_odesk(external_id=cipher)
             request.session['success'] = 'You have successfuly registered'
-            return redirect('settings_view')
+            return redirect('settings')
 
 
 @login_required
@@ -520,10 +518,10 @@ def project_workers_view(request, id):
     samples = Sample.objects.filter(job=job)
     workers = []
     for sample in samples:
-        worker = sample.added_by
+        worker = sample.get_source_worker()
         workers.append({
             'id': worker.id,
-            'name': worker.first_name + worker.last_name,
+            'name': worker.name,
             'quality': worker.estimated_quality,
             'votes_added': len(worker.get_votes_added_for_job(job)),
             'links_collected': worker.get_links_collected_for_job(job).count(),
@@ -655,33 +653,20 @@ def project_classifier_view(request, id):
         context['samples_created'] = samples_created
 
     elif request.method == "POST":
-        '''    test_type = request.POST.get('test-type', 'urls')
-            if test_type == 'urls':
-                urls = request.POST.get('test-urls', '')
-                # Split text to lines with urls, and remove duplicates
-                urls = set(urls.splitlines())
-                w = Worker()
-                w.save()
-                classified_samples = []
-                for url in urls:
-                    cs = ClassifiedSample(job=job, sample=None, url=url)
-                    try:
-                        sample = Sample.objects.get(job=job, url=url)
-                        cs.sample = sample
-                        cs.save()
-                        classified_samples.append(cs.id)
-                        send_event("EventNewClassifySample", cs.id, 'view')
-                        continue
-                    except Sample.DoesNotExist:
-                        pass
-
-                    cs.save()
-                    classified_samples.append(cs.id)
-                    send_event('EventNewRawSample', job.id, w.id, url,
-                        create_classified=False)
-                request.session['classified-samples'] = classified_samples
-            return redirect('project_classifier_view', id)
-        '''
+        test_type = request.POST.get('test-type', 'urls')
+        if test_type == 'urls':
+            urls = request.POST.get('test-urls', '')
+            # Split text to lines with urls, and remove duplicates
+            urls = set(urls.splitlines())
+            classified_samples = []
+            for url in urls:
+                cs = ClassifiedSample.objects.create_by_owner(
+                    job=job,
+                    url=url
+                )
+                classified_samples.append(cs.id)
+            request.session['classified-samples'] = classified_samples
+        return redirect('project_classifier_view', id)
     samples = ClassifiedSample.objects.filter(job=job).exclude(label='')
     yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
     yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))

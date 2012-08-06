@@ -3,7 +3,7 @@ from celery.task import current
 from django.db import DatabaseError
 
 from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job,
-    Worker, ClassifiedSample)
+    ClassifiedSample)
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 from urlannotator.flow_control import send_event
 
@@ -41,8 +41,8 @@ def web_screenshot_extraction(sample_id, url=None):
 
 
 @task()
-def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
-    label=None, silent=False, *args, **kwargs):
+def create_sample(extraction_result, temp_sample_id, job_id, url,
+    source_type, source_val='', label=None, silent=False,*args, **kwargs):
     """
     Creates real sample using TemporarySample. If error while capturing web
     propagate it. Finally deletes TemporarySample.
@@ -56,7 +56,6 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
     # Checking if all previous tasks succeeded.
     if extracted:
         job = Job.objects.get(id=job_id)
-        worker = Worker.objects.get(id=worker_id)
 
         # Proper sample entry
         sample = Sample(
@@ -64,7 +63,8 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
             url=url,
             text=temp_sample.text,
             screenshot=temp_sample.screenshot,
-            added_by=worker
+            source_type=source_type,
+            source_val=source_val
         )
         sample.save()
         sample_id = sample.id
@@ -92,8 +92,8 @@ def create_sample(extraction_result, temp_sample_id, job_id, worker_id, url,
 
 
 @task()
-def create_classify_sample(sample_id, create_classified=True, label='', *args,
-        **kwargs):
+def create_classify_sample(sample_id, source_type, create_classified=True,
+    label='', source_val='', *args, **kwargs):
     """
     Creates classified sample from existing sample, therefore we don't need
     web extraction.
@@ -115,13 +115,18 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
                 job=sample.job,
                 url=sample.url,
                 sample=sample,
-                label=label
+                label=label,
+                source_type=source_type,
+                source_val=source_val
             )
 
             class_sample.save()
 
             # Sample created sucesfully - pushing event.
-            send_event("EventNewClassifySample", class_sample.id, 'create_class')
+            send_event(
+                "EventNewClassifySample",
+                class_sample.id,
+            )
 
         except DatabaseError, e:
             # Retry process on db error, such as 'Database is locked'
@@ -132,7 +137,8 @@ def create_classify_sample(sample_id, create_classified=True, label='', *args,
 
 
 @task()
-def copy_sample_to_job(sample_id, job_id, label='', *args, **kwargs):
+def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
+    *args, **kwargs):
     try:
         old_sample = Sample.objects.get(id=sample_id)
         job = Job.objects.get(id=job_id)
@@ -141,14 +147,13 @@ def copy_sample_to_job(sample_id, job_id, label='', *args, **kwargs):
             url=old_sample.url,
             text=old_sample.text,
             screenshot=old_sample.screenshot,
-            source=old_sample.source,
-            added_by=old_sample.added_by
+            source_type=source_type,
+            source_val=source_val
         )
 
         # Golden sample
         if label is not None:
             # GoldSample created sucesfully - pushing event.
-            print 'Copying gold sample with label', label
             gold = GoldSample(
                 sample=new_sample,
                 label=label

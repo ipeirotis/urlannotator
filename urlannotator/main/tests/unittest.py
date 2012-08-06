@@ -24,13 +24,14 @@ class SampleFactoryTest(TestCase):
         )
 
     def testSimpleSample(self):
-        worker = Worker()
-        worker.save()
-
         test_url = 'google.com'
 
         sf = SampleFactory()
-        res = sf.new_sample(self.job.id, worker.id, test_url)
+        res = sf.new_sample(
+            job_id=self.job.id,
+            url=test_url,
+            source_type=''
+        )
         res.get()
 
         query = Sample.objects.filter(job=self.job, url=test_url)
@@ -281,7 +282,7 @@ class SettingsTests(TestCase):
         u.get_profile().full_name = "Testing Test"
         u.get_profile().save()
 
-        Worker(external_id=1).save()
+        Worker.objects.create_odesk(external_id=1).save()
         # Odesk assoc
         resp = c.get(reverse('settings'))
         self.assertIn('odesk', resp.context)

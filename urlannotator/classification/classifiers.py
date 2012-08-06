@@ -167,6 +167,8 @@ class SimpleClassifier(Classifier):
         """
         if self.classifier is None:
             return None
+        if not hasattr(sample, 'text'):
+            sample = sample.sample
         label = self.classifier.classify(self.get_features(sample))
         sample.label = label
         sample.save()
@@ -179,7 +181,7 @@ class SimpleClassifier(Classifier):
         """
         if self.classifier is None:
             return None
-        label = self.classifier.classify(self.get_features(sample))
+        label = self.classifier.classify(self.get_features(sample.sample))
         sample.label = label
         sample.save()
         return {'label': label}
@@ -224,7 +226,6 @@ class GooglePredictionClassifier(Classifier):
         file_name = 'model-%s' % self.model
         file_out = '%s/%s.csv' % (training_dir, file_name)
 
-        print 'Uploading', len(samples), 'samples for', self.model
         # Lets create dir for temporary training sets.
         os.system("mkdir -p %s" % training_dir)
 
@@ -275,8 +276,6 @@ class GooglePredictionClassifier(Classifier):
             sample.sample.label = sample.label
             train_set.append(sample.sample)
 
-        print self.model, 'received', samp_num, 'to train on. Will train on',\
-            len(train_set)
         name = self.create_and_upload_training_data(train_set)
         body = {
             'id': self.model,
@@ -302,12 +301,12 @@ class GooglePredictionClassifier(Classifier):
 
     def classify(self, sample):
         """
-            Classifies gives sample and saves result to the model.
+            Classifies given sample and saves result to the model.
         """
         if self.model is None:
             return None
 
-        body = {'input': {'csvInstance': [sample.text]}}
+        body = {'input': {'csvInstance': [sample.sample.text]}}
         label = self.papi.predict(body=body, id=self.model).execute()
         label = label['outputLabel']
         sample.label = label
@@ -323,7 +322,7 @@ class GooglePredictionClassifier(Classifier):
         if self.model is None:
             return None
 
-        body = {'input': {'csvInstance': [sample.text]}}
+        body = {'input': {'csvInstance': [sample.sample.text]}}
         label = self.papi.predict(body=body, id=self.model).execute()
         sample.label = label['outputLabel']
         sample.save()

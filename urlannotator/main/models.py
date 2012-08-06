@@ -1,3 +1,5 @@
+# import odesk
+
 from tastypie.models import create_api_key
 
 from django.db import models
@@ -23,6 +25,7 @@ class Account(models.Model):
     odesk_uid = models.CharField(default='', max_length=100)
     full_name = models.CharField(default='', max_length=100)
     alerts = models.BooleanField(default=False)
+    worker_entry = models.ForeignKey('Worker', null=True, blank=True)
 
 
 def create_user_profile(sender, instance, created, **kwargs):
@@ -232,6 +235,25 @@ class Job(models.Model):
     def is_odesk_required_for_source(source):
         return int(source) != 1
 
+# Sample source types breakdown:
+# owner - Sample created by the job creator. source_val is empty.
+SAMPLE_SOURCE_OWNER = 'owner'
+
+
+class SampleManager(models.Manager):
+    def create_by_owner(self, *args, **kwargs):
+        '''
+            Asynchronously creates a new sample with owner as a source.
+        '''
+        if 'source_type' in kwargs:
+            kwargs.pop('source_type')
+
+        send_event(
+            'EventNewRawSample',
+            source_type=SAMPLE_SOURCE_OWNER,
+            *args, **kwargs
+        )
+
 
 class Sample(models.Model):
     """
@@ -242,12 +264,27 @@ class Sample(models.Model):
     text = models.TextField()
     screenshot = models.URLField()
     source_type = models.CharField(max_length=100, blank=False)
-    # source_id = char
-    # added_by = models.ForeignKey('Worker')
+    source_val = models.CharField(max_length=100, blank=True, null=True)
     added_on = models.DateField(auto_now_add=True)
+
+    objects = SampleManager()
 
     class Meta:
         unique_together = ('job', 'url')
+
+    def get_source_worker(self):
+        '''
+            Returns a worker that has sent this sample.
+        '''
+        # FIXME: Add support for more sources. Fix returned type for owner.
+        #        Should be of Worker type.
+        if self.source_type == SAMPLE_SOURCE_OWNER:
+            cipher = self.job.account.odesk_uid
+            try:
+                worker = Worker.objects.get(external_id=cipher)
+                return worker
+            except Worker.DoesNotExist:
+                return None
 
     def get_workers(self):
         """
@@ -297,15 +334,51 @@ class Sample(models.Model):
 # worker
 # is_valid
 
+# Worker types breakdown:
+# odesk - worker from odesk. External id points to user's odesk id.
+
+WORKER_TYPE_ODESK = 0
+
+WORKER_TYPES = (
+    (WORKER_TYPE_ODESK, 'oDesk'),
+)
+
+
+class WorkerManager(models.Manager):
+    def create_odesk(self, *args, **kwargs):
+        if 'worker_type' in kwargs:
+            kwargs.pop('worker_type')
+
+        return self.create(
+            worker_type=WORKER_TYPE_ODESK,
+            **kwargs
+        )
+
 
 class Worker(models.Model):
     """
         Represents the worker who has completed a HIT.
     """
     external_id = models.CharField(max_length=100)
-    # worker_type    # type
+    worker_type = models.IntegerField(max_length=100, choices=WORKER_TYPES)
     estimated_quality = models.DecimalField(default=0, decimal_places=5,
         max_digits=7)
+
+    objects = WorkerManager()
+
+    def get_name_as(self, requesting_user):
+        """
+            Returns worker's name. Uses requesting_user's ceredentials if
+            necessary.
+        """
+        # FIXME: Uncomment when proper odesk external id handling is done
+
+        # if self.worker_type == WORKER_TYPE_ODESK:
+        #     client = odesk.Client(settings.ODESK_CLIENT_ID,
+        #         settings.ODESK_CLIENT_SECRET,
+        #         requesting_user.get_profile().odesk_key)
+        #     r = client.provider.get_provider('~~3f19de366cb49c91')
+        #     return r['dev_full_name']
 
     def get_links_collected_for_job(self, job):
         """
@@ -357,6 +430,42 @@ class GoldSample(models.Model):
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
 
 
+class ClassifiedSampleManager(models.Manager):
+    def create_by_owner(self, *args, **kwargs):
+        if 'source_type' in kwargs:
+            kwargs.pop('source_type')
+
+        kwargs['source_type'] = SAMPLE_SOURCE_OWNER
+        kwargs['source_val'] = ''
+        try:
+            kwargs['sample'] = Sample.objects.get(
+                job=kwargs['job'],
+                url=kwargs['url']
+            )
+        except Sample.DoesNotExist:
+            pass
+
+        classified_sample = self.create(**kwargs)
+        # If sample exists, step immediately to classification
+        if 'sample' in kwargs:
+            send_event('EventNewClassifySample', classified_sample.id)
+        else:
+            Sample.objects.create_by_owner(
+                job_id=kwargs['job'].id,
+                url=kwargs['url'],
+                create_classified=False
+            )
+
+        return classified_sample
+
+# Classified samples' status breakdown:
+# PENDING - The sample is being created or classified. If
+#           ClassifiedSample.sample is not none, the sample is being classified
+# SUCCESS - The sample has been created and classified.
+CLASSIFIED_SAMPLE_SUCCESS = 'SUCCESS'
+CLASSIFIED_SAMPLE_PENDING = 'PENDING'
+
+
 class ClassifiedSample(models.Model):
     """
         A sample classification request was made for. The sample field is set
@@ -366,8 +475,25 @@ class ClassifiedSample(models.Model):
     url = models.URLField()
     job = models.ForeignKey(Job)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
-    # source_type = models.CharField(max_length=100, blank=False)
-    # source_id = char
+    source_type = models.CharField(max_length=100, blank=False)
+    source_val = models.CharField(max_length=100, blank=True, null=True)
+    label_probability = JSONField()
+
+    objects = ClassifiedSampleManager()
+
+    def get_status(self):
+        '''
+            Returns current classification status.
+        '''
+        if self.sample and self.label:
+            return CLASSIFIED_SAMPLE_SUCCESS
+        return CLASSIFIED_SAMPLE_PENDING
+
+    def is_pending(self):
+        return self.get_status() == CLASSIFIED_SAMPLE_PENDING
+
+    def is_successful(self):
+        return self.get_status() == CLASSIFIED_SAMPLE_SUCCESS
 
 
 class ProgressManager(models.Manager):
