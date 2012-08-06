@@ -46,8 +46,11 @@ class Classifier247Tests(TestCase):
                 label=self.labels[idx]
             ))
 
-        self.classifier247 = Classifier247(SimpleClassifier,
-            description='Test classifier', classes=['label'])
+        sc_reader = SimpleClassifier(description='Test classifier',
+            classes=['label'])
+        sc_writer = SimpleClassifier(description='Test classifier',
+            classes=['label'])
+        self.classifier247 = Classifier247(sc_reader, sc_writer)
 
     def testReadClassifier247(self):
         test_sample = Sample(job=self.job, added_by=self.worker,

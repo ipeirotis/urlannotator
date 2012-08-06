@@ -8,101 +8,36 @@ from apiclient.discovery import build
 from boto.gs.connection import GSConnection
 from boto.gs.bucket import Bucket
 from django.conf import settings
-from tenclouds.lock.rwlock import MemcachedRWLock
-from tenclouds.lock.locks import MemcacheLock
 from oauth2client.file import Storage
 from boto.s3.key import Key
 
 from urlannotator.classification.models import Classifier as ClassifierModel
+from urlannotator.tools.synchronization import RWSynchronize247
 
 
-class Classifier247(object):
+class Classifier247(RWSynchronize247):
 
-    def __init__(self, classifier_cls, rwlock_cls=MemcachedRWLock,
-            lock_cls=MemcacheLock, *args, **kwargs):
+    def __init__(self, reader_instance, writer_instance):
         """
-        Our permanent (24/7) classifier can be initialized with custom
-        classifier class - classifier_cls (which performs real classification) &
-        with custom locking implementation. On default we use MamcacheLock and
-        MemcachedRWLock.
+        Our permanent (24/7) synchronize template can be initialized with
+        instances of sync objects.
         """
 
-        self.lock = lock_cls()
-        self.rwlock = rwlock_cls()
-        self.read_classifier = classifier_cls(*args, **kwargs)
-        self.write_classifier = classifier_cls(*args, **kwargs)
+        writer_functions = [
+            'train',
+            'update'
+        ]
 
-    def train(self, *args, **kwargs):
-        """
-        Writing task. Lock write classifier.
-        On default after training switch is performed. This can be disabled by
-        passing switch=False in kwargs.
-        """
+        reader_functions = [
+            'classify',
+            'classify_with_info'
+        ]
 
-        # Switch can be disabled.
-        switch = True
-        if 'switch' in kwargs:
-            switch = kwargs['switch']
-            kwargs.pop('switch')
-
-        self.lock.acquire()
-        result = self.write_classifier.train(*args, **kwargs)
-        if switch:
-            self._switch_with_lock()
-        self.lock.release()
-
-        return result
-
-    def update(self, *args, **kwargs):
-        """ Writing task. Lock write classifier.
-        """
-
-        self.lock.acquire()
-        result = self.write_classifier.update(*args, **kwargs)
-        self.lock.release()
-
-        return result
-
-    def classify(self, *args, **kwargs):
-        """ Reading task. Read classifier is used - aquire reader rwlock.
-        """
-
-        self.rwlock.reader_acquire()
-        result = self.read_classifier.classify(*args, **kwargs)
-        self.rwlock.reader_release()
-
-        return result
-
-    def classify_with_info(self, *args, **kwargs):
-        """ Reading task. Read classifier is used - aquire reader rwlock.
-        """
-
-        self.rwlock.reader_acquire()
-        result = self.read_classifier.classify_with_info(*args, **kwargs)
-        self.rwlock.reader_release()
-
-        return result
-
-    def switch(self):
-        """
-        Cold switch. Aquires all locks and runs switch. In result whole
-        classifier is blocked for switch time.
-        """
-
-        self.lock.acquire()
-        self._switch_with_lock()
-        self.lock.release()
-
-    def _switch_with_lock(self):
-        """
-        Hot switch. Use only when ensured that write classifier is not used.
-        F.e. when training task ends.
-        """
-
-        self.rwlock.writer_acquire()
-        (self.read_classifier, self.write_classifier) = (self.write_classifier,
-            self.read_classifier)
-        self.rwlock.writer_release()
+        super(self.__class__, self).__init__('Classifier247',
+            reader_instance=reader_instance,
+            writer_instance=writer_instance,
+            reader_functions=reader_functions,
+            writer_functions=writer_functions)
 
 
 class Classifier(object):
