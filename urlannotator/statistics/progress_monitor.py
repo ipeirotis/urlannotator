@@ -5,7 +5,7 @@ from urlannotator.statistics.job_monitor import JobMonitor
 from urlannotator.main.models import ProgressStatistics
 
 
-@task()
+@task(ignore_result=True)
 class ProgressMonitor(JobMonitor):
     def __init__(self, **kwargs):
         super(ProgressMonitor, self).__init__(

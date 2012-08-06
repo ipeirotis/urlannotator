@@ -5,7 +5,7 @@ from urlannotator.statistics.job_monitor import JobMonitor
 from urlannotator.main.models import URLStatistics
 
 
-@task()
+@task(ignore_result=True)
 class URLMonitor(JobMonitor):
     def __init__(self, **kwargs):
         super(URLMonitor, self).__init__(

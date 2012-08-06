@@ -5,7 +5,7 @@ from urlannotator.statistics.job_monitor import JobMonitor
 from urlannotator.main.models import SpentStatistics
 
 
-@task()
+@task(ignore_result=True)
 class SpentMonitor(JobMonitor):
     def __init__(self, **kwargs):
         super(SpentMonitor, self).__init__(
