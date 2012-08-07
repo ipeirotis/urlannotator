@@ -7,3 +7,6 @@
 *.pyc
 local_settings.py
 prediction.dat
+doc/_*/
+doc/source
+
