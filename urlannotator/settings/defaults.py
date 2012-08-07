@@ -278,6 +278,7 @@ CELERY_IMPORTS = (
     'urlannotator.statistics.spent_monitor',
     'urlannotator.statistics.url_monitor',
     'urlannotator.statistics.progress_monitor',
+    'urlannotator.sample_gathering.simple_gatherer',
 )
 
 CELERYBEAT_SCHEDULE = {
@@ -297,8 +298,8 @@ CELERYBEAT_SCHEDULE = {
         'args': []
     },
     'sample_gatherer': {
-        'task': 'urlannotator.sample_gathering.sample_gatherer.SimpleGatherer',
-        'schedule': datetime.timedelta(seconds=10 * 60),
+        'task': 'urlannotator.sample_gathering.simple_gatherer.SimpleGatherer',
+        'schedule': datetime.timedelta(seconds=10),
         'args': []
     },
 }
