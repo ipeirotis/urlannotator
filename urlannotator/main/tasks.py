@@ -1,6 +1,6 @@
 from celery import task
 from celery.task import current
-from django.db import DatabaseError
+from django.db import DatabaseError, IntegrityError
 
 from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job,
     ClassifiedSample)
@@ -166,6 +166,9 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
             # Sample created sucesfully - pushing event.
             send_event("EventNewSample", new_sample.id)
 
+    except IntegrityError:
+        # Such sample has been created in the mean time, dont do anything
+        return Sample.objects.get(job=job, url=old_sample.url).id
     except DatabaseError, e:
         # Retry process on db error, such as 'Database is locked'
         copy_sample_to_job.retry(exc=e,
