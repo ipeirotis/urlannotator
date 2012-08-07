@@ -30,7 +30,8 @@ class testJobMonitors(TestCase):
         for cls, mon in monitor_list:
             self.assertEqual(cls.objects.filter(job=self.job).count(), 1)
             mon.delay()
-            self.assertEqual(cls.objects.filter(job=self.job).count(), 2)
+            # No new entry, not in the hour period
+            self.assertEqual(cls.objects.filter(job=self.job).count(), 1)
 
 
 class testStatExtraction(TestCase):
