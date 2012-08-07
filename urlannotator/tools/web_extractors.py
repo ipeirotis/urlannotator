@@ -92,8 +92,10 @@ def get_web_screenshot(url):
     # Give access to view screen.
     k.make_public()
 
-    # Amazon replaces 'http://' with 'http%3A/'
+    # Amazon replaces some characters
     name = k.name.replace('://', '%3A/')
+    name = k.name.replace('?', '%3F')
+    name = k.name.replace('=', '%3D')
 
     # Url for public screen (without any expiration date)
     return S3_SERVER_NAME + SCREEN_DUMPS_BUCKET_NAME + '/' + name
