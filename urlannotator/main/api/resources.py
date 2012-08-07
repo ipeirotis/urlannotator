@@ -2,8 +2,7 @@ from tastypie.resources import ModelResource
 from django.conf.urls import url
 import urllib
 
-from urlannotator.main.models import Job, Worker, ClassifiedSample, Sample
-from urlannotator.flow_control import send_event
+from urlannotator.main.models import Job, ClassifiedSample
 
 
 class JobResource(ModelResource):
@@ -40,29 +39,20 @@ class JobResource(ModelResource):
             return self.create_response(request, {'error': 'Wrong job.'})
 
         url = urllib.unquote_plus(request.GET['url'])
-        w = Worker()
-        w.save()
 
         # Create classified sample and raise event to create a new sample.
         # A classified sample monitor will update classified_sample.sample
         # as soon as a sample with given url and job is created
-        classified_sample = ClassifiedSample(job=job, url=url, label='')
-        try:
-            sample = Sample.objects.get(job=job, url=url)
-            classified_sample.sample = sample
-        except Sample.DoesNotExist:
-            pass
+        classified_sample = ClassifiedSample.objects.create_by_owner(
+            job=job,
+            url=url,
+            label=''
+        )
 
-        classified_sample.save()
-
-        # If sample exists, step immediately to classification
-        if classified_sample.sample:
-            send_event('EventNewClassifySample', classified_sample.id)
-        else:
-            send_event('EventNewRawSample', job.id, w.id, url)
-
-        return self.create_response(request,
-            {'request_id': classified_sample.id})
+        return self.create_response(
+            request,
+            {'request_id': classified_sample.id}
+        )
 
     def get_classify_status(self, request, **kwargs):
         """
@@ -76,27 +66,34 @@ class JobResource(ModelResource):
             return self.create_response(request, {'error': 'Wrong job.'})
 
         if 'request' not in request.GET:
-            return self.create_response(request,
-                {'error': 'Wrong request id.'})
+            return self.create_response(
+                request,
+                {'error': 'Wrong request id.'}
+            )
 
         try:
             request_id = int(request.GET['request'])
         except:
-            return self.create_response(request,
-                {'error': 'Wrong request id.'})
+            return self.create_response(
+                request,
+                {'error': 'Wrong request id.'}
+            )
 
         try:
-            classified_sample = ClassifiedSample.objects.get(job=job,
-                id=request_id)
+            classified_sample = ClassifiedSample.objects.get(
+                job=job,
+                id=request_id
+            )
         except ClassifiedSample.DoesNotExist:
-            return self.create_response(request,
-                {'error': 'Wrong request id.'})
+            return self.create_response(
+                request,
+                {'error': 'Wrong request id.'}
+            )
 
         resp = {}
-        status = 'PENDING'
-        if classified_sample.sample and classified_sample.label:
-            status = 'SUCCESS'
+        status = classified_sample.get_status()
+        resp['status'] = status
+        if classified_sample.is_successful():
             resp['outputLabel'] = classified_sample.label
 
-        resp['status'] = status
         return self.create_response(request, resp)

@@ -1,5 +1,7 @@
+import datetime
 import os
 import tempfile
+import json
 from django.core.urlresolvers import reverse_lazy
 
 DEBUG = True
@@ -24,8 +26,6 @@ MEDIA_ROOT = ''
 MEDIA_URL = ''
 STATIC_ROOT = os.path.join(ROOT_DIR, '..', 'collected_static')
 
-SITE_URL = 'urlannotator.10clouds.com'
-
 EMAIL_HOST = ''
 EMAIL_PORT = '587'
 EMAIL_HOST_USER = ''
@@ -37,6 +37,9 @@ STATIC_URL = '/statics/'
 # Default classifier used for NEW jobs. Has to be a valid class name from
 # urlannotator.classification.classifiers module
 JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
+
+# Interval between a job monitor check. Defaults to 15 minutes.
+JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15)
 
 SOCIAL_AUTH_CREATE_USERS = False
 
@@ -152,6 +155,7 @@ PROJECT_APPS = (
     'urlannotator.sample_gathering',
     'urlannotator.main',
     'urlannotator.tools',
+    'urlannotator.statistics',
 )
 
 INSTALLED_APPS = BASE_APPS + PROJECT_APPS
@@ -271,7 +275,28 @@ CELERY_IMPORTS = (
     'urlannotator.flow_control.event_system',
     'urlannotator.flow_control.event_handlers',
     'urlannotator.main.event_handlers',
+    'urlannotator.statistics.spent_monitor',
+    'urlannotator.statistics.url_monitor',
+    'urlannotator.statistics.progress_monitor',
 )
+
+CELERYBEAT_SCHEDULE = {
+    'spent_monitor': {
+        'task': 'urlannotator.statistics.spent_monitor.SpentMonitor',
+        'schedule': JOB_MONITOR_INTERVAL,
+        'args': []
+    },
+    'url_monitor': {
+        'task': 'urlannotator.statistics.url_monitor.URLMonitor',
+        'schedule': JOB_MONITOR_INTERVAL,
+        'args': []
+    },
+    'progress_monitor': {
+        'task': 'urlannotator.statistics.progress_monitor.ProgressMonitor',
+        'schedule': JOB_MONITOR_INTERVAL,
+        'args': []
+    },
+}
 
 # Test runner
 # CELERY_ALWAYS_EAGER = True

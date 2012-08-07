@@ -4,11 +4,10 @@ from celery import group, chain
 
 from urlannotator.classification.models import TrainingSet, Classifier
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.main.models import TemporarySample, Job, Worker, Sample
+from urlannotator.main.models import TemporarySample, Job, Sample
 from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample,
     copy_sample_to_job)
-from urlannotator.flow_control import send_event
 
 
 class SampleFactory(object):
@@ -19,7 +18,7 @@ class SampleFactory(object):
         None
     """
 
-    def new_sample(self, job_id, worker_id, url='', text=None, label=None,
+    def new_sample(self, job_id, url='', text=None, label=None,
             *args, **kwargs):
         """
         Produce new sample and starts tasks for screen and text extraction.
@@ -53,9 +52,17 @@ class SampleFactory(object):
         return chain(group([
             web_screenshot_extraction.s(temp_sample.id, url=url),
             web_content_extraction.s(temp_sample.id, url=url)]),
-            create_sample.s(temp_sample.id, job_id, worker_id, url, label,
-                *args, **kwargs),
-            create_classify_sample.s(*args, **kwargs)
+            create_sample.s(
+                temp_sample_id=temp_sample.id,
+                job_id=job_id,
+                url=url,
+                label=label,
+                *args, **kwargs
+            ),
+            create_classify_sample.s(
+                label=label,
+                *args, **kwargs
+            )
         ).apply_async(
             expires=datetime.datetime.now() + datetime.timedelta(days=1)
         )
@@ -75,17 +82,15 @@ class JobFactory(object):
         """
         job = Job.objects.get(id=job_id)
 
-        # FIXME: fake worker
-        w = Worker()
-        w.save()
-
         if not job.gold_samples:
             job.set_gold_samples_done()
         else:
             for gold_sample in job.gold_samples:
-                send_event('EventNewRawSample', job_id, w.id,
-                    gold_sample['url'], label=gold_sample['label'])
-        return None
+                Sample.objects.create_by_owner(
+                    job_id=job_id,
+                    url=gold_sample['url'],
+                    label=gold_sample['label']
+                )
 
     def classify_urls(self, job_id):
         """
@@ -94,13 +99,11 @@ class JobFactory(object):
 
         job = Job.objects.get(id=job_id)
 
-        # FIXME: fake worker
-        w = Worker()
-        w.save()
-
-        for sample in job.classify_urls:
-            send_event('EventNewRawSample', job_id, w.id, sample)
-        return None
+        for sample_url in job.classify_urls:
+            Sample.objects.create_by_owner(
+                job_id=job_id,
+                url=sample_url
+            )
 
     def create_training_set(self, job):
         """

@@ -1,8 +1,12 @@
+# import odesk
+
 from tastypie.models import create_api_key
 
 from django.db import models
+from django.db.models import F
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
+from django.utils.timezone import now
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.flow_control import send_event
@@ -21,6 +25,7 @@ class Account(models.Model):
     odesk_uid = models.CharField(default='', max_length=100)
     full_name = models.CharField(default='', max_length=100)
     alerts = models.BooleanField(default=False)
+    worker_entry = models.ForeignKey('Worker', null=True, blank=True)
 
 
 def create_user_profile(sender, instance, created, **kwargs):
@@ -40,11 +45,22 @@ JOB_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
 # Active - up and running job.
 # Completed - job has reached it's goal. Possible BTM still running.
 # Stopped - job has been stopped by it's owner.
-# Created - job has been just created by user, awaiting initialization of
-#           elements. An active job must've gone through this step.
-#           Drafts DO NOT get this status.
-JOB_STATUS_CHOICES = ((0, 'Draft'), (1, 'Active'), (2, 'Completed'),
-                      (3, 'Stopped'), (4, 'Initializing'))
+# Initializing - job has been just created by user, awaiting initialization of
+#                elements. An active job must've gone through this step.
+#                Drafts DO NOT get this status.
+JOB_STATUS_DRAFT = 0
+JOB_STATUS_ACTIVE = 1
+JOB_STATUS_COMPLETED = 2
+JOB_STATUS_STOPPED = 3
+JOB_STATUS_INIT = 4
+
+JOB_STATUS_CHOICES = (
+    (JOB_STATUS_DRAFT, 'Draft'),
+    (JOB_STATUS_ACTIVE, 'Active'),
+    (JOB_STATUS_COMPLETED, 'Completed'),
+    (JOB_STATUS_STOPPED, 'Stopped'),
+    (JOB_STATUS_INIT, 'Initializing')
+)
 
 # Job initialization progress flags. Set flags means the step is done.
 JOB_FLAGS_TRAINING_SET_CREATED = 1  # Training set creation
@@ -68,6 +84,10 @@ class JobManager(models.Manager):
         kwargs['remaining_urls'] = kwargs.get('no_of_urls', 0)
         return self.create(**kwargs)
 
+    def get_active(self, **kwargs):
+        els = super(JobManager, self).get_query_set().filter(status=1)
+        return els
+
 
 class Job(models.Model):
     """
@@ -90,7 +110,9 @@ class Job(models.Model):
     classify_urls = JSONField()
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
     remaining_urls = models.PositiveIntegerField(default=0)
+    collected_urls = models.PositiveIntegerField(default=0)
     initialization_status = models.IntegerField(default=0)
+    activated = models.DateTimeField(auto_now_add=True)
 
     objects = JobManager()
 
@@ -98,43 +120,85 @@ class Job(models.Model):
         return JOB_STATUS_CHOICES[self.status][1]
 
     def is_draft(self):
-        return self.status == 0
+        return self.status == JOB_STATUS_DRAFT
 
     def is_active(self):
-        return self.status == 1
+        return self.status == JOB_STATUS_ACTIVE
 
     def activate(self):
         if self.is_active():
             return
-        self.status = 1
+        self.status = JOB_STATUS_ACTIVE
+        self.activated = now()
         self.save()
 
+    def get_hours_spent(self):
+        """
+            Returns number of hours workers have worked on this project
+            altogether.
+        """
+        # FIXME: Returns number of hours since project activation
+        delta = now() - self.activated
+        return int(delta.total_seconds() / 3600)
+
+    def get_urls_collected(self):
+        """
+            Returns number of urls collected.
+        """
+        # FIXME: Returns number of urls gathered. Should be number of urls
+        #        that has gone through validation and are accepted.
+        return self.no_of_urls - self.remaining_urls
+
+    def get_no_of_workers(self):
+        """
+            Returns number of workers that have worked on this project.
+        """
+        # FIXME: Returns number of all workers.
+        return Worker.objects.all().count()
+
+    def get_cost(self):
+        """
+            Returns amount of money the job has costed so far.
+        """
+        # FIXME: Add proper billing entries?
+        return self.hourly_rate * self.get_hours_spent()
+
+    def get_progress(self):
+        """
+            Returns actual progress (in percents) in the job.
+        """
+        # FIXME: Is it proper way of getting progress?
+        div = self.no_of_urls or 1
+        return self.get_urls_collected() / div * 100
+
     def is_completed(self):
-        return self.status == 2
+        return self.status == JOB_STATUS_COMPLETED
 
     def complete(self):
-        self.status = 2
+        self.status = JOB_STATUS_COMPLETED
         self.save()
 
     def is_stopped(self):
-        return self.status == 3
+        return self.status == JOB_STATUS_STOPPED
 
     def stop(self):
-        self.status = 3
+        self.status = JOB_STATUS_STOPPED
         self.save()
 
     def is_initializing(self):
-        return self.status == 4
+        return self.status == JOB_STATUS_INIT
 
     def set_flag(self, flag):
-        self.initialization_status |= flag
-        if self.initialization_status == JOB_FLAGS_ALL:
-            self.activate()
-        else:
-            self.save()
+        self.initialization_status = F('initialization_status') | flag
+        self.save()
+        job = Job.objects.get(id=self.id)
+        # Possible race condition here, but not harmful since activate does no
+        # harmful changes when executed twice
+        if job.initialization_status == JOB_FLAGS_ALL:
+            job.activate()
 
     def unset_flag(self, flag):
-        self.initialization_status &= (~flag)
+        self.initialization_status = F('initialization_status') & (~flag)
         self.save()
 
     def is_flag_set(self, flag):
@@ -171,16 +235,24 @@ class Job(models.Model):
     def is_odesk_required_for_source(source):
         return int(source) != 1
 
+# Sample source types breakdown:
+# owner - Sample created by the job creator. source_val is empty.
+SAMPLE_SOURCE_OWNER = 'owner'
 
-class Worker(models.Model):
-    """
-        Represents the worker who has completed a HIT.
-    """
-    external_id = models.CharField(max_length=100)
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
-    estimated_quality = models.DecimalField(default=0, decimal_places=5,
-        max_digits=7)
+
+class SampleManager(models.Manager):
+    def create_by_owner(self, *args, **kwargs):
+        '''
+            Asynchronously creates a new sample with owner as a source.
+        '''
+        if 'source_type' in kwargs:
+            kwargs.pop('source_type')
+
+        send_event(
+            'EventNewRawSample',
+            source_type=SAMPLE_SOURCE_OWNER,
+            *args, **kwargs
+        )
 
 
 class Sample(models.Model):
@@ -191,12 +263,153 @@ class Sample(models.Model):
     url = models.URLField()
     text = models.TextField()
     screenshot = models.URLField()
-    source = models.CharField(max_length=100, blank=False)
-    added_by = models.ForeignKey(Worker)
+    source_type = models.CharField(max_length=100, blank=False)
+    source_val = models.CharField(max_length=100, blank=True, null=True)
     added_on = models.DateField(auto_now_add=True)
+
+    objects = SampleManager()
 
     class Meta:
         unique_together = ('job', 'url')
+
+    def get_source_worker(self):
+        '''
+            Returns a worker that has sent this sample.
+        '''
+        # FIXME: Add support for more sources. Fix returned type for owner.
+        #        Should be of Worker type.
+        if self.source_type == SAMPLE_SOURCE_OWNER:
+            cipher = self.job.account.odesk_uid
+            try:
+                worker = Worker.objects.get(external_id=cipher)
+                return worker
+            except Worker.DoesNotExist:
+                return None
+
+    def get_workers(self):
+        """
+            Returns workers that have sent this sample (url).
+        """
+        #  FIXME: Support for multiple workers sending the same url.
+        return [self.added_by]
+
+    def get_yes_votes(self):
+        """
+            Returns amount of YES votes received by this sample.
+        """
+        # FIXME: Actual votes.
+        return 0
+
+    def get_no_votes(self):
+        """
+            Returns amount of NO votes received by this sample.
+        """
+        # FIXME: Actual votes.
+        return 0
+
+    def get_broken_votes(self):
+        """
+            Returns amount of BROKEN votes received by this sample.
+        """
+        # FIXME: Actual votes.
+        return 0
+
+    def get_yes_probability(self):
+        """
+            Returns probability of YES label on this sample.
+        """
+        # FIXME: Actual classifier label percentage.
+        return 0
+
+    def get_no_probability(self):
+        """
+            Returns probability of NO label on this sample.
+        """
+        # FIXME: Actual classifier label percentage.
+        return 0
+
+# --vote--
+# label
+# sample
+# worker
+# is_valid
+
+# Worker types breakdown:
+# odesk - worker from odesk. External id points to user's odesk id.
+
+WORKER_TYPE_ODESK = 0
+
+WORKER_TYPES = (
+    (WORKER_TYPE_ODESK, 'oDesk'),
+)
+
+
+class WorkerManager(models.Manager):
+    def create_odesk(self, *args, **kwargs):
+        if 'worker_type' in kwargs:
+            kwargs.pop('worker_type')
+
+        return self.create(
+            worker_type=WORKER_TYPE_ODESK,
+            **kwargs
+        )
+
+
+class Worker(models.Model):
+    """
+        Represents the worker who has completed a HIT.
+    """
+    external_id = models.CharField(max_length=100)
+    worker_type = models.IntegerField(max_length=100, choices=WORKER_TYPES)
+    estimated_quality = models.DecimalField(default=0, decimal_places=5,
+        max_digits=7)
+
+    objects = WorkerManager()
+
+    def get_name_as(self, requesting_user):
+        """
+            Returns worker's name. Uses requesting_user's ceredentials if
+            necessary.
+        """
+        # FIXME: Uncomment when proper odesk external id handling is done
+
+        # if self.worker_type == WORKER_TYPE_ODESK:
+        #     client = odesk.Client(settings.ODESK_CLIENT_ID,
+        #         settings.ODESK_CLIENT_SECRET,
+        #         requesting_user.get_profile().odesk_key)
+        #     r = client.provider.get_provider('~~3f19de366cb49c91')
+        #     return r['dev_full_name']
+
+    def get_links_collected_for_job(self, job):
+        """
+            Returns links collected by given worker for given job.
+        """
+        # FIXME: Actual links collected query
+        s = Sample.objects.filter(job=job, added_by=self)
+        return s
+
+    def get_hours_spent_for_job(self, job):
+        """
+            Returns hours spent by given worker for given job.
+        """
+        # FIXME: Proper time tracking. Now returns 0.
+        return 0
+
+    def get_votes_added_for_job(self, job):
+        """
+            Returns votes added by given worker for given job.
+        """
+        # FIXME: Proper votes query. Now returns empty set.
+        return []
+
+    def get_earned_for_job(self, job):
+        """
+            Returns total amount of money earned by the given worker during
+            given job.
+        """
+        # FIXME: Proper billing query.
+        return 0
+
 
 class TemporarySample(models.Model):
     """
@@ -217,6 +430,42 @@ class GoldSample(models.Model):
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
 
 
+class ClassifiedSampleManager(models.Manager):
+    def create_by_owner(self, *args, **kwargs):
+        if 'source_type' in kwargs:
+            kwargs.pop('source_type')
+
+        kwargs['source_type'] = SAMPLE_SOURCE_OWNER
+        kwargs['source_val'] = ''
+        try:
+            kwargs['sample'] = Sample.objects.get(
+                job=kwargs['job'],
+                url=kwargs['url']
+            )
+        except Sample.DoesNotExist:
+            pass
+
+        classified_sample = self.create(**kwargs)
+        # If sample exists, step immediately to classification
+        if 'sample' in kwargs:
+            send_event('EventNewClassifySample', classified_sample.id)
+        else:
+            Sample.objects.create_by_owner(
+                job_id=kwargs['job'].id,
+                url=kwargs['url'],
+                create_classified=False
+            )
+
+        return classified_sample
+
+# Classified samples' status breakdown:
+# PENDING - The sample is being created or classified. If
+#           ClassifiedSample.sample is not none, the sample is being classified
+# SUCCESS - The sample has been created and classified.
+CLASSIFIED_SAMPLE_SUCCESS = 'SUCCESS'
+CLASSIFIED_SAMPLE_PENDING = 'PENDING'
+
+
 class ClassifiedSample(models.Model):
     """
         A sample classification request was made for. The sample field is set
@@ -226,3 +475,109 @@ class ClassifiedSample(models.Model):
     url = models.URLField()
     job = models.ForeignKey(Job)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
+    source_type = models.CharField(max_length=100, blank=False)
+    source_val = models.CharField(max_length=100, blank=True, null=True)
+    label_probability = JSONField()
+
+    objects = ClassifiedSampleManager()
+
+    def get_status(self):
+        '''
+            Returns current classification status.
+        '''
+        if self.sample and self.label:
+            return CLASSIFIED_SAMPLE_SUCCESS
+        return CLASSIFIED_SAMPLE_PENDING
+
+    def is_pending(self):
+        return self.get_status() == CLASSIFIED_SAMPLE_PENDING
+
+    def is_successful(self):
+        return self.get_status() == CLASSIFIED_SAMPLE_SUCCESS
+
+
+class ProgressManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns progress statistic for given job.
+        """
+        els = super(ProgressManager, self).get_query_set().filter(job=job).\
+            order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class ProgressStatistics(models.Model):
+    """
+        Keeps track of job progress per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = ProgressManager()
+
+
+class SpentManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns spent statistic for given job.
+        """
+        els = super(SpentManager, self).get_query_set().filter(job=job).\
+            order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class SpentStatistics(models.Model):
+    """
+        Keeps track of job spent amount per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = SpentManager()
+
+
+class URLStatManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns url collected statistic for given job.
+        """
+        els = super(URLStatManager, self).get_query_set().filter(job=job).\
+            order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class URLStatistics(models.Model):
+    """
+        Keeps track of urls collected for a job per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = URLStatManager()
+
+
+def create_stats(sender, instance, created, **kwargs):
+    """
+        Creates a brand new statistics' entry for new job.
+    """
+    if created:
+        ProgressStatistics.objects.create(job=instance, value=0)
+        SpentStatistics.objects.create(job=instance, value=0)
+        URLStatistics.objects.create(job=instance, value=0)
+
+post_save.connect(create_stats, sender=Job)

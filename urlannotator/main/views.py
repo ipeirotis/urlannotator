@@ -27,7 +27,8 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     GeneralEmailUserForm, GeneralUserForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_CHOICES, ClassifiedSample)
-from urlannotator.flow_control import send_event
+from urlannotator.statistics.stat_extraction import (extract_progress_stats,
+    extract_url_stats, extract_spent_stats, extract_performance_stats)
 
 
 def get_activation_key(email, num, salt_size=10,
@@ -184,7 +185,7 @@ def settings_view(request):
 
     if profile.odesk_uid:
         w = Worker.objects.get(external_id=profile.odesk_uid)
-        context['odesk'] = {'name': '%s %s' % (w.first_name, w.last_name)}
+        context['odesk'] = {'name': w.get_name_as(request.user)}
 
     if request.method == "POST":
         if 'submit' in request.POST:
@@ -306,29 +307,31 @@ def odesk_disconnect(request):
 
 
 def odesk_complete(request):
-    client = odesk.Client(settings.ODESK_CLIENT_ID,
-        settings.ODESK_CLIENT_SECRET)
+    client = odesk.Client(
+        settings.ODESK_CLIENT_ID,
+        settings.ODESK_CLIENT_SECRET
+    )
     auth, user = client.auth.get_token(request.GET['frob'])
+    # FIXME: Add proper ciphertext support when its ready. Replace uid with
+    #        the ciphertext to use as an identifier.
+    # cipher = client.getciphertext()
+    cipher = user['uid']
 
     if request.user.is_authenticated():
         if request.user.get_profile().odesk_uid == '':
-            request.user.get_profile().odesk_uid = user['uid']
+            request.user.get_profile().odesk_uid = cipher
             request.user.get_profile().odesk_key = auth
             request.user.get_profile().save()
 
             # Add Worker model on odesk account association
-            if not Worker.objects.filter(external_id=user['uid']):
-                Worker(
-                    external_id=user['uid'],
-                    first_name=user['first_name'],
-                    last_name=user['last_name']
-                ).save()
+            if not Worker.objects.filter(external_id=cipher):
+                Worker.objects.create_odesk(external_id=cipher)
             request.session['success'] = 'You have successfully logged in.'
         return redirect('index')
     else:
         try:
-            assoc = Account.objects.get(odesk_uid=user['uid'])
-            u = authenticate(username=assoc[0].user.username, password='1')
+            assoc = Account.objects.get(odesk_uid=cipher)
+            u = authenticate(username=assoc.user.username, password='1')
             login(request, u)
             return redirect('index')
         except Account.DoesNotExist:
@@ -338,10 +341,10 @@ def odesk_complete(request):
                 return redirect('index')
             request.session.pop('registration')
 
-            u = User.objects.create_user(email=user['email'],
-                username=' '.join(['odesk', user['uid']]), password='1')
+            u = User.objects.create_user(email=user['mail'],
+                username=' '.join(['odesk', cipher]), password='1')
             profile = u.get_profile()
-            profile.odesk_uid = user['uid']
+            profile.odesk_uid = cipher
             profile.odesk_key = auth
             profile.full_name = '%s %s' % (user['first_name'],
                 user['last_name'])
@@ -349,14 +352,10 @@ def odesk_complete(request):
             login(request, u)
 
             # Create Worker model on odesk account registration
-            if not Worker.objects.filter(external_id=user['uid']):
-                Worker(
-                    external_id=user['uid'],
-                    first_name=user['first_name'],
-                    last_name=user['last_name']
-                ).save()
+            if not Worker.objects.filter(external_id=cipher):
+                Worker.objects.create_odesk(external_id=cipher)
             request.session['success'] = 'You have successfuly registered'
-            return redirect('settings_view')
+            return redirect('settings')
 
 
 @login_required
@@ -430,6 +429,17 @@ def project_view(request, id):
         if value == 'Activate project':
             proj.activate()
     context = {'project': proj}
+    extract_progress_stats(proj, context)
+    extract_url_stats(proj, context)
+    extract_spent_stats(proj, context)
+    extract_performance_stats(proj, context)
+    context['hours_spent'] = proj.get_hours_spent()
+    context['urls_collected'] = proj.get_urls_collected()
+    context['no_of_workers'] = proj.get_no_of_workers()
+    context['cost'] = proj.get_cost()
+    context['budget'] = proj.budget
+    context['progress'] = proj.get_progress()
+
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
 
@@ -437,12 +447,27 @@ def project_view(request, id):
 @login_required
 def project_workers_view(request, id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
+    context = {'project': job}
+    # FIXME: Proper worker gathering. We should include multiple addition of
+    #        the same sample by different workers.
+    samples = Sample.objects.filter(job=job)
+    workers = []
+    for sample in samples:
+        worker = sample.get_source_worker()
+        workers.append({
+            'id': worker.id,
+            'name': worker.name,
+            'quality': worker.estimated_quality,
+            'votes_added': len(worker.get_votes_added_for_job(job)),
+            'links_collected': worker.get_links_collected_for_job(job).count(),
+            'hours_spent': worker.get_hours_spent_for_job(job)
+        })
+    context['workers'] = workers
     return render(request, 'main/project/workers.html',
         RequestContext(request, context))
 
@@ -450,12 +475,22 @@ def project_workers_view(request, id):
 @login_required
 def project_worker_view(request, id, worker_id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
-    except Job.DoesNotExist:
+        job = Job.objects.get(id=id, account=request.user.get_profile())
+        worker = Worker.objects.get(id=worker_id)
+    except (Job.DoesNotExist, Worker.DoesNotExist):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
+    context = {'project': job}
+    worker = {
+        'name': '%s %s' % (worker.first_name, worker.last_name),
+        'links_collected': worker.get_links_collected_for_job(job),
+        'votes_added': worker.get_votes_added_for_job(job),
+        'hours_spent': worker.get_hours_spent_for_job(job),
+        'quality': worker.estimated_quality,
+        'earned': worker.get_earned_for_job(job),
+        'work_started': worker.get_job_start_time(job),
+    }
     return render(request, 'main/project/worker.html',
         RequestContext(request, context))
 
@@ -499,13 +534,34 @@ def project_btm_view(request, id):
 @login_required
 def project_data_view(request, id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id, account=request.user.get_profile())
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
+    context = {
+        'project': job,
+        'data_set': Sample.objects.filter(job=job)
+    }
+
     return render(request, 'main/project/data.html',
+        RequestContext(request, context))
+
+
+@login_required
+def project_data_detail(request, id, data_id):
+    try:
+        job = Job.objects.get(id=id, account=request.user.get_profile())
+        sample = Sample.objects.get(id=data_id, job=job)
+    except (Job.DoesNotExist, Sample.DoesNotExist):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    context = {
+        'project': job,
+        'sample': sample
+    }
+    return render(request, 'main/project/data_detail.html',
         RequestContext(request, context))
 
 
@@ -542,28 +598,15 @@ def project_classifier_view(request, id):
             urls = request.POST.get('test-urls', '')
             # Split text to lines with urls, and remove duplicates
             urls = set(urls.splitlines())
-            w = Worker()
-            w.save()
             classified_samples = []
             for url in urls:
-                cs = ClassifiedSample(job=job, sample=None, url=url)
-                try:
-                    sample = Sample.objects.get(job=job, url=url)
-                    cs.sample = sample
-                    cs.save()
-                    classified_samples.append(cs.id)
-                    send_event("EventNewClassifySample", cs.id, 'view')
-                    continue
-                except Sample.DoesNotExist:
-                    pass
-
-                cs.save()
+                cs = ClassifiedSample.objects.create_by_owner(
+                    job=job,
+                    url=url
+                )
                 classified_samples.append(cs.id)
-                send_event('EventNewRawSample', job.id, w.id, url,
-                    create_classified=False)
             request.session['classified-samples'] = classified_samples
         return redirect('project_classifier_view', id)
-
     samples = ClassifiedSample.objects.filter(job=job).exclude(label='')
     yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
     yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
@@ -576,6 +619,8 @@ def project_classifier_view(request, id):
         'yes_labels': {'val': yes_labels.count(), 'perc': yes_perc},
         'no_labels': {'val': no_labels.count(), 'perc': no_perc},
         'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
+
+    extract_performance_stats(job, context)
 
     return render(request, 'main/project/classifier.html',
         RequestContext(request, context))

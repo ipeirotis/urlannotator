@@ -1,0 +1,3 @@
+from urlannotator.statistics.progress_monitor import progress_monitor
+from urlannotator.statistics.spent_monitor import spent_monitor
+from urlannotator.statistics.url_monitor import url_monitor

@@ -3,7 +3,7 @@ import json
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import Sample, Job, Worker, ClassifiedSample
+from urlannotator.main.models import Sample, Job, ClassifiedSample
 from urlannotator.classification.classifiers import (SimpleClassifier,
     Classifier247, GooglePredictionClassifier)
 from urlannotator.classification.models import TrainingSet, Classifier
@@ -20,21 +20,18 @@ class Classifier247Tests(TestCase):
         self.job = Job(account=self.u.get_profile())
         self.job.save()
 
-        self.worker = Worker()
-        self.worker.save()
-
         self.train_data = [
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Mechanical squirrel screwdriver over car'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Screwdriver fix mechanical bike bolts'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Brown banana apple pinapple potato'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='apple pinapple potato'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Hippo tree over lagoon'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Green tan with true fox')
         ]
         self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
@@ -53,7 +50,7 @@ class Classifier247Tests(TestCase):
         self.classifier247 = Classifier247(sc_reader, sc_writer)
 
     def testReadClassifier247(self):
-        test_sample = Sample(job=self.job, added_by=self.worker,
+        test_sample = Sample(job=self.job, source_type='',
             text='Scottish whisky banana apple pinapple')
         self.assertEqual(self.classifier247.classify(test_sample), None)
         self.assertEqual(self.classifier247.classify_with_info(test_sample),
@@ -69,21 +66,18 @@ class SimpleClassifierTests(TestCase):
         self.job = Job(account=self.u.get_profile())
         self.job.save()
 
-        self.worker = Worker()
-        self.worker.save()
-
         self.train_data = [
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Mechanical squirrel screwdriver over car'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Screwdriver fix mechanical bike bolts'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Brown banana apple pinapple potato'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='apple pinapple potato'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Hippo tree over lagoon'),
-            Sample(job=self.job, added_by=self.worker,
+            Sample(job=self.job, source_type='',
                 text='Green tan with true fox')
         ]
         self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
@@ -98,7 +92,7 @@ class SimpleClassifierTests(TestCase):
     def testSimpleClassifier(self):
         sc = SimpleClassifier(description='Test classifier', classes=['label'])
         # Tests without training
-        test_sample = Sample(job=self.job, added_by=self.worker,
+        test_sample = Sample(job=self.job, source_type='',
             text='Scottish whisky banana apple pinapple')
         self.assertEqual(sc.classify(test_sample), None)
         self.assertEqual(sc.classify_with_info(test_sample), None)
@@ -122,6 +116,7 @@ class TrainingSetManagerTests(TestCase):
 
 
 class ClassifierFactoryTests(TestCase):
+
     def setUp(self):
         self.u = User.objects.create_user(username='test', password='1')
         # # Clean cached classifiers
@@ -133,12 +128,9 @@ class ClassifierFactoryTests(TestCase):
         factory = classifier_factory.create_classifier(1)
         self.assertEqual(factory.__class__, SimpleClassifier)
 
-        # Cached classifier
-        factory_two = classifier_factory.create_classifier(1)
-        self.assertEqual(factory, factory_two)
-
 
 class GoogleMonitorTests(TestCase):
+
     def setUp(self):
         self.u = User.objects.create_user(username='test', password='1')
         # Clean cached classifiers
@@ -159,6 +151,21 @@ class GoogleMonitorTests(TestCase):
         # test it.
         old_status = GooglePredictionClassifier.get_train_status
         GooglePredictionClassifier.get_train_status = lambda x: 'DONE'
+        old_analyze = GooglePredictionClassifier.analyze
+        GooglePredictionClassifier.analyze = lambda x: {
+            'modelDescription': {
+                'confusionMatrix': {
+                    'Yes': {
+                        'Yes': 5.0,
+                        'No': 3.0,
+                    },
+                    'No': {
+                        'Yes': 2.0,
+                        'No': 7.0,
+                    }
+                }
+            }
+        }
         monitor.run()
 
         GoogleTrainingMonitor.run = old_status

@@ -2,7 +2,8 @@ from celery import task, Task, registry
 from celery.task import current
 
 from urlannotator.flow_control import send_event
-from urlannotator.classification.models import TrainingSet
+from urlannotator.classification.models import (TrainingSet,
+    ClassifierPerformance)
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.main.models import Sample, ClassifiedSample
 
@@ -28,14 +29,14 @@ class ClassifierTrainingManager(Task):
                 registry.tasks[ClassifierTrainingManager.name].retry(
                     countdown=3 * 60)
 
-            classifier = classifier_factory.create_classifier(job.id)
-            # train_samples = [train_sample.sample for train_sample in
-            #     TrainingSet.objects.newest_for_job(job).training_samples.all()]
-            # if train_samples:
-            #     classifier.train(train_samples)
-            samples_list = Sample.objects.filter(id__in=samples)
-            for sample in samples_list:
-                classifier.classify(sample)
+            # classifier = classifier_factory.create_classifier(job.id)
+            # # train_samples = [train_sample.sample for train_sample in
+            # #     TrainingSet.objects.newest_for_job(job).training_samples.all()]
+            # # if train_samples:
+            # #     classifier.train(train_samples)
+            # samples_list = Sample.objects.filter(id__in=samples)
+            # for sample in samples_list:
+            #     classifier.classify(sample)
 
 
 add_samples = registry.tasks[ClassifierTrainingManager.name]
@@ -91,7 +92,6 @@ def classify(sample_id, from_name='', *args, **kwargs):
     """
         Classifies given samples
     """
-    print 'Classifying sample from', from_name
     class_sample = ClassifiedSample.objects.get(id=sample_id)
     if class_sample.label:
         return
@@ -104,13 +104,19 @@ def classify(sample_id, from_name='', *args, **kwargs):
             60 * 60 * 24))
 
     classifier = classifier_factory.create_classifier(job.id)
-    label = classifier.classify(class_sample.sample)
+    label = classifier.classify(class_sample)
+    ClassifierPerformance.objects.create(
+        job=job,
+        value=ClassifiedSample.objects.filter(job=job).count()
+    )
+    if not label:
+        label = 'No'
     class_sample.label = label
     class_sample.save()
 
 
 @task
-def update_classifier_stats(*args, **kwargs):
+def update_classifier_stats(job_id, *args, **kwargs):
     pass
 
 

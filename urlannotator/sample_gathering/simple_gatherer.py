@@ -1,14 +1,9 @@
-import sys
-import os
-import time
+import json
 
-FILE_DIR = os.path.abspath(os.path.dirname(__file__))
-ROOT_DIR = os.path.join(FILE_DIR, '..', '..')
+from celery import task, Task, registry
 
-sys.path.append(ROOT_DIR)
-
-from urlannotator.main.models import Job, Worker
-from urlannotator.flow_control import send_event
+from urlannotator.main.models import Job, Sample
+from urlannotator.classification.models import ClassifierPerformance
 
 # Number of seconds between each gather
 TIME_INTERVAL = 2 * 60
@@ -17,33 +12,34 @@ TIME_INTERVAL = 2 * 60
 SAMPLE_LIMIT = 20
 
 
-class SimpleGatherer(object):
+@task(ignore_result=True)
+class SimpleGatherer(Task):
     """
         Simple sample gatherer that is run on fixed interval.
     """
     def run(self, *args, **kwargs):
-        while True:
-            jobs = Job.objects.filter(remaining_urls__gt=0, status=1)
-            w = Worker.objects.create()
-            urls = [
-                'google.com',
-                'wikipedia.org',
-                'http://www.dec.ny.gov/animals/9358.html',
-                'http://www.enchantedlearning.com/subjects/mammals/raccoon/Raccoonprintout.shtml']
-            i = 0
-            to_collect = SAMPLE_LIMIT
-            for job in jobs:
-                if to_collect == 0:
-                    break
+        jobs = Job.objects.get_active().filter(remaining_urls__gt=0)
+        urls = [
+            'google.com',
+            'wikipedia.org',
+            'http://www.dec.ny.gov/animals/9358.html',
+            'http://www.enchantedlearning.com/subjects/mammals/raccoon/Raccoonprintout.shtml']
+        i = 0
+        to_collect = SAMPLE_LIMIT
+        for job in jobs:
+            if to_collect == 0:
+                break
 
-                collected = 0
-                for j in xrange(min(job.remaining_urls, to_collect)):
-                    send_event('EventNewRawSample', job.id, w.id, urls[i])
-                    collected += 1
-                    i = (i + 1) % len(urls)
-                job.remaining_urls -= collected
-                job.save()
-                to_collect -= collected
-            time.sleep(TIME_INTERVAL)
+            collected = 0
+            for j in xrange(min(job.remaining_urls, to_collect)):
+                Sample.objects.create_by_owner(
+                    job_id=job.id,
+                    url=urls[i]
+                )
+                collected += 1
+                i = (i + 1) % len(urls)
+            job.remaining_urls -= collected
+            job.save()
+            to_collect -= collected
 
-SimpleGatherer().run()
+simple_gatherer = registry.tasks[SimpleGatherer.name]

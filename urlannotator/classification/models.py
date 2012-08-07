@@ -1,6 +1,10 @@
-from django.db import models
-from urlannotator.main.models import Job, Sample, LABEL_CHOICES
+import json
+
 from tenclouds.django.jsonfield.fields import JSONField
+from django.db import models
+from django.db.models.signals import post_save
+
+from urlannotator.main.models import Job, Sample, LABEL_CHOICES
 
 
 class Classifier(models.Model):
@@ -15,6 +19,66 @@ class Classifier(models.Model):
 
 class Statistics(models.Model):
     pass
+
+
+class PerformanceManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns performance for given job.
+        """
+        els = super(PerformanceManager, self).\
+            get_query_set().filter(job=job).order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class ClassifierPerformance(Statistics):
+    """
+        Keeps history of classifer performance for each job.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = JSONField()
+
+    objects = PerformanceManager()
+
+
+class PerformancePerHourManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns performance statistic for given job.
+        """
+        els = super(PerformancePerHourManager, self).\
+            get_query_set().filter(job=job).order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class ClassifierPerformancePerHour(Statistics):
+    """
+        Keeps track of classifer performance for each job per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = JSONField()
+
+    objects = PerformancePerHourManager()
+
+
+def create_stats(sender, instance, created, **kwargs):
+    """
+        Creates a brand new statistics' entry for new job.
+    """
+    if created:
+        val = json.dumps({})
+        ClassifierPerformance.objects.create(job=instance, value=val)
+        ClassifierPerformancePerHour.objects.create(job=instance, value=val)
+
+post_save.connect(create_stats, sender=Job)
 
 
 class TrainingSetManager(models.Manager):

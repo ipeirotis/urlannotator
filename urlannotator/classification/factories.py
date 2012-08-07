@@ -33,24 +33,24 @@ class ClassifierFactory(object):
         job.set_classifier_created()
 
     def create_classifier(self, job_id):
-        classifier = self.cache.get(str(job_id), None)
+        # classifier = self.cache.get(str(job_id), None)
 
-        # Custom classifier initialization
-        if not classifier:
-            job = Job.objects.get(id=job_id)
-            classifier_entry = Classifier.objects.get(job=job)
+        # # Custom classifier initialization
+        # if not classifier:
+        job = Job.objects.get(id=job_id)
+        classifier_entry = Classifier.objects.get(job=job)
 
-            if classifier_entry.type == 'SimpleClassifier':
-                classifier = SimpleClassifier(job.description, ['Yes', 'No'])
-            elif classifier_entry.type == 'GooglePredictionClassifier':
-                classifier = GooglePredictionClassifier(job.description,
-                    ['Yes', 'No'])
-                params = classifier_entry.parameters
-                classifier.model = params['model']
-                classifier.id = classifier_entry.id
+        if classifier_entry.type == 'SimpleClassifier':
+            classifier = SimpleClassifier(job.description, ['Yes', 'No'])
+        elif classifier_entry.type == 'GooglePredictionClassifier':
+            classifier = GooglePredictionClassifier(job.description,
+                ['Yes', 'No'])
+            params = classifier_entry.parameters
+            classifier.model = params['model']
+            classifier.id = classifier_entry.id
 
             # Cache newly created classifier
-            self.cache[str(job_id)] = classifier
+            # self.cache[str(job_id)] = classifier
 
         return classifier
 

@@ -24,13 +24,14 @@ class SampleFactoryTest(TestCase):
         )
 
     def testSimpleSample(self):
-        worker = Worker()
-        worker.save()
-
         test_url = 'google.com'
 
         sf = SampleFactory()
-        res = sf.new_sample(self.job.id, worker.id, test_url)
+        res = sf.new_sample(
+            job_id=self.job.id,
+            url=test_url,
+            source_type=''
+        )
         res.get()
 
         query = Sample.objects.filter(job=self.job, url=test_url)
@@ -40,7 +41,6 @@ class SampleFactoryTest(TestCase):
         sample = query.get()
         self.assertTrue('google' in sample.text)
 
-        print 'ss', sample.screenshot
         s = urllib2.urlopen(sample.screenshot)
         self.assertEqual(s.headers.type, 'image/png')
 
@@ -281,7 +281,7 @@ class SettingsTests(TestCase):
         u.get_profile().full_name = "Testing Test"
         u.get_profile().save()
 
-        Worker(external_id=1).save()
+        Worker.objects.create_odesk(external_id=1).save()
         # Odesk assoc
         resp = c.get(reverse('settings'))
         self.assertIn('odesk', resp.context)
@@ -586,7 +586,6 @@ class ApiTests(TestCase):
             % (self.api_url, 'job/1/classify/'), follow=True)
 
         array = json.loads(resp.content)
-        print array
         request_id = array['request_id']
 
         resp = c.get('%s%s?format=json&url=google.com&request=%s'
