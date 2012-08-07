@@ -57,10 +57,7 @@ class RWSynchronize247(object):
             """
 
             # Switch can be disabled.
-            template_switch = True
-            if 'template_switch' in kwargs:
-                template_switch = kwargs['template_switch']
-                kwargs.pop('template_switch')
+            template_switch = kwargs.pop('template_switch', True)
 
             self.lock.acquire_exclusive_lock()
             res = getattr(self.writer_instance, function_name)(*args, **kwargs)
