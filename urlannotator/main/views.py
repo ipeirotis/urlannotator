@@ -483,7 +483,7 @@ def project_worker_view(request, id, worker_id):
 
     context = {'project': job}
     worker = {
-        'name': '%s %s' % (worker.first_name, worker.last_name),
+        'name': worker.name,
         'links_collected': worker.get_links_collected_for_job(job),
         'votes_added': worker.get_votes_added_for_job(job),
         'hours_spent': worker.get_hours_spent_for_job(job),
