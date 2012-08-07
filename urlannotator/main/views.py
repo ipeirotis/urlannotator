@@ -29,6 +29,7 @@ from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_CHOICES, ClassifiedSample)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats)
+from urlannotator.classification.models import ClassifierPerformance
 
 
 def get_activation_key(email, num, salt_size=10,
@@ -620,8 +621,21 @@ def project_classifier_view(request, id):
         'no_labels': {'val': no_labels.count(), 'perc': no_perc},
         'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
 
-    extract_performance_stats(job, context)
+    context['performance_TPM'] = []
+    context['performance_TNM'] = []
+    context['performance_AUC'] = []
+    for perf in ClassifierPerformance.objects.filter(job=job).order_by('date'):
+        date = perf.date.strftime('%Y,%m-1,%d,%H,%M,%S')
+        context['performance_TPM'].append(
+            '[Date.UTC(%s),%d]' % (date, perf.value.get('TPM', 0)))
+        context['performance_TNM'].append(
+            '[Date.UTC(%s),%d]' % (date, perf.value.get('TNM', 0)))
+        context['performance_AUC'].append(
+            '[Date.UTC(%s),%d]' % (date, perf.value.get('AUC', 0)))
 
+    context['performance_TPM'] = ','.join(context['performance_TPM'])
+    context['performance_TNM'] = ','.join(context['performance_TNM'])
+    context['performance_AUC'] = ','.join(context['performance_AUC'])
     return render(request, 'main/project/classifier.html',
         RequestContext(request, context))
 

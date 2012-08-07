@@ -75,16 +75,28 @@ def extract_stat_by_val(cls, job, val_fun):
         Extracts stat using a val_fun to take value from entry.
     '''
     stats = cls.objects.filter(job=job).order_by('date')
+    stats_count = stats.count()
     list_stats = [{'date': stats[0].date, 'delta': val_fun(stats[0])}]
+    now_time = now()
+    idx = 1
+    interval = datetime.timedelta(hours=1)
+    actual_time = stats[0].date + interval
     actual_value = val_fun(stats[0])
 
-    for stat in stats:
-        print stat.value
+    while actual_time <= now_time:
+        # Find next closest sample
+        while idx < stats_count:
+            if stats[idx].date > actual_time:
+                break
+            idx += 1
+
+        stat = stats[idx - 1]
         list_stats.append({
-            'date': stat.date,
+            'date': actual_time,
             'delta': val_fun(stat) - actual_value
         })
         actual_value = val_fun(stat)
+        actual_time += interval
 
     stats = ','.join([format_date_val(v) for v in list_stats])
     return stats
