@@ -299,7 +299,7 @@ CELERYBEAT_SCHEDULE = {
     },
     'sample_gatherer': {
         'task': 'urlannotator.sample_gathering.simple_gatherer.SimpleGatherer',
-        'schedule': datetime.timedelta(seconds=10),
+        'schedule': datetime.timedelta(seconds=10 * 60),
         'args': []
     },
 }
