@@ -39,7 +39,7 @@ STATIC_URL = '/statics/'
 JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
 # Interval between a job monitor check. Defaults to 15 minutes.
-JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15)
+JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
 
 SOCIAL_AUTH_CREATE_USERS = False
 
@@ -294,6 +294,11 @@ CELERYBEAT_SCHEDULE = {
     'progress_monitor': {
         'task': 'urlannotator.statistics.progress_monitor.ProgressMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
+        'args': []
+    },
+    'sample_gatherer': {
+        'task': 'urlannotator.sample_gathering.sample_gatherer.SimpleGatherer',
+        'schedule': datetime.timedelta(seconds=10 * 60),
         'args': []
     },
 }
