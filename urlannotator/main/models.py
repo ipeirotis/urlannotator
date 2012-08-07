@@ -291,7 +291,7 @@ class Sample(models.Model):
             Returns workers that have sent this sample (url).
         """
         #  FIXME: Support for multiple workers sending the same url.
-        return [self.added_by]
+        return [self.source_type]
 
     def get_yes_votes(self):
         """
@@ -379,6 +379,7 @@ class Worker(models.Model):
         #         requesting_user.get_profile().odesk_key)
         #     r = client.provider.get_provider('~~3f19de366cb49c91')
         #     return r['dev_full_name']
+        return 'Temp Name %d' % self.id
 
     def get_links_collected_for_job(self, job):
         """

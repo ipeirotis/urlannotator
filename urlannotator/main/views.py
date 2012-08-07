@@ -461,7 +461,7 @@ def project_workers_view(request, id):
         worker = sample.get_source_worker()
         workers.append({
             'id': worker.id,
-            'name': worker.name,
+            'name': worker.get_name_as(request.user),
             'quality': worker.estimated_quality,
             'votes_added': len(worker.get_votes_added_for_job(job)),
             'links_collected': worker.get_links_collected_for_job(job).count(),
