@@ -46,7 +46,7 @@ class testStatExtraction(TestCase):
         context = {}
         extractors = [
             (extract_performance_stats, 'performance_TPM'),
-            (extract_performance_stats, 'performance_NPM'),
+            (extract_performance_stats, 'performance_TNM'),
             (extract_performance_stats, 'performance_AUC'),
             (extract_spent_stats, 'spent_stats'),
             (extract_url_stats, 'url_stats'),

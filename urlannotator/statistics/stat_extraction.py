@@ -95,17 +95,17 @@ def extract_performance_stats(job, context):
         Extracts job's performance statistics as difference per hour.
     '''
     extract_TPM = lambda x: x.value.get('TPM', 0)
-    extract_NPM = lambda x: x.value.get('NPM', 0)
+    extract_TNM = lambda x: x.value.get('TNM', 0)
     extract_AUC = lambda x: x.value.get('AUC', 0)
     context['performance_TPM'] = extract_stat_by_val(
         ClassifierPerformance,
         job,
         extract_TPM
     )
-    context['performance_NPM'] = extract_stat_by_val(
+    context['performance_TNM'] = extract_stat_by_val(
         ClassifierPerformance,
         job,
-        extract_NPM
+        extract_TNM
     )
     context['performance_AUC'] = extract_stat_by_val(
         ClassifierPerformance,
