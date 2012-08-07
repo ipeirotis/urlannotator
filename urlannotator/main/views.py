@@ -27,7 +27,6 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     GeneralEmailUserForm, GeneralUserForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_CHOICES, ClassifiedSample)
-from urlannotator.classification.models import ClassifierPerformance
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats)
 
@@ -621,8 +620,7 @@ def project_classifier_view(request, id):
         'no_labels': {'val': no_labels.count(), 'perc': no_perc},
         'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
 
-    stats = ClassifierPerformance.objects.filter(job=job).order_by('date')
-    context['training_stats'] = ','.join(str(ts.value) for ts in stats)
+    extract_performance_stats(job, context)
 
     return render(request, 'main/project/classifier.html',
         RequestContext(request, context))

@@ -166,14 +166,27 @@ $(document).ready(function() {
          },
          yAxis: {
             title: {
-              text: 'Samples classified'
+              text: 'Performance'
             },
             showFirstLabel: false
          },
          series: [{
-            showInLegend: false,
-            pointStart: 1,
-            data: [{{samples_stats}}]
+            showInLegend: true,
+            name: 'TPM',
+            color: '#FFAAFF',
+            data: [{{performance_TPM|safe}}]
+         },
+         {
+            showInLegend: true,
+            name: 'NPM',
+            color: '#AAAAFF',
+            data: [{{performance_NPM|safe}}]
+         },
+         {
+            showInLegend: true,
+            name: 'AUC',
+            color: '#AAFFAA',
+            data: [{{performance_AUC|safe}}]
          }]
       });
    });
