@@ -1,3 +1,4 @@
+import datetime
 # import odesk
 
 from tastypie.models import create_api_key
@@ -411,6 +412,11 @@ class Worker(models.Model):
         # FIXME: Proper billing query.
         return 0
 
+    def get_job_start_time(self, job):
+        '''
+            Returns the time the worker started to work on the job at.
+        '''
+        return datetime.datetime.now()
 
 class TemporarySample(models.Model):
     """
