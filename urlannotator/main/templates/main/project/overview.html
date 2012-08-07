@@ -191,10 +191,22 @@ $(document).ready(function() {
             showFirstLabel: false
          },
          series: [{
-            showInLegend: false,
-            name: 'Performance',
+            showInLegend: true,
+            name: 'TPM',
             color: '#FFAAFF',
-            data: [{{performance_stats|safe}}]
+            data: [{{performance_TPM|safe}}]
+         },
+         {
+            showInLegend: true,
+            name: 'NPM',
+            color: '#AAAAFF',
+            data: [{{performance_NPM|safe}}]
+         },
+         {
+            showInLegend: true,
+            name: 'AUC',
+            color: '#AAFFAA',
+            data: [{{performance_AUC|safe}}]
          }]
       });
    });

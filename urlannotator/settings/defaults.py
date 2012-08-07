@@ -280,21 +280,24 @@ CELERY_IMPORTS = (
     'urlannotator.flow_control.event_system',
     'urlannotator.flow_control.event_handlers',
     'urlannotator.main.event_handlers',
+    'urlannotator.statistics.spent_monitor',
+    'urlannotator.statistics.url_monitor',
+    'urlannotator.statistics.progress_monitor',
 )
 
 CELERYBEAT_SCHEDULE = {
     'spent_monitor': {
-        'task': 'urlannotator.statistics.spent_monitor',
+        'task': 'urlannotator.statistics.spent_monitor.SpentMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'args': []
     },
     'url_monitor': {
-        'task': 'urlannotator.statistics.url_monitor',
+        'task': 'urlannotator.statistics.url_monitor.URLMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'args': []
     },
     'progress_monitor': {
-        'task': 'urlannotator.statistics.progress_monitor',
+        'task': 'urlannotator.statistics.progress_monitor.ProgressMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'args': []
     },

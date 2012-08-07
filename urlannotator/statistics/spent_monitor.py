@@ -1,20 +1,23 @@
-from celery import task, registry
-from django.conf import settings
+import datetime
 
-from urlannotator.statistics.job_monitor import JobMonitor
+from celery import task, registry, Task
+
 from urlannotator.main.models import SpentStatistics
+from urlannotator.statistics.job_monitor import extract
 
 
 @task(ignore_result=True)
-class SpentMonitor(JobMonitor):
-    def __init__(self, **kwargs):
-        super(SpentMonitor, self).__init__(
-            cls=SpentStatistics,
-            interval=settings.SPENT_MONITOR_STAT_INTERVAL,
-            **kwargs
-        )
+class SpentMonitor(Task):
+    # FIXME: Possible inheritance to JobMonitor without breaking Task?
+    def __init__(self, interval=datetime.timedelta(seconds=1)):
+        self.interval = interval
+        self.model_cls = SpentStatistics
 
     def get_value(self, job):
         return job.budget
+
+    def run(self):
+        extract(self)
+
 
 spent_monitor = registry.tasks[SpentMonitor.name]

@@ -1,3 +1,5 @@
+import json
+
 from tenclouds.django.jsonfield.fields import JSONField
 from django.db import models
 from django.db.models.signals import post_save
@@ -38,7 +40,7 @@ class ClassifierPerformance(Statistics):
     """
     job = models.ForeignKey(Job)
     date = models.DateTimeField(auto_now_add=True)
-    value = models.IntegerField(default=0)
+    value = JSONField()
 
     objects = PerformanceManager()
 
@@ -62,8 +64,7 @@ class ClassifierPerformancePerHour(Statistics):
     """
     job = models.ForeignKey(Job)
     date = models.DateTimeField(auto_now_add=True)
-    value = models.IntegerField(default=0)
-    delta = models.IntegerField(default=0)
+    value = JSONField()
 
     objects = PerformancePerHourManager()
 
@@ -73,8 +74,9 @@ def create_stats(sender, instance, created, **kwargs):
         Creates a brand new statistics' entry for new job.
     """
     if created:
-        ClassifierPerformance.objects.create(job=instance, value=0)
-        ClassifierPerformancePerHour.objects.create(job=instance, value=0)
+        val = json.dumps({})
+        ClassifierPerformance.objects.create(job=instance, value=val)
+        ClassifierPerformancePerHour.objects.create(job=instance, value=val)
 
 post_save.connect(create_stats, sender=Job)
 

@@ -5,6 +5,7 @@ from django.core.management.base import NoArgsCommand
 
 from urlannotator.classification.models import Classifier
 from urlannotator.classification.factories import classifier_factory
+from urlannotator.statistics.stat_extraction import update_classifier_stats
 
 # Number of seconds between each classifier training check
 TIME_INTERVAL = 1 * 60
@@ -33,6 +34,9 @@ class GoogleTrainingMonitor(object):
                 params.pop('training')
                 classifier_entry.parameters = json.dumps(params)
                 classifier_entry.save()
+
+                update_classifier_stats(classifier, job)
+
                 if not job.is_classifier_trained():
                     job.set_classifier_trained()
 

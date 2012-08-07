@@ -213,6 +213,13 @@ class GooglePredictionClassifier(Classifier):
         service = build("prediction", "v1.5", http=http)
         self.papi = service.trainedmodels()
 
+    def analyze(self):
+        try:
+            status = self.papi.analyze(id=self.model).execute()
+            return status
+        except:
+            return {}
+
     def get_train_status(self):
         try:
             status = self.papi.get(id=self.model).execute()
@@ -308,11 +315,11 @@ class GooglePredictionClassifier(Classifier):
 
         body = {'input': {'csvInstance': [sample.sample.text]}}
         label = self.papi.predict(body=body, id=self.model).execute()
-        label = label['outputLabel']
-        sample.label = label
+        sample.label = label['outputLabel']
+        sample.label_probability = label['outputMulti']
         sample.save()
 
-        return label
+        return label['outputLabel']
 
     def classify_with_info(self, sample):
         """
@@ -325,6 +332,7 @@ class GooglePredictionClassifier(Classifier):
         body = {'input': {'csvInstance': [sample.sample.text]}}
         label = self.papi.predict(body=body, id=self.model).execute()
         sample.label = label['outputLabel']
+        sample.label_probability = label['outputMulti']
         sample.save()
 
         result = {

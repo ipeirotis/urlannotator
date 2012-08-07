@@ -41,7 +41,6 @@ class SampleFactoryTest(TestCase):
         sample = query.get()
         self.assertTrue('google' in sample.text)
 
-        print 'ss', sample.screenshot
         s = urllib2.urlopen(sample.screenshot)
         self.assertEqual(s.headers.type, 'image/png')
 
@@ -587,7 +586,6 @@ class ApiTests(TestCase):
             % (self.api_url, 'job/1/classify/'), follow=True)
 
         array = json.loads(resp.content)
-        print array
         request_id = array['request_id']
 
         resp = c.get('%s%s?format=json&url=google.com&request=%s'

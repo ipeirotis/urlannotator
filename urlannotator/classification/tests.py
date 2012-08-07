@@ -3,7 +3,7 @@ import json
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import Sample, Job, Worker, ClassifiedSample
+from urlannotator.main.models import Sample, Job, ClassifiedSample
 from urlannotator.classification.classifiers import (SimpleClassifier,
     Classifier247, GooglePredictionClassifier)
 from urlannotator.classification.models import TrainingSet, Classifier
@@ -113,6 +113,7 @@ class TrainingSetManagerTests(TestCase):
 
 
 class ClassifierFactoryTests(TestCase):
+
     def setUp(self):
         self.u = User.objects.create_user(username='test', password='1')
         # # Clean cached classifiers
@@ -124,12 +125,9 @@ class ClassifierFactoryTests(TestCase):
         factory = classifier_factory.create_classifier(1)
         self.assertEqual(factory.__class__, SimpleClassifier)
 
-        # Cached classifier
-        factory_two = classifier_factory.create_classifier(1)
-        self.assertEqual(factory, factory_two)
-
 
 class GoogleMonitorTests(TestCase):
+
     def setUp(self):
         self.u = User.objects.create_user(username='test', password='1')
         # Clean cached classifiers
@@ -150,6 +148,21 @@ class GoogleMonitorTests(TestCase):
         # test it.
         old_status = GooglePredictionClassifier.get_train_status
         GooglePredictionClassifier.get_train_status = lambda x: 'DONE'
+        old_analyze = GooglePredictionClassifier.analyze
+        GooglePredictionClassifier.analyze = lambda x: {
+            'modelDescription': {
+                'confusionMatrix': {
+                    'Yes': {
+                        'Yes': 5.0,
+                        'No': 3.0,
+                    },
+                    'No': {
+                        'Yes': 2.0,
+                        'No': 7.0,
+                    }
+                }
+            }
+        }
         monitor.run()
 
         GoogleTrainingMonitor.run = old_status

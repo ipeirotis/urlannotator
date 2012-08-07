@@ -1,4 +1,3 @@
-import datetime
 import odesk
 import hashlib
 import string
@@ -9,7 +8,6 @@ import json
 
 from docutils import core
 from django.shortcuts import render, redirect
-from django.utils.timezone import now
 from django.contrib.auth.models import User
 from django.template import RequestContext, Context
 from django.contrib.auth import authenticate, login, logout
@@ -28,10 +26,10 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_CHOICES, ClassifiedSample, ProgressStatistics, SpentStatistics,
-    URLStatistics)
-from urlannotator.flow_control import send_event
+    LABEL_CHOICES, ClassifiedSample)
 from urlannotator.classification.models import ClassifierPerformance
+from urlannotator.statistics.stat_extraction import (extract_progress_stats,
+    extract_url_stats, extract_spent_stats, extract_performance_stats)
 
 
 def get_activation_key(email, num, salt_size=10,
@@ -417,63 +415,6 @@ def odesk_login(request):
     client = odesk.Client(settings.ODESK_CLIENT_ID,
         settings.ODESK_CLIENT_SECRET)
     return redirect(client.auth.auth_url())
-
-
-def format_date_val(val):
-    """
-        Formats a date statistics value into a Date.UTC(y,m,j,H,i,s) format.
-    """
-    arg_string = val['date'].strftime('%Y,%m-1,%d,%H,%M,%S')
-    return '[Date.UTC(%s),%d]' % (arg_string, val['delta'])
-
-
-def extract_stat(cls, job):
-    """
-        Returns a string representing a list of statistics samples formatted
-        for use in Highcharts. The closest, earliest value is always used.
-    """
-    stats = cls.objects.filter(job=job).order_by('date')
-    stats_count = stats.count()
-    list_stats = [{'date': stats[0].date, 'delta': stats[0].value}]
-    now_time = now()
-    idx = 1
-    interval = datetime.timedelta(hours=1)
-    actual_time = stats[0].date + interval
-    actual_value = stats[0].value
-
-    while actual_time <= now_time:
-        # Find next closest sample
-        while idx < stats_count:
-            if stats[idx].date > actual_time:
-                break
-            idx += 1
-
-        stat = stats[idx - 1]
-        list_stats.append({
-            'date': actual_time,
-            'delta': stat.value - actual_value
-        })
-        actual_value = stat.value
-        actual_time += interval
-
-    stats = ','.join([format_date_val(v) for v in list_stats])
-    return stats
-
-
-def extract_progress_stats(job, context):
-    context['progress_stats'] = extract_stat(ProgressStatistics, job)
-
-
-def extract_spent_stats(job, context):
-    context['spent_stats'] = extract_stat(SpentStatistics, job)
-
-
-def extract_url_stats(job, context):
-    context['url_stats'] = extract_stat(URLStatistics, job)
-
-
-def extract_performance_stats(job, context):
-    context['performance_stats'] = extract_stat(ClassifierPerformance, job)
 
 
 @login_required

@@ -19,7 +19,7 @@ class SamplesValidationManager(Task):
         # FIXME: Mock
         # TODO: Later after more samples are collected we launch
         # send_validated_samples
-        send_validated_samples.delay(self.samples)
+        send_validated_samples.delay(sample_id)
 
 new_sample_task = registry.tasks[SamplesValidationManager.name]
 

@@ -1,21 +1,22 @@
-from celery import task, registry
-from django.conf import settings
+import datetime
 
-from urlannotator.statistics.job_monitor import JobMonitor
+from celery import task, registry, Task
+
+from urlannotator.statistics.job_monitor import extract
 from urlannotator.main.models import ProgressStatistics
 
 
 @task(ignore_result=True)
-class ProgressMonitor(JobMonitor):
-    def __init__(self, **kwargs):
-        super(ProgressMonitor, self).__init__(
-            cls=ProgressStatistics,
-            interval=settings.PROGRESS_MONITOR_STAT_INTERVAL,
-            **kwargs
-        )
+class ProgressMonitor(Task):
+    def __init__(self, interval=datetime.timedelta(seconds=1)):
+        self.interval = interval
+        self.model_cls = ProgressStatistics
 
     def get_value(self, job):
         div = job.no_of_urls or 1
         return (job.no_of_urls - job.remaining_urls) / div * 100
+
+    def run(self):
+        extract(self)
 
 progress_monitor = registry.tasks[ProgressMonitor.name]

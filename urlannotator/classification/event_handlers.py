@@ -109,12 +109,14 @@ def classify(sample_id, from_name='', *args, **kwargs):
         job=job,
         value=ClassifiedSample.objects.filter(job=job).count()
     )
+    if not label:
+        label = 'No'
     class_sample.label = label
     class_sample.save()
 
 
 @task
-def update_classifier_stats(*args, **kwargs):
+def update_classifier_stats(job_id, *args, **kwargs):
     pass
 
 
