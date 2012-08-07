@@ -39,12 +39,7 @@ STATIC_URL = '/statics/'
 JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
 # Interval between a job monitor check. Defaults to 15 minutes.
-JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
-
-# Interval between statistic entries. Default is 1 hour.
-SPENT_MONITOR_STAT_INTERVAL = datetime.timedelta(hours=1)
-PROGRESS_MONITOR_STAT_INTERVAL = datetime.timedelta(hours=1)
-URL_MONITOR_STAT_INTERVAL = datetime.timedelta(hours=1)
+JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15)
 
 SOCIAL_AUTH_CREATE_USERS = False
 

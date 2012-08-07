@@ -8,7 +8,7 @@ from urlannotator.main.models import URLStatistics
 
 @task(ignore_result=True)
 class URLMonitor(Task):
-    def __init__(self, interval=datetime.timedelta(seconds=1)):
+    def __init__(self, interval=datetime.timedelta(hours=1)):
         self.interval = interval
         self.model_cls = URLStatistics
 

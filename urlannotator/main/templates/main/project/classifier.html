@@ -156,13 +156,15 @@ $(document).ready(function() {
       performanceGraph = new Highcharts.Chart({
          chart: {
             renderTo: 'performanceGraph',
-            type: 'line'
+            type: 'line',
+            zoomType: 'x'
          },
          title: {
             text: 'Classifier performance'
          },
          xAxis: {
-            tickInterval: 1,
+            type: 'datetime',
+            maxZoom: 1 * 3600 * 1000, // an hour
          },
          yAxis: {
             title: {
