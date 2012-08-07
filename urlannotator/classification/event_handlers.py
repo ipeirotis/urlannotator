@@ -105,10 +105,6 @@ def classify(sample_id, from_name='', *args, **kwargs):
 
     classifier = classifier_factory.create_classifier(job.id)
     label = classifier.classify(class_sample)
-    ClassifierPerformance.objects.create(
-        job=job,
-        value=ClassifiedSample.objects.filter(job=job).count()
-    )
     if not label:
         label = 'No'
     class_sample.label = label
