@@ -386,7 +386,7 @@ class Worker(models.Model):
             Returns links collected by given worker for given job.
         """
         # FIXME: Actual links collected query
-        s = Sample.objects.filter(job=job, added_by=self)
+        s = Sample.objects.filter(job=job)
         return s
 
     def get_hours_spent_for_job(self, job):
