@@ -10,8 +10,8 @@ from django.core import mail
 
 from social_auth.models import UserSocialAuth
 
-from urlannotator.main.models import (Account, Job, Worker, Sample, GoldSample,
-    ClassifiedSample)
+from urlannotator.main.models import Account, Job, Worker, Sample, GoldSample
+from urlannotator.classification.models import ClassifiedSample
 from urlannotator.main.factories import SampleFactory
 
 

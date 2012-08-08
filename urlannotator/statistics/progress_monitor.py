@@ -16,7 +16,8 @@ class ProgressMonitor(Task):
         div = job.no_of_urls or 1
         return (job.no_of_urls - job.remaining_urls) / div * 100
 
-    def run(self):
+    def run(self, interval=datetime.timedelta(hours=1)):
+        self.interval = interval
         extract(self)
 
 progress_monitor = registry.tasks[ProgressMonitor.name]

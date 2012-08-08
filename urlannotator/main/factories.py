@@ -116,11 +116,6 @@ class JobFactory(object):
         """
             Creates classifier entry with type equal to JOB_DEFAULT_CLASSIFIER.
         """
-        Classifier(
-            job=job,
-            type=settings.JOB_DEFAULT_CLASSIFIER,
-            parameters=''
-        ).save()
         classifier_factory.initialize_classifier(
             job.id,
             settings.JOB_DEFAULT_CLASSIFIER

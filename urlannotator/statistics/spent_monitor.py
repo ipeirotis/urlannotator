@@ -16,7 +16,8 @@ class SpentMonitor(Task):
     def get_value(self, job):
         return job.budget
 
-    def run(self):
+    def run(self, interval=datetime.timedelta(hours=1)):
+        self.interval = interval
         extract(self)
 
 

@@ -2,7 +2,8 @@ from tastypie.resources import ModelResource
 from django.conf.urls import url
 import urllib
 
-from urlannotator.main.models import Job, ClassifiedSample
+from urlannotator.main.models import Job
+from urlannotator.classification.models import ClassifiedSample
 
 
 class JobResource(ModelResource):

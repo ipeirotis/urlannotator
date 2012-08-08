@@ -3,9 +3,9 @@ from celery.task import current
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet,
-    ClassifierPerformance)
+    ClassifierPerformance, ClassifiedSample)
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.main.models import Sample, ClassifiedSample
+from urlannotator.main.models import Sample
 
 
 @task()

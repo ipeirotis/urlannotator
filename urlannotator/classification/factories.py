@@ -6,55 +6,109 @@ from urlannotator.classification.classifiers import (SimpleClassifier,
     GooglePredictionClassifier)
 
 
-class ClassifierFactory(object):
-    def __init__(self, *args, **kwargs):
-        # Cache of classifiers tied to jobs. One classifier per job,
-        # cannot change.
-        self.cache = {}
+def InvalidClassifier(name, **kwargs):
+    print 'Unhandled classifier', name
 
-    def initialize_classifier(self, job_id, classifier_name, prefix=''):
+
+def SimpleClassifier_init(entry, **kwargs):
+    entry.type = 'SimpleClassifier'
+    params = {
+        'training_set': 0,
+    }
+    entry.parameters = json.dumps(params)
+
+
+def GooglePredictionClassifier_init(entry, prefix, job, **kwargs):
+    entry.type = 'GooglePredictionClassifier'
+    params = {
+        'model': '%sjob-%d' % (prefix, job.id),
+        'training': 'RUNNING',
+        'training_set': 0,
+    }
+    entry.parameters = json.dumps(params)
+
+# Contains mapping Classifier_name -> initialization_function.
+classifier_inits = {
+    'SimpleClassifier': SimpleClassifier_init,
+    'GooglePredictionClassifier': GooglePredictionClassifier_init,
+}
+
+
+def SimpleClassifer_ctor(job, entry, **kwargs):
+    classifier = SimpleClassifier(job.description, ['Yes', 'No'])
+    classifier.id = entry.id
+    training_set = TrainingSet.objects.newest_for_job(job)
+    samples = training_set.training_samples.all()
+    classifier.train(samples)
+    return classifier
+
+
+def GooglePredictionClassifer_ctor(job, entry, **kwargs):
+    classifier = GooglePredictionClassifier(
+        job.description,
+        ['Yes', 'No'],
+    )
+    params = entry.parameters
+    classifier.model = params['model']
+    classifier.id = entry.id
+    return classifier
+
+# Contains mapping Classifier_name -> constructor_function.
+classifier_ctors = {
+    'SimpleClassifier': SimpleClassifer_ctor,
+    'GooglePredictionClassifier': GooglePredictionClassifer_ctor,
+}
+
+
+class ClassifierFactory(object):
+    def initialize_classifier(self, job_id, classifier_name, main=True,
+        prefix=''):
         """
-            Manages initialization of NEW classifier.
+            Manages initialization of a NEW classifier.
         """
         job = Job.objects.get(id=job_id)
-        classifier_entry = Classifier.objects.get(job=job)
+        classifier_entry = Classifier(job=job, main=main)
 
-        # Custom parameters setup goes here.
-        if classifier_name == 'SimpleClassifier':
-            classifier_entry.type = classifier_name
-            classifier_entry.parameters = '{}'
-        elif classifier_name == 'GooglePredictionClassifier':
-            classifier_entry.type = classifier_name
-            params = {'model': '%sjob-%d' % (prefix, job_id),
-                'training': 'RUNNING'}
-            classifier_entry.parameters = json.dumps(params)
+        fun = classifier_inits.get(classifier_name, InvalidClassifier)
+        fun(
+            entry=classifier_entry,
+            prefix=prefix,
+            job=job,
+        )
 
         classifier_entry.save()
-        job.set_classifier_created()
+
+        if main:
+            job.set_classifier_created()
+        return classifier_entry.id
 
     def create_classifier(self, job_id):
-        # classifier = self.cache.get(str(job_id), None)
-
-        # # Custom classifier initialization
-        # if not classifier:
+        '''
+            Creates a classifier object from a main classifier tied to the job.
+        '''
+        # Custom classifier initialization
         job = Job.objects.get(id=job_id)
-        classifier_entry = Classifier.objects.get(job=job)
+        classifier_entry = Classifier.objects.get(job=job, main=True)
 
-        if classifier_entry.type == 'SimpleClassifier':
-            classifier = SimpleClassifier(job.description, ['Yes', 'No'])
-            training_set = TrainingSet.objects.newest_for_job(job)
-            samples = training_set.training_samples.all()
-            classifier.train(samples)
-        elif classifier_entry.type == 'GooglePredictionClassifier':
-            classifier = GooglePredictionClassifier(job.description,
-                ['Yes', 'No'])
-            params = classifier_entry.parameters
-            classifier.model = params['model']
-            classifier.id = classifier_entry.id
+        ctor = classifier_ctors.get(classifier_entry.type, InvalidClassifier)
+        classifier = ctor(
+            job=job,
+            entry=classifier_entry,
+            name=classifier_entry.type,
+        )
+        return classifier
 
-            # Cache newly created classifier
-            # self.cache[str(job_id)] = classifier
-
+    def create_classifier_from_id(self, class_id):
+        '''
+            Creates a classifier object from an entry with given id.
+        '''
+        entry = Classifier.objects.get(id=class_id)
+        ctor = classifier_ctors.get(entry.type, InvalidClassifier)
+        classifier = ctor(
+            job=entry.job,
+            entry=entry,
+            name=entry.type,
+        )
         return classifier
 
 classifier_factory = ClassifierFactory()

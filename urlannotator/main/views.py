@@ -26,10 +26,11 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_CHOICES, ClassifiedSample)
+    LABEL_CHOICES)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats)
-from urlannotator.classification.models import ClassifierPerformance
+from urlannotator.classification.models import (ClassifierPerformance,
+    ClassifiedSample)
 
 
 def get_activation_key(email, num, salt_size=10,

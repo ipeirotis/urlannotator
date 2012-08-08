@@ -15,7 +15,8 @@ class URLMonitor(Task):
     def get_value(self, job):
         return job.no_of_urls - job.remaining_urls
 
-    def run(self):
+    def run(self, interval=datetime.timedelta(hours=1)):
+        self.interval = interval
         extract(self)
 
 url_monitor = registry.tasks[URLMonitor.name]

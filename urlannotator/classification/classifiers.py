@@ -11,7 +11,8 @@ from django.conf import settings
 from oauth2client.file import Storage
 from boto.s3.key import Key
 
-from urlannotator.classification.models import Classifier as ClassifierModel
+from urlannotator.classification.models import (Classifier as ClassifierModel,
+    TrainingSet)
 from urlannotator.tools.synchronization import RWSynchronize247
 
 
@@ -56,7 +57,9 @@ class Classifier(object):
 
 class SimpleClassifier(Classifier):
     """
-        Simple url classifier using Decision Tree
+        Simple url classifier using Decision Tree.
+        Model parameters:
+            training_set - id of the set the was trained on.
     """
 
     def __init__(self, description, classes, *args, **kwargs):
@@ -105,6 +108,11 @@ class SimpleClassifier(Classifier):
         if not hasattr(sample, 'text'):
             sample = sample.sample
         label = self.classifier.classify(self.get_features(sample))
+
+        entry = ClassifierModel.objects.get(id=self.id)
+        training_set = TrainingSet.objects.newest_for_job(entry.job)
+        sample.training_set = training_set
+
         sample.label = label
         sample.label_probability = {'Yes': 0, 'No': 0}
         sample.save()
@@ -118,6 +126,11 @@ class SimpleClassifier(Classifier):
         if self.classifier is None:
             return None
         label = self.classifier.classify(self.get_features(sample.sample))
+
+        entry = ClassifierModel.objects.get(id=self.id)
+        training_set = TrainingSet.objects.newest_for_job(entry.job)
+        sample.training_set = training_set
+
         sample.label = label
         sample.label_probability = {'Yes': 0, 'No': 0}
         sample.save()
@@ -130,7 +143,11 @@ GOOGLE_BUCKET_NAME = 'urlannotator'
 
 class GooglePredictionClassifier(Classifier):
     """
-        Classifier using Google Prediction API
+        Classifier using Google Prediction API.
+        Model parameters:
+            model - name of the classification model in Google Prediction
+            training - status of training. If not present, training is finished
+            training_set - id of training set the classifier was trained on
     """
 
     def __init__(self, description, classes, *args, **kwargs):
@@ -252,6 +269,11 @@ class GooglePredictionClassifier(Classifier):
 
         body = {'input': {'csvInstance': [sample.sample.text]}}
         label = self.papi.predict(body=body, id=self.model).execute()
+
+        entry = ClassifierModel.objects.get(id=self.id)
+        training_set = TrainingSet.objects.newest_for_job(entry.job)
+        sample.training_set = training_set
+
         sample.label = label['outputLabel']
         sample.label_probability = label['outputMulti']
         sample.save()
@@ -268,12 +290,17 @@ class GooglePredictionClassifier(Classifier):
 
         body = {'input': {'csvInstance': [sample.sample.text]}}
         label = self.papi.predict(body=body, id=self.model).execute()
+
+        entry = ClassifierModel.objects.get(id=self.id)
+        training_set = TrainingSet.objects.newest_for_job(entry.job)
+        sample.training_set = training_set
+
         sample.label = label['outputLabel']
         sample.label_probability = label['outputMulti']
         sample.save()
 
         result = {
             'outputLabel': label['outputLabel'],
-            'outputMulti': label['outputMulti']
+            'outputMulti': label['outputMulti'],
         }
         return result

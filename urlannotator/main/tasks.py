@@ -2,8 +2,8 @@ from celery import task
 from celery.task import current
 from django.db import DatabaseError, IntegrityError
 
-from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job,
-    ClassifiedSample)
+from urlannotator.classification.models import ClassifiedSample
+from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job)
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 from urlannotator.flow_control import send_event
 

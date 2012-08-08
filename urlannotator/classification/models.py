@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models.signals import post_save
 
 from urlannotator.main.models import Job, Sample, LABEL_CHOICES
+from urlannotator.flow_control import send_event
 
 
 class Classifier(models.Model):
@@ -15,6 +16,7 @@ class Classifier(models.Model):
     job = models.ForeignKey(Job)
     type = models.CharField(max_length=20)
     parameters = JSONField()
+    main = models.BooleanField(default=True)
 
 
 class Statistics(models.Model):
@@ -114,3 +116,73 @@ class TrainingSample(models.Model):
     set = models.ForeignKey(TrainingSet, related_name="training_samples")
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=20, choices=LABEL_CHOICES)
+
+# Classified sample source_type breakdown:
+# owner - classify request from job owner. Source_val is irrevelant.
+CLASS_SAMPLE_SOURCE_OWNER = 'owner'
+
+
+class ClassifiedSampleManager(models.Manager):
+    def create_by_owner(self, *args, **kwargs):
+        if 'source_type' in kwargs:
+            kwargs.pop('source_type')
+
+        kwargs['source_type'] = CLASS_SAMPLE_SOURCE_OWNER
+        kwargs['source_val'] = ''
+        try:
+            kwargs['sample'] = Sample.objects.get(
+                job=kwargs['job'],
+                url=kwargs['url']
+            )
+        except Sample.DoesNotExist:
+            pass
+
+        classified_sample = self.create(**kwargs)
+        # If sample exists, step immediately to classification
+        if 'sample' in kwargs:
+            send_event('EventNewClassifySample', classified_sample.id)
+        else:
+            Sample.objects.create_by_owner(
+                job_id=kwargs['job'].id,
+                url=kwargs['url'],
+                create_classified=False
+            )
+
+        return classified_sample
+
+# Classified samples' status breakdown:
+# PENDING - The sample is being created or classified. If
+#           ClassifiedSample.sample is not none, the sample is being classified
+# SUCCESS - The sample has been created and classified.
+CLASSIFIED_SAMPLE_SUCCESS = 'SUCCESS'
+CLASSIFIED_SAMPLE_PENDING = 'PENDING'
+
+
+class ClassifiedSample(models.Model):
+    """
+        A sample classification request was made for. The sample field is set
+        when corresponding sample is created.
+    """
+    sample = models.ForeignKey(Sample, blank=True, null=True)
+    url = models.URLField()
+    job = models.ForeignKey(Job)
+    label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
+    source_type = models.CharField(max_length=100, blank=False)
+    source_val = models.CharField(max_length=100, blank=True, null=True)
+    label_probability = JSONField()
+
+    objects = ClassifiedSampleManager()
+
+    def get_status(self):
+        '''
+            Returns current classification status.
+        '''
+        if self.sample and self.label:
+            return CLASSIFIED_SAMPLE_SUCCESS
+        return CLASSIFIED_SAMPLE_PENDING
+
+    def is_pending(self):
+        return self.get_status() == CLASSIFIED_SAMPLE_PENDING
+
+    def is_successful(self):
+        return self.get_status() == CLASSIFIED_SAMPLE_SUCCESS

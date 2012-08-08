@@ -1,3 +1,5 @@
+import datetime
+
 from django.test import TestCase
 
 from urlannotator.main.models import (Job, Account,
@@ -18,8 +20,6 @@ class testJobMonitors(TestCase):
     def setUp(self):
         acc = Account.objects.all()[0]
         self.job = Job.objects.filter(account=acc)[0]
-        self.job.activate()
-        self.job.set_classifier_trained()
 
     def testMonitors(self):
         monitor_list = [
@@ -29,7 +29,7 @@ class testJobMonitors(TestCase):
         ]
         for cls, mon in monitor_list:
             self.assertEqual(cls.objects.filter(job=self.job).count(), 1)
-            mon.delay()
+            mon.delay(interval=datetime.timedelta(seconds=0))
             self.assertEqual(cls.objects.filter(job=self.job).count(), 2)
 
 
