@@ -1,6 +1,6 @@
 import json
 
-from urlannotator.classification.models import Classifier
+from urlannotator.classification.models import Classifier, TrainingSet
 from urlannotator.main.models import Job
 from urlannotator.classification.classifiers import (SimpleClassifier,
     GooglePredictionClassifier)
@@ -42,6 +42,9 @@ class ClassifierFactory(object):
 
         if classifier_entry.type == 'SimpleClassifier':
             classifier = SimpleClassifier(job.description, ['Yes', 'No'])
+            training_set = TrainingSet.objects.newest_for_job(job)
+            samples = training_set.training_samples.all()
+            classifier.train(samples)
         elif classifier_entry.type == 'GooglePredictionClassifier':
             classifier = GooglePredictionClassifier(job.description,
                 ['Yes', 'No'])

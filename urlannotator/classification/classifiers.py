@@ -106,6 +106,7 @@ class SimpleClassifier(Classifier):
             sample = sample.sample
         label = self.classifier.classify(self.get_features(sample))
         sample.label = label
+        sample.label_probability = {'Yes': 0, 'No': 0}
         sample.save()
         return label
 
@@ -118,6 +119,7 @@ class SimpleClassifier(Classifier):
             return None
         label = self.classifier.classify(self.get_features(sample.sample))
         sample.label = label
+        sample.label_probability = {'Yes': 0, 'No': 0}
         sample.save()
         return {'label': label}
 
