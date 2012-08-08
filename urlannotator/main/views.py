@@ -460,14 +460,15 @@ def project_workers_view(request, id):
     workers = []
     for sample in samples:
         worker = sample.get_source_worker()
-        workers.append({
-            'id': worker.id,
-            'name': worker.get_name_as(request.user),
-            'quality': worker.estimated_quality,
-            'votes_added': len(worker.get_votes_added_for_job(job)),
-            'links_collected': worker.get_links_collected_for_job(job).count(),
-            'hours_spent': worker.get_hours_spent_for_job(job)
-        })
+        if worker:
+            workers.append({
+                'id': worker.id,
+                'name': worker.get_name_as(request.user),
+                'quality': worker.estimated_quality,
+                'votes_added': len(worker.get_votes_added_for_job(job)),
+                'links_collected': worker.get_links_collected_for_job(job),
+                'hours_spent': worker.get_hours_spent_for_job(job)
+            })
     context['workers'] = workers
     return render(request, 'main/project/workers.html',
         RequestContext(request, context))

@@ -20,7 +20,7 @@
             <td><a href="{% url project_worker_view project.id worker.id%}">{{worker.name}}</a></td>
             <td>{{worker.quality}}</td>
             <td>{{worker.votes_added}}</td>
-            <td>{{worker.links_collected}}</td>
+            <td>{{worker.links_collected|length}}</td>
             <td>{{worker.hours_spent}}</td>
           </tr>
         {% endfor %}

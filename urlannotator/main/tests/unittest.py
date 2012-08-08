@@ -530,6 +530,54 @@ class ProjectTests(TestCase):
         self.assertEqual(Sample.objects.filter(job=job).count(),
             2)
 
+    def testWorkersView(self):
+        job = Job.objects.create_active(
+            title='test',
+            description='test',
+            account=self.u.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+        resp = self.c.get(
+            reverse('project_workers_view', args=[job.id]),
+            follow=True
+        )
+        self.assertIn('workers', resp.context)
+        self.assertFalse(resp.context['workers'])
+
+        w = Worker.objects.all()
+        if w:
+            w = w[0]
+            resp = self.c.get(
+                reverse('project_worker_view', args=[job.id, w.id]),
+                follow=True
+            )
+            self.assertIn('name', resp.context)
+            self.assertTrue(resp.context['name'])
+
+    def testDataView(self):
+        job = Job.objects.create_active(
+            title='test',
+            description='test',
+            account=self.u.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+        resp = self.c.get(
+            reverse('project_data_view', args=[job.id]),
+            follow=True
+        )
+        self.assertIn('data_set', resp.context)
+        self.assertTrue(resp.context['data_set'])
+
+        s = Sample.objects.filter(job=job)
+        if s:
+            s = s[0]
+            resp = self.c.get(
+                reverse('project_data_detail', args=[job.id, s.id]),
+                follow=True
+            )
+            self.assertIn('sample', resp.context)
+            self.assertTrue(resp.context['sample'])
+
 
 class DocsTest(TestCase):
     def testDocs(self):
