@@ -78,7 +78,7 @@ def train_on_set(set_id):
 
     samples = (training_sample
         for training_sample in training_set.training_samples.all())
-    classifier.train(samples)
+    classifier.train(samples, set_id=set_id)
 
 
     # Gold samples created (since we are here), classifier created (checked).

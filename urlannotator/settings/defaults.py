@@ -36,7 +36,8 @@ STATIC_URL = '/statics/'
 
 # Default classifier used for NEW jobs. Has to be a valid class name from
 # urlannotator.classification.classifiers module
-JOB_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
+JOB_DEFAULT_CLASSIFIER = 'Classifier247'
+TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
 # Interval between a job monitor check. Defaults to 15 minutes.
 JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)

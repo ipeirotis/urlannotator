@@ -40,9 +40,17 @@ class Classifier247(RWSynchronize247):
             reader_functions=reader_functions,
             writer_functions=writer_functions)
 
+        def train(self, samples=[], turn_off=True, set_id=0):
+            # Don't turn off classifier on test.
+            super(Classifier247, self).train(
+                samples=samples,
+                turn_off=False,
+                set_id=set_id
+            )
+
 
 class Classifier(object):
-    def train(self, samples):
+    def train(self, samples=[], turn_off=True, set_id=0):
         pass
 
     def update(self, samples):
@@ -84,16 +92,28 @@ class SimpleClassifier(Classifier):
             feature_set[word] = True
         return feature_set
 
-    def train(self, samples):
+    def train(self, samples=[], turn_off=True, set_id=0):
         """
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample.
         """
+        entry = ClassifierModel.objects.get(id=self.id)
+        job = entry.job
+        if turn_off:
+            job.unset_classifier_trained()
+
+        if set_id:
+            training_set = TrainingSet.objects.get(id=set_id)
+            samples = training_set.training_samples.all()
+            entry.parameters['training_set'] = set_id
+            entry.save()
+
         train_set = []
         for sample in samples:
             job = sample.sample.job
             sample.sample.label = sample.label
             train_set.append((self.get_features(sample.sample), sample.label))
+
         if train_set:
             self.classifier = nltk.classify.DecisionTreeClassifier.train(
                 train_set)
@@ -110,7 +130,8 @@ class SimpleClassifier(Classifier):
         label = self.classifier.classify(self.get_features(sample))
 
         entry = ClassifierModel.objects.get(id=self.id)
-        training_set = TrainingSet.objects.newest_for_job(entry.job)
+        train_set_id = entry.parameters['training_set']
+        training_set = TrainingSet.objects.get(id=train_set_id)
         sample.training_set = training_set
 
         sample.label = label
@@ -128,7 +149,8 @@ class SimpleClassifier(Classifier):
         label = self.classifier.classify(self.get_features(sample.sample))
 
         entry = ClassifierModel.objects.get(id=self.id)
-        training_set = TrainingSet.objects.newest_for_job(entry.job)
+        train_set_id = entry.parameters['training_set']
+        training_set = TrainingSet.objects.get(id=train_set_id)
         sample.training_set = training_set
 
         sample.label = label
@@ -218,7 +240,7 @@ class GooglePredictionClassifier(Classifier):
 
         return file_name
 
-    def train(self, samples):
+    def train(self, samples=[], turn_off=True, set_id=0):
         """
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample. Required model
@@ -227,13 +249,17 @@ class GooglePredictionClassifier(Classifier):
         # Turns off classifier for the job. Can't be used until classification
         # is done.
         entry = ClassifierModel.objects.get(id=self.id)
-        job = entry.job
-        job.unset_classifier_trained()
+        if turn_off:
+            job = entry.job
+            job.unset_classifier_trained()
+
+        if set_id:
+            training_set = TrainingSet.objects.get(id=set_id)
+            samples = training_set.training_samples.all()
+            entry.parameters['training_set'] = set_id
 
         train_set = []
-        samp_num = 0
         for sample in samples:
-            samp_num += 1
             sample.sample.label = sample.label
             train_set.append(sample.sample)
 
@@ -271,7 +297,8 @@ class GooglePredictionClassifier(Classifier):
         label = self.papi.predict(body=body, id=self.model).execute()
 
         entry = ClassifierModel.objects.get(id=self.id)
-        training_set = TrainingSet.objects.newest_for_job(entry.job)
+        train_set_id = entry.parameters['training_set']
+        training_set = TrainingSet.objects.get(train_set_id)
         sample.training_set = training_set
 
         sample.label = label['outputLabel']
@@ -292,7 +319,8 @@ class GooglePredictionClassifier(Classifier):
         label = self.papi.predict(body=body, id=self.model).execute()
 
         entry = ClassifierModel.objects.get(id=self.id)
-        training_set = TrainingSet.objects.newest_for_job(entry.job)
+        train_set_id = entry.parameters['training_set']
+        training_set = TrainingSet.objects.get(train_set_id)
         sample.training_set = training_set
 
         sample.label = label['outputLabel']

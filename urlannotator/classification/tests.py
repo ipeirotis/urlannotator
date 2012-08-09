@@ -19,7 +19,9 @@ class Classifier247Tests(TestCase):
     def setUp(self):
         self.u = User.objects.get(username='test')
 
-        self.job = Job.objects.all()[0]
+        self.job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
         self.train_data = [
             Sample(job=self.job, source_type='',
@@ -44,21 +46,9 @@ class Classifier247Tests(TestCase):
                 label=self.labels[idx]
             ))
 
-        reader_id = classifier_factory.initialize_classifier(
+        self.classifier247 = classifier_factory.create_classifier(
             job_id=self.job.id,
-            classifier_name='SimpleClassifier',
-            prefix='reader',
-            main=False,
         )
-        writer_id = classifier_factory.initialize_classifier(
-            job_id=self.job.id,
-            classifier_name='SimpleClassifier',
-            prefix='writer',
-            main=False,
-        )
-        sc_reader = classifier_factory.create_classifier_from_id(reader_id)
-        sc_writer = classifier_factory.create_classifier_from_id(writer_id)
-        self.classifier247 = Classifier247(sc_reader, sc_writer)
 
     def testReadClassifier247(self):
         test_sample = self.classified[0]
