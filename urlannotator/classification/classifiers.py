@@ -16,39 +16,6 @@ from urlannotator.classification.models import (Classifier as ClassifierModel,
 from urlannotator.tools.synchronization import RWSynchronize247
 
 
-class Classifier247(RWSynchronize247):
-
-    def __init__(self, reader_instance, writer_instance):
-        """
-        Our permanent (24/7) synchronize template can be initialized with
-        instances of sync objects.
-        """
-
-        writer_functions = [
-            'train',
-            'update'
-        ]
-
-        reader_functions = [
-            'classify',
-            'classify_with_info'
-        ]
-
-        super(self.__class__, self).__init__('Classifier247',
-            reader_instance=reader_instance,
-            writer_instance=writer_instance,
-            reader_functions=reader_functions,
-            writer_functions=writer_functions)
-
-        def train(self, samples=[], turn_off=True, set_id=0):
-            # Don't turn off classifier on test.
-            super(Classifier247, self).train(
-                samples=samples,
-                turn_off=False,
-                set_id=set_id
-            )
-
-
 class Classifier(object):
     def train(self, samples=[], turn_off=True, set_id=0):
         pass
@@ -61,6 +28,129 @@ class Classifier(object):
 
     def classify_with_info(self, sample):
         pass
+
+
+class Classifier247(Classifier):
+
+    def __init__(self, reader_instance, writer_instance, entry_id,
+        switched=False):
+        """
+        Our permanent (24/7) synchronize template can be initialized with
+        instances of sync objects.
+        """
+
+        self.switched = switched
+        self.id = entry_id
+
+        if switched:
+            (reader_instance, writer_instance) =\
+                (writer_instance, reader_instance)
+
+        self.sync247 = RWSynchronize247(
+            template_name=str(entry_id),
+            reader_instance=reader_instance,
+            writer_instance=writer_instance,
+        )
+
+    def train(self, samples=[], turn_off=True, set_id=0):
+        self.sync247.modified_lock()
+        entry = ClassifierModel.objects.get(id=self.id)
+        job = entry.job
+
+        if turn_off:
+            job.unset_classifier_trained()
+
+        switched = entry.parameters['switched']
+
+        # Switch instances only if we have the same switched status as the
+        # DB. Otherwise, we would switch to db-present state.
+        # If our state was different than db, then we would switch to be up to
+        # date, and then switch again as a result of training resulting in the
+        # same instances' roles.
+        if switched == self.switched:
+            self.sync247._switch_with_lock()
+            entry.parameters['switched'] = not switched
+            entry.save()
+        else:
+            self.switched = switched
+
+        mod = self.sync247.get_modified()
+
+        # Trains the subclassifier
+        mod.train(
+            samples=[],
+            turn_off=False,
+            set_id=set_id,
+        )
+        job.set_classifier_trained()
+        self.sync247.release_modified()
+
+    def update(self, samples=[], turn_off=True, set_id=0):
+        self.sync247.modified_lock()
+        entry = ClassifierModel.objects.get(id=self.id)
+        job = entry.job
+
+        if turn_off:
+            job.unset_classifier_trained()
+
+        switched = entry.parameters['switched']
+
+        # Switch instances only if we have the same switched status as the
+        # DB. Otherwise, we would switch to db-present state.
+        # If our state was different than db, then we would switch to be up to
+        # date, and then switch again as a result of training resulting in the
+        # same instances' roles.
+        if switched == self.switched:
+            self.sync247._switch_with_lock()
+            entry.parameters['switched'] = not switched
+            entry.save()
+        else:
+            self.switched = switched
+
+        mod = self.sync247.get_modified()
+
+        # Trains the subclassifier
+        mod.update(
+            samples=[],
+            turn_off=False,
+            set_id=set_id,
+        )
+        job.set_classifier_trained()
+        self.sync247.release_modified()
+
+    def classify(self, sample):
+        self.sync247.reader_lock()
+        entry = ClassifierModel.objects.get(id=self.id)
+
+        switched = entry.parameters['switched']
+
+        if switched != self.switched:
+            # We are outdated. Perform a unsafe switch - don't lock, just
+            # update instances' roles
+            self.sync247._switch_unsafe()
+            self.switched = switched
+
+        read = self.sync247.get_reader()
+        # Trains the subclassifier
+        read.classify(sample)
+        self.sync247.release_reader()
+
+    def classify_with_info(self, sample):
+        self.sync247.reader_lock()
+        entry = ClassifierModel.objects.get(id=self.id)
+
+        switched = entry.parameters['switched']
+
+        if switched != self.switched:
+            # We are outdated. Perform a unsafe switch - don't lock, just
+            # update instances' roles
+            self.sync247._switch_unsafe()
+            self.switched = switched
+
+        read = self.sync247.get_reader()
+        # Trains the subclassifier
+        read.classify_with_info(sample)
+        self.sync247.release_reader()
 
 
 class SimpleClassifier(Classifier):

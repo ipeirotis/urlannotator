@@ -102,10 +102,12 @@ def Classifier247_ctor(job, entry, *args, **kwargs):
         class_id=entry_B,
         *args, **kwargs
     )
-    classifier = Classifier247(classifier_A, classifier_B)
-    if entry.parameters['switched']:
-        classifier.switch()
-
+    classifier = Classifier247(
+        reader_instance=classifier_A,
+        writer_instance=classifier_B,
+        entry_id=entry.id,
+        switched=entry.parameters['switched'],
+    )
     return classifier
 
 
