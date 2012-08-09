@@ -429,7 +429,9 @@ def project_view(request, id):
     if request.method == "POST":
         value = request.POST.get('submit', None)
         if value == 'Activate project':
-            proj.activate()
+            if proj.is_draft():
+                proj.initialize()
+
     context = {'project': proj}
     extract_progress_stats(proj, context)
     extract_url_stats(proj, context)
