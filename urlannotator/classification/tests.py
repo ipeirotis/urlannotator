@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job
 from urlannotator.classification.classifiers import (SimpleClassifier,
-    Classifier247, GooglePredictionClassifier)
+    GooglePredictionClassifier)
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample)
 from urlannotator.classification.factories import classifier_factory

@@ -133,6 +133,12 @@ class Job(models.Model):
         self.activated = now()
         self.save()
 
+    def initialize(self):
+        self.status = JOB_STATUS_INIT
+        self.remaining_urls = self.no_of_urls
+        self.save()
+        send_event('EventNewJobInitialization', self.id)
+
     def get_hours_spent(self):
         """
             Returns number of hours workers have worked on this project
