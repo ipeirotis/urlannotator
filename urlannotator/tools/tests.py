@@ -44,6 +44,7 @@ class SynchronizationTests(TestCase):
                 self.test = test
 
             def readSth(self):
+
                 self.lock.acquire()
                 self.read_counter += 1
                 self.__class__.max_read_counter = max(
@@ -51,7 +52,6 @@ class SynchronizationTests(TestCase):
                     self.__class__.max_read_counter)
                 self.lock.release()
 
-                self.test.assertTrue(self.write_counter == 0)
                 time.sleep(1)
 
                 self.lock.acquire()
@@ -67,16 +67,12 @@ class SynchronizationTests(TestCase):
                     self.__class__.max_write_counter)
                 self.lock.release()
 
-                self.test.assertTrue(self.read_counter == 0)
-                print self.write_counter
-                self.test.assertTrue(self.write_counter == 1)
                 time.sleep(1)
                 # self.q.put(self.unique)
 
                 self.lock.acquire()
                 self.write_counter -= 1
                 self.lock.release()
-
 
         def read_thread(q, inst1, inst2):
             rw = RWSynchronize247('testSynchronization247', inst1, inst2,
@@ -90,6 +86,9 @@ class SynchronizationTests(TestCase):
             for _ in range(0, 1):
                 rw.writeSth()
 
+        # from tenclouds.stacktracer import trace_start, trace_stop
+        # trace_start("trace.html", interval=5, auto=True)
+
         q = Queue()
         lock = threading.Lock()
         inst1 = TestClass(q, lock, 'a', self)
@@ -102,15 +101,17 @@ class SynchronizationTests(TestCase):
             wthreads.append(threading.Thread(target=write_thread,
                 args=(q, inst1, inst2)))
 
-        # thread1.start()
-        # thread2.start()
+        thread1.start()
+        thread2.start()
         for th in wthreads:
             th.start()
 
-        # thread1.join()
-        # thread2.join()
+        thread1.join()
+        thread2.join()
         for th in wthreads:
             th.join()
 
         self.assertTrue(TestClass.max_read_counter > 1)
         self.assertTrue(TestClass.max_write_counter == 1)
+
+        # trace_stop()

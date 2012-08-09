@@ -1,6 +1,6 @@
 import new
 
-from tenclouds.lock import FileLock
+from tenclouds.lock.rwlock import FileRWLock
 
 
 class RWSynchronize247(object):
@@ -21,8 +21,8 @@ class RWSynchronize247(object):
         self.reader_functions = reader_functions
         self.writer_functions = writer_functions
 
-        self.lock = FileLock(template_name + '_general_lock')
-        self.rwlock = FileLock(template_name + '_rw_lock')
+        self.lock = FileRWLock(template_name + '_general_lock')
+        self.rwlock = FileRWLock(template_name + '_rw_lock')
 
         # Dynamic add reader methods.
         for func_name in reader_functions:
@@ -40,9 +40,9 @@ class RWSynchronize247(object):
             Reading task. Read instance is used - aquire reader rwlock.
             """
 
-            self.rwlock.acquire_shared_lock()
+            self.rwlock.reader_acquire()
             res = getattr(self.reader_instance, function_name)(*args, **kwargs)
-            self.rwlock.unlock()
+            self.rwlock.reader_release()
 
             return res
 
@@ -59,11 +59,11 @@ class RWSynchronize247(object):
             # Switch can be disabled.
             template_switch = kwargs.pop('template_switch', True)
 
-            self.lock.acquire_exclusive_lock()
+            self.lock.writer_acquire()
             res = getattr(self.writer_instance, function_name)(*args, **kwargs)
             if template_switch:
                 self._switch_with_lock()
-            self.lock.unlock()
+            self.lock.writer_release()
 
             return res
 
@@ -79,9 +79,9 @@ class RWSynchronize247(object):
         template 24/7 instance is blocked for switch time.
         """
 
-        self.lock.acquire_exclusive_lock()
+        self.lock.writer_acquire()
         self._switch_with_lock()
-        self.lock.unlock()
+        self.lock.writer_release()
 
     def _switch_with_lock(self):
         """
@@ -89,7 +89,7 @@ class RWSynchronize247(object):
         F.e. when training task ends.
         """
 
-        self.rwlock.acquire_exclusive_lock()
+        self.rwlock.writer_acquire()
         (self.reader_instance, self.writer_instance) = (self.writer_instance,
             self.reader_instance)
-        self.rwlock.unlock()
+        self.rwlock.writer_release()
