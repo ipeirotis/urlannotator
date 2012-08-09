@@ -74,10 +74,7 @@ class GoldSamplesMonitor(Task):
         # assume that!
         lock = MemcacheLock(key=lock_key)
         try:
-            print 'trying to lock'
-            # lock.release()
-            # lock.acquire_with_wait(wait_time=30 * 60)
-            print 'locked'
+            lock.acquire_with_wait(wait_time=30 * 60)
             if not job.is_gold_samples_done():
                 all_golds = len(job.gold_samples)
                 current_golds = training_set.training_samples.count()
@@ -87,8 +84,7 @@ class GoldSamplesMonitor(Task):
                         "EventTrainingSetCompleted",
                         training_set.id
                     )
-            # lock.release()
-            print 'released'
+            lock.release()
         except TimeoutError:
             # Lock taken for too long. Ignore - something is screwed up or
             # we are unlucky

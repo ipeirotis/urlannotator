@@ -40,14 +40,14 @@ def Classifier247_init(entry, prefix, job, *args, **kwargs):
 
     # Create default classifier entries as subclassifiers
     classifier_name = settings.TWENTYFOUR_DEFAULT_CLASSIFIER
-    classifier_A = classifier_factory.initialize_classifier(
+    classifier_a = classifier_factory.initialize_classifier(
         job_id=job.id,
         main=False,
         prefix=prefix_a,
         classifier_name=classifier_name,
         *args, **kwargs
     )
-    classifier_B = classifier_factory.initialize_classifier(
+    classifier_b = classifier_factory.initialize_classifier(
         job_id=job.id,
         main=False,
         prefix=prefix_b,
@@ -55,10 +55,9 @@ def Classifier247_init(entry, prefix, job, *args, **kwargs):
         *args, **kwargs
     )
     params = {
-        'switched': False,
         'training_set': 0,
-        'classifier_A': classifier_A,
-        'classifier_B': classifier_B,
+        'reader': classifier_a,
+        'writer': classifier_b,
     }
     entry.parameters = json.dumps(params)
 
@@ -89,24 +88,24 @@ def GooglePredictionClassifer_ctor(job, entry, *args, **kwargs):
     return classifier
 
 
-def Classifier247_ctor(job, entry, *args, **kwargs):
-    entry_A = entry.parameters['classifier_A']
-    entry_B = entry.parameters['classifier_B']
+def Classifier247_ctor(entry, factory, *args, **kwargs):
+    entry_reader = entry.parameters['reader']
+    entry_writer = entry.parameters['writer']
 
     # First, create subclassfiers.
-    classifier_A = classifier_factory.create_classifier_from_id(
-        class_id=entry_A,
+    classifier_r = classifier_factory.create_classifier_from_id(
+        class_id=entry_reader,
         *args, **kwargs
     )
-    classifier_B = classifier_factory.create_classifier_from_id(
-        class_id=entry_B,
+    classifier_w = classifier_factory.create_classifier_from_id(
+        class_id=entry_writer,
         *args, **kwargs
     )
     classifier = Classifier247(
-        reader_instance=classifier_A,
-        writer_instance=classifier_B,
+        reader_instance=classifier_r,
+        writer_instance=classifier_w,
         entry_id=entry.id,
-        switched=entry.parameters['switched'],
+        factory=factory,
     )
     return classifier
 
@@ -169,6 +168,7 @@ class ClassifierFactory(object):
             job=entry.job,
             entry=entry,
             name=entry.type,
+            factory=self,
         )
         return classifier
 

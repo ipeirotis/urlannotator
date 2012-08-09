@@ -50,38 +50,29 @@ class RWSynchronize247(object):
         """
         return self.writer_instance
 
-    def modified_release(self, switch=True):
+    def modified_release(self, func, switch=True, *args, **kwargs):
         """
         Returns modified instance's lock.
 
         :param switch: perform instances switch writer :=: reader
         """
         if switch:
-            self._switch_with_lock()
+            self._switch_with_lock(func, *args, **kwargs)
         self.lock.unlock()
 
-    def switch(self):
+    def switch(self, func, *args, **kwargs):
         """
         Cold switch. Aquires all locks and runs switch. In result whole
         template 24/7 instance is blocked for switch time.
         """
         self.lock.acquire_exclusive_lock()
-        self._switch_with_lock()
+        self._switch_with_lock(func, *args, **kwargs)
         self.lock.unlock()
 
-    def _switch_unsafe(self):
-        """
-        Switch instances unsafely. Only use this to update this template's
-        instances' roles from external state source to get in sync with other
-        templates using the same locks across the machine.
-        IT IS NOT THREAD SAFE.
-        """
-        (self.reader_instance, self.writer_instance) = (self.writer_instance,
-            self.reader_instance)
-
-    def _switch_with_lock(self):
+    def _switch_with_lock(self, func, *args, **kwargs):
         """
         Hot switch. Use only when you hold the modified lock.
         """
         self.rwlock.acquire_exclusive_lock()
+        func(*args, **kwargs)
         self.rwlock.unlock()

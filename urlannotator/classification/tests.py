@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job
 from urlannotator.classification.classifiers import (SimpleClassifier,
-    GooglePredictionClassifier)
+    GooglePredictionClassifier, Classifier247)
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample)
 from urlannotator.classification.factories import classifier_factory
@@ -132,7 +132,11 @@ class ClassifierFactoryTests(TestCase):
             gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
         )
         factory = classifier_factory.create_classifier(job.id)
-        self.assertEqual(factory.__class__, SimpleClassifier)
+        self.assertEqual(factory.__class__, Classifier247)
+        self.assertEqual(Classifier.objects.filter(
+            job=job,
+            type='SimpleClassifier',
+        ).count(), 2)
         cs = ClassifiedSample.objects.all()[0]
         self.assertTrue(factory.classify(cs))
 
