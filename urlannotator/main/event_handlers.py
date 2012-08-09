@@ -84,11 +84,12 @@ class GoldSamplesMonitor(Task):
                         "EventTrainingSetCompleted",
                         training_set.id
                     )
-            lock.release()
         except TimeoutError:
             # Lock taken for too long. Ignore - something is screwed up or
             # we are unlucky
             pass
+        finally:
+            lock.release()
 
 
 new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]

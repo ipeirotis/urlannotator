@@ -41,11 +41,7 @@ class Classifier247(Classifier):
         self.id = entry_id
         self.factory = factory
 
-        self.sync247 = RWSynchronize247(
-            template_name=str(entry_id),
-            reader_instance=reader_instance,
-            writer_instance=writer_instance,
-        )
+        self.sync247 = RWSynchronize247(template_name=str(entry_id))
 
     def update_self(self):
         """
