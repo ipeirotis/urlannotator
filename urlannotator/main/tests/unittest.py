@@ -16,12 +16,10 @@ from urlannotator.main.factories import SampleFactory
 
 
 class SampleFactoryTest(TestCase):
+    fixtures = ['init_test_fixture.json']
+
     def setUp(self):
-        self.user = User.objects.create_user(username='test', password='1')
-        self.job = Job.objects.create_active(
-            account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'example.com', 'label': 'Yes'}])
-        )
+        self.job = Job.objects.all()[0]
 
     def testSimpleSample(self):
         test_url = 'google.com'
@@ -46,14 +44,16 @@ class SampleFactoryTest(TestCase):
 
 
 class JobFactoryTest(TestCase):
+    fixtures = ['init_test_fixture.json']
+
     def setUp(self):
-        self.u = User.objects.create_user(username='test2', password='1')
+        self.u = User.objects.all()[0]
 
     def testJobFactory(self):
         Job.objects.create_draft(account=self.u.get_profile())
 
-        # Nothing new added
-        self.assertEqual(Sample.objects.all().count(), 0)
+        # Nothing new added. 1 sample from fixture.
+        self.assertEqual(Sample.objects.all().count(), 1)
 
         gold_samples = [{'url': 'google.com', 'label': 'Yes'}]
         Job.objects.create_active(
@@ -62,11 +62,14 @@ class JobFactoryTest(TestCase):
         )
 
         # New sample created
-        self.assertEqual(Sample.objects.all().count(), 1)
-        self.assertEqual(GoldSample.objects.all().exclude(label='').count(), 1)
+        self.assertEqual(Sample.objects.all().count(), 2)
+        # New Gold Sample + 1 from fixture
+        self.assertEqual(GoldSample.objects.all().exclude(label='').count(), 2)
 
 
 class BaseNotLoggedInTests(TestCase):
+    def setUp(self):
+        self.c = Client()
 
     def testLoginNotRestrictedPages(self):
         url_list = [('', 'main/index.html'),
@@ -74,12 +77,11 @@ class BaseNotLoggedInTests(TestCase):
                     (reverse('register'), 'main/register.html')]
 
         for url, template in url_list:
-            c = Client()
-            resp = c.get(url)
+            resp = self.c.get(url)
 
             self.assertEqual(resp.status_code, 200)
             self.assertTemplateUsed(resp, template)
-            self.assertFalse(c.session)
+            self.assertFalse(self.c.session)
 
             self.assertFalse('projects' in resp.context)
             self.assertFalse('success' in resp.context)
@@ -90,22 +92,18 @@ class BaseNotLoggedInTests(TestCase):
                     ('/wizard/', 'main/wizard/project.html')]
 
         for url, template in url_list:
-            c = Client()
-
-            self.assertRaises(c.get(url))
+            self.assertRaises(self.c.get(url))
 
     def testEmailRegister(self):
-        c = Client()
-
         register_url = reverse('register')
-        resp = c.post(register_url, {'email': 'testtest.test',
+        resp = self.c.post(register_url, {'email': 'testtest.test',
                                      'password1': 'test1',
                                      'password2': 'test'})
         self.assertFormError(resp, 'form', None, 'Passwords do not match.')
         self.assertFormError(resp, 'form', 'email',
                              'Enter a valid e-mail address.')
 
-        resp = c.post(register_url, {'email': 'test@test.test',
+        resp = self.c.post(register_url, {'email': 'test@test.test',
                                      'password1': 'test',
                                      'password2': 'test'})
         user = User.objects.get(email='test@test.test')
@@ -119,51 +117,58 @@ class BaseNotLoggedInTests(TestCase):
         self.assertTrue(user.get_profile().email_registered)
 
         # Account not activated
-        resp = c.post(reverse('login'), {'email': 'test@test.test',
+        resp = self.c.post(reverse('login'), {'email': 'test@test.test',
                                          'password': 'test'}, follow=True)
 
         self.assertIn('error', resp.context)
 
         bad_key = 'thisisabadkey'
-        resp = c.get('/activation/%s' % bad_key)
+        resp = self.c.get('/activation/%s' % bad_key)
         self.assertTrue('error' in resp.context)
 
         bad_key = 'thisisabadkey-20'
-        resp = c.get('/activation/%s' % bad_key)
+        resp = self.c.get('/activation/%s' % bad_key)
         self.assertTrue('error' in resp.context)
 
-        resp = c.get('/activation/%s' % key, follow=True)
+        resp = self.c.get('/activation/%s' % key, follow=True)
         self.assertTrue('success' in resp.context)
         self.assertEqual(Account.objects.get(id=1).activation_key,
                          'activated')
 
-        resp = c.get('/activation/%s' % key)
+        resp = self.c.get('/activation/%s' % key)
         self.assertTrue('error' in resp.context)
 
-        resp = c.post(register_url, {'email': 'test@test.test',
+        resp = self.c.post(register_url, {'email': 'test@test.test',
                                      'password1': 'test1',
                                      'password2': 'test'})
         self.assertFormError(resp, 'form', None, 'Passwords do not match.')
         self.assertFormError(resp, 'form', 'email', 'Email is already in use.')
 
-        resp = c.post(reverse('login'), {'email': 'test@test.test',
+        resp = self.c.post(reverse('login'), {'email': 'test@test.test',
                                          'password': 'test'})
         # Redirection
         self.assertEqual(resp.status_code, 302)
 
-        resp = c.post(reverse('login'), {'email': 'test@test.test',
+        resp = self.c.post(reverse('login'), {'email': 'test@test.test',
                                          'password': 'test',
                                          'remember': 'remember'})
         # Redirection
         self.assertEqual(resp.status_code, 302)
 
-        resp = c.post(reverse('login'), {'email': 'test@test.test',
+        resp = self.c.post(reverse('login'), {'email': 'test@test.test',
                                          'password': 'test2'})
         # Redirection
         self.assertEqual(resp.status_code, 302)
 
 
 class LoggedInTests(TestCase):
+    fixtures = ['init_test_fixture.json']
+
+    def setUp(self):
+        self.u = User.objects.all()[0]
+        self.c = Client()
+        self.c.login(username='test', password='!')
+
     def createProject(self, user):
         Job.objects.create_active(
             account=user.get_profile(),
@@ -174,149 +179,131 @@ class LoggedInTests(TestCase):
         )
 
     def testDashboard(self):
-        c = Client()
-        u = User.objects.create_user(username='test2', password='test',
-            email='test@test.org')
-        c.login(username='test2', password='test')
-
-        resp = c.get(reverse('index'))
-
-        # Empty projects list
-        self.assertTrue('projects' in resp.context)
-        self.assertTrue(not resp.context['projects'])
+        resp = self.c.get(reverse('index'))
 
         # Populate projects
-        self.createProject(u)
-        self.createProject(u)
+        self.createProject(self.u)
+        self.createProject(self.u)
 
-        self.assertTrue(Job.objects.all().count() == 2)
-        resp = c.get(reverse('index'))
+        self.assertTrue(Job.objects.all().count() == 3)
+        resp = self.c.get(reverse('index'))
 
         self.assertTrue('projects' in resp.context)
-        self.assertTrue(len(resp.context['projects']) == 2)
+        self.assertTrue(len(resp.context['projects']) == 3)
 
     def testLogIn(self):
-        c = Client()
-        User.objects.create_user(username='test2', password='test',
-            email='test2@test.org')
-        resp = c.post(reverse('login'),
+        resp = self.c.post(reverse('login'),
             {'email': 'test@test.org', 'password': 'test'}, follow=True)
         self.assertTemplateUsed(resp, 'main/index.html')
         self.assertIn('error', resp.context)
 
-        resp = c.post(reverse('login'),
+        resp = self.c.post(reverse('login'),
             {'email': 'testtest.org', 'password': 'test'}, follow=True)
         self.assertTemplateUsed(resp, 'main/index.html')
         self.assertIn('error', resp.context)
 
 
 class SettingsTests(TestCase):
-    def testBasic(self):
-        c = Client()
-        u = User.objects.create_user(username='test2', password='test',
-                                     email='test@test.org')
-        c.login(username='test2', password='test')
+    fixtures = ['init_test_fixture.json']
 
-        resp = c.get(reverse('settings'))
+    def setUp(self):
+        self.u = User.objects.all()[0]
+        self.c = Client()
+
+    def testBasic(self):
+        resp = self.c.get(reverse('settings'))
         # User not registered via email
         self.assertFalse('email' in resp.content)
         self.assertFalse('password' in resp.content)
 
-        resp = c.post(reverse('settings'), {'full_name': 'test',
+        resp = self.c.post(reverse('settings'), {'full_name': 'test',
             'submit': 'general'})
         self.assertTrue('success' in resp.context)
         self.assertEqual(resp.context['success'],
                          'Full name has been successfully changed.')
 
-        u.get_profile().email_registered = True
-        u.get_profile().save()
+        self.u.get_profile().email_registered = True
+        self.u.get_profile().save()
 
-        resp = c.post(reverse('settings'), {'full_name': 'test',
+        resp = self.c.post(reverse('settings'), {'full_name': 'test',
             'email': 'test@test.org', 'submit': 'general'})
         self.assertTrue('success' in resp.context)
         self.assertEqual(resp.context['success'],
                          'Full name has been successfully changed.')
 
         # Password change
-        resp = c.post(reverse('settings'), {'old_password': 'test2',
+        resp = self.c.post(reverse('settings'), {'old_password': 'test2',
             'submit': 'password'})
         self.assertFormError(resp, 'password_form', 'old_password',
             'Your old password was entered incorrectly. '
             'Please enter it again.')
 
-        resp = c.post(reverse('settings'), {'old_password': 'test',
+        resp = self.c.post(reverse('settings'), {'old_password': '!',
             'submit': 'password', 'new_password1': 'test2',
             'new_password2': 'test2'},
             follow=True)
         self.assertIn('success', resp.context)
 
         # Alerts
-        resp = c.post(reverse('settings'), {'alerts': None,
+        resp = self.c.post(reverse('settings'), {'alerts': None,
             'submit': 'alerts'})
         self.assertFormError(resp, 'alerts_form', 'alerts', [])
 
-        resp = c.post(reverse('settings'), {'alerts': 'alerts',
+        resp = self.c.post(reverse('settings'), {'alerts': 'alerts',
             'submit': 'alerts'},
             follow=True)
         self.assertIn('success', resp.context)
 
-        resp = c.post(reverse('settings'), {'submit': 'wrongsubmit'})
+        resp = self.c.post(reverse('settings'), {'submit': 'wrongsubmit'})
         self.assertTemplateUsed(resp, 'main/settings.html')
         self.assertNotIn('error', resp.context)
         self.assertNotIn('success', resp.context)
 
     def testAssociation(self):
-        c = Client()
-        u = User.objects.create_user(username='test2', password='test',
-                                     email='test@test.org')
-        c.login(username='test2', password='test')
-
-        resp = c.get(reverse('settings'))
+        resp = self.c.get(reverse('settings'))
         self.assertNotIn('facebook', resp.context)
         self.assertNotIn('google', resp.context)
         self.assertNotIn('twitter', resp.context)
         self.assertNotIn('odesk', resp.context)
 
-        u.get_profile().odesk_uid = 1
-        u.get_profile().full_name = "Testing Test"
-        u.get_profile().save()
+        self.u.get_profile().odesk_uid = 1
+        self.u.get_profile().full_name = "Testing Test"
+        self.u.get_profile().save()
 
         Worker.objects.create_odesk(external_id=1).save()
         # Odesk assoc
-        resp = c.get(reverse('settings'))
+        resp = self.c.get(reverse('settings'))
         self.assertIn('odesk', resp.context)
 
         # Facebook assoc
-        usa = UserSocialAuth(user=u, provider='facebook', uid='Tester')
+        usa = UserSocialAuth(user=self.u, provider='facebook', uid='Tester')
         usa.save()
 
-        resp = c.get(reverse('settings'))
+        resp = self.c.get(reverse('settings'))
         self.assertIn('facebook', resp.context)
 
         # Google assoc
-        usa = UserSocialAuth(user=u, provider='google-oauth2', uid='Tester')
+        usa = UserSocialAuth(user=self.u, provider='google-oauth2', uid='Tester')
         usa.save()
 
-        resp = c.get(reverse('settings'))
+        resp = self.c.get(reverse('settings'))
         self.assertIn('google', resp.context)
 
         # Twitter assoc
-        usa = UserSocialAuth(user=u, provider='twitter', uid='Tester')
+        usa = UserSocialAuth(user=self.u, provider='twitter', uid='Tester')
         usa.save()
 
-        resp = c.get(reverse('settings'))
+        resp = self.c.get(reverse('settings'))
         self.assertIn('twitter', resp.context)
 
 
 class ProjectTests(TestCase):
+    fixtures = ['init_test_fixture.json']
+
     def setUp(self):
         self.c = Client()
-        self.u = User.objects.create_user(username='test2', password='test',
-                                     email='test@test.org')
-        self.c.login(username='test2', password='test')
-        Sample.objects.all().delete()
-        GoldSample.objects.all().delete()
-        ClassifiedSample.objects.all().delete()
+        self.u = User.objects.all()[0]
+        self.c.login(username='test', password='!')
 
     def testBasic(self):
         # No odesk association - display alert
@@ -502,7 +489,7 @@ class ProjectTests(TestCase):
         self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
             1)
 
-        testUrl = 'example.com'
+        testUrl = 'google.com'
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
@@ -510,7 +497,7 @@ class ProjectTests(TestCase):
         self.assertEqual(ClassifiedSample.objects.all().count(), 3)
         # old data + new sample
         self.assertEqual(Sample.objects.filter(job=job).count(),
-            2)
+            1)
 
         # Create a new job and check uniqueness
         job = Job.objects.create_active(
@@ -520,15 +507,14 @@ class ProjectTests(TestCase):
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
 
-        testUrl = 'example.com'
+        testUrl = 'google.com'
         self.c.post(reverse('project_classifier_view', args=[job.id]),
             {'test-urls': testUrl}, follow=True)
 
         # classification request + old data
         self.assertEqual(ClassifiedSample.objects.all().count(), 5)
-        # old data + new sample
-        self.assertEqual(Sample.objects.filter(job=job).count(),
-            2)
+        # old data, no new sample since this is the same url
+        self.assertEqual(Sample.objects.filter(job=job).count(), 1)
 
     def testWorkersView(self):
         job = Job.objects.create_active(
@@ -588,15 +574,16 @@ class DocsTest(TestCase):
 
 
 class ApiTests(TestCase):
+    fixtures = ['init_test_fixture.json']
+
     def setUp(self):
         self.api_url = '/api/v1/'
-        self.user = User.objects.create_user(username='testing',
-            password='test')
+        self.user = User.objects.all()[0]
         self.user.save()
+        self.c = Client()
 
     def testJobs(self):
-        c = Client()
-        resp = c.get('/api/v1/job/?format=json', follow=True)
+        resp = self.c.get('/api/v1/job/?format=json', follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('meta', array)
@@ -606,44 +593,44 @@ class ApiTests(TestCase):
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
 
-        resp = c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
             follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('status', array)
 
-        resp = c.get('%s%s?format=json' % (self.api_url, 'job/1/classify/'),
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/classify/'),
             follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
 
-        resp = c.get('%s%s?format=json&url=example.com'
-            % (self.api_url, 'job/2/classify/'), follow=True)
+        resp = self.c.get('%s%s?format=json&url=google.com'
+            % (self.api_url, 'job/4/classify/'), follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
 
-        resp = c.get('%s%s?format=json&request=test'
+        resp = self.c.get('%s%s?format=json&request=test'
             % (self.api_url, 'job/1/classify/status/'), follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
 
-        resp = c.get('%s%s?format=json&url=google.com'
+        resp = self.c.get('%s%s?format=json&url=google.com'
             % (self.api_url, 'job/1/classify/'), follow=True)
 
         array = json.loads(resp.content)
         request_id = array['request_id']
 
-        resp = c.get('%s%s?format=json&url=google.com&request=%s'
+        resp = self.c.get('%s%s?format=json&url=google.com&request=%s'
             % (self.api_url, 'job/1/classify/status/', request_id),
             follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('status', array)
 
-        resp = c.get('%s%s?format=json&request=test'
+        resp = self.c.get('%s%s?format=json&request=test'
             % (self.api_url, 'job/2/classify/'), follow=True)
 
         array = json.loads(resp.content)
