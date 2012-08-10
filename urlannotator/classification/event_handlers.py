@@ -107,6 +107,7 @@ def classify(sample_id, from_name='', *args, **kwargs):
     label = classifier.classify(class_sample)
     if not label:
         label = 'No'
+    class_sample = ClassifiedSample.objects.get(id=sample_id)
     class_sample.label = label
     class_sample.save()
 

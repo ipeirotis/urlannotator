@@ -325,15 +325,35 @@ class Sample(models.Model):
         """
             Returns probability of YES label on this sample.
         """
-        # FIXME: Actual classifier label percentage.
-        return 0
+        # TODO: More meaningful probability query? Currently most recent one.
+        cs_set = self.classifiedsample_set.all()
+        max_id = -1
+        cs = None
+        yes_prob = 0
+        for cs_it in cs_set:
+            if cs_it.id > max_id:
+                max_id = cs_it.id
+                cs = cs_it
+        if cs:
+            yes_prob = cs.label_probability['Yes']
+        return yes_prob * 100
 
     def get_no_probability(self):
         """
             Returns probability of NO label on this sample.
         """
-        # FIXME: Actual classifier label percentage.
-        return 0
+        # TODO: More meaningful probability query? Currently most recent one.
+        cs_set = self.classifiedsample_set.all()
+        max_id = -1
+        cs = None
+        no_prob = 0
+        for cs_it in cs_set:
+            if cs_it.id > max_id:
+                max_id = cs_it.id
+                cs = cs_it
+        if cs:
+            no_prob = cs.label_probability['No']
+        return no_prob * 100
 
 # --vote--
 # label

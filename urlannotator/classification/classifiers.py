@@ -212,44 +212,48 @@ class SimpleClassifier(Classifier):
 
             job.set_classifier_trained()
 
-    def classify(self, sample):
+    def classify(self, class_sample):
         """
             Classifies gives sample and saves result to the model.
         """
         if self.classifier is None:
             return None
-        if not hasattr(sample, 'text'):
-            sample = sample.sample
+        sample = class_sample
+        if not hasattr(class_sample, 'text'):
+            sample = class_sample.sample
         label = self.classifier.classify(self.get_features(sample))
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
         training_set = TrainingSet.objects.get(id=train_set_id)
-        sample.training_set = training_set
-        sample.label = label
-        sample.label_probability = {'Yes': 0, 'No': 0}
-        sample.save()
+        class_sample.training_set = training_set
+        class_sample.label = label
+        label_probability = {'Yes': 0, 'No': 0}
+        class_sample.label_probability = json.dumps(label_probability)
+        class_sample.save()
         return label
 
-    def classify_with_info(self, sample):
+    def classify_with_info(self, class_sample):
         """
             Classifies given sample and returns more detailed data.
             Currently only label.
         """
         if self.classifier is None:
             return None
-        label = self.classifier.classify(self.get_features(sample.sample))
+        sample = class_sample
+        if not hasattr(class_sample, 'text'):
+            sample = class_sample.sample
+        label = self.classifier.classify(self.get_features(sample))
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
         training_set = TrainingSet.objects.get(id=train_set_id)
-        sample.training_set = training_set
-
-        sample.label = label
-        sample.label_probability = {'Yes': 0, 'No': 0}
-        sample.save()
-        return {'label': label}
-
+        class_sample.training_set = training_set
+        class_sample.label = label
+        label_probability = {'Yes': 0, 'No': 0}
+        class_sample.label_probability = json.dumps(label_probability)
+        class_sample.save()
+        return label
 # Google Storage parameters used in GooglePrediction classifier
 GOOGLE_STORAGE_PREFIX = 'gs'
 GOOGLE_BUCKET_NAME = 'urlannotator'
@@ -394,7 +398,10 @@ class GooglePredictionClassifier(Classifier):
         sample.training_set = training_set
 
         sample.label = label['outputLabel']
-        sample.label_probability = label['outputMulti']
+        label_probability = {}
+        for label, prob in label['outputMulti']:
+            label_probability[label] = prob
+        sample.label_probability = json.dumps(label_probability)
         sample.save()
 
         return label['outputLabel']
@@ -416,7 +423,10 @@ class GooglePredictionClassifier(Classifier):
         sample.training_set = training_set
 
         sample.label = label['outputLabel']
-        sample.label_probability = label['outputMulti']
+        label_probability = {}
+        for label, prob in label['outputMulti']:
+            label_probability[label] = prob
+        sample.label_probability = json.dumps(label_probability)
         sample.save()
 
         result = {

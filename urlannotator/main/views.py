@@ -546,7 +546,7 @@ def project_data_view(request, id):
 
     context = {
         'project': job,
-        'data_set': Sample.objects.filter(job=job)
+        'data_set': Sample.objects.filter(job=job),
     }
 
     return render(request, 'main/project/data.html',
@@ -564,7 +564,7 @@ def project_data_detail(request, id, data_id):
 
     context = {
         'project': job,
-        'sample': sample
+        'sample': sample,
     }
     return render(request, 'main/project/data_detail.html',
         RequestContext(request, context))
