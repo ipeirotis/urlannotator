@@ -42,9 +42,11 @@ class SynchronizationTests(TestCase):
                 self.lock = lock
                 self.unique = unique
                 self.test = test
+                self.sync247 = RWSynchronize247('testSynchronization247')
 
             def readSth(self):
 
+                self.sync247.reader_lock()
                 self.lock.acquire()
                 self.read_counter += 1
                 self.__class__.max_read_counter = max(
@@ -57,9 +59,11 @@ class SynchronizationTests(TestCase):
                 self.lock.acquire()
                 self.__class__.read_counter -= 1
                 self.lock.release()
+                self.sync247.reader_release()
 
             def writeSth(self):
 
+                self.sync247.modified_lock()
                 self.lock.acquire()
                 self.write_counter += 1
                 self.__class__.max_write_counter = max(
@@ -73,18 +77,15 @@ class SynchronizationTests(TestCase):
                 self.lock.acquire()
                 self.write_counter -= 1
                 self.lock.release()
+                self.sync247.modified_release()
 
         def read_thread(q, inst1, inst2):
-            rw = RWSynchronize247('testSynchronization247', inst1, inst2,
-                reader_functions=['readSth'], writer_functions=['writeSth'])
             for _ in range(0, 1):
-                rw.readSth()
+                inst1.readSth()
 
         def write_thread(q, inst1, inst2):
-            rw = RWSynchronize247('testSynchronization247', inst1, inst2,
-                reader_functions=['readSth'], writer_functions=['writeSth'])
             for _ in range(0, 1):
-                rw.writeSth()
+                inst2.writeSth()
 
         # from tenclouds.stacktracer import trace_start, trace_stop
         # trace_start("trace.html", interval=5, auto=True)

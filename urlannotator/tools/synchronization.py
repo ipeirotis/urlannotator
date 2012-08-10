@@ -25,7 +25,7 @@ class RWSynchronize247(object):
         """
         self.lock.writer_acquire()
 
-    def modified_release(self, func, switch=True, *args, **kwargs):
+    def modified_release(self, func=None, switch=True, *args, **kwargs):
         """
         Returns modified instance's lock.
 
@@ -35,7 +35,7 @@ class RWSynchronize247(object):
             self._switch_with_lock(func, *args, **kwargs)
         self.lock.writer_release()
 
-    def switch(self, func, *args, **kwargs):
+    def switch(self, func=None, *args, **kwargs):
         """
         Cold switch. Aquires all locks and runs switch. In result whole
         template 24/7 instance is blocked for switch time.
@@ -44,10 +44,11 @@ class RWSynchronize247(object):
         self._switch_with_lock(func, *args, **kwargs)
         self.lock.writer_release()
 
-    def _switch_with_lock(self, func, *args, **kwargs):
+    def _switch_with_lock(self, func=None, *args, **kwargs):
         """
         Hot switch. Use only when you hold the modified lock.
         """
         self.rwlock.writer_acquire()
-        func(*args, **kwargs)
+        if func:
+            func(*args, **kwargs)
         self.rwlock.writer_release()
