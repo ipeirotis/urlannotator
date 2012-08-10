@@ -17,3 +17,4 @@ numpy
 nltk
 django-tastypie
 google-api-python-client
+-e git+git@github.com:10clouds/tagasauris-api.git#egg=tagasauris-api.egg

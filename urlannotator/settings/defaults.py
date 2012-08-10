@@ -307,3 +307,7 @@ CELERYBEAT_SCHEDULE = {
 # Test runner
 # CELERY_ALWAYS_EAGER = True
 TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
+
+TAGASAURIS_LOGIN = ''
+TAGASAURIS_PASS = ''
+TAGASAURIS_HOST = ''
