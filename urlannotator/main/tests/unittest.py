@@ -209,6 +209,7 @@ class SettingsTests(TestCase):
     def setUp(self):
         self.u = User.objects.all()[0]
         self.c = Client()
+        self.c.login(username='test', password='!')
 
     def testBasic(self):
         resp = self.c.get(reverse('settings'))
@@ -260,7 +261,7 @@ class SettingsTests(TestCase):
         self.assertNotIn('success', resp.context)
 
     def testAssociation(self):
-        resp = self.c.get(reverse('settings'))
+        resp = self.c.get(reverse('settings'), follow=True)
         self.assertNotIn('facebook', resp.context)
         self.assertNotIn('google', resp.context)
         self.assertNotIn('twitter', resp.context)
