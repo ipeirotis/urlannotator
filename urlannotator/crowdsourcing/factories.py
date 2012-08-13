@@ -14,12 +14,6 @@ TAGASAURIS_VOTING_WORKFLOW = 'voting'
 
 
 class ExternalJobsFactory(object):
-    """
-    Gets:
-        Job id.
-    Result:
-        None
-    """
 
     def initialize_job(self, job_id, *args, **kwargs):
 
@@ -29,7 +23,13 @@ class ExternalJobsFactory(object):
             settings.TAGASAURIS_PASS, settings.TAGASAURIS_HOST)
 
         def create_job(c, job, task_type):
+            # Unique id for tagasauris job within our tagasauris account.
             ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+
+            # Tagasauris Job is created with dummy media object (soo ugly...).
+            # Before job creation we must configure Tagasauris account and
+            # workflows. Account must have disabled billings & workflows need
+            # to have "external" flag set.
             result = c.create_job(
                 id=ext_id,
                 title=job.title,
@@ -44,11 +44,15 @@ class ExternalJobsFactory(object):
 
             return ext_id, result
 
+        # TODO: we can run it in tasks with proper polling/callback with info
+        # of job creation status.
         sample_gatering_key, _ = create_job(c, job,
             TAGASAURIS_SAMPLE_GATHERER_WORKFLOW)
         voting_key, _ = create_job(c, job, TAGASAURIS_VOTING_WORKFLOW)
 
+        # Our link to tagasauris jobs.
         TagasaurisJobs(
+            urlannotator_job_id=job.id,
             sample_gatering_key=sample_gatering_key,
             voting_key=voting_key,
             beatthemachine_key=None

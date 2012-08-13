@@ -17,6 +17,7 @@ class BeatTheMachineSamples(Sample):
 
 
 class TagasaurisJobs(models.Model):
+    urlannotator_job_id = models.CharField(max_length=25)
     sample_gatering_key = models.CharField(max_length=25)
     voting_key = models.CharField(max_length=25)
     beatthemachine_key = models.CharField(max_length=25, null=True, blank=True)
