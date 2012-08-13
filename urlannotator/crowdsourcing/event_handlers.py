@@ -1,6 +1,7 @@
 from celery import task, Task, registry
 
 from tasks import send_validated_samples
+from factories import ExternalJobsFactory
 
 
 @task()
@@ -23,6 +24,21 @@ class SamplesValidationManager(Task):
 
 new_sample_task = registry.tasks[SamplesValidationManager.name]
 
+
+@task()
+class ExternalJobsManager(Task):
+    """ Manage creation of external jobs creation.
+    """
+
+    def __init__(self):
+        self.factory = ExternalJobsFactory()
+
+    def run(self, *args, **kwargs):
+        self.factory.initialize_job(*args, **kwargs)
+
+initialize_external_jobs = registry.tasks[ExternalJobsManager.name]
+
 FLOW_DEFINITIONS = [
     (r'^EventNewSample$', new_sample_task),
+    (r'^EventNewJobInitialization$', initialize_external_jobs),
 ]
