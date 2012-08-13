@@ -4,6 +4,7 @@ import threading
 from Queue import Queue
 
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from urlannotator.tools.web_extractors import get_web_screenshot, get_web_text
 from urlannotator.tools.synchronization import RWSynchronize247
@@ -11,6 +12,7 @@ from urlannotator.tools.synchronization import RWSynchronize247
 
 class WebExtractorsTests(TestCase):
 
+    @override_settings(TOOLS_TESTING=False)
     def testWebTextExtractor(self):
         text = get_web_text('google.com')
         self.assertTrue('google' in text)
@@ -19,6 +21,7 @@ class WebExtractorsTests(TestCase):
         # self.assertTrue('10Clouds' in text)
         # self.assertTrue('We make great apps' in text)
 
+    @override_settings(TOOLS_TESTING=False)
     def testWebScreenshotExtractor(self):
         screenshot = get_web_screenshot('google.com')
 

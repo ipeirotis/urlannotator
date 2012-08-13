@@ -1,17 +1,17 @@
 from django.test import TestCase
+from django.contrib.auth.models import User
 
-from urlannotator.main.models import Job, Account
+from urlannotator.main.models import Job
 from urlannotator.sample_gathering.simple_gatherer import simple_gatherer
 from urlannotator.classification.models import ClassifiedSample
 
 
 class testSampleGatherer(TestCase):
-    fixtures = ['sample_test_fixture.json']
-
     def setUp(self):
-        acc = Account.objects.all()[0]
+        self.u = User.objects.create_user(username='testing', password='test')
+
         self.job = Job.objects.create_active(
-            account=acc,
+            account=self.u.get_profile(),
             no_of_urls=30,
             gold_samples=[
                 {'url':'google.com', 'label':'Yes'},

@@ -50,6 +50,8 @@ def extract_words(text):
 def get_web_text(url):
     """ Using links we extract content from web.
     """
+    if settings.TOOLS_TESTING:
+        return 'test'
 
     # Simply calling links/lynx
     return extract_words(subprocess.check_output(["links", "-dump", url]))
@@ -63,6 +65,9 @@ def get_web_screenshot(url):
     Url is put together from s3 server name and object path.
     As result we return url to screenshot.
     """
+
+    if settings.TOOLS_TESTING:
+        return url
 
     slugified_url = slugify(url)
     screen_dir = "urlannotator_web_screenshot"

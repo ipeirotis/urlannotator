@@ -1,9 +1,10 @@
 import datetime
 
 from django.test import TestCase
+from django.contrib.auth.models import User
 
-from urlannotator.main.models import (Job, Account,
-    SpentStatistics, URLStatistics, ProgressStatistics)
+from urlannotator.main.models import (Job, SpentStatistics, URLStatistics,
+    ProgressStatistics)
 from urlannotator.statistics.spent_monitor import spent_monitor
 from urlannotator.statistics.url_monitor import url_monitor
 from urlannotator.statistics.progress_monitor import progress_monitor
@@ -15,11 +16,20 @@ from urlannotator.classification.models import ClassifierPerformance
 
 
 class testJobMonitors(TestCase):
-    fixtures = ['init_test_fixture.json']
 
     def setUp(self):
-        acc = Account.objects.all()[0]
-        self.job = Job.objects.filter(account=acc)[0]
+        self.u = User.objects.create_user(username='testing', password='test')
+
+        self.job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            no_of_urls=30,
+            gold_samples=[
+                {'url':'google.com', 'label':'Yes'},
+                {'url':'wikipedia.org', 'label':'Yes'},
+                {'url':'http://www.dec.ny.gov/animals/9358.html', 'label':'Yes'},
+                {'url':'http://www.enchantedlearning.com/subjects/mammals/raccoon/Raccoonprintout.shtml', 'label':'Yes'},
+            ]
+        )
 
     def testMonitors(self):
         monitor_list = [
@@ -34,11 +44,20 @@ class testJobMonitors(TestCase):
 
 
 class testStatExtraction(TestCase):
-    fixtures = ['init_test_fixture.json']
 
     def setUp(self):
-        acc = Account.objects.all()[0]
-        self.job = Job.objects.filter(account=acc)[0]
+        self.u = User.objects.create_user(username='testing', password='test')
+
+        self.job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            no_of_urls=30,
+            gold_samples=[
+                {'url':'google.com', 'label':'Yes'},
+                {'url':'wikipedia.org', 'label':'Yes'},
+                {'url':'http://www.dec.ny.gov/animals/9358.html', 'label':'Yes'},
+                {'url':'http://www.enchantedlearning.com/subjects/mammals/raccoon/Raccoonprintout.shtml', 'label':'Yes'},
+            ]
+        )
         self.job.activate()
         self.job.set_classifier_trained()
 

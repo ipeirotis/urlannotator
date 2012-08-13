@@ -16,20 +16,24 @@ from urlannotator.main.factories import SampleFactory
 
 
 class SampleFactoryTest(TestCase):
-    fixtures = ['init_test_fixture.json']
 
     def setUp(self):
-        self.job = Job.objects.all()[0]
+        self.u = User.objects.create_user(username='testing', password='test')
+
+        self.job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
     def testSimpleSample(self):
         test_url = 'google.com'
 
-        sf = SampleFactory()
-        res = sf.new_sample(
-            job_id=self.job.id,
-            url=test_url,
-            source_type=''
-        )
+        with self.settings(TOOLS_TESTING=False):
+            sf = SampleFactory()
+            res = sf.new_sample(
+                job_id=self.job.id,
+                url=test_url,
+                source_type=''
+            )
         res.get()
 
         query = Sample.objects.filter(job=self.job, url=test_url)
@@ -44,16 +48,14 @@ class SampleFactoryTest(TestCase):
 
 
 class JobFactoryTest(TestCase):
-    fixtures = ['init_test_fixture.json']
-
     def setUp(self):
-        self.u = User.objects.all()[0]
+        self.u = User.objects.create_user(username='testing', password='test')
 
     def testJobFactory(self):
         Job.objects.create_draft(account=self.u.get_profile())
 
-        # Nothing new added. 1 sample from fixture.
-        self.assertEqual(Sample.objects.all().count(), 1)
+        # Nothing new added.
+        self.assertEqual(Sample.objects.all().count(), 0)
 
         gold_samples = [{'url': 'google.com', 'label': 'Yes'}]
         Job.objects.create_active(
@@ -62,9 +64,9 @@ class JobFactoryTest(TestCase):
         )
 
         # New sample created
-        self.assertEqual(Sample.objects.all().count(), 2)
-        # New Gold Sample + 1 from fixture
-        self.assertEqual(GoldSample.objects.all().exclude(label='').count(), 2)
+        self.assertEqual(Sample.objects.all().count(), 1)
+        # New Gold Sample
+        self.assertEqual(GoldSample.objects.all().exclude(label='').count(), 1)
 
 
 class BaseNotLoggedInTests(TestCase):
@@ -162,12 +164,12 @@ class BaseNotLoggedInTests(TestCase):
 
 
 class LoggedInTests(TestCase):
-    fixtures = ['init_test_fixture.json']
 
     def setUp(self):
-        self.u = User.objects.all()[0]
+        self.u = User.objects.create_user(username='testing', password='test')
+
         self.c = Client()
-        self.c.login(username='test', password='!')
+        self.c.login(username='testing', password='test')
 
     def createProject(self, user):
         Job.objects.create_active(
@@ -185,11 +187,11 @@ class LoggedInTests(TestCase):
         self.createProject(self.u)
         self.createProject(self.u)
 
-        self.assertTrue(Job.objects.all().count() == 3)
+        self.assertEqual(Job.objects.all().count(), 2)
         resp = self.c.get(reverse('index'))
 
         self.assertTrue('projects' in resp.context)
-        self.assertTrue(len(resp.context['projects']) == 3)
+        self.assertEqual(len(resp.context['projects']), 2)
 
     def testLogIn(self):
         resp = self.c.post(reverse('login'),
@@ -204,12 +206,12 @@ class LoggedInTests(TestCase):
 
 
 class SettingsTests(TestCase):
-    fixtures = ['init_test_fixture.json']
 
     def setUp(self):
-        self.u = User.objects.all()[0]
+        self.u = User.objects.create_user(username='testing', password='test')
+
         self.c = Client()
-        self.c.login(username='test', password='!')
+        self.c.login(username='testing', password='test')
 
     def testBasic(self):
         resp = self.c.get(reverse('settings'))
@@ -239,7 +241,7 @@ class SettingsTests(TestCase):
             'Your old password was entered incorrectly. '
             'Please enter it again.')
 
-        resp = self.c.post(reverse('settings'), {'old_password': '!',
+        resp = self.c.post(reverse('settings'), {'old_password': 'test',
             'submit': 'password', 'new_password1': 'test2',
             'new_password2': 'test2'},
             follow=True)
@@ -299,12 +301,12 @@ class SettingsTests(TestCase):
 
 
 class ProjectTests(TestCase):
-    fixtures = ['init_test_fixture.json']
 
     def setUp(self):
+        self.u = User.objects.create_user(username='testing', password='test')
+
         self.c = Client()
-        self.u = User.objects.all()[0]
-        self.c.login(username='test', password='!')
+        self.c.login(username='testing', password='test')
 
     def testBasic(self):
         # No odesk association - display alert
@@ -575,12 +577,11 @@ class DocsTest(TestCase):
 
 
 class ApiTests(TestCase):
-    fixtures = ['init_test_fixture.json']
 
     def setUp(self):
         self.api_url = '/api/v1/'
-        self.user = User.objects.all()[0]
-        self.user.save()
+        self.user = User.objects.create_user(username='testing', password='test')
+
         self.c = Client()
 
     def testJobs(self):

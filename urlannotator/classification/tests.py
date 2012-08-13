@@ -14,10 +14,9 @@ from urlannotator.classification.management.commands.google_monitor import (
 
 
 class Classifier247Tests(TestCase):
-    fixtures = ['classification_test_fixture.json']
 
     def setUp(self):
-        self.u = User.objects.get(username='test')
+        self.u = User.objects.create_user(username='testing', password='test')
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
@@ -58,10 +57,13 @@ class Classifier247Tests(TestCase):
 
 
 class SimpleClassifierTests(TestCase):
-    fixtures = ['classification_test_fixture.json']
 
     def setUp(self):
-        self.u = User.objects.get(username='test')
+        self.u = User.objects.create_user(username='testing', password='test')
+
+        self.job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
         self.job = Job.objects.all()[0]
 
@@ -102,15 +104,16 @@ class SimpleClassifierTests(TestCase):
 
 
 class TrainingSetManagerTests(TestCase):
-    fixtures = ['classification_test_fixture.json']
 
     def testTrainingSet(self):
         job = Job()
         self.assertEqual(TrainingSet.objects.newest_for_job(job), None)
 
-        u = User.objects.get(username='test')
+        u = User.objects.create_user(username='testing', password='test')
 
-        job = Job.objects.all()[0]
+        job = Job.objects.create_active(
+            account=u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
         ts = TrainingSet(job=job)
         ts.save()
@@ -119,12 +122,13 @@ class TrainingSetManagerTests(TestCase):
 
 
 class ClassifierFactoryTests(TestCase):
-    fixtures = ['classification_test_fixture.json']
 
     def setUp(self):
-        self.u = User.objects.get(username='test')
+        self.u = User.objects.create_user(username='testing', password='test')
 
-        self.job = Job.objects.all()
+        self.job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
     def testClassifierFactory(self):
         job = Job.objects.create_active(
@@ -142,17 +146,18 @@ class ClassifierFactoryTests(TestCase):
 
 
 class GoogleMonitorTests(TestCase):
-    fixtures = ['classification_test_fixture.json']
 
     def setUp(self):
-        self.u = User.objects.get(username='test')
+        self.u = User.objects.create_user(username='testing', password='test')
 
-        self.job = Job.objects.get(id=1)
+        self.job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
     def testGoogleMonitor(self):
         monitor = GoogleTrainingMonitor()
 
-        entry = Classifier.objects.get(job=self.job)
+        entry = Classifier.objects.get(job=self.job, main=True)
         entry.type = 'GooglePredictionClassifier'
         entry.parameters = json.dumps({'model': 'test', 'training': 'RUNNING'})
         entry.save()
@@ -181,7 +186,7 @@ class GoogleMonitorTests(TestCase):
         monitor.run()
 
         GoogleTrainingMonitor.run = old_status
-        entry = Classifier.objects.get(job=self.job)
+        entry = Classifier.objects.get(job=self.job, main=True)
         params = entry.parameters
         self.assertFalse('training' in params)
         job = Job.objects.get(id=self.job.id)
