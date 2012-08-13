@@ -312,3 +312,6 @@ TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 TAGASAURIS_LOGIN = ''
 TAGASAURIS_PASS = ''
 TAGASAURIS_HOST = ''
+
+# Tools testing flag. If set to False, several tool's behaviour won't be mocked
+TOOLS_TESTING = False
