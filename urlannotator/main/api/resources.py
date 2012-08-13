@@ -130,19 +130,21 @@ class SampleResource(ModelResource):
         try:
             tag_job = TagasaurisJobs.objects.get(
                 sample_gatering_key=kwargs['tagasauris_job_id'])
+            job = Job.objects.get(id=tag_job.urlannotator_job_id)
         except (TagasaurisJobs.DoesNotExist, Job.DoesNotExist):
             return self.create_response(request, {'error': 'Wrong job.'})
 
         url = urllib.unquote_plus(request.POST['url'])
+        worker_id = urllib.unquote_plus(request.POST['worker_id'])
 
-        sf = SampleFactory()
-        res = sf.new_sample(
-            job_id=tag_job.urlannotator_job_id,
+        sample = ClassifiedSample.objects.create_by_worker(
+            job=job,
             url=url,
-            source_type=''
+            label='',
+            source_val=worker_id
         )
 
         return self.create_response(
             request,
-            {'request_id': res.id}
+            {'request_id': sample.id}
         )
