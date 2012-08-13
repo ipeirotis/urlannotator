@@ -16,7 +16,7 @@ TAGASAURIS_VOTING_WORKFLOW = 'voting'
 class ExternalJobsFactory(object):
 
     def initialize_job(self, job_id, *args, **kwargs):
-        if settings.TOOLS_TESTINGS:
+        if settings.TOOLS_TESTING:
             return
 
         job = Job.objects.get(id=job_id)
