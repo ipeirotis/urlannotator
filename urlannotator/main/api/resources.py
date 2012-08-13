@@ -3,7 +3,9 @@ from django.conf.urls import url
 import urllib
 
 from urlannotator.main.models import Job
+from urlannotator.main.factories import SampleFactory
 from urlannotator.classification.models import ClassifiedSample
+from urlannotator.crowdsourcing.models import TagasaurisJobs
 
 
 class JobResource(ModelResource):
@@ -98,3 +100,51 @@ class JobResource(ModelResource):
             resp['outputLabel'] = classified_sample.label
 
         return self.create_response(request, resp)
+
+
+class SampleResource(ModelResource):
+    """ Entry point for externally gathered samples.
+    """
+
+    class Meta:
+        resource_name = 'sample'
+        list_allowed_methods = ['post']
+
+    def override_urls(self):
+        return [
+            url(r'^(?P<resource_name>%s)/tagasauris/'
+                '(?P<tagasauris_job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('add_from_tagasauris'),
+                name='sample_add_from_tagasauris'),
+        ]
+
+    def add_from_tagasauris(self, request, **kwargs):
+        """
+            Initiates classification on passed url using classifier
+            associated with job. Returns task id on success.
+        """
+        self.method_check(request, allowed=['post'])
+        if 'url' not in request.POST:
+            return self.create_response(request, {'error': 'Wrong url.'})
+
+        try:
+            tag_job = TagasaurisJobs.objects.get(
+                sample_gatering_key=kwargs['tagasauris_job_id'])
+            job = Job.objects.get(id=tag_job.urlannotator_job_id)
+        except (TagasaurisJobs.DoesNotExist, Job.DoesNotExist):
+            return self.create_response(request, {'error': 'Wrong job.'})
+
+        url = urllib.unquote_plus(request.POST['url'])
+        worker_id = urllib.unquote_plus(request.POST['worker_id'])
+
+        sample = ClassifiedSample.objects.create_by_worker(
+            job=job,
+            url=url,
+            label='',
+            source_val=worker_id
+        )
+
+        return self.create_response(
+            request,
+            {'request_id': sample.id}
+        )
