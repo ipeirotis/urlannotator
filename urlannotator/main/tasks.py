@@ -42,7 +42,7 @@ def web_screenshot_extraction(sample_id, url=None):
 
 @task()
 def create_sample(extraction_result, temp_sample_id, job_id, url,
-    source_type, source_val='', label=None, silent=False,*args, **kwargs):
+    source_type, source_val='', label=None, silent=False, *args, **kwargs):
     """
     Creates real sample using TemporarySample. If error while capturing web
     propagate it. Finally deletes TemporarySample.

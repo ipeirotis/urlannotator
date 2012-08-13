@@ -245,6 +245,7 @@ class Job(models.Model):
 # Sample source types breakdown:
 # owner - Sample created by the job creator. source_val is empty.
 SAMPLE_SOURCE_OWNER = 'owner'
+SAMPLE_TAGASAURIS_WORKER = 'owner'
 
 
 class SampleManager(models.Manager):
@@ -258,6 +259,20 @@ class SampleManager(models.Manager):
         send_event(
             'EventNewRawSample',
             source_type=SAMPLE_SOURCE_OWNER,
+            *args, **kwargs
+        )
+
+    def create_by_worker(self, *args, **kwargs):
+        '''
+            Asynchronously creates a new sample with tagasauris worker as a
+            source.
+        '''
+        if 'source_type' in kwargs:
+            kwargs.pop('source_type')
+
+        send_event(
+            'EventNewRawSample',
+            source_type=SAMPLE_TAGASAURIS_WORKER,
             *args, **kwargs
         )
 
