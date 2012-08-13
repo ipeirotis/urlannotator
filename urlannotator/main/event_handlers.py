@@ -89,7 +89,10 @@ class GoldSamplesMonitor(Task):
             # we are unlucky
             pass
         finally:
-            lock.release()
+            try:
+                lock.release()
+            except:
+                pass
 
 
 new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]
