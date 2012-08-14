@@ -132,6 +132,10 @@ class Job(models.Model):
         self.status = JOB_STATUS_ACTIVE
         self.activated = now()
         self.save()
+        send_event(
+            "EventNewJobInitializationDone",
+            job_id=self.id,
+        )
 
     def initialize(self):
         self.status = JOB_STATUS_INIT
@@ -458,6 +462,7 @@ class Worker(models.Model):
             Returns the time the worker started to work on the job at.
         '''
         return datetime.datetime.now()
+
 
 class TemporarySample(models.Model):
     """

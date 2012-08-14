@@ -5,8 +5,11 @@ import random
 import os
 import csv
 import json
+import time
+import datetime
 
 from docutils import core
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.template import RequestContext, Context
@@ -31,6 +34,7 @@ from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats)
 from urlannotator.classification.models import (ClassifierPerformance,
     ClassifiedSample)
+from urlannotator.logging.models import LogEntry, LongActionEntry
 
 
 def get_activation_key(email, num, salt_size=10,
@@ -43,6 +47,32 @@ def get_activation_key(email, num, salt_size=10,
     salt = ''.join(random.choice(salt_chars) for x in range(salt_size))
     key.update('%s%s%d' % (salt, email, num))
     return '%s-%d' % (key.hexdigest(), num)
+
+
+@login_required
+def alerts_view(request):
+    jobs = Job.objects.filter(account=request.user.get_profile())
+    entries = LogEntry.objects.filter(
+        job__in=jobs,
+        read=False,
+    ).order_by('id')
+    alerts = [{
+        'id': entry.id,
+        'text': entry.__unicode__(),
+    } for entry in entries]
+    entries.update(read=True)
+
+    actions = LongActionEntry.objects.running_for_user(request.user)
+    actions = [{
+        'id': action.id,
+        'text': action.__unicode__(),
+    } for action in actions]
+
+    res = {
+        'alerts': alerts,
+        'actions': actions,
+    }
+    return HttpResponse(json.dumps(res))
 
 
 @csrf_protect

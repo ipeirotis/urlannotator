@@ -49,11 +49,11 @@ class GoldSamplesMonitor(Task):
     def __init__(self):
         self.samples = []
 
-    def run(self, sample_id, *args, **kwargs):
+    def run(self, gold_id, *args, **kwargs):
         # FIXME: Mock
-        self.samples.append(sample_id)
+        self.samples.append(gold_id)
 
-        gold_sample = GoldSample.objects.get(id=sample_id)
+        gold_sample = GoldSample.objects.get(id=gold_id)
         job = gold_sample.sample.job
 
         # If training set is not prepared, retry later

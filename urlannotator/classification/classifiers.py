@@ -189,6 +189,8 @@ class SimpleClassifier(Classifier):
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample.
         """
+        import time
+        time.sleep(30)
         entry = ClassifierModel.objects.get(id=self.id)
         job = entry.job
         if turn_off:

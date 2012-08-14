@@ -78,7 +78,11 @@ def create_sample(extraction_result, temp_sample_id, job_id, url,
                     label=label
                 )
                 gold.save()
-                send_event("EventNewGoldSample", gold.id)
+                send_event(
+                    "EventNewGoldSample",
+                    job_id=job.id,
+                    gold_id=gold.id,
+                )
 
             # Ordinary sample
             else:
@@ -159,7 +163,11 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
                 label=label
             )
             gold.save()
-            send_event("EventNewGoldSample", gold.id)
+            send_event(
+                "EventNewGoldSample",
+                job_id=job.id,
+                gold_id=gold.id,
+            )
 
         # Ordinary sample
         else:

@@ -114,6 +114,8 @@
               {% endif %}
             {% endblock %}
           </div>
+          <div id="alert-box" class="row-fluid">
+          </div>
           <div class="row-fluid">
           {% block main %}
           {% endblock %}
@@ -132,6 +134,41 @@
             {% compressed_js 'core' %}
             <script type="text/javascript">
               $('#loginDiv').bind('click', function (e) { e.stopPropagation() })
+            </script>
+            <script type="text/javascript">
+              function insertAlert(text, id){
+                text = '<div rel="tooltip" title="test" id="alert-'+id+'" class="alert alert-info fade in"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
+                $('#alert-box').prepend(text);
+                setTimeout("$('#alert-"+id+"').alert('close')", 15 * 1000);
+              };
+
+              function insertAction(action){
+                text = '<div id="action-'+action.id+'" class="alert action fade in"><button data-dismiss="alert" class="close" type="button">×</button>'+action.text+'</div>';
+                $('#alert-box').prepend(text);
+              };
+
+              function removeActions(){
+                $('.action').remove()
+              };
+
+              function checkAlerts(){
+                $.get("{% url alerts_view %}", function(data) {
+                  var res = JSON.parse(data);
+                  var alerts = res['alerts'];
+                  for (alert in alerts){
+                    insertAlert(alerts[alert].text, alerts[alert].id)
+                  };
+
+                  var actions = res['actions'];
+                  removeActions()
+                  for (action in actions){
+                    insertAction(actions[action])
+                  };
+                  setTimeout("checkAlerts()", 10 * 1000);
+                });
+              }
+
+              checkAlerts();
             </script>
         {% endblock %}
         <!-- end scripts -->

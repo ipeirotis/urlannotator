@@ -79,7 +79,10 @@ def train_on_set(set_id):
     samples = (training_sample
         for training_sample in training_set.training_samples.all())
     classifier.train(samples, set_id=set_id)
-
+    send_event(
+        "EventClassifierTrained",
+        job_id=job.id,
+    )
 
     # Gold samples created (since we are here), classifier created (checked).
     # Job has been fully initialized
@@ -110,6 +113,11 @@ def classify(sample_id, from_name='', *args, **kwargs):
     class_sample = ClassifiedSample.objects.get(id=sample_id)
     class_sample.label = label
     class_sample.save()
+    send_event(
+        'EventSampleClassified',
+        class_sample=class_sample.id,
+        sample_id=class_sample.sample.id,
+    )
 
 
 @task
