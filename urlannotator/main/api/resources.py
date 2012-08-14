@@ -3,7 +3,6 @@ from django.conf.urls import url
 import urllib
 
 from urlannotator.main.models import Job
-from urlannotator.main.factories import SampleFactory
 from urlannotator.classification.models import ClassifiedSample
 from urlannotator.crowdsourcing.models import TagasaurisJobs
 

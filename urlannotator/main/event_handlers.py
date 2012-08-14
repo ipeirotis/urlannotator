@@ -84,10 +84,6 @@ class GoldSamplesMonitor(Task):
                         "EventTrainingSetCompleted",
                         training_set.id
                     )
-        except TimeoutError:
-            # Lock taken for too long. Ignore - something is screwed up or
-            # we are unlucky
-            pass
         finally:
             try:
                 lock.release()

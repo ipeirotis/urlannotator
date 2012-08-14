@@ -32,7 +32,11 @@ class RWSynchronize247(object):
         :param switch: perform instances switch writer :=: reader
         """
         if switch:
-            self._switch_with_lock(func, *args, **kwargs)
+            try:
+                self._switch_with_lock(func, *args, **kwargs)
+            finally:
+                self.lock.writer_release()
+                return
         self.lock.writer_release()
 
     def switch(self, func=None, *args, **kwargs):
@@ -41,14 +45,23 @@ class RWSynchronize247(object):
         template 24/7 instance is blocked for switch time.
         """
         self.lock.writer_acquire()
-        self._switch_with_lock(func, *args, **kwargs)
-        self.lock.writer_release()
+        try:
+
+            self._switch_with_lock(func, *args, **kwargs)
+
+        finally:
+            self.lock.writer_release()
 
     def _switch_with_lock(self, func=None, *args, **kwargs):
         """
         Hot switch. Use only when you hold the modified lock.
         """
         self.rwlock.writer_acquire()
-        if func:
-            func(*args, **kwargs)
-        self.rwlock.writer_release()
+
+        try:
+
+            if func:
+                func(*args, **kwargs)
+
+        finally:
+            self.rwlock.writer_release()
