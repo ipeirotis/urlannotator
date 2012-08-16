@@ -2,8 +2,7 @@ from celery import task, Task, registry
 from celery.task import current
 
 from urlannotator.flow_control import send_event
-from urlannotator.classification.models import (TrainingSet,
-    ClassifierPerformance, ClassifiedSample)
+from urlannotator.classification.models import TrainingSet, ClassifiedSample
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.main.models import Sample
 
@@ -115,6 +114,7 @@ def classify(sample_id, from_name='', *args, **kwargs):
     class_sample.save()
     send_event(
         'EventSampleClassified',
+        job_id=job.id,
         class_sample=class_sample.id,
         sample_id=class_sample.sample.id,
     )

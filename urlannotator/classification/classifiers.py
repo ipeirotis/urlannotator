@@ -3,6 +3,7 @@ import httplib2
 import os
 import csv
 import json
+import pickle
 
 from apiclient.discovery import build
 from boto.gs.connection import GSConnection
@@ -125,10 +126,12 @@ class Classifier247(Classifier):
         """
         self.sync247.reader_lock()
 
-        res = func(*args, **kwargs)
+        try:
+            res = func(*args, **kwargs)
 
-        self.sync247.reader_release()
-        return res
+            return res
+        finally:
+            self.sync247.reader_release()
 
     def _classify(self, sample):
         writer, reader = self.update_self()
@@ -184,13 +187,31 @@ class SimpleClassifier(Classifier):
             feature_set[word] = True
         return feature_set
 
+    def get_file_name(self):
+        """
+            Returns file name under which the classifier is stored.
+        """
+        path = os.path.join('/tmp/10c/classifiers', self.model)
+        return path
+
+    def dump_classifier(self):
+        """
+            Dumps classifier to a file.
+        """
+        if not os.path.exists('/tmp/10c/classifiers'):
+            os.makedirs('/tmp/10c/classifiers')
+
+        print 'dumping classifier to', self.get_file_name()
+        with open(self.get_file_name(), 'wb') as f:
+            pickle.dump(self.classifier, f)
+
     def train(self, samples=[], turn_off=True, set_id=0):
         """
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample.
         """
-        import time
-        time.sleep(30)
+        # import time
+        # time.sleep(10)
         entry = ClassifierModel.objects.get(id=self.id)
         job = entry.job
         if turn_off:
@@ -212,14 +233,29 @@ class SimpleClassifier(Classifier):
             self.classifier = nltk.classify.DecisionTreeClassifier.train(
                 train_set)
 
+            self.dump_classifier()
             job.set_classifier_trained()
+
+    def load_classifier(self):
+        """
+            Loads classifier from file.
+        """
+        print 'attempting to load', self.get_file_name()
+        if os.path.exists(self.get_file_name()):
+            print 'loading classifier from', self.get_file_name()
+            with open(self.get_file_name(), 'rb') as f:
+                self.classifier = pickle.load(f)
+                print self.classifier
 
     def classify(self, class_sample):
         """
             Classifies gives sample and saves result to the model.
         """
+        self.load_classifier()
+
         if self.classifier is None:
             return None
+
         sample = class_sample
         if not hasattr(class_sample, 'text'):
             sample = class_sample.sample
@@ -240,8 +276,11 @@ class SimpleClassifier(Classifier):
             Classifies given sample and returns more detailed data.
             Currently only label.
         """
+        self.load_classifier()
+
         if self.classifier is None:
             return None
+
         sample = class_sample
         if not hasattr(class_sample, 'text'):
             sample = class_sample.sample
@@ -256,6 +295,7 @@ class SimpleClassifier(Classifier):
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
         return label
+
 # Google Storage parameters used in GooglePrediction classifier
 GOOGLE_STORAGE_PREFIX = 'gs'
 GOOGLE_BUCKET_NAME = 'urlannotator'

@@ -14,9 +14,10 @@ def InvalidClassifier(name, **kwargs):
     print 'Unhandled classifier', name
 
 
-def SimpleClassifier_init(entry, *args, **kwargs):
+def SimpleClassifier_init(entry, prefix, job, *args, **kwargs):
     entry.type = 'SimpleClassifier'
     params = {
+        'model': '%sprefix-simple-%d' % (prefix, job.id),
         'training_set': 0,
     }
     entry.parameters = json.dumps(params)
@@ -70,10 +71,14 @@ classifier_inits = {
 
 
 def SimpleClassifer_ctor(job, entry, *args, **kwargs):
-    classifier = SimpleClassifier(job.description, ['Yes', 'No'])
+    classifier = SimpleClassifier(
+        job.description,
+        ['Yes', 'No'],
+    )
+    classifier.model = entry.parameters['model']
     classifier.id = entry.id
+
     training_set = TrainingSet.objects.newest_for_job(job)
-    classifier.train(set_id=training_set.id)
     return classifier
 
 

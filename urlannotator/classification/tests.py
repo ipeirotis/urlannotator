@@ -1,6 +1,7 @@
 import json
 
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job
@@ -58,6 +59,7 @@ class Classifier247Tests(TestCase):
 
 class SimpleClassifierTests(TestCase):
 
+    @override_settings(JOB_DEFAULT_CLASSIFIER='SimpleClassifier')
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
 
@@ -96,7 +98,11 @@ class SimpleClassifierTests(TestCase):
             classifier_name='SimpleClassifier',
         )
         sc = classifier_factory.create_classifier_from_id(sc_id)
-        # Tests without training
+
+        training_set = TrainingSet.objects.newest_for_job(self.job)
+
+        sc.train(set_id=training_set.id)
+
         test_sample = self.classified[0]
         # Classifier already trained
         self.assertNotEqual(sc.classify(test_sample), None)

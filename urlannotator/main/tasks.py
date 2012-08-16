@@ -87,7 +87,11 @@ def create_sample(extraction_result, temp_sample_id, job_id, url,
             # Ordinary sample
             else:
                 # Sample created sucesfully - pushing event.
-                send_event("EventNewSample", sample_id)
+                send_event(
+                    "EventNewSample",
+                    job_id=job.id,
+                    sample_id=sample_id,
+                )
 
     # We don't need this object any more.
     temp_sample.delete()
@@ -172,7 +176,11 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
         # Ordinary sample
         else:
             # Sample created sucesfully - pushing event.
-            send_event("EventNewSample", new_sample.id)
+            send_event(
+                "EventNewSample",
+                job_id=job.id,
+                sample_id=new_sample.id,
+            )
 
     except IntegrityError:
         # Such sample has been created in the mean time, dont do anything
