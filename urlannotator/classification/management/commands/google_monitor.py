@@ -22,8 +22,8 @@ class GoogleTrainingMonitor(object):
         )
         for classifier_entry in classifiers:
             job = classifier_entry.job
-            classifier = classifier_factory.create_classifier(
-                job_id=job.id
+            classifier = classifier_factory.create_classifier_from_id(
+                classifier_entry.id
             )
 
             params = classifier_entry.parameters

@@ -2,8 +2,7 @@ from tastypie.resources import ModelResource
 from django.conf.urls import url
 import urllib
 
-from urlannotator.main.models import Job
-from urlannotator.main.factories import SampleFactory
+from urlannotator.main.models import Job, Sample
 from urlannotator.classification.models import ClassifiedSample
 from urlannotator.crowdsourcing.models import TagasaurisJobs
 
@@ -137,8 +136,8 @@ class SampleResource(ModelResource):
         url = urllib.unquote_plus(request.POST['url'])
         worker_id = urllib.unquote_plus(request.POST['worker_id'])
 
-        sample = ClassifiedSample.objects.create_by_worker(
-            job=job,
+        sample = Sample.objects.create_by_worker(
+            job_id=job.id,
             url=url,
             label='',
             source_val=worker_id

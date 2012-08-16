@@ -4,6 +4,7 @@ import os
 import csv
 import json
 import pickle
+import time
 
 from apiclient.discovery import build
 from boto.gs.connection import GSConnection
@@ -15,20 +16,37 @@ from boto.s3.key import Key
 from urlannotator.classification.models import (Classifier as ClassifierModel,
     TrainingSet)
 from urlannotator.tools.synchronization import RWSynchronize247
+from urlannotator.statistics.stat_extraction import update_classifier_stats
+
+# Classifier training statuses breakdown:
+# CLASS_TRAIN_STATUS_DONE - training has been completed.
+# CLASS_TRAIN_STATUS_RUNNING - training is still in progress.
+CLASS_TRAIN_STATUS_DONE = 'DONE'
+CLASS_TRAIN_STATUS_RUNNING = 'RUNNING'
 
 
 class Classifier(object):
     def train(self, samples=[], turn_off=True, set_id=0):
-        pass
+        raise NotImplementedError
 
     def update(self, samples):
-        pass
+        raise NotImplementedError
 
     def classify(self, sample):
-        pass
+        raise NotImplementedError
+
+    def analyze(self):
+        raise NotImplementedError
+
+    def get_train_status(self):
+        raise NotImplementedError
 
     def classify_with_info(self, sample):
-        pass
+        raise NotImplementedError
+
+
+# Number of seconds between Classifier247 subclassifier's train status check.
+CLASS247_TRAIN_STATUS_CHECK = 10 * 60
 
 
 class Classifier247(Classifier):
@@ -69,20 +87,30 @@ class Classifier247(Classifier):
         entry.parameters['writer'] = writer_id
         entry.save()
 
+    def analyze(self):
+        self.sync247.reader_lock()
+        writer, reader = self.update_self()
+        res = reader.analyze()
+        self.sync247.reader_release()
+        return res
+
     def train_lock(self, func, turn_off=True, *args, **kwargs):
         """
         Locks the classifier during training.
         """
         self.sync247.modified_lock()
 
-        func(*args, **kwargs)
-        writer, reader = self.update_self()
+        try:
 
-        self.sync247.modified_release(
-            self.update_to_db,
-            writer_id=reader.id,
-            reader_id=writer.id,
-        )
+            func(*args, **kwargs)
+
+        finally:
+            writer, reader = self.update_self()
+            self.sync247.modified_release(
+                self.update_to_db,
+                writer_id=reader.id,
+                reader_id=writer.id,
+            )
 
     def _train(self, samples=[], set_id=0):
         writer, reader = self.update_self()
@@ -93,6 +121,21 @@ class Classifier247(Classifier):
             turn_off=False,
             set_id=set_id,
         )
+
+        trained = writer.get_train_status() == CLASS_TRAIN_STATUS_DONE
+
+        while not trained:
+            time.sleep(CLASS247_TRAIN_STATUS_CHECK)
+
+            status = writer.get_train_status()
+            trained = status == CLASS_TRAIN_STATUS_DONE
+
+        entry = ClassifierModel.objects.get(id=self.id)
+        job = entry.job
+        update_classifier_stats(self, entry.job)
+
+        if not job.is_classifier_trained():
+            job.set_classifier_trained()
 
     def train(self, samples=[], turn_off=True, set_id=0):
         self.train_lock(
@@ -205,6 +248,26 @@ class SimpleClassifier(Classifier):
         with open(self.get_file_name(), 'wb') as f:
             pickle.dump(self.classifier, f)
 
+    def analyze(self):
+        """
+            Returns classifier performance stats.
+        """
+        res = {
+            'modelDescription': {
+                'confusionMatrix': {
+                    'Yes': {
+                        'Yes': 1,
+                        'No': 0,
+                    },
+                    'No': {
+                        'Yes': 0,
+                        'No': 1,
+                    }
+                }
+            }
+        }
+        return res
+
     def train(self, samples=[], turn_off=True, set_id=0):
         """
             Trains classifier on gives samples' set. If sample has no label,
@@ -246,6 +309,9 @@ class SimpleClassifier(Classifier):
             with open(self.get_file_name(), 'rb') as f:
                 self.classifier = pickle.load(f)
                 print self.classifier
+
+    def get_train_status(self):
+        return CLASS_TRAIN_STATUS_DONE
 
     def classify(self, class_sample):
         """
@@ -340,7 +406,7 @@ class GooglePredictionClassifier(Classifier):
             return status['trainingStatus']
         except:
             # Model doesn't exist (first training).
-            return 'RUNNING'
+            return CLASS_TRAIN_STATUS_RUNNING
 
     def create_and_upload_training_data(self, samples):
         training_dir = 'urlannotator-training-data'
