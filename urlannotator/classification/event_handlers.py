@@ -1,5 +1,10 @@
+from multiprocessing.pool import ThreadPool
+
 from celery import task, Task, registry
 from celery.task import current
+from django.conf import settings
+from django.db.transaction import commit, is_dirty
+from django.db import connections
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet,
@@ -61,6 +66,25 @@ def update_classified_sample(sample_id, *args, **kwargs):
         send_event("EventNewClassifySample", class_sample.id, 'update_classified')
     return None
 
+thread_pool = None
+
+
+def init_pool():
+    global thread_pool
+    if not thread_pool:
+        thread_pool = ThreadPool(5)
+
+
+def train(set_id):
+    training_set = TrainingSet.objects.get(id=set_id)
+    job = training_set.job
+
+    classifier = classifier_factory.create_classifier(job.id)
+
+    samples = (training_sample
+        for training_sample in training_set.training_samples.all())
+    classifier.train(samples, set_id=set_id)
+
 
 @task
 def train_on_set(set_id):
@@ -70,16 +94,16 @@ def train_on_set(set_id):
     training_set = TrainingSet.objects.get(id=set_id)
     job = training_set.job
 
-    # If classifier hasn't been created, retry later
+    # If classifier hasn't been created, retry later.
     if not job.is_classifier_created():
         train_on_set.retry(countdown=30)
 
-    classifier = classifier_factory.create_classifier(job.id)
-
-    samples = (training_sample
-        for training_sample in training_set.training_samples.all())
-    classifier.train(samples, set_id=set_id)
-
+    # If we are testing tools, continue with synchronized flow.
+    if settings.TOOLS_TESTING:
+        train(set_id=set_id)
+    else:
+        init_pool()
+        thread_pool.apply_async(train, kwds={'set_id': set_id})
 
     # Gold samples created (since we are here), classifier created (checked).
     # Job has been fully initialized

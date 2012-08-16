@@ -59,3 +59,4 @@ class ExternalJobsFactory(object):
             voting_key=voting_key,
             beatthemachine_key=None
         ).save()
+        pass
