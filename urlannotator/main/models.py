@@ -256,7 +256,7 @@ class SampleManager(models.Manager):
         if 'source_type' in kwargs:
             kwargs.pop('source_type')
 
-        send_event(
+        return send_event(
             'EventNewRawSample',
             source_type=SAMPLE_SOURCE_OWNER,
             *args, **kwargs
@@ -270,7 +270,7 @@ class SampleManager(models.Manager):
         if 'source_type' in kwargs:
             kwargs.pop('source_type')
 
-        send_event(
+        return send_event(
             'EventNewRawSample',
             source_type=SAMPLE_TAGASAURIS_WORKER,
             *args, **kwargs
