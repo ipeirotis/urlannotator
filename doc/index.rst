@@ -9,6 +9,7 @@ Welcome to URL annotator's documentation!
 Contents:
 
 .. toctree::
+   tips.rst
    :maxdepth: 2
 
 
