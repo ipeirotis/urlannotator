@@ -23,15 +23,15 @@
     <tbody>
     {% for p in projects %}
       <tr>
-        <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.topic_desc}}">(i)</a></td>
+        <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">(i)</a></td>
         <td class="statusCol">{{p.get_status}}</td>
         <td class="beatMachineCol">--</td>
-        <td class="linksCol">0</td>
-        <td class="hoursSpentCol">0</td>
-        <td class="totalCostCol">0</td>
-        <td class="budgetCol">0</td>
+        <td class="linksCol">{{p.get_urls_collected}}</td>
+        <td class="hoursSpentCol">{{p.get_hours_spent}}</td>
+        <td class="totalCostCol">{{p.get_cost}}</td>
+        <td class="budgetCol">{{p.budget}}</td>
         <td class="classfierCol">0</td>
-        <td class="progressCol">0%</td>
+        <td class="progressCol">{{p.get_progress}}%</td>
       </tr>
     {% endfor %}
     </tbody>
