@@ -11,6 +11,7 @@ from django.utils.timezone import now
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.flow_control import send_event
+from urlannotator.tools.synchronization import ContextPOSIXLock
 
 LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
 
@@ -133,6 +134,10 @@ class Job(models.Model):
         return self.status == JOB_STATUS_ACTIVE
 
     def activate(self):
+        """
+            Activates current job. Due to it's nature, this method REQUIRES
+            synchronization outside.
+        """
         if self.is_active():
             return
         self.status = JOB_STATUS_ACTIVE
@@ -208,11 +213,13 @@ class Job(models.Model):
     def set_flag(self, flag):
         self.initialization_status = F('initialization_status') | flag
         self.save()
-        job = Job.objects.get(id=self.id)
-        # Possible race condition here, but not harmful since activate does no
-        # harmful changes when executed twice
-        if job.initialization_status == JOB_FLAGS_ALL:
-            job.activate()
+
+        with ContextPOSIXLock(name='job-%d-mutex' % self.id):
+            job = Job.objects.get(id=self.id)
+            # Possible race condition here, but not harmful since activate does no
+            # harmful changes when executed twice
+            if job.initialization_status == JOB_FLAGS_ALL:
+                job.activate()
 
     def unset_flag(self, flag):
         self.initialization_status = F('initialization_status') & (~flag)
