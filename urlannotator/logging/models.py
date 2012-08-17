@@ -5,6 +5,10 @@ from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.main.models import Job
 
+# Log description string formats.
+log_formats = {}
+long_formats = {}
+
 # Log types breakdown:
 LOG_TYPE_JOB_INIT_START = 0  # Job initialization has been started
 LOG_TYPE_JOB_INIT_DONE = 1  # Job initialization has been completed
@@ -17,6 +21,26 @@ LOG_TYPE_SAMPLE_CLASSIFIED = 7  # A new sample has been classified
 
 # Long action type breakdown:
 LONG_ACTION_TRAINING = 1  # Classifier training
+
+log_formats[LOG_TYPE_JOB_INIT_START] =\
+    '<a href="%(job_url)s">New job</a> initialization has been started.'
+log_formats[LOG_TYPE_JOB_INIT_DONE] =\
+    '<a href="%(job_url)s">New job</a> initialization has been completed.'
+log_formats[LOG_TYPE_NEW_SAMPLE_START] =\
+    'New sample is being created in <a href="%(job_url)s">your job</a>.'
+log_formats[LOG_TYPE_NEW_GOLD_SAMPLE] =\
+    'New gold sample has been created in <a href="%(job_url)s">your job</a>.'
+log_formats[LOG_TYPE_NEW_SAMPLE_DONE] =\
+    'New sample has been created to <a href="%(job_url)s">your job</a>.'
+log_formats[LOG_TYPE_CLASS_TRAIN_START] =\
+    '<a href="%(job_url)s">Your job\'s</a> classifier training has been started.'
+log_formats[LOG_TYPE_CLASS_TRAIN_DONE] =\
+    '<a href="%(job_url)s">Your job\'s</a> classifier training has been finished.'
+log_formats[LOG_TYPE_SAMPLE_CLASSIFIED] =\
+    'A sample has been classified for <a href="%(job_url)s">your job</a>.'
+
+long_formats[LONG_ACTION_TRAINING] =\
+    '<a href="%(job_url)s">Your job\'s</a> classifier is under training.'
 
 
 class LongActionManager(models.Manager):
@@ -58,9 +82,14 @@ class LongActionEntry(models.Model):
     objects = LongActionManager()
 
     def __unicode__(self):
-        return self.get_action_type_display()
-
-# Log entry stringify functions.
+        """
+            Formats action's string with it's parameters.
+        """
+        format_dict = {
+            'job_url': self.job.get_absolute_url(),
+        }
+        format_string = long_formats[self.action_type]
+        return format_string % format_dict
 
 
 class LogManager(models.Manager):
@@ -107,4 +136,9 @@ class LogEntry(models.Model):
             Parses a log entry into a human-readable form. Used directly in
             alert display for end-users.
         """
-        return self.get_log_type_display()
+        format_dict = {
+            'job_url': self.job.get_absolute_url(),
+        }
+        print format_dict
+        string = log_formats[self.log_type]
+        return string % format_dict

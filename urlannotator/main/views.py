@@ -56,8 +56,10 @@ def alerts_view(request):
         job__in=jobs,
         read=False,
     ).order_by('id')
+
     alerts = [{
         'id': entry.id,
+        'type': entry.log_type,
         'text': entry.__unicode__(),
     } for entry in entries]
     entries.update(read=True)
@@ -65,6 +67,7 @@ def alerts_view(request):
     actions = LongActionEntry.objects.running_for_user(request.user)
     actions = [{
         'id': action.id,
+        'type': action.action_type,
         'text': action.__unicode__(),
     } for action in actions]
 

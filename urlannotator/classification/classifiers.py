@@ -244,7 +244,6 @@ class SimpleClassifier(Classifier):
         if not os.path.exists('/tmp/10c/classifiers'):
             os.makedirs('/tmp/10c/classifiers')
 
-        print 'dumping classifier to', self.get_file_name()
         with open(self.get_file_name(), 'wb') as f:
             pickle.dump(self.classifier, f)
 
@@ -273,8 +272,6 @@ class SimpleClassifier(Classifier):
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample.
         """
-        # import time
-        # time.sleep(10)
         entry = ClassifierModel.objects.get(id=self.id)
         job = entry.job
         if turn_off:
@@ -303,12 +300,9 @@ class SimpleClassifier(Classifier):
         """
             Loads classifier from file.
         """
-        print 'attempting to load', self.get_file_name()
         if os.path.exists(self.get_file_name()):
-            print 'loading classifier from', self.get_file_name()
             with open(self.get_file_name(), 'rb') as f:
                 self.classifier = pickle.load(f)
-                print self.classifier
 
     def get_train_status(self):
         return CLASS_TRAIN_STATUS_DONE

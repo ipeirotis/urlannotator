@@ -117,6 +117,12 @@ class Job(models.Model):
 
     objects = JobManager()
 
+    @models.permalink
+    def get_absolute_url(self):
+        return ('project_view', (), {
+            'id': self.id,
+        })
+
     def get_status(self):
         return JOB_STATUS_CHOICES[self.status][1]
 
