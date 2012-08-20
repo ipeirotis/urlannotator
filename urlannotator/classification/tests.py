@@ -5,7 +5,7 @@ from django.test.utils import override_settings
 from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job
-from urlannotator.classification.classifiers import (SimpleClassifier,
+from urlannotator.classification.classifiers import (
     GooglePredictionClassifier, Classifier247)
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample)
@@ -191,6 +191,7 @@ class GoogleMonitorTests(TestCase):
         }
         monitor.run()
 
+        GooglePredictionClassifier.analyze = old_analyze
         GoogleTrainingMonitor.run = old_status
         entry = Classifier.objects.get(job=self.job, main=True)
         params = entry.parameters

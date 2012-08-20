@@ -78,7 +78,6 @@ def SimpleClassifer_ctor(job, entry, *args, **kwargs):
     classifier.model = entry.parameters['model']
     classifier.id = entry.id
 
-    training_set = TrainingSet.objects.newest_for_job(job)
     return classifier
 
 

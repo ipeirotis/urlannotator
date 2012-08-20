@@ -211,19 +211,22 @@ class Job(models.Model):
         return self.status == JOB_STATUS_INIT
 
     def set_flag(self, flag):
-        self.initialization_status = F('initialization_status') | flag
-        self.save()
-
         with POSIXLock(name='job-%d-mutex' % self.id):
+            self.initialization_status = F('initialization_status') | flag
+            self.save()
+
             job = Job.objects.get(id=self.id)
-            # Possible race condition here, but not harmful since activate does no
-            # harmful changes when executed twice
-            if job.initialization_status == JOB_FLAGS_ALL:
-                job.activate()
+            self.initialization_status = job.initialization_status
+
+            if self.initialization_status == JOB_FLAGS_ALL:
+                self.activate()
 
     def unset_flag(self, flag):
         self.initialization_status = F('initialization_status') & (~flag)
         self.save()
+
+        job = Job.objects.get(id=self.id)
+        self.initialization_status = job.initialization_status
 
     def is_flag_set(self, flag):
         return self.initialization_status & flag != 0

@@ -1,9 +1,6 @@
-import json
-
 from celery import task, Task, registry
 
 from urlannotator.main.models import Job, Sample
-from urlannotator.classification.models import ClassifierPerformance
 
 # Number of seconds between each gather
 TIME_INTERVAL = 2 * 60

@@ -2,7 +2,7 @@ import datetime
 from django.conf import settings
 from celery import group, chain
 
-from urlannotator.classification.models import TrainingSet, Classifier
+from urlannotator.classification.models import TrainingSet
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.main.models import TemporarySample, Job, Sample
 from urlannotator.main.tasks import (web_content_extraction,

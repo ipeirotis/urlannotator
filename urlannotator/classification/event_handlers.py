@@ -3,8 +3,6 @@ from multiprocessing.pool import ThreadPool
 from celery import task, Task, registry
 from celery.task import current
 from django.conf import settings
-from django.db.transaction import commit, is_dirty
-from django.db import connections
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import TrainingSet, ClassifiedSample

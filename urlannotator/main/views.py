@@ -5,8 +5,6 @@ import random
 import os
 import csv
 import json
-import time
-import datetime
 
 from docutils import core
 from django.http import HttpResponse
