@@ -11,7 +11,7 @@ from django.utils.timezone import now
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.flow_control import send_event
-from urlannotator.tools.synchronization import ContextPOSIXLock
+from urlannotator.tools.synchronization import POSIXLock
 
 LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
 
@@ -214,7 +214,7 @@ class Job(models.Model):
         self.initialization_status = F('initialization_status') | flag
         self.save()
 
-        with ContextPOSIXLock(name='job-%d-mutex' % self.id):
+        with POSIXLock(name='job-%d-mutex' % self.id):
             job = Job.objects.get(id=self.id)
             # Possible race condition here, but not harmful since activate does no
             # harmful changes when executed twice

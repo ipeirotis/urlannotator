@@ -1,5 +1,4 @@
 import urllib2
-import time
 import threading
 from Queue import Queue
 
@@ -7,7 +6,7 @@ from django.test import TestCase
 from django.test.utils import override_settings
 
 from urlannotator.tools.web_extractors import get_web_screenshot, get_web_text
-from urlannotator.tools.synchronization import RWSynchronize247
+from urlannotator.tools.synchronization import RWSynchronize247, POSIXLock
 
 
 class WebExtractorsTests(TestCase):
@@ -40,14 +39,13 @@ class SynchronizationTests(TestCase):
             write_counter = 0
             max_write_counter = 0
 
-            def __init__(self, q, lock, unique, test):
+            def __init__(self, q, lock, unique):
                 self.q = q
                 self.lock = lock
                 self.unique = unique
-                self.test = test
-                self.sync247 = RWSynchronize247('testSynchronization247')
+                self.sync247 = RWSynchronize247('testSynchronization247%s' % unique)
 
-            def readSth(self):
+            def readSth(self, queues):
 
                 self.sync247.reader_lock()
                 self.lock.acquire()
@@ -57,14 +55,12 @@ class SynchronizationTests(TestCase):
                     self.__class__.max_read_counter)
                 self.lock.release()
 
-                time.sleep(1)
-
                 self.lock.acquire()
                 self.__class__.read_counter -= 1
                 self.lock.release()
                 self.sync247.reader_release()
 
-            def writeSth(self):
+            def writeSth(self, queues):
 
                 self.sync247.modified_lock()
                 self.lock.acquire()
@@ -74,48 +70,95 @@ class SynchronizationTests(TestCase):
                     self.__class__.max_write_counter)
                 self.lock.release()
 
-                time.sleep(1)
-                # self.q.put(self.unique)
-
                 self.lock.acquire()
                 self.write_counter -= 1
                 self.lock.release()
                 self.sync247.modified_release()
 
-        def read_thread(q, inst1, inst2):
-            for _ in range(0, 1):
-                inst1.readSth()
+        def read_thread(queues, lock):
+            tc = TestClass(queues, lock, 'a')
+            queues['r'].get(block=True)
+            queues['s'].put('b')
+            tc.readSth(queues)
 
-        def write_thread(q, inst1, inst2):
-            for _ in range(0, 1):
-                inst2.writeSth()
+        def write_thread(queues, lock):
+            tc = TestClass(queues, lock, 'a')
+            queues['w'].get(block=True)
+            queues['s'].put('b')
+            tc.writeSth(queues)
 
         # from tenclouds.stacktracer import trace_start, trace_stop
         # trace_start("trace.html", interval=5, auto=True)
 
-        q = Queue()
-        lock = threading.Lock()
-        inst1 = TestClass(q, lock, 'a', self)
-        inst2 = TestClass(q, lock, 'b', self)
-        thread1 = threading.Thread(target=read_thread, args=(q, inst1, inst2))
-        thread2 = threading.Thread(target=read_thread, args=(q, inst1, inst2))
+        def test_schema(test, schema=['w', 'w', 'w', 'r'],
+            writers=3, readers=1):
+            """
+                Allows semi-synchronizingly test RWLock. We can't go any deeper
+                with atomicity due to technical reasons of semaphore testing.
 
-        wthreads = []
-        for _ in range(0, 2):
-            wthreads.append(threading.Thread(target=write_thread,
-                args=(q, inst1, inst2)))
+                Makes every writer and reader be able to enter critical section
+                in the specified order. Yet, no assumptions should be done as
+                when a thread really enters the critical section.
+            """
 
-        thread1.start()
-        thread2.start()
-        for th in wthreads:
-            th.start()
+            TestClass.read_counter = 0
+            TestClass.write_counter = 0
+            TestClass.max_write_counter = 0
+            TestClass.max_read_counter = 0
 
-        thread1.join()
-        thread2.join()
-        for th in wthreads:
-            th.join()
+            queues = {
+                'w': Queue(),
+                'r': Queue(),
+                's': Queue(),
+            }
 
-        self.assertTrue(TestClass.max_read_counter > 1)
-        self.assertTrue(TestClass.max_write_counter == 1)
+            lock = threading.Lock()
+            rthreads = []
+            for _ in range(readers):
+                rthreads.append(
+                    threading.Thread(target=read_thread, args=(queues, lock))
+                )
 
+            wthreads = []
+            for _ in range(writers):
+                wthreads.append(threading.Thread(target=write_thread,
+                    args=(queues, lock)))
+
+            for th in wthreads + rthreads:
+                th.start()
+
+            for op in schema:
+                queues[op].put('x')
+                queues['s'].get(block=True)
+
+            for th in wthreads + rthreads:
+                th.join()
+
+            test.assertTrue(TestClass.max_read_counter >= 1 or not readers)
+            test.assertTrue(TestClass.max_write_counter == 1 or not writers)
+
+        test_schema(self)
+        test_schema(self, schema=['w', 'r'], writers=1, readers=1)
+        test_schema(self, schema=['r', 'r'], writers=0, readers=2)
+        test_schema(self, schema=['w', 'w'], writers=2, readers=0)
+        test_schema(self, schema=['w', 'r', 'r', 'w', 'r', 'w', 'r', 'w', 'w',
+            'r', 'r', 'r', 'w', 'w', 'r', 'w', 'w', 'w', 'r', 'r'],
+            writers=10, readers=10)
         # trace_stop()
+
+
+class POSIXCacheTest(TestCase):
+    def testPOSIXCache(self):
+        lock = POSIXLock(name='cache-test')
+        lock_two = POSIXLock(name='cache-test')
+        self.assertEqual(lock.lock, lock_two.lock)
+
+        lock_id = id(lock.lock)
+        del lock, lock_two
+
+        # Create a different lock so that an attempt to create a lock with
+        # previous name results in an object of different id.
+        lock_two = POSIXLock(name='cache-test2')
+        lock = POSIXLock(name='cache-test')
+
+        self.assertFalse(id(lock.lock) == lock_id)

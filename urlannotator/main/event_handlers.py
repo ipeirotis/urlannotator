@@ -4,7 +4,7 @@ from factories import SampleFactory, JobFactory
 from urlannotator.classification.models import TrainingSample, TrainingSet
 from urlannotator.main.models import GoldSample
 from urlannotator.flow_control import send_event
-from urlannotator.tools.synchronization import ContextPOSIXLock
+from urlannotator.tools.synchronization import POSIXLock
 
 
 @task()
@@ -70,7 +70,7 @@ class GoldSamplesMonitor(Task):
         # Send training set completed event. Used here as we are certain no
         # new samples will come in the mean time. In general, you can't
         # assume that!
-        with ContextPOSIXLock(name=lock_key):
+        with POSIXLock(name=lock_key):
             if not job.is_gold_samples_done():
                 all_golds = len(job.gold_samples)
                 current_golds = training_set.training_samples.count()
