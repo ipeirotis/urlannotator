@@ -1,7 +1,7 @@
 =============
 URL Annotator
 =============
-Last modified: July 30, 2012
+Last modified: August 20, 2012
 
 
 Source/How to get it
@@ -40,6 +40,8 @@ Required libraries:
 - nltk
 - django-tastypie
 - google-api-python-client
+- posix-ipc
+- 10clouds/tagasauris-api
 
 (See deployment/files/requirements/base.txt)
 
