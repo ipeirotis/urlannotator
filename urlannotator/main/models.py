@@ -419,12 +419,6 @@ class Sample(models.Model):
             no_prob = cs.label_probability['No']
         return no_prob * 100
 
-# --vote--
-# label
-# sample
-# worker
-# is_valid
-
 # Worker types breakdown:
 # odesk - worker from odesk. External id points to user's odesk id.
 
@@ -468,7 +462,7 @@ class Worker(models.Model):
         #     client = odesk.Client(settings.ODESK_CLIENT_ID,
         #         settings.ODESK_CLIENT_SECRET,
         #         requesting_user.get_profile().odesk_key)
-        #     r = client.provider.get_provider('~~3f19de366cb49c91')
+        #     r = client.provider.get_provider(self.external_id)
         #     return r['dev_full_name']
         return 'Temp Name %d' % self.id
 
@@ -506,6 +500,7 @@ class Worker(models.Model):
         '''
             Returns the time the worker started to work on the job at.
         '''
+        # FIXME: Proper job start query.
         return datetime.datetime.now()
 
 

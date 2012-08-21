@@ -8,6 +8,7 @@ class WorkerQualityVote(models.Model):
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
     added_on = models.DateField()
+    is_valid = models.BooleanField(default=True)
 
 
 class BeatTheMachineSamples(Sample):
