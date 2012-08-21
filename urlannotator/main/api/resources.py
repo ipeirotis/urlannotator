@@ -6,6 +6,9 @@ from urlannotator.main.models import Job, Sample
 from urlannotator.classification.models import ClassifiedSample
 from urlannotator.crowdsourcing.models import TagasaurisJobs
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class JobResource(ModelResource):
     """ Resource allowing API access to Jobs
@@ -123,7 +126,7 @@ class SampleResource(ModelResource):
             associated with job. Returns task id on success.
         """
         self.method_check(request, allowed=['post'])
-        if 'url' not in request.POST:
+        if 'good_urls' not in request.POST:
             return self.create_response(request, {'error': 'Wrong url.'})
 
         try:
@@ -133,17 +136,21 @@ class SampleResource(ModelResource):
         except (TagasaurisJobs.DoesNotExist, Job.DoesNotExist):
             return self.create_response(request, {'error': 'Wrong job.'})
 
-        url = urllib.unquote_plus(request.POST['url'])
+        good_urls = request.POST.getlist('good_urls', None)
+        # bad_urls = request.POST.getlist('bad_urls', None)
         worker_id = urllib.unquote_plus(request.POST['worker_id'])
 
-        sample = Sample.objects.create_by_worker(
-            job_id=job.id,
-            url=url,
-            label='',
-            source_val=worker_id
-        )
+        sample_ids = []
+        for url in good_urls:
+            sample = Sample.objects.create_by_worker(
+                job_id=job.id,
+                url=url,
+                label='',
+                source_val=worker_id
+            )
+            sample_ids.append(sample.id)
 
         return self.create_response(
             request,
-            {'request_id': sample.id}
+            {'request_id': sample_ids}
         )
