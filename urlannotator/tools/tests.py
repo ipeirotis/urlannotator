@@ -154,6 +154,8 @@ class POSIXCacheTest(TestCase):
         self.assertEqual(lock.lock, lock_two.lock)
 
         lock_id = id(lock.lock)
+
+        # Drop locks' ref count to 0 - instant garbage collection
         del lock, lock_two
 
         # Create a different lock so that an attempt to create a lock with
@@ -161,4 +163,5 @@ class POSIXCacheTest(TestCase):
         lock_two = POSIXLock(name='cache-test2')
         lock = POSIXLock(name='cache-test')
 
+        # Make sure we will unlink no longer used resources.
         self.assertFalse(id(lock.lock) == lock_id)

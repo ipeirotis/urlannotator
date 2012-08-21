@@ -1,4 +1,4 @@
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import Process
 
 from celery import task, Task, registry
 from celery.task import current
@@ -63,13 +63,14 @@ def update_classified_sample(sample_id, *args, **kwargs):
         send_event("EventNewClassifySample", class_sample.id, 'update_classified')
     return None
 
-thread_pool = None
 
-
-def init_pool():
-    global thread_pool
-    if not thread_pool:
-        thread_pool = ThreadPool(5)
+def process_execute(*args, **kwargs):
+    """
+        Executes func from keyword arguments with values from them.
+        Args and kwargs are directly passed to multiprocessing.Process.
+    """
+    proc = Process(*args, **kwargs)
+    proc.start()
 
 
 def train(set_id):
@@ -103,8 +104,7 @@ def train_on_set(set_id):
     if settings.TOOLS_TESTING:
         train(set_id=set_id)
     else:
-        init_pool()
-        thread_pool.apply_async(train, kwds={'set_id': set_id})
+        process_execute(train, kwds={'set_id': set_id})
 
     # Gold samples created (since we are here), classifier created (checked).
     # Job has been fully initialized

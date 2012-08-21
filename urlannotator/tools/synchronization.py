@@ -8,6 +8,9 @@ from tenclouds.lock.rwlock import RWLock
 memcache_client = memcache.Client(['127.0.0.1:11211'], debug=0)
 
 
+_posix_sem_prefix = 'urlannotator'
+
+
 class _POSIXSemProxy(object):
     """
         Proxies access to posix_ipc.Semaphore. Closes underlying semaphore on
@@ -16,10 +19,11 @@ class _POSIXSemProxy(object):
     def __init__(self, name):
         self.name = name
         self.semaphore = posix_ipc.Semaphore(
-            name='/%s' % name,
+            name='/%s-%s' % (_posix_sem_prefix, name),
             flags=posix_ipc.O_CREAT,
             initial_value=1,
         )
+        self.semaphore.unlink()
 
     def acquire(self):
         self.semaphore.acquire()
@@ -136,13 +140,6 @@ class POSIXLock(object):
 
     def release(self):
         self.lock.release()
-
-    def close(self):
-        """
-            Closes underlying semaphore. Use when you need to close the
-            underlying semaphore and you are sure the dtor WON'T be called.
-        """
-        self.lock.close()
 
     def __enter__(self):
         self.acquire()
