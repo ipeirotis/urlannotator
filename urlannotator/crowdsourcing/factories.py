@@ -1,5 +1,6 @@
 import hashlib
 import uuid
+import time
 
 from django.conf import settings
 
@@ -7,6 +8,9 @@ from tagapi.api import TagasaurisClient
 
 from urlannotator.crowdsourcing.models import TagasaurisJobs
 from urlannotator.main.models import Job
+
+import logging
+log = logging.getLogger(__name__)
 
 
 TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
@@ -44,19 +48,37 @@ class ExternalJobsFactory(object):
                 dummy_media='dummy'
             )
 
-            return ext_id, result
+            # media_import_key = result[0]
+            job_creation_key = result[1]
+
+            job_created = False
+            while not job_created:
+                time.sleep(5)
+                res = c.status_progress(status_key=job_creation_key)
+                job_created = res['completed'] == 100 and res['status'] == 'ok'
+
+            result = c.get_job(external_id=ext_id)
+            hit = result['hits'][0]
+
+            # Using hit later - example:
+            # ext_url = settings.TAGASAURIS_HIT_URL % hit
+
+            return ext_id, hit
 
         # TODO: we can run it in tasks with proper polling/callback with info
         # of job creation status.
-        sample_gatering_key, _ = create_job(c, job,
+        sample_gatering_key, sample_gatering_hit = create_job(c, job,
             TAGASAURIS_SAMPLE_GATHERER_WORKFLOW)
-        voting_key, _ = create_job(c, job, TAGASAURIS_VOTING_WORKFLOW)
+        # voting_key, voting_hit = create_job(c, job, TAGASAURIS_VOTING_WORKFLOW)
+        voting_key = 1
+        voting_hit = None
 
         # Our link to tagasauris jobs.
         TagasaurisJobs(
             urlannotator_job_id=job.id,
             sample_gatering_key=sample_gatering_key,
             voting_key=voting_key,
-            beatthemachine_key=None
+            beatthemachine_key=None,
+            sample_gatering_hit=sample_gatering_hit,
+            voting_hit=voting_hit,
         ).save()
-        pass

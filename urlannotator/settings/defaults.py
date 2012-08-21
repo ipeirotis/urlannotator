@@ -310,9 +310,10 @@ CELERYBEAT_SCHEDULE = {
 # CELERY_ALWAYS_EAGER = True
 TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
-TAGASAURIS_LOGIN = ''
-TAGASAURIS_PASS = ''
-TAGASAURIS_HOST = ''
+TAGASAURIS_LOGIN = 'urlannotator'
+TAGASAURIS_PASS = 'urlannotator'
+TAGASAURIS_HOST = 'https://devel.tagasauris.com'
+TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 
 # Tools testing flag. If set to True, certain tools will be mocked.
 TOOLS_TESTING = False
