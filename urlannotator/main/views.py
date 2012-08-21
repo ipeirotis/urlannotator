@@ -475,6 +475,7 @@ def project_view(request, id):
     context['budget'] = proj.budget
     context['progress'] = proj.get_progress()
 
+    context['logs'] = LogEntry.objects.filter(job=proj).order_by('-date')[:4]
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
 

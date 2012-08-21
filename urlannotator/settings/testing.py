@@ -8,4 +8,3 @@ BROKER_URL = 'amqp://'
 
 # Several tools won't access resources if this is set to True.
 TOOLS_TESTING = True
-DEBUG = False
