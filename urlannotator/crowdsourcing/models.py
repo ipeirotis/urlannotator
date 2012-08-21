@@ -1,5 +1,6 @@
 from django.db import models
-from urlannotator.main.models import Worker, Sample, LABEL_CHOICES
+from django.conf import settings
+from urlannotator.main.models import Worker, Sample, LABEL_CHOICES, Job
 
 
 class WorkerQualityVote(models.Model):
@@ -17,9 +18,22 @@ class BeatTheMachineSamples(Sample):
 
 
 class TagasaurisJobs(models.Model):
-    urlannotator_job_id = models.CharField(max_length=25)
-    sample_gatering_key = models.CharField(max_length=25)
+    urlannotator_job = models.OneToOneField(Job)
+    sample_gathering_key = models.CharField(max_length=25)
     voting_key = models.CharField(max_length=25)
     beatthemachine_key = models.CharField(max_length=25, null=True, blank=True)
-    sample_gatering_hit = models.CharField(max_length=25, null=True, blank=True)
+    sample_gathering_hit = models.CharField(max_length=25, null=True, blank=True)
     voting_hit = models.CharField(max_length=25, null=True, blank=True)
+
+    def get_sample_gathering_url(self):
+        """
+            Returns URL under which Own Workforce can submit new samples.
+        """
+        return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
+
+    def get_voting_url(self):
+        """
+            Returns URL under which Own Workforce can vote on labels.
+        """
+        # TODO: Proper link
+        return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit

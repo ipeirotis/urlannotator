@@ -67,7 +67,7 @@ class ExternalJobsFactory(object):
 
         # TODO: we can run it in tasks with proper polling/callback with info
         # of job creation status.
-        sample_gatering_key, sample_gatering_hit = create_job(c, job,
+        sample_gathering_key, sample_gatering_hit = create_job(c, job,
             TAGASAURIS_SAMPLE_GATHERER_WORKFLOW)
         # voting_key, voting_hit = create_job(c, job, TAGASAURIS_VOTING_WORKFLOW)
         voting_key = 1
@@ -75,8 +75,8 @@ class ExternalJobsFactory(object):
 
         # Our link to tagasauris jobs.
         TagasaurisJobs(
-            urlannotator_job_id=job.id,
-            sample_gatering_key=sample_gatering_key,
+            urlannotator_job=job,
+            sample_gathering_key=sample_gatering_key,
             voting_key=voting_key,
             beatthemachine_key=None,
             sample_gatering_hit=sample_gatering_hit,

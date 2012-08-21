@@ -37,9 +37,21 @@ def create_user_profile(sender, instance, created, **kwargs):
 post_save.connect(create_user_profile, sender=User)
 post_save.connect(create_api_key, sender=User)
 
-JOB_BASIC_DATA_SOURCE_CHOICES = ((1, 'Own workforce'),)
+# Job source types
+JOB_SOURCE_ODESK_FREE = 0
+JOB_SOURCE_OWN_WORKFORCE = 1
+JOB_SOURCE_ODESK_PAID = 2
+
+JOB_BASIC_DATA_SOURCE_CHOICES = (
+    (JOB_SOURCE_OWN_WORKFORCE, 'Own workforce'),
+)
+JOB_ODESK_DATA_SOURCE_CHOICES = (
+    (JOB_SOURCE_ODESK_FREE, 'Odesk free'),
+    (JOB_SOURCE_ODESK_PAID, 'Odesk paid')
+)
+
 JOB_DATA_SOURCE_CHOICES = JOB_BASIC_DATA_SOURCE_CHOICES + \
-                          ((0, 'Odesk free'), (2, 'Odesk paid'))
+                          JOB_ODESK_DATA_SOURCE_CHOICES
 JOB_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
 
 # Job status breakdown:
@@ -123,6 +135,23 @@ class Job(models.Model):
         return ('project_view', (), {
             'id': self.id,
         })
+
+    def get_sample_gathering_url(self):
+        """
+            Returns the URL under which Own Workforce can submit new samples.
+        """
+        tag_job = self.tagasaurisjobs
+        return tag_job.get_sample_gathering_url()
+
+    def get_voting_url(self):
+        """
+            Returns the URL under which Own Workforce can vote on labels.
+        """
+        tag_job = self.tagasaurisjobs
+        return tag_job.get_voting_url()
+
+    def is_own_workforce(self):
+        return self.data_source == JOB_SOURCE_OWN_WORKFORCE
 
     def get_status(self):
         return JOB_STATUS_CHOICES[self.status][1]

@@ -131,8 +131,8 @@ class SampleResource(ModelResource):
 
         try:
             tag_job = TagasaurisJobs.objects.get(
-                sample_gatering_key=kwargs['tagasauris_job_id'])
-            job = Job.objects.get(id=tag_job.urlannotator_job_id)
+                sample_gathering_key=kwargs['tagasauris_job_id'])
+            job = tag_job.urlannotator_job
         except (TagasaurisJobs.DoesNotExist, Job.DoesNotExist):
             return self.create_response(request, {'error': 'Wrong job.'})
 
