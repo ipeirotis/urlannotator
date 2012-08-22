@@ -69,9 +69,7 @@ class ExternalJobsFactory(object):
         # of job creation status.
         sample_gathering_key, sample_gathering_hit = create_job(c, job,
             TAGASAURIS_SAMPLE_GATHERER_WORKFLOW)
-        # voting_key, voting_hit = create_job(c, job, TAGASAURIS_VOTING_WORKFLOW)
-        voting_key = 1
-        voting_hit = None
+        voting_key, voting_hit = create_job(c, job, TAGASAURIS_VOTING_WORKFLOW)
 
         # Our link to tagasauris jobs.
         TagasaurisJobs(
