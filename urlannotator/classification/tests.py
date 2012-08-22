@@ -10,8 +10,6 @@ from urlannotator.classification.classifiers import (
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample)
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.classification.management.commands.google_monitor import (
-    GoogleTrainingMonitor)
 
 
 class Classifier247Tests(TestCase):
@@ -149,52 +147,3 @@ class ClassifierFactoryTests(TestCase):
         ).count(), 2)
         cs = ClassifiedSample.objects.all()[0]
         self.assertTrue(factory.classify(cs))
-
-
-class GoogleMonitorTests(TestCase):
-
-    def setUp(self):
-        self.u = User.objects.create_user(username='testing', password='test')
-
-        self.job = Job.objects.create_active(
-            account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
-
-    def testGoogleMonitor(self):
-        monitor = GoogleTrainingMonitor()
-
-        entry = Classifier.objects.get(job=self.job, main=True)
-        entry.type = 'GooglePredictionClassifier'
-        entry.parameters = json.dumps({'model': 'test', 'training': 'RUNNING'})
-        entry.save()
-        params = entry.parameters
-        self.assertIn('training', params)
-
-        # Mock classifier's get_train_status. It is async, and we can't really
-        # test it.
-        old_status = GooglePredictionClassifier.get_train_status
-        GooglePredictionClassifier.get_train_status = lambda x: 'DONE'
-        old_analyze = GooglePredictionClassifier.analyze
-        GooglePredictionClassifier.analyze = lambda x: {
-            'modelDescription': {
-                'confusionMatrix': {
-                    'Yes': {
-                        'Yes': 5.0,
-                        'No': 3.0,
-                    },
-                    'No': {
-                        'Yes': 2.0,
-                        'No': 7.0,
-                    }
-                }
-            }
-        }
-        monitor.run()
-
-        GooglePredictionClassifier.analyze = old_analyze
-        GoogleTrainingMonitor.run = old_status
-        entry = Classifier.objects.get(job=self.job, main=True)
-        params = entry.parameters
-        self.assertFalse('training' in params)
-        job = Job.objects.get(id=self.job.id)
-        self.assertTrue(job.is_classifier_trained())
