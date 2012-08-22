@@ -229,6 +229,20 @@ class POSIXRWLock(RWLock):
 
 class RWSynchronize247(object):
 
+    class RWSynchronize247SwitchContext(object):
+        """
+            Inner class of RWSynchronize247 to provide context management to
+            the switch process. Abstracts the logic under it to the user.
+        """
+        def __init__(self, sync):
+            self.sync247 = sync
+
+        def __enter__(self):
+            self.sync247.begin_switch()
+
+        def __exit__(self, *args, **kwargs):
+            self.sync247.end_switch()
+
     def __init__(self, template_name):
         self.lock = POSIXLock(name=template_name + '_general_lock')
         self.rwlock = POSIXRWLock(name=template_name + '_rw_lock')
@@ -251,38 +265,31 @@ class RWSynchronize247(object):
         """
         self.lock.acquire()
 
-    def modified_release(self, func=None, switch=True, *args, **kwargs):
+    def modified_release(self):
         """
-        Returns modified instance's lock.
-
-        :param switch: perform instances switch writer :=: reader
+        Releases modified instance's lock.
         """
-        if switch:
-            try:
-                self._switch_with_lock(func, *args, **kwargs)
-            finally:
-                self.lock.release()
-                return
         self.lock.release()
 
-    def switch(self, func=None, *args, **kwargs):
+    def switch(self):
         """
-        Cold switch. Aquires all locks and runs switch. In result whole
-        template 24/7 instance is blocked for switch time.
+            Provides a context management for classifier switch. It is safe to
+            perform any pre- and post- switch actions inside the context as
+            well as the switch itself.
+            You are required to have the modified lock acquired before using
+            this context.
         """
-        with self.lock:
-            self._switch_with_lock(func, *args, **kwargs)
+        return self.RWSynchronize247SwitchContext(sync=self)
 
-    def _switch_with_lock(self, func=None, *args, **kwargs):
+    def begin_switch(self):
         """
-        Hot switch. Use only when you hold the modified lock.
+            Acquires all neccesary locks to execute safe switch logics.
+            You are required to have modified lock acquired.
         """
         self.rwlock.writer_acquire()
 
-        try:
-
-            if func:
-                func(*args, **kwargs)
-
-        finally:
-            self.rwlock.writer_release()
+    def end_switch(self):
+        """
+            Finalizes switch locks.
+        """
+        self.rwlock.writer_release()

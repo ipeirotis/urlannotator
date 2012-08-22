@@ -25,7 +25,7 @@ class WebExtractorsTests(TestCase):
         screenshot = get_web_screenshot('google.com')
 
         s = urllib2.urlopen(screenshot)
-        self.assertEqual(s.headers.type, 'image/png')
+        self.assertEqual(s.headers.type, 'image/jpeg')
 
 
 class SynchronizationTests(TestCase):

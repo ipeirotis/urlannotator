@@ -1,6 +1,7 @@
 from celery import task
 
-from urlannotator.main.models import Job
+from urlannotator.main.models import Job, Sample, GoldSample
+from urlannotator.classification.models import ClassifiedSample
 from urlannotator.logging.models import LogEntry, LongActionEntry
 from urlannotator.logging.models import (
     LOG_TYPE_JOB_INIT_START,
@@ -53,8 +54,11 @@ def log_new_sample_start(job_id, url, *args, **kwargs):
 @task(ignore_result=True)
 def log_sample_done(job_id, sample_id, *args, **kwargs):
     job = Job.objects.get(id=job_id)
+    sample = Sample.objects.get(id=sample_id)
     params = {
-        'sample': sample_id,
+        'sample_id': sample_id,
+        'sample_url': sample.url,
+        'sample_screenshot': sample.screenshot,
     }
 
     LogEntry.objects.log(
@@ -68,8 +72,11 @@ def log_sample_done(job_id, sample_id, *args, **kwargs):
 @task(ignore_result=True)
 def log_gold_sample_done(job_id, gold_id, *args, **kwargs):
     job = Job.objects.get(id=job_id)
+    gold = GoldSample.objects.get(id=gold_id)
     params = {
         'gold_sample': gold_id,
+        'gold_url': gold.sample.url,
+        'gold_label': gold.label,
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_NEW_GOLD_SAMPLE,
@@ -110,10 +117,14 @@ def log_classifier_train_start(job_id, *args, **kwargs):
 
 
 @task(ignore_result=True)
-def log_sample_classified(job_id, sample_id, *args, **kwargs):
+def log_sample_classified(job_id, class_id, *args, **kwargs):
     job = Job.objects.get(id=job_id)
+    class_sample = ClassifiedSample.objects.get(id=class_id)
     params = {
-        'sample': sample_id,
+        'class_id': class_sample.id,
+        'sample_id': class_sample.sample_id,
+        'class_url': class_sample.url,
+        'class_label': class_sample.label,
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_SAMPLE_CLASSIFIED,

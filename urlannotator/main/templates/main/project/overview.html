@@ -51,10 +51,11 @@
 </div>
 </div>
 <div class="row-fluid">
-<div id="recent-alerts-container" style="width: 20%; float: right;">
-{% for log in logs %}
-  <div class="alert alert-info fade in">{{log|safe}}</div>
-{% endfor %}
+<div style="width: 20%; float: right;">
+  <h3>Updates</h3>
+  <div id="updates-box">
+
+  </div>
 </div>
 <div style="width:80%">
   <h3>Newest Correct Voted Data</h3>
@@ -214,6 +215,35 @@ $(document).ready(function() {
          }]
       });
    });
+
+function addBox(updates_box, box){
+  text = [
+    '<div class="update-box">',
+    '<img src="'+box['image_url']+'" class="box-img"><div class="box-inner">',
+    '<span class="box-header">'+box['title']+'</span>',
+    '<span class="box-content">'+box['text']+'</span>',
+  ];
+  if (box['by'] != undefined){
+    text.push('<span>by <a href="{% url project_workers_view project.id %}/'+box['by-id']+'">'+box['by']+'</a></span>');
+  }
+  text.push('</div></div>')
+  updates_box.append(text.join(''))
+};
+
+function getUpdatesBox(){
+  $.get('{% url updates_box_view project.id %}', function(data){
+    data = JSON.parse(data);
+    $('.update-box').remove();
+    box = $('#updates-box');
+    for (alert in data){
+      addBox(box, data[alert]);
+    }
+    setTimeout('getUpdatesBox()', 5 * 1000);
+  })
+
+};
+
+getUpdatesBox();
 </script>
 {% endblock %}
 
@@ -240,6 +270,24 @@ div.infobox {
 div.infobox-disabled {
   background-color: #F7F7F9;
   color: gray;
+}
+div.update-box {
+  margin-bottom: 5px;
+  clear: both;
+}
+img.box-img {
+  width: 60px;
+  height: 60px;
+  float: left;
+}
+span.box-header {
+  display: block;
+  font-weight: bold;
+}
+span.box-content {
+  display: block;
+}
+div.box-inner {
 }
 </style>
 {% endblock %}

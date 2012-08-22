@@ -49,30 +49,45 @@ def get_activation_key(email, num, salt_size=10,
 
 @login_required
 def alerts_view(request):
+    def aggregate(entry_set, attribute):
+        entry_dict = {}
+        for entry in entry_set:
+            entry_type = getattr(entry, attribute)
+            if entry_type in entry_dict:
+                entry_dict[entry_type] = entry.get_plural_text()
+            else:
+                entry_dict[entry_type] = entry.__unicode__()
+        return entry_dict
+
     jobs = Job.objects.filter(account=request.user.get_profile())
-    entries = LogEntry.objects.filter(
+    alert_entries = LogEntry.objects.filter(
         job__in=jobs,
         read=False,
-    ).order_by('id')
+    )
+    alert_entries.update(read=True)
+    alerts = aggregate(alert_entries, 'log_type')
 
-    alerts = [{
-        'id': entry.id,
-        'type': entry.log_type,
-        'text': entry.__unicode__(),
-    } for entry in entries]
-    entries.update(read=True)
-
-    actions = LongActionEntry.objects.running_for_user(request.user)
-    actions = [{
-        'id': action.id,
-        'type': action.action_type,
-        'text': action.__unicode__(),
-    } for action in actions]
-
+    action_entries = LongActionEntry.objects.running_for_user(request.user)
+    actions = aggregate(action_entries, 'action_type')
     res = {
         'alerts': alerts,
         'actions': actions,
     }
+    return HttpResponse(json.dumps(res))
+
+
+@login_required
+def updates_box_view(request, job_id):
+    try:
+        job = Job.objects.get(id=job_id, account=request.user.get_profile())
+    except Job.DoesNotExist:
+        return HttpResponse(json.dumps({'error': 'Project doesn\'t exist'}))
+
+    log_entries = LogEntry.objects.filter(job=job).order_by('-id')[:4]
+    res = []
+    for log_entry in log_entries:
+        res.append(log_entry.get_box())
+
     return HttpResponse(json.dumps(res))
 
 
@@ -475,7 +490,6 @@ def project_view(request, id):
     context['budget'] = proj.budget
     context['progress'] = proj.get_progress()
 
-    context['logs'] = LogEntry.objects.filter(job=proj).order_by('-date')[:4]
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
 

@@ -138,7 +138,7 @@ def classify(sample_id, from_name='', *args, **kwargs):
     send_event(
         'EventSampleClassified',
         job_id=job.id,
-        class_sample=class_sample.id,
+        class_id=class_sample.id,
         sample_id=class_sample.sample.id,
     )
 

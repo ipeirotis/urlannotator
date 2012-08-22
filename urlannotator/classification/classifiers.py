@@ -103,14 +103,14 @@ class Classifier247(Classifier):
         try:
 
             func(*args, **kwargs)
-
+            with self.sync247.switch():
+                writer, reader = self.update_self()
+                self.update_to_db(
+                    writer_id=reader.id,
+                    reader_id=writer.id,
+                )
         finally:
-            writer, reader = self.update_self()
-            self.sync247.modified_release(
-                self.update_to_db,
-                writer_id=reader.id,
-                reader_id=writer.id,
-            )
+            self.sync247.modified_release()
 
     def _train(self, samples=[], set_id=0):
         writer, reader = self.update_self()

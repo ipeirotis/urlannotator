@@ -44,7 +44,7 @@ class SampleFactoryTest(TestCase):
         self.assertTrue('google' in sample.text)
 
         s = urllib2.urlopen(sample.screenshot)
-        self.assertEqual(s.headers.type, 'image/png')
+        self.assertEqual(s.headers.type, 'image/jpeg')
 
 
 class JobFactoryTest(TestCase):

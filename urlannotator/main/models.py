@@ -294,7 +294,7 @@ class Job(models.Model):
 # Sample source types breakdown:
 # owner - Sample created by the job creator. source_val is empty.
 SAMPLE_SOURCE_OWNER = 'owner'
-SAMPLE_TAGASAURIS_WORKER = 'owner'
+SAMPLE_TAGASAURIS_WORKER = 'tagasauris_worker'
 
 
 class SampleManager(models.Manager):
@@ -347,15 +347,13 @@ class Sample(models.Model):
         '''
             Returns a worker that has sent this sample.
         '''
-        # FIXME: Add support for more sources. Fix returned type for owner.
-        #        Should be of Worker type.
+        # FIXME: Add support for more sources.
         if self.source_type == SAMPLE_SOURCE_OWNER:
-            cipher = self.job.account.odesk_uid
-            try:
-                worker = Worker.objects.get(external_id=cipher)
-                return worker
-            except Worker.DoesNotExist:
-                return None
+            # If the sample's creator is owner, ignore source worker.
+            return None
+        elif self.source_type == SAMPLE_TAGASAURIS_WORKER:
+            # FIXME: Proper worker type handling
+            return None
 
     def get_workers(self):
         """
@@ -421,11 +419,14 @@ class Sample(models.Model):
 
 # Worker types breakdown:
 # odesk - worker from odesk. External id points to user's odesk id.
-
+# internal - worker registered in our system. External id is the user's id.
 WORKER_TYPE_ODESK = 0
+WORKER_TYPE_INTERNAL = 1
 
 WORKER_TYPES = (
     (WORKER_TYPE_ODESK, 'oDesk'),
+    (WORKER_TYPE_INTERNAL, 'internal')
+
 )
 
 

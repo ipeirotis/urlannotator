@@ -71,7 +71,7 @@ def get_web_screenshot(url):
 
     slugified_url = slugify(url)
     screen_dir = "urlannotator_web_screenshot"
-    screen_out = "%s/%s.png" % (screen_dir, slugified_url)
+    screen_out = "%s/%s.jpeg" % (screen_dir, slugified_url)
 
     # Lets create dir for temporary screenshots.
     os.system("mkdir -p %s" % screen_dir)

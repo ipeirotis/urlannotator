@@ -136,29 +136,23 @@
               $('#loginDiv').bind('click', function (e) { e.stopPropagation() })
             </script>
             <script type="text/javascript">
-              var alert_dict = {}
-              var action_dict = {}
-
               function insertAlert(text, id){
-                text = '<div id="alert-'+id+'" class="alert alert-info fade in"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
+                text = '<div id="alert-'+id+'" class="alert alert-info fade in our-alert"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
                 $('#alert-box').prepend(text);
-                setTimeout("$('#alert-"+id+"').alert('close')", 15 * 1000);
               };
 
-              function insertAction(action){
-                if (action_dict[action.type] == undefined) {
-                  action_dict[action.type] = []
-                }
-                action_dict[action.type].push(action)
-
-                // text = '<div id="action-'+action.type+'" class="alert action fade in"><button data-dismiss="alert" class="close" type="button">×</button>'+action.text+'</div>';
-                // $('#alert-box').prepend(text);
+              function insertAction(action, id){
+                text = '<div id="action-'+id+'" class="alert action fade in"><button data-dismiss="alert" class="close" type="button">×</button>'+action+'</div>';
+                $('#alert-box').prepend(text);
               };
 
               function removeActions(){
-                $('.action').alert('close')
-                action_dict = {}
+                $('.action').remove()
               };
+
+              function removeAlerts(){
+                $('.our-alert').remove()
+              }
 
               function toggleAction(type){
                 display = $('#action-more-' + type).css('display');
@@ -173,33 +167,16 @@
                 $.get("{% url alerts_view %}", function(data) {
                   var res = JSON.parse(data);
                   var alerts = res['alerts'];
+                  removeAlerts()
                   for (alert in alerts){
-                    insertAlert(alerts[alert].text, alerts[alert].id)
+                    insertAlert(alerts[alert], alert)
                   };
 
                   var actions = res['actions'];
                   removeActions()
                   for (action in actions){
-                    insertAction(actions[action])
+                    insertAction(actions[action], action)
                   };
-                  // Creates all types alerts
-                  for (type in action_dict){
-                    text = ['<div id="action-' + type + '" class="alert action fade in"><button data-dismiss="alert" class="close" type="button">×</button>'];
-                    if (action_dict[type].length != 0){
-                      text.push('<p>' + action_dict[type][0].text);
-                      if (action_dict[type].length > 1){
-                        text.push(' <a href="#" onclick="toggleAction(' + type + ')">Show all (' + action_dict[type].length + ')</a></p><div id="action-more-' + type + '" style="display: none;">');
-                        for (var action = 1; action < action_dict[type].length; ++action){
-                          text.push('<p>' + action_dict[type][action].text + '</p>');
-                        }
-                        text.push('</div>');
-                      } else {
-                        text.push('</p>');
-                      }
-                    }
-                    text.push('</div>');
-                    $('#alert-box').prepend(text.join(''));
-                  }
                   setTimeout("checkAlerts()", 10 * 1000);
                 });
               }

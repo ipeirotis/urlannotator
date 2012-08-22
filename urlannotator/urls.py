@@ -56,6 +56,8 @@ urlpatterns = patterns('urlannotator',
     url(r'^auth/', include('social_auth.urls')),
 
     url(r'^alerts$', 'main.views.alerts_view', name='alerts_view'),
+    url(r'^updates/(?P<job_id>\d+)$', 'main.views.updates_box_view',
+        name='updates_box_view'),
 
     url(r'^api/', include(v1_api.urls)),
     url(r'^readme$', 'main.views.readme_view', name='readme_view'),
