@@ -1,12 +1,18 @@
+import hashlib
+import uuid
+
 from multiprocessing.pool import Process
 
 from celery import task, Task, registry
 from celery.task import current
 from django.conf import settings
 
+from tagapi.api import TagasaurisClient
+
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import TrainingSet, ClassifiedSample
 from urlannotator.classification.factories import classifier_factory
+from urlannotator.crowdsourcing.models import SampleMapping
 from urlannotator.main.models import Sample
 
 
@@ -42,6 +48,42 @@ class ClassifierTrainingManager(Task):
 
 
 add_samples = registry.tasks[ClassifierTrainingManager.name]
+
+
+@task(ignore_result=True)
+def send_for_voting(samples, *args, **kwargs):
+    if isinstance(samples, int):
+        samples = [samples]
+
+    job = Sample.objects.get(id=samples[0]).job
+    tc = TagasaurisClient(settings.TAGASAURIS_LOGIN,
+        settings.TAGASAURIS_PASS, settings.TAGASAURIS_HOST)
+
+    mediaobjects = []
+
+    for sample_id in samples:
+        sample = Sample.objects.get(id=sample_id)
+
+        ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+
+        SampleMapping(
+            sample=sample,
+            external_id=ext_id,
+            crowscourcing_type=SampleMapping.TAGASAURIS,
+        ).save()
+
+        mediaobjects.append({
+            'id': ext_id,
+            'mimetype': "image/png",
+            'url': sample.screenshot,
+        })
+
+    res = tc.mediaobject_send(mediaobjects)
+    tc.wait_for_complete(res)
+
+    tc.job_add_media(
+        external_ids=[mo['id'] for mo in mediaobjects],
+        external_id=job.tagasaurisjobs.voting_key)
 
 
 @task
@@ -151,6 +193,7 @@ def update_classifier_stats(job_id, *args, **kwargs):
 FLOW_DEFINITIONS = [
     (r'^EventNewSample$', update_classified_sample),
     (r'^EventSamplesValidated$', add_samples),
+    (r'^EventSamplesValidated$', send_for_voting),
     (r'^EventNewClassifySample$', classify),
     # (r'EventTrainClassifier', classify),
     (r'^EventTrainingSetCompleted$', train_on_set),

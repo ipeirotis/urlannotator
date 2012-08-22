@@ -38,3 +38,15 @@ class TagasaurisJobs(models.Model):
         """
         # TODO: Proper link
         return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
+
+
+class SampleMapping(models.Model):
+    TAGASAURIS = 'TAGASAURIS'
+    CROWDSOURCING_CHOICES = (
+        (TAGASAURIS, 'Tagasauris'),
+    )
+
+    sample = models.ForeignKey(Sample)
+    external_id = models.CharField(max_length=25)
+    crowscourcing_type = models.CharField(max_length=20,
+        choices=CROWDSOURCING_CHOICES)
