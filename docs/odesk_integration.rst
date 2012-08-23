@@ -123,7 +123,7 @@ Issues:
 ========================
 
 After worker has done job, Tagasauris has collected the URLs, we are ready to
-reward the worker. There are two possible ways to do that:
+reward the worker. These are the possible ways to do that:
 
 - Ending fixed price contract results in immediate payment
 - Bulk payment of all jobs done by the worker throughout set period of time
