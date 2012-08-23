@@ -7,12 +7,12 @@ from celery import task, Task, registry
 from celery.task import current
 from django.conf import settings
 
-from tagapi.api import TagasaurisClient
-
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import TrainingSet, ClassifiedSample
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.crowdsourcing.models import SampleMapping
+from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
+from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
+    create_job, TAGASAURIS_VOTING_WORKFLOW, samples_to_mediaobjects)
 from urlannotator.main.models import Sample
 
 
@@ -50,40 +50,111 @@ class ClassifierTrainingManager(Task):
 add_samples = registry.tasks[ClassifierTrainingManager.name]
 
 
-@task(ignore_result=True)
-def send_for_voting(samples, *args, **kwargs):
-    if isinstance(samples, int):
-        samples = [samples]
+@task()
+class SampleVotingManager(Task):
+    """ Task periodically executed for update external voting service with
+        newly delivered samples.
+    """
 
-    job = Sample.objects.get(id=samples[0]).job
-    tc = TagasaurisClient(settings.TAGASAURIS_LOGIN,
-        settings.TAGASAURIS_PASS, settings.TAGASAURIS_HOST)
+    def get_mapped_samples(self, job):
+        """ Samples already mapped in external service.
+        """
+        mapped_samples = SampleMapping.objects.select_related('sample').filter(
+            sample__job=job)
+        return [ms.sample for ms in mapped_samples]
 
-    mediaobjects = []
+    def get_unmapped_samples(self):
+        """ New Samples since last update. We should send those to external
+            voting service.
+        """
+        mapped_samples = SampleMapping.objects.select_related('sample').all()
+        mapped_samples_ids = set([s.sample.id for s in mapped_samples])
+        return Sample.objects.select_related('job').exclude(
+            id__in=mapped_samples_ids)
 
-    for sample_id in samples:
-        sample = Sample.objects.get(id=sample_id)
+    def get_jobs(self, all_samples):
+        """ Auxiliary function for divide samples in job related groups and
+            annotate those groups with info if external job should be
+            initialized or not. We assume that jobs having already mapped
+            samples are initialized, otherwise - not.
+        """
+        jobs = set([s.job for s in all_samples])
 
-        ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+        for job in jobs:
+            job_samples = [s for s in all_samples if s.job == job]
+            initialized = len(self.get_mapped_samples(job)) > 0
+            yield job, job_samples, initialized
 
-        SampleMapping(
-            sample=sample,
-            external_id=ext_id,
-            crowscourcing_type=SampleMapping.TAGASAURIS,
-        ).save()
+    def initialize_job(self, job, new_samples):
+        """ Job initialization.
+            TODO: Extend in future with other than tagasauris services?
+        """
+        tc = make_tagapi_client()
 
-        mediaobjects.append({
-            'id': ext_id,
-            'mimetype': "image/png",
-            'url': sample.screenshot,
-        })
+        # Creates sample to mediaobject mapping
+        mediaobjects = samples_to_mediaobjects(new_samples)
 
-    res = tc.mediaobject_send(mediaobjects)
-    tc.wait_for_complete(res)
+        for sample, mediaobject in mediaobjects.items():
+            SampleMapping(
+                sample=sample,
+                external_id=mediaobject['id'],
+                crowscourcing_type=SampleMapping.TAGASAURIS,
+            ).save()
 
-    tc.job_add_media(
-        external_ids=[mo['id'] for mo in mediaobjects],
-        external_id=job.tagasaurisjobs.voting_key)
+        # Objects to send.
+        mediaobjects = mediaobjects.values()
+
+        # Creating new job with mediaobjects
+        voting_key, voting_hit = create_job(tc, job,
+            TAGASAURIS_VOTING_WORKFLOW,
+            mediaobjects=mediaobjects)
+
+        tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
+        tag_jobs.voting_key = voting_key
+        tag_jobs.voting_hit = voting_hit
+        tag_jobs.save()
+
+    def update_job(self, job, new_samples):
+        """ Updating existing job.
+            TODO: Extend in future with other than tagasauris services?
+        """
+        tc = make_tagapi_client()
+
+        # Creates sample to mediaobject mapping
+        mediaobjects = samples_to_mediaobjects(new_samples)
+
+        for sample, mediaobject in mediaobjects.items():
+            SampleMapping(
+                sample=sample,
+                external_id=mediaobject['id'],
+                crowscourcing_type=SampleMapping.TAGASAURIS,
+            ).save()
+
+        # New objects
+        mediaobjects = mediaobjects.values()
+
+        res = tc.mediaobject_send(mediaobjects)
+        tc.wait_for_complete(res)
+
+        # We must wait for media objects beeing uploaded before we can attach
+        # them to job.
+        tc.job_add_media(
+            external_ids=[mo['id'] for mo in mediaobjects],
+            external_id=job.tagasaurisjobs.voting_key)
+
+    def run(self, *args, **kwargs):
+        """ Main task function.
+        """
+        unmapped_samples = self.get_unmapped_samples()
+        jobs = self.get_jobs(unmapped_samples)
+
+        for job, new_samples, initialized in jobs:
+            if initialized:
+                self.update_job(job, new_samples)
+            else:
+                self.initialize_job(job, new_samples)
+
+send_for_voting = registry.tasks[SampleVotingManager.name]
 
 
 @task
@@ -193,7 +264,7 @@ def update_classifier_stats(job_id, *args, **kwargs):
 FLOW_DEFINITIONS = [
     (r'^EventNewSample$', update_classified_sample),
     (r'^EventSamplesValidated$', add_samples),
-    (r'^EventSamplesValidated$', send_for_voting),
+    (r'^EventSamplesVoting$', send_for_voting),
     (r'^EventNewClassifySample$', classify),
     # (r'EventTrainClassifier', classify),
     (r'^EventTrainingSetCompleted$', train_on_set),

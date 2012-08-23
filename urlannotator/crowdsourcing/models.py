@@ -21,9 +21,10 @@ class BeatTheMachineSamples(Sample):
 class TagasaurisJobs(models.Model):
     urlannotator_job = models.OneToOneField(Job)
     sample_gathering_key = models.CharField(max_length=25)
-    voting_key = models.CharField(max_length=25)
+    voting_key = models.CharField(max_length=25, null=True, blank=True)
     beatthemachine_key = models.CharField(max_length=25, null=True, blank=True)
-    sample_gathering_hit = models.CharField(max_length=25, null=True, blank=True)
+    sample_gathering_hit = models.CharField(max_length=25, null=True,
+        blank=True)
     voting_hit = models.CharField(max_length=25, null=True, blank=True)
 
     def get_sample_gathering_url(self):
