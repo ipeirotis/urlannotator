@@ -219,12 +219,12 @@ $(document).ready(function() {
 function addBox(updates_box, box){
   text = [
     '<div class="update-box">',
-    '<img src="'+box['image_url']+'" class="box-img"><div class="box-inner">',
-    '<span class="box-header">'+box['title']+'</span>',
-    '<span class="box-content">'+box['text']+'</span>',
+    '<img src="'+box['Image_url']+'" class="box-img"><div class="box-inner">',
+    '<span class="box-header">'+box['Title']+'</span>',
+    '<span class="box-content">'+box['Text']+'</span>',
   ];
   if (box['by'] != undefined){
-    text.push('<span>by <a href="{% url project_workers_view project.id %}/'+box['by-id']+'">'+box['by']+'</a></span>');
+    text.push('<span>by <a href="{% url project_workers_view project.id %}/'+box['By-id']+'">'+box['By']+'</a></span>');
   }
   text.push('</div></div>')
   updates_box.append(text.join(''))

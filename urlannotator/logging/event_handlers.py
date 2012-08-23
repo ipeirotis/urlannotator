@@ -3,7 +3,7 @@ from celery import task
 from urlannotator.main.models import Job, Sample, GoldSample
 from urlannotator.classification.models import ClassifiedSample
 from urlannotator.logging.models import LogEntry, LongActionEntry
-from urlannotator.logging.models import (
+from urlannotator.logging.settings import (
     LOG_TYPE_JOB_INIT_START,
     LOG_TYPE_JOB_INIT_DONE,
     LOG_TYPE_NEW_SAMPLE_START,

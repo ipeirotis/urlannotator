@@ -56,15 +56,11 @@ def alerts_view(request):
             if entry_type in entry_dict:
                 entry_dict[entry_type] = entry.get_plural_text()
             else:
-                entry_dict[entry_type] = entry.__unicode__()
+                entry_dict[entry_type] = entry.get_single_text()
         return entry_dict
 
-    jobs = Job.objects.filter(account=request.user.get_profile())
-    alert_entries = LogEntry.objects.filter(
-        job__in=jobs,
-        read=False,
-    )
-    alert_entries.update(read=True)
+    alert_entries = LogEntry.objects.unread_for_user(request.user)
+    print alert_entries
     alerts = aggregate(alert_entries, 'log_type')
 
     action_entries = LongActionEntry.objects.running_for_user(request.user)
@@ -83,10 +79,11 @@ def updates_box_view(request, job_id):
     except Job.DoesNotExist:
         return HttpResponse(json.dumps({'error': 'Project doesn\'t exist'}))
 
-    log_entries = LogEntry.objects.filter(job=job).order_by('-id')[:4]
-    res = []
-    for log_entry in log_entries:
-        res.append(log_entry.get_box())
+    log_entries = LogEntry.objects.recent_for_job(
+        job=job,
+        num=4,
+    )
+    res = [entry.get_box() for entry in log_entries]
 
     return HttpResponse(json.dumps(res))
 

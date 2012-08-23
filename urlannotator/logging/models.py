@@ -4,114 +4,9 @@ from django.db import models
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.main.models import Job
-
-# Log types breakdown:
-LOG_TYPE_DEFAULT = -1  # Default log type settings
-LOG_TYPE_JOB_INIT_START = 0  # Job initialization has been started
-LOG_TYPE_JOB_INIT_DONE = 1  # Job initialization has been completed
-LOG_TYPE_NEW_SAMPLE_START = 2  # New sample creation has been initiated
-LOG_TYPE_NEW_GOLD_SAMPLE = 3  # New gold sample has been created
-LOG_TYPE_NEW_SAMPLE_DONE = 4  # New sample creation has been finished
-LOG_TYPE_CLASS_TRAIN_START = 5  # Classifier training has been started
-LOG_TYPE_CLASS_TRAIN_DONE = 6  # Classifier training has been finished
-LOG_TYPE_SAMPLE_CLASSIFIED = 7  # A new sample has been classified
-
-# Long action type breakdown:
-LONG_ACTION_TRAINING = 1  # Classifier training
-
-# Log configurations
-# Configuration template:
-# 'Single_text' - event description in singular form.
-# 'Plural_text' - event description in plural form.
-# 'Box_entry' - dictionary of settings used in formatting updates box entries.
-#   'Title' - entry title
-#   'Text' - entry text.
-#   'Image_url' - url of alert's image.
-#   'By_id' - id of worker that triggered the log.
-#   'By' - name of the worker that triggered the log.
-# 'Show_users' - whether log can be shown to users in alerts/updates box.
-# 'Console_out' - event description when printing out to the console. Also
-#                 used in entry.__unicode__() method
-#
-# Following variables are available in strings:
-#   'job_url', 'job_id', any variable from entry.log_val dictionary,
-#   'log_val', 'log_type', 'worker_id' (defaults to 0), 'worker_name' (defaults
-#   to an empty string)
-# If a config entry is missing some values, default ones are used.
-
-log_config = {
-    LOG_TYPE_DEFAULT: {
-        'Single_text': 'Event',
-        'Plural_text': 'Events',
-        'Box_entry': {
-            'Title': 'Event',
-            'Text': 'Event text.',
-            'Image_url': '',
-            'By_id': 0,
-            'By': '',
-        },
-        'Show_users': False,
-        'Console_out': 'Event %(log_type)s (%(log_val)s).',
-    },
-    LOG_TYPE_JOB_INIT_START: {
-        'Console_out': 'Job\'s %(job_id)d initialization has been started.',
-    },
-    LOG_TYPE_JOB_INIT_DONE: {
-        'Console_out': 'Job\'s %(job_id)d initialization has been completed.',
-    },
-    LOG_TYPE_NEW_SAMPLE_START: {
-        'Console_out': 'New sample is being created (%(log_val)s).',
-    },
-    LOG_TYPE_NEW_GOLD_SAMPLE: {
-        'Console_out': 'New gold sample is being created (%(log_val)s).',
-    },
-    LOG_TYPE_NEW_SAMPLE_DONE: {
-        'Console_out': 'New sample has been created (%(log_val)s).',
-        'Single_text': 'New sample (%(sample_url)s) has been created.',
-        'Plural_text': 'New samples have been created.',
-        'Show_users': True,
-        'Box_entry': {
-            'Title': 'New Sample',
-            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
-        },
-    },
-    LOG_TYPE_CLASS_TRAIN_START: {
-        'Console_out': 'Classifier is being trained (%(log_val)s).',
-    },
-    LOG_TYPE_CLASS_TRAIN_DONE: {
-        'Console_out': 'Classifier training has finished (%(log_val)s).',
-    },
-    LOG_TYPE_SAMPLE_CLASSIFIED: {
-        'Console_out': 'Sample has been classified (%(log_val)s).',
-    },
-}
-
-
-def log_config_get(log_type, attrs):
-    """
-        Gets given config attr for log_type. If not present, gets the attrs for
-        default config. If missing, returns None.
-        Attrs can be a list of attributes for nested lookup.
-    """
-    default = log_config[LOG_TYPE_DEFAULT]
-    value = log_config[log_type]
-    for attr in attrs:
-        value = value.get(attr, None)
-        default = default[attr]
-        if not value:
-            value = default
-
-    return value
-
-# Long actions formats
-long_single = {
-    LONG_ACTION_TRAINING:
-    '<a href="%(job_url)s">Your job\'s</a> classifier is under training.',
-}
-
-long_plural = {
-    LONG_ACTION_TRAINING: 'Classifiers\' are being trained.',
-}
+from urlannotator.logging.settings import log_config_get, generate_log_types
+from urlannotator.logging.settings import (LONG_ACTION_TRAINING, long_single,
+    long_plural)
 
 
 class LongActionManager(models.Manager):
@@ -153,6 +48,9 @@ class LongActionEntry(models.Model):
     objects = LongActionManager()
 
     def __unicode__(self):
+        self.get_single_text()
+
+    def get_single_text(self):
         """
             Single action's string with it's parameters.
         """
@@ -174,20 +72,31 @@ class LogManager(models.Manager):
         """
             Creates new log entry.
         """
-        self.create(
+        return self.create(
             job=job,
             log_type=log_type,
             log_val=json.dumps(params)
         )
 
+    def unread_for_user(self, user):
+        """
+            Returns all unread logs for user.
+        """
+        jobs = user.get_profile().job_set.all()
+        entries = self.filter(job__in=jobs, read=False)
+        res = [entry for entry in entries if entry.is_visible_to_users()]
+        entries.update(read=True)
+        return res
 
-def generate_log_types():
-    """
-        Generates a list of tuples (log_id, log_text) and returns it.
-    """
-    log_list = [(log_id, log_config_get(log_id, ['Single_text']))
-        for log_id, log in log_config.items()]
-    return list(log_list)
+    def recent_for_job(self, job, num=4, user_visible=True):
+        """
+            Returns `num` recent logs for given job.
+
+            :param user_visible: whether return only those visible for users
+        """
+        logs = self.filter(job=job).order_by('-id')[:num]
+        return [log for log in logs
+            if (not user_visible or log.is_visible_to_users())]
 
 
 class LogEntry(models.Model):
@@ -262,3 +171,10 @@ class LogEntry(models.Model):
             'By_id': log_config_get(self.log_type, ['Box_entry', 'By_id']),
         }
         return val
+
+    def is_visible_to_users(self):
+        """
+            Returns whether given entry is visible to users (via alerts or
+            updates box)
+        """
+        return log_config_get(self.log_type, ['Show_users'])

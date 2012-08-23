@@ -108,7 +108,7 @@ class Job(models.Model):
         Model representing actual project that is start by user, and consists
         of gathering, verifying and classifying samples.
     """
-    account = models.ForeignKey(Account, related_name='project')
+    account = models.ForeignKey(Account)
     title = models.CharField(max_length=100)
     description = models.TextField()
     status = models.IntegerField(default=0, choices=JOB_STATUS_CHOICES)
