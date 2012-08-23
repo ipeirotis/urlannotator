@@ -90,7 +90,8 @@ class JobManager(models.Manager):
         kwargs['status'] = 4
         kwargs['remaining_urls'] = kwargs.get('no_of_urls', 0)
         job = self.create(**kwargs)
-        send_event('EventNewJobInitialization', job.id)
+        send_event('EventNewJobInitialization',
+            job_id=job.id)
         return job
 
     def create_draft(self, **kwargs):
@@ -181,7 +182,8 @@ class Job(models.Model):
         self.status = JOB_STATUS_INIT
         self.remaining_urls = self.no_of_urls
         self.save()
-        send_event('EventNewJobInitialization', self.id)
+        send_event('EventNewJobInitialization',
+            job_id=self.id)
 
     def get_hours_spent(self):
         """

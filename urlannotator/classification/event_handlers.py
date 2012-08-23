@@ -173,7 +173,9 @@ def update_classified_sample(sample_id, *args, **kwargs):
         label=''
     )
     for class_sample in classified:
-        send_event("EventNewClassifySample", class_sample.id, 'update_classified')
+        send_event("EventNewClassifySample",
+            sample_id=class_sample.id,
+            from_name='update_classified')
     return None
 
 
@@ -202,7 +204,7 @@ def train(set_id):
 
 
 @task
-def train_on_set(set_id):
+def train_on_set(set_id, *args, **kwargs):
     """
         Trains classifier on newly created training set
     """

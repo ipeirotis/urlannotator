@@ -78,7 +78,8 @@ class GoldSamplesMonitor(Task):
                     job.set_gold_samples_done()
                     send_event(
                         "EventTrainingSetCompleted",
-                        training_set.id
+                        set_id=training_set.id,
+                        job_id=job.id
                     )
 
 new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]

@@ -140,7 +140,8 @@ class ClassifiedSampleManager(models.Manager):
         classified_sample = self.create(**kwargs)
         # If sample exists, step immediately to classification
         if 'sample' in kwargs:
-            send_event('EventNewClassifySample', classified_sample.id)
+            send_event('EventNewClassifySample',
+                sample_id=classified_sample.id)
         else:
             Sample.objects.create_by_owner(
                 job_id=kwargs['job'].id,

@@ -133,7 +133,7 @@ def create_classify_sample(sample_id, source_type, create_classified=True,
             # Sample created sucesfully - pushing event.
             send_event(
                 "EventNewClassifySample",
-                class_sample.id,
+                sample_id=class_sample.id,
             )
 
         except DatabaseError, e:
