@@ -130,6 +130,7 @@ reward the worker. There are two possible ways to do that:
     - API call
     - Closing contracts without payment on all but last, which gives a bonus
       equal to the total value of the previous jobs
+- Payment after reaching a certain threshold of money (i.e. 10$)
 
 oDesk supports funding from PayPal or credit card.
 Certain credit cards may apply fees on transactions.
@@ -153,3 +154,6 @@ Issues:
 - Fees
 - Who is holding the money: we or the job creator?
 - Who is sending the money: we or the job creator?
+- In case of PayPal fees for debit/credit cards inside the US , the fee is almost
+  1/3rd of the minimal contract value of 1$, which is not as lightweight as
+  inteded
