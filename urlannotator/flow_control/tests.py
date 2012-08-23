@@ -3,6 +3,7 @@ import os
 from django.test import TestCase
 
 from urlannotator.flow_control import send_event
+# from urlannotator.test import FlowControlTestCase
 
 
 class TestEventBusSender(TestCase):
