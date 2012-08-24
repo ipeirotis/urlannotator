@@ -1,3 +1,5 @@
+import re
+
 from django.test import TestCase
 
 from celery import registry
@@ -10,6 +12,8 @@ class FlowControlTestCase(TestCase):
         suppress_events = self.suppress_events()
 
         for matcher, task_func in flow:
+            if type(matcher) is str:
+                matcher = re.compile(matcher)
             # If match any suppressed event - skip it.
             # Event is suppressed when it doesn't start any task.
             if not any([matcher.match(event) for event in suppress_events]):
