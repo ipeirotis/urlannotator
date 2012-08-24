@@ -1,7 +1,6 @@
 import datetime
 import os
 import tempfile
-import json
 from django.core.urlresolvers import reverse_lazy
 
 DEBUG = True

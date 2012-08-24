@@ -1,6 +1,3 @@
-import hashlib
-import uuid
-
 from multiprocessing.pool import Process
 
 from celery import task, Task, registry
@@ -184,8 +181,21 @@ def process_execute(*args, **kwargs):
         Executes func from keyword arguments with values from them.
         Args and kwargs are directly passed to multiprocessing.Process.
     """
+    from django.db import transaction
+    transaction.commit()
     proc = Process(*args, **kwargs)
     proc.start()
+
+
+def prepare_func(func, *args, **kwargs):
+    """
+        Closes django connection before executing the function.
+        Used in subprocessing to enforce fresh connection.
+    """
+    from django.db import connection
+    connection.close()
+
+    return func(*args, **kwargs)
 
 
 def train(set_id):
@@ -219,7 +229,8 @@ def train_on_set(set_id, *args, **kwargs):
     if settings.TOOLS_TESTING:
         train(set_id=set_id)
     else:
-        process_execute(train, kwds={'set_id': set_id})
+        process_execute(target=prepare_func,
+            kwargs={'func': train, 'set_id': set_id})
 
     # Gold samples created (since we are here), classifier created (checked).
     # Job has been fully initialized

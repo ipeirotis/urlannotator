@@ -1,15 +1,16 @@
-import json
+import time
 
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job
-from urlannotator.classification.classifiers import (
-    GooglePredictionClassifier, Classifier247)
+from urlannotator.classification.classifiers import Classifier247
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample)
 from urlannotator.classification.factories import classifier_factory
+from urlannotator.crowdsourcing.event_handlers import initialize_external_jobs
+from urlannotator.flow_control.test import FlowControlMixin
 
 
 class Classifier247Tests(TestCase):
@@ -147,3 +148,28 @@ class ClassifierFactoryTests(TestCase):
         ).count(), 2)
         cs = ClassifiedSample.objects.all()[0]
         self.assertTrue(factory.classify(cs))
+
+
+class LongTrainingTest(FlowControlMixin, TransactionTestCase):
+    def setUp(self):
+        self.u = User.objects.create_user(username='test', password='test')
+
+    def flow_definition(self):
+        old = super(LongTrainingTest, self).flow_definition()
+
+        new = [entry for entry in old if entry[1] != initialize_external_jobs]
+        return new
+
+    def testLongTraining(self):
+        with override_settings(TOOLS_TESTING=False):
+            job = Job.objects.create_active(
+                account=self.u.get_profile(),
+                gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            time.sleep(2)
+
+            # Refresh our job object
+            job = Job.objects.get(id=job.id)
+            self.assertTrue(job.is_classifier_trained())
+
+    def tearDown(self):
+        self.u.delete()
