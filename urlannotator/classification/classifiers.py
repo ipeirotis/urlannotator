@@ -391,8 +391,22 @@ class GooglePredictionClassifier(Classifier):
         try:
             status = self.papi.analyze(id=self.model).execute()
             return status
-        except:
-            return {}
+        except Exception, e:
+            print 'Exception caught', e
+            return {
+                'modelDescription': {
+                    'confusionMatrix': {
+                        'Yes': {
+                            'Yes': 1,
+                            'No': 0,
+                        },
+                        'No': {
+                            'Yes': 0,
+                            'No': 1,
+                        }
+                    }
+                }
+            }
 
     def get_train_status(self):
         try:

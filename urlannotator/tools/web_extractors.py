@@ -81,7 +81,8 @@ def get_web_screenshot(url):
 
     # Non-zero result code
     if res:
-        print "Screenshot capture of", url, "resulted in code", res
+        raise Exception("Screenshot capture of %s resulted in code %s"
+            % (url, res))
 
     conn = S3Connection(settings.AWS_ACCESS_KEY_ID,
         settings.AWS_SECRET_ACCESS_KEY)
