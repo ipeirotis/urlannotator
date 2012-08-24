@@ -1,11 +1,9 @@
 import re
 
-from django.test import TestCase
-
 from celery import registry
 
 
-class FlowControlTestCase(TestCase):
+class FlowControlMixin(object):
 
     def _new_registered(self):
         flow = self.flow_definition()
@@ -37,7 +35,7 @@ class FlowControlTestCase(TestCase):
         # Switching configuration for new one.
         bus_sender.registered = list(self._new_registered())
 
-        return super(FlowControlTestCase, self)._pre_setup()
+        return super(FlowControlMixin, self)._pre_setup()
 
     def _post_teardown(self):
         """ Restores original flow definitions.
@@ -47,7 +45,7 @@ class FlowControlTestCase(TestCase):
         bus_sender = registry.tasks[EventBusSender.name]
         bus_sender.registered = self._original_registered
 
-        super(FlowControlTestCase, self)._post_teardown()
+        super(FlowControlMixin, self)._post_teardown()
 
     def flow_definition(self):
         """ This can be overriden with custom flow definitions.
