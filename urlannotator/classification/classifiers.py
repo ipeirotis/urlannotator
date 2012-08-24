@@ -109,6 +109,10 @@ class Classifier247(Classifier):
                     writer_id=reader.id,
                     reader_id=writer.id,
                 )
+
+            entry = ClassifierModel.objects.get(id=self.id)
+            update_classifier_stats(self, entry.job)
+
         finally:
             self.sync247.modified_release()
 
@@ -132,7 +136,6 @@ class Classifier247(Classifier):
 
         entry = ClassifierModel.objects.get(id=self.id)
         job = entry.job
-        update_classifier_stats(self, entry.job)
 
         if not job.is_classifier_trained():
             job.set_classifier_trained()

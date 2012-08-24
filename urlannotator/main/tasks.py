@@ -9,7 +9,7 @@ from urlannotator.flow_control import send_event
 
 
 @task()
-def web_content_extraction(sample_id, url=None):
+def web_content_extraction(sample_id, url=None, *args, **kwargs):
     """ Links/lynx required. Generates html output from those browsers.
     """
     if url is None:
@@ -22,7 +22,7 @@ def web_content_extraction(sample_id, url=None):
 
 
 @task()
-def web_screenshot_extraction(sample_id, url=None):
+def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
     """ CutyCapt required. Generates html output from those browsers.
     """
     if url is None:
