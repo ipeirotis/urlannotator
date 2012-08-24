@@ -182,7 +182,9 @@ def process_execute(*args, **kwargs):
         Args and kwargs are directly passed to multiprocessing.Process.
     """
     from django.db import transaction
-    transaction.commit()
+    if transaction.is_dirty():
+        transaction.commit()
+
     proc = Process(*args, **kwargs)
     proc.start()
 
