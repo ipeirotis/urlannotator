@@ -8,3 +8,5 @@ cutycapt
 lynx
 links
 xvfb
+libjpeg8
+libjpeg62-dev
