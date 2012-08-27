@@ -16,13 +16,14 @@ class LoggingTest(TestCase):
             gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
     def test_visibility(self):
-        # No user-visible logs shouldve been added.
+        # Read user-visible logs.
+        logs = LogEntry.objects.unread_for_user(self.u)
         logs = LogEntry.objects.unread_for_user(self.u)
         self.assertFalse(logs)
 
         # What about recent alerts?
         logs = LogEntry.objects.recent_for_job(self.job)
-        self.assertFalse(logs)
+        self.assertTrue(logs)
 
         # Lets add a user-visible alert - new sample done.
         params = {

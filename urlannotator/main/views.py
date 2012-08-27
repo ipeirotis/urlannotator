@@ -96,7 +96,10 @@ def register_view(request):
     """
     if request.method == "GET":
         context = {'form': NewUserForm()}
-        context['error'] = request.session.pop('error', None)
+        error = request.session.pop('error', None)
+        if error:
+            context['error'] = error
+
         return render(request, 'main/register.html',
             RequestContext(request, context))
     else:
