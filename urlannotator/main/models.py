@@ -233,8 +233,9 @@ class Job(models.Model):
         """
             Returns actual progress (in percents) in the job.
         """
-        # FIXME: Is it proper way of getting progress?
-        div = self.no_of_urls or 1
+        if not self.no_of_urls:
+            return 100
+        div = self.no_of_urls
         return self.get_urls_collected() / div * 100
 
     def is_completed(self):
@@ -368,9 +369,7 @@ class Sample(models.Model):
         """
             Returns a worker that has sent this sample.
         """
-        # FIXME: Add support for more sources.
         if self.source_type == SAMPLE_SOURCE_OWNER:
-            # If the sample's creator is owner, ignore source worker.
             return Worker.objects.get_worker(
                 source_type=self.source_type,
                 source_val=self.job.account.user.id,
@@ -576,11 +575,10 @@ class Worker(models.Model):
                 source_type = source
                 break
 
-        s = Sample.objects.by_worker(
-            source_type=source_type,
-            source_val=self.external_id,
-        ).filter(job=job)
-        return s
+        classified = job.classifiedsample_set.all()
+        return [sample for sample in classified
+            if sample.source_type == source_type
+            and sample.source_val == self.external_id]
 
     def get_hours_spent_for_job(self, job):
         """

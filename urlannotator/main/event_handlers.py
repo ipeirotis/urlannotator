@@ -66,7 +66,6 @@ class GoldSamplesMonitor(Task):
         ).save()
 
         lock_key = 'TrainingSampleLock-%d' % job.id
-        # FIXME: Correct event name?
         # Send training set completed event. Used here as we are certain no
         # new samples will come in the mean time. In general, you can't
         # assume that!
