@@ -1,7 +1,7 @@
 =============
 URL Annotator
 =============
-Last modified: August 20, 2012
+Last modified: August 27, 2012
 
 
 Source/How to get it
@@ -42,6 +42,8 @@ Required libraries:
 - google-api-python-client
 - posix-ipc
 - 10clouds/tagasauris-api
+- Pillow==1.7.7
+- futures
 
 (See deployment/files/requirements/base.txt)
 
