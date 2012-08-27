@@ -56,6 +56,13 @@ log_config = {
         'Console_out': 'New sample is being created (%(log_val)s).',
     },
     LOG_TYPE_NEW_GOLD_SAMPLE: {
+        'Show_users': True,
+        'Single_text': 'New gold sample (%(sample_url)s) has been created.',
+        'Plural_text': 'New gold samples have been created.',
+        'Box_entry': {
+            'Title': 'New Gold Sample',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+        },
         'Console_out': 'New gold sample is being created (%(log_val)s).',
     },
     LOG_TYPE_NEW_SAMPLE_DONE: {
@@ -69,9 +76,25 @@ log_config = {
         },
     },
     LOG_TYPE_CLASS_TRAIN_START: {
+        'Show_users': True,
+        'Single_text': 'Classifier is being trained.',
+        'Plural_text': 'Classifiers are being trained.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Classifier Training',
+            'Text': 'Started',
+        },
         'Console_out': 'Classifier is being trained (%(log_val)s).',
     },
     LOG_TYPE_CLASS_TRAIN_DONE: {
+        'Show_users': True,
+        'Single_text': 'Classifier training has been finished.',
+        'Plural_text': 'Classifiers\' training has been finished.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Classifier Training',
+            'Text': 'Done',
+        },
         'Console_out': 'Classifier training has finished (%(log_val)s).',
     },
     LOG_TYPE_SAMPLE_CLASSIFIED: {

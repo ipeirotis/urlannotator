@@ -64,8 +64,8 @@ class testStatExtraction(TestCase):
     def testExtraction(self):
         context = {}
         extractors = [
-            (extract_performance_stats, 'performance_TPM'),
-            (extract_performance_stats, 'performance_TNM'),
+            (extract_performance_stats, 'performance_TPR'),
+            (extract_performance_stats, 'performance_TNR'),
             (extract_performance_stats, 'performance_AUC'),
             (extract_spent_stats, 'spent_stats'),
             (extract_url_stats, 'url_stats'),
@@ -103,8 +103,8 @@ class testStatExtraction(TestCase):
         cp = cp[0]
 
         metrics_to_check = (
-            'TPM',
-            'TNM',
+            'TPR',
+            'TNR',
             'AUC',
         )
 

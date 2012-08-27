@@ -96,6 +96,7 @@ def register_view(request):
     """
     if request.method == "GET":
         context = {'form': NewUserForm()}
+        context['error'] = request.session.pop('error', None)
         return render(request, 'main/register.html',
             RequestContext(request, context))
     else:
@@ -668,20 +669,20 @@ def project_classifier_view(request, id):
         'no_labels': {'val': no_labels.count(), 'perc': no_perc},
         'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
 
-    context['performance_TPM'] = []
-    context['performance_TNM'] = []
+    context['performance_TPR'] = []
+    context['performance_TNR'] = []
     context['performance_AUC'] = []
     for perf in ClassifierPerformance.objects.filter(job=job).order_by('date'):
         date = perf.date.strftime('%Y,%m-1,%d,%H,%M,%S')
-        context['performance_TPM'].append(
-            '[Date.UTC(%s),%d]' % (date, perf.value.get('TPM', 0)))
-        context['performance_TNM'].append(
-            '[Date.UTC(%s),%d]' % (date, perf.value.get('TNM', 0)))
+        context['performance_TPR'].append(
+            '[Date.UTC(%s),%d]' % (date, perf.value.get('TPR', 0)))
+        context['performance_TNR'].append(
+            '[Date.UTC(%s),%d]' % (date, perf.value.get('TNR', 0)))
         context['performance_AUC'].append(
             '[Date.UTC(%s),%d]' % (date, perf.value.get('AUC', 0)))
 
-    context['performance_TPM'] = ','.join(context['performance_TPM'])
-    context['performance_TNM'] = ','.join(context['performance_TNM'])
+    context['performance_TPR'] = ','.join(context['performance_TPR'])
+    context['performance_TNR'] = ','.join(context['performance_TNR'])
     context['performance_AUC'] = ','.join(context['performance_AUC'])
     return render(request, 'main/project/classifier.html',
         RequestContext(request, context))

@@ -107,6 +107,7 @@ $(document).ready(function() {
             title: {
               text: 'Progress'
             },
+            min: 0,
             showFirstLabel: false
          },
          series: [{
@@ -136,6 +137,7 @@ $(document).ready(function() {
             title: {
               text: 'Spent'
             },
+            min: 0,
             showFirstLabel: false
          },
          series: [{
@@ -165,6 +167,7 @@ $(document).ready(function() {
             title: {
               text: 'URLs'
             },
+            min: 0,
             showFirstLabel: false
          },
          series: [{
@@ -194,19 +197,20 @@ $(document).ready(function() {
             title: {
               text: 'Performance'
             },
+            min: 0,
             showFirstLabel: false
          },
          series: [{
             showInLegend: true,
-            name: 'TPM',
+            name: 'TPR',
             color: '#FFAAFF',
-            data: [{{performance_TPM|safe}}]
+            data: [{{performance_TPR|safe}}]
          },
          {
             showInLegend: true,
-            name: 'TNM',
+            name: 'TNR',
             color: '#AAAAFF',
-            data: [{{performance_TNM|safe}}]
+            data: [{{performance_TNR|safe}}]
          },
          {
             showInLegend: true,

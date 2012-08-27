@@ -45,9 +45,12 @@ class Classifier(object):
         raise NotImplementedError
 
 
-# Number of seconds between Classifier247 subclassifier's train status check.
-CLASS247_TRAIN_STATUS_CHECK = 10 * 60
+# Number of seconds between steps Classifier247 subclassifier's train status
+# check.
+CLASS247_TRAIN_STEP = 15
 
+# Maxmimum number of seconds to wait between train status check.
+CLASS247_MAX_WAIT = 10 * 60
 
 class Classifier247(Classifier):
 
@@ -127,12 +130,14 @@ class Classifier247(Classifier):
         )
 
         trained = writer.get_train_status() == CLASS_TRAIN_STATUS_DONE
+        wait_time = CLASS247_TRAIN_STEP
 
         while not trained:
-            time.sleep(CLASS247_TRAIN_STATUS_CHECK)
+            time.sleep(max(CLASS247_TRAIN_STEP, CLASS247_MAX_WAIT))
 
             status = writer.get_train_status()
             trained = status == CLASS_TRAIN_STATUS_DONE
+            wait_time += CLASS247_TRAIN_STEP
 
         entry = ClassifierModel.objects.get(id=self.id)
         job = entry.job

@@ -65,7 +65,7 @@
                 <td></td>
                 <td>
                     {%csrf_token%}
-                    <input type="submit" href="#" class="btn" value="Classify!">      
+                    <input type="submit" href="#" class="btn" value="Classify!">
                 </td>
             </tr>
         </tbody>
@@ -129,10 +129,10 @@
               </td>
             </tr>
           {% endfor %}
-        </tbody>  
+        </tbody>
       </table>
     {% endif %}
-  
+
 </div>
 {% endblock %}
 
@@ -170,19 +170,21 @@ $(document).ready(function() {
             title: {
               text: 'Performance'
             },
+            min: 0,
+            max: 1,
             showFirstLabel: false
          },
          series: [{
             showInLegend: true,
-            name: 'TPM',
+            name: 'TPR',
             color: '#FFAAFF',
-            data: [{{performance_TPM|safe}}]
+            data: [{{performance_TPR|safe}}]
          },
          {
             showInLegend: true,
-            name: 'TNM',
+            name: 'TNR',
             color: '#AAAAFF',
-            data: [{{performance_TNM|safe}}]
+            data: [{{performance_TNR|safe}}]
          },
          {
             showInLegend: true,

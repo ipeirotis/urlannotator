@@ -23,11 +23,21 @@ def extract_stat(cls, job):
     """
     stats = cls.objects.filter(job=job).order_by('date')
     stats_count = stats.count()
-    list_stats = [{'date': stats[0].date, 'delta': stats[0].value}]
     now_time = now()
     idx = 1
     interval = datetime.timedelta(hours=1)
-    actual_time = stats[0].date + interval
+    actual_time = datetime.datetime(
+        year=stats[0].date.year,
+        month=stats[0].date.month,
+        day=stats[0].date.day,
+        hour=stats[0].date.hour,
+        minute=0,
+        second=0,
+        microsecond=0,
+        tzinfo=stats[0].date.tzinfo,
+    )
+    list_stats = [{'date': actual_time, 'delta': stats[0].value}]
+    actual_time += interval
     actual_value = stats[0].value
 
     while actual_time <= now_time:
@@ -76,11 +86,21 @@ def extract_stat_by_val(cls, job, val_fun):
     '''
     stats = cls.objects.filter(job=job).order_by('date')
     stats_count = stats.count()
-    list_stats = [{'date': stats[0].date, 'delta': val_fun(stats[0])}]
     now_time = now()
+    actual_time = datetime.datetime(
+        year=stats[0].date.year,
+        month=stats[0].date.month,
+        day=stats[0].date.day,
+        hour=stats[0].date.hour,
+        minute=0,
+        second=0,
+        microsecond=0,
+        tzinfo=stats[0].date.tzinfo,
+    )
     idx = 1
     interval = datetime.timedelta(hours=1)
-    actual_time = stats[0].date + interval
+    list_stats = [{'date': actual_time, 'delta': val_fun(stats[0])}]
+    actual_time += interval
     actual_value = val_fun(stats[0])
 
     while actual_time <= now_time:
@@ -106,18 +126,18 @@ def extract_performance_stats(job, context):
     '''
         Extracts job's performance statistics as difference per hour.
     '''
-    extract_TPM = lambda x: x.value.get('TPM', 0)
-    extract_TNM = lambda x: x.value.get('TNM', 0)
+    extract_TPR = lambda x: x.value.get('TPR', 0)
+    extract_TNR = lambda x: x.value.get('TNR', 0)
     extract_AUC = lambda x: x.value.get('AUC', 0)
-    context['performance_TPM'] = extract_stat_by_val(
+    context['performance_TPR'] = extract_stat_by_val(
         ClassifierPerformance,
         job,
-        extract_TPM
+        extract_TPR
     )
-    context['performance_TNM'] = extract_stat_by_val(
+    context['performance_TNR'] = extract_stat_by_val(
         ClassifierPerformance,
         job,
-        extract_TNM
+        extract_TNR
     )
     context['performance_AUC'] = extract_stat_by_val(
         ClassifierPerformance,
@@ -133,7 +153,7 @@ def TruePositiveMetric(classifier, job, analyze):
     matrix = analyze['modelDescription']['confusionMatrix']
     yesCount = matrix['Yes']['Yes']
     noCount = matrix['Yes']['No']
-    return ('TPM', round(yesCount / (yesCount + noCount), 4))
+    return ('TPR', round(yesCount / (yesCount + noCount), 4))
 
 
 def TrueNegativeMetric(classifier, job, analyze):
@@ -143,16 +163,16 @@ def TrueNegativeMetric(classifier, job, analyze):
     matrix = analyze['modelDescription']['confusionMatrix']
     yesCount = matrix['No']['Yes']
     noCount = matrix['No']['No']
-    return ('TNM', round(noCount / (yesCount + noCount), 4))
+    return ('TNR', round(noCount / (yesCount + noCount), 4))
 
 
 def AUCMetric(classifier, job, analyze):
     '''
         Calculates 'Area Under the Curve' metric.
     '''
-    TPM = TruePositiveMetric(classifier, job, analyze)
-    TNM = TrueNegativeMetric(classifier, job, analyze)
-    return ('AUC', round((TPM[1] + TNM[1]) / 2.0, 4))
+    TPR = TruePositiveMetric(classifier, job, analyze)
+    TNR = TrueNegativeMetric(classifier, job, analyze)
+    return ('AUC', round((TPR[1] + TNR[1]) / 2.0, 4))
 
 # List of classifier performance metrics to be calculated, stored and displayed
 # on the performance chart
