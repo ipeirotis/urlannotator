@@ -533,15 +533,15 @@ class ProjectTests(TestCase):
         self.assertIn('workers', resp.context)
         self.assertFalse(resp.context['workers'])
 
-        w = Worker.objects.all()
+        Worker.objects.create_odesk(external_id='1')
+        w = Worker.objects.get_odesk(external_id='1')
         if w:
-            w = w[0]
             resp = self.c.get(
                 reverse('project_worker_view', args=[job.id, w.id]),
                 follow=True
             )
-            self.assertIn('name', resp.context)
-            self.assertTrue(resp.context['name'])
+            self.assertIn('worker', resp.context)
+            self.assertTrue(resp.context['worker']['name'])
 
     def testDataView(self):
         job = Job.objects.create_active(

@@ -1,9 +1,9 @@
 import datetime
 import requests
 import hashlib
-import urllib
 # import odesk
 
+from itertools import chain
 from tastypie.models import create_api_key
 
 from django.db import models
@@ -211,8 +211,16 @@ class Job(models.Model):
         """
             Returns number of workers that have worked on this project.
         """
-        # FIXME: Returns number of all workers.
-        return Worker.objects.all().count()
+        workers = {}
+        for classified in self.classifiedsample_set.all():
+            if not classified.source_type in workers:
+                workers[classified.source_type] = {}
+
+            workers[classified.source_type][classified.source_val] = classified
+
+        workers = [val.values() for entry, val in workers.items()]
+        workers = list(chain.from_iterable(workers))
+        return len(workers)
 
     def get_cost(self):
         """
@@ -332,6 +340,12 @@ class SampleManager(models.Manager):
             *args, **kwargs
         )
 
+    def by_worker(self, source_type, source_val, **kwargs):
+        """
+            Returns samples done by the worker.
+        """
+        return self.filter(source_type=source_type, source_val=source_val)
+
 
 class Sample(models.Model):
     """
@@ -351,16 +365,21 @@ class Sample(models.Model):
         unique_together = ('job', 'url')
 
     def get_source_worker(self):
-        '''
+        """
             Returns a worker that has sent this sample.
-        '''
+        """
         # FIXME: Add support for more sources.
         if self.source_type == SAMPLE_SOURCE_OWNER:
             # If the sample's creator is owner, ignore source worker.
-            return None
+            return Worker.objects.get_worker(
+                source_type=self.source_type,
+                source_val=self.job.account.user.id,
+            )
         elif self.source_type == SAMPLE_TAGASAURIS_WORKER:
-            # FIXME: Proper worker type handling
-            return None
+            return Worker.objects.get_worker(
+                source_type=self.source_type,
+                source_val=self.job.account.user.id,
+            )
 
     def get_screenshot_key(self):
         """
@@ -369,7 +388,6 @@ class Sample(models.Model):
         """
         algorithm = hashlib.new(imagescale2.HASHING_ALGORITHM)
         algorithm.update(imagescale2.SALT)
-        print self.screenshot
         algorithm.update(self.screenshot)
         return algorithm.hexdigest()
 
@@ -402,8 +420,16 @@ class Sample(models.Model):
         """
             Returns workers that have sent this sample (url).
         """
-        #  FIXME: Support for multiple workers sending the same url.
-        return [self.source_type]
+        workers = {}
+        for classified in self.classifiedsample_set.all():
+            if not classified.source_type in workers:
+                workers[classified.source_type] = {}
+
+            workers[classified.source_type][classified.source_val] = classified
+
+        workers = [val.values() for entry, val in workers.items()]
+        workers = list(chain.from_iterable(workers))
+        return workers
 
     def get_yes_votes(self):
         """
@@ -464,13 +490,20 @@ class Sample(models.Model):
 # odesk - worker from odesk. External id points to user's odesk id.
 # internal - worker registered in our system. External id is the user's id.
 WORKER_TYPE_ODESK = 0
-WORKER_TYPE_INTERNAL = 1
+WORKER_TYPE_TAGASAURIS = 1
+WORKER_TYPE_INTERNAL = 2
 
 WORKER_TYPES = (
     (WORKER_TYPE_ODESK, 'oDesk'),
-    (WORKER_TYPE_INTERNAL, 'internal')
-
+    (WORKER_TYPE_TAGASAURIS, 'Tagasauris'),
+    (WORKER_TYPE_INTERNAL, 'internal'),
 )
+
+# Mapping from sample source type to worker type
+sample_source_to_worker = {
+    SAMPLE_SOURCE_OWNER: WORKER_TYPE_INTERNAL,
+    SAMPLE_TAGASAURIS_WORKER: WORKER_TYPE_TAGASAURIS,
+}
 
 
 class WorkerManager(models.Manager):
@@ -482,6 +515,21 @@ class WorkerManager(models.Manager):
             worker_type=WORKER_TYPE_ODESK,
             **kwargs
         )
+
+    def get_odesk(self, external_id):
+        return self.get(
+            external_id=external_id,
+            worker_type=WORKER_TYPE_ODESK,
+        )
+
+    def get_worker(self, source_type, source_val, **kwargs):
+        """
+            Returns worker that corresponds to source_type, source_val pair.
+        """
+        worker_type = sample_source_to_worker.get(
+            source_type, WORKER_TYPE_INTERNAL
+        )
+        return self.get(worker_type=worker_type, external_id=source_val)
 
 
 class Worker(models.Model):
@@ -495,13 +543,20 @@ class Worker(models.Model):
 
     objects = WorkerManager()
 
-    def get_name_as(self, requesting_user):
+    def __unicode__(self):
+        return self.get_name()
+
+    def can_show_to_user(self):
+        return self.worker_type != WORKER_TYPE_INTERNAL
+
+    def get_name(self):
         """
-            Returns worker's name. Uses requesting_user's ceredentials if
-            necessary.
+            Returns worker's name.
         """
         # FIXME: Uncomment when proper odesk external id handling is done
 
+        if self.worker_type == WORKER_TYPE_INTERNAL:
+            return 'You'
         # if self.worker_type == WORKER_TYPE_ODESK:
         #     client = odesk.Client(settings.ODESK_CLIENT_ID,
         #         settings.ODESK_CLIENT_SECRET,
@@ -515,7 +570,16 @@ class Worker(models.Model):
             Returns links collected by given worker for given job.
         """
         # FIXME: Actual links collected query
-        s = Sample.objects.filter(job=job)
+        source_type = None
+        for source, worker in sample_source_to_worker.items():
+            if worker == self.worker_type:
+                source_type = source
+                break
+
+        s = Sample.objects.by_worker(
+            source_type=source_type,
+            source_val=self.external_id,
+        ).filter(job=job)
         return s
 
     def get_hours_spent_for_job(self, job):
@@ -546,6 +610,16 @@ class Worker(models.Model):
         '''
         # FIXME: Proper job start query.
         return datetime.datetime.now()
+
+
+def create_worker(sender, instance, created, **kwargs):
+    if created:
+        Worker.objects.create(
+            external_id=instance.id,
+            worker_type=WORKER_TYPE_INTERNAL,
+        )
+
+post_save.connect(create_worker, sender=User)
 
 
 class TemporarySample(models.Model):

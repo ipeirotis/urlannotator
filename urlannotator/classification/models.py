@@ -118,7 +118,7 @@ class TrainingSample(models.Model):
     label = models.CharField(max_length=20, choices=LABEL_CHOICES)
 
 # Classified sample source_type breakdown:
-# owner - classify request from job owner. Source_val is irrevelant.
+# owner - classify request from job owner. Source_val is irrelevant.
 CLASS_SAMPLE_SOURCE_OWNER = 'owner'
 
 
@@ -181,6 +181,15 @@ class ClassifiedSample(models.Model):
         if self.sample and self.label:
             return CLASSIFIED_SAMPLE_SUCCESS
         return CLASSIFIED_SAMPLE_PENDING
+
+    def get_source_worker(self):
+        """
+            Returns a worker that has created this sample. `None` otherwise.
+        """
+        return Worker.objects.get_worker(
+            source_type=self.source_type,
+            source_val=self.source_val,
+        )
 
     def is_pending(self):
         return self.get_status() == CLASSIFIED_SAMPLE_PENDING

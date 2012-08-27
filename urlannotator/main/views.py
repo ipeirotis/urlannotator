@@ -246,8 +246,8 @@ def settings_view(request):
         context['twitter'] = l[0]
 
     if profile.odesk_uid:
-        w = Worker.objects.get(external_id=profile.odesk_uid)
-        context['odesk'] = {'name': w.get_name_as(request.user)}
+        w = Worker.objects.get_odesk(external_id=profile.odesk_uid)
+        context['odesk'] = {'name': w.get_name()}
 
     if request.method == "POST":
         if 'submit' in request.POST:
@@ -523,10 +523,10 @@ def project_workers_view(request, id):
     workers = []
     for sample in samples:
         worker = sample.get_source_worker()
-        if worker:
+        if worker and worker.can_show_to_user():
             workers.append({
                 'id': worker.id,
-                'name': worker.get_name_as(request.user),
+                'name': worker.get_name(),
                 'quality': worker.estimated_quality,
                 'votes_added': len(worker.get_votes_added_for_job(job)),
                 'links_collected': worker.get_links_collected_for_job(job),
@@ -543,12 +543,16 @@ def project_worker_view(request, id, worker_id):
         job = Job.objects.get(id=id, account=request.user.get_profile())
         worker = Worker.objects.get(id=worker_id)
     except (Job.DoesNotExist, Worker.DoesNotExist):
-        request.session['error'] = 'The project does not exist.'
+        request.session['error'] = 'The user does not exist.'
+        return redirect('index')
+
+    if not worker.can_show_to_user():
+        request.session['error'] = 'The user does not exist.'
         return redirect('index')
 
     context = {'project': job}
     worker = {
-        'name': worker.get_name_as(request.user),
+        'name': worker.get_name(),
         'links_collected': worker.get_links_collected_for_job(job),
         'votes_added': worker.get_votes_added_for_job(job),
         'hours_spent': worker.get_hours_spent_for_job(job),
@@ -556,6 +560,7 @@ def project_worker_view(request, id, worker_id):
         'earned': worker.get_earned_for_job(job),
         'work_started': worker.get_job_start_time(job),
     }
+    context['worker'] = worker
     return render(request, 'main/project/worker.html',
         RequestContext(request, context))
 
