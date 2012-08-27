@@ -18,8 +18,8 @@
       <tbody>
         {% for data in data_set %}
           <tr>
-            <td><a href="{{data.screenshot}}"><img style="width: 60px; max-height: 60px;" src="{{data.screenshot}}"></a></td>
-            <td><a href="{% url project_data_detail project.id data.id%}">{{data.url}}</a></td>
+            <td><a href="{% url sample_thumbnail data.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail data.id 'small' %}"></a></td>
+            <td><a href="{% url project_data_detail project.id data.id %}">{{data.url}}</a></td>
             <td>{{data.added_on}}</td>
             <td>{{data.get_workers|length}}</td>
             <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
@@ -38,6 +38,6 @@ table#more-information td:first-child {
   width: 140px;
   text-align: right;
   padding-right: 10px;
-} 
+}
 </style>
-{% endblock %}  
+{% endblock %}

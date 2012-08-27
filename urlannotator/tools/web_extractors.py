@@ -99,8 +99,9 @@ def get_web_screenshot(url):
     k.make_public()
 
     # Amazon replaces some characters
-    name = k.name.replace('://', '%3A/')
-    name = k.name.replace('?', '%3F')
+
+    k.name = k.name.replace('://', '%3A/')
+    k.name = k.name.replace('?', '%3F')
     name = k.name.replace('=', '%3D')
 
     # Url for public screen (without any expiration date)

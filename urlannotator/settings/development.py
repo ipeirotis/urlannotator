@@ -2,6 +2,7 @@
 
 import os
 from defaults import *
+from imagescale2 import DEF_PORT
 
 DATABASES = {
     'default': {
@@ -19,6 +20,7 @@ CELERY_RESULT_BACKEND = 'amqp://'
 BROKER_URL = 'amqp://'
 
 SITE_URL = '127.0.0.1:8000'
+IMAGESCALE_URL = '127.0.0.1:%d' % DEF_PORT
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

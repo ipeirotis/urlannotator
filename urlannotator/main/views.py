@@ -7,7 +7,7 @@ import csv
 import json
 
 from docutils import core
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.template import RequestContext, Context
@@ -60,7 +60,6 @@ def alerts_view(request):
         return entry_dict
 
     alert_entries = LogEntry.objects.unread_for_user(request.user)
-    print alert_entries
     alerts = aggregate(alert_entries, 'log_type')
 
     action_entries = LongActionEntry.objects.running_for_user(request.user)
@@ -86,6 +85,24 @@ def updates_box_view(request, job_id):
     res = [entry.get_box() for entry in log_entries]
 
     return HttpResponse(json.dumps(res))
+
+
+def sample_thumbnail(request, id, thumb_type='small'):
+    try:
+        sample = Sample.objects.get(id=id)
+    except Sample.DoesNotExist:
+        raise Http404
+
+    if thumb_type == 'small':
+        return HttpResponse(
+            sample.get_small_thumbnail(),
+            content_type='image/png'
+        )
+    else:
+        return HttpResponse(
+            sample.get_large_thumbnail(),
+            content_type='image/png'
+        )
 
 
 @csrf_protect

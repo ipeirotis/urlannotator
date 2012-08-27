@@ -1,4 +1,7 @@
 import datetime
+import requests
+import hashlib
+import urllib
 # import odesk
 
 from tastypie.models import create_api_key
@@ -8,10 +11,12 @@ from django.db.models import F
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.utils.timezone import now
+from django.conf import settings
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
+from urlannotator.settings import imagescale2
 
 LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
 
@@ -356,6 +361,42 @@ class Sample(models.Model):
         elif self.source_type == SAMPLE_TAGASAURIS_WORKER:
             # FIXME: Proper worker type handling
             return None
+
+    def get_screenshot_key(self):
+        """
+            Returns sample's key used to authenticate thumbnail request in
+            imagescale.
+        """
+        algorithm = hashlib.new(imagescale2.HASHING_ALGORITHM)
+        algorithm.update(imagescale2.SALT)
+        print self.screenshot
+        algorithm.update(self.screenshot)
+        return algorithm.hexdigest()
+
+    def get_thumbnail(self, width=60, height=60):
+        """
+            Returns a thumbnail from sample's screenshot fit to given size.
+        """
+        params = {
+            'width': width,
+            'height': height,
+            'url': self.screenshot,
+            'key': self.get_screenshot_key(),
+        }
+        r = requests.get('http://' + settings.IMAGESCALE_URL, params=params)
+        return r.content
+
+    def get_small_thumbnail(self):
+        """
+            Returns a small (60x60) thumbnail to use in samples list, etc.
+        """
+        return self.get_thumbnail(width=60, height=60)
+
+    def get_large_thumbnail(self):
+        """
+            Returns a large (300x300) thumbnail to use as screenshot's preview.
+        """
+        return self.get_thumbnail(width=300, height=300)
 
     def get_workers(self):
         """

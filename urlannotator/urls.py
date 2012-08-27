@@ -51,6 +51,8 @@ urlpatterns = patterns('urlannotator',
         'main.views.project_btm_view', name='project_btm_view'),
     url(r'^project/(?P<id>\d+)/classifier$',
         'main.views.project_classifier_view', name='project_classifier_view'),
+    url(r'^sample/(?P<id>\d+)/(?P<thumb_type>(small|large))$',
+        'main.views.sample_thumbnail', name='sample_thumbnail'),
 
     url(r'^_admin/', include(admin.site.urls)),
     url(r'^auth/', include('social_auth.urls')),
