@@ -53,7 +53,7 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
     if callback is not None:
         kwargs.update({
             "workflow": {
-                "NotifyTask_1": {
+                settings.TAGASAURIS_NOTIFY[task_type]: {
                     "config": {
                         "urlannotator_callback_url": callback
                     }
