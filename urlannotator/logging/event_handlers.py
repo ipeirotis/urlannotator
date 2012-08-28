@@ -41,7 +41,7 @@ def log_new_job_done(job_id, *args, **kwargs):
 def log_new_sample_start(job_id, url, *args, **kwargs):
     job = Job.objects.get(id=job_id)
     params = {
-        'url': url,
+        'sample_url': url,
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_NEW_SAMPLE_START,

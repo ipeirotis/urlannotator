@@ -57,13 +57,13 @@ log_config = {
     },
     LOG_TYPE_NEW_GOLD_SAMPLE: {
         'Show_users': True,
-        'Single_text': 'New gold sample (%(sample_url)s) has been created.',
+        'Single_text': 'New gold sample (%(gold_url)s) has been created.',
         'Plural_text': 'New gold samples have been created.',
         'Box_entry': {
             'Title': 'New Gold Sample',
-            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+            'Text': '<a href="%(gold_url)s">%(gold_url)s</a>',
         },
-        'Console_out': 'New gold sample is being created (%(log_val)s).',
+        'Console_out': 'New gold sample has been created (%(log_val)s).',
     },
     LOG_TYPE_NEW_SAMPLE_DONE: {
         'Console_out': 'New sample has been created (%(log_val)s).',
