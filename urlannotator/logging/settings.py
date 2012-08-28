@@ -62,6 +62,7 @@ log_config = {
         'Box_entry': {
             'Title': 'New Gold Sample',
             'Text': '<a href="%(gold_url)s">%(gold_url)s</a>',
+            'Image_url': '%(sample_image)s',
         },
         'Console_out': 'New gold sample has been created (%(log_val)s).',
     },
@@ -73,6 +74,7 @@ log_config = {
         'Box_entry': {
             'Title': 'New Sample',
             'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+            'Image_url': '%(sample_image)s',
         },
     },
     LOG_TYPE_CLASS_TRAIN_START: {
@@ -105,6 +107,7 @@ log_config = {
         'Box_entry': {
             'Title': 'New Sample',
             'Text': '<a href="%(class_url)s">%(class_url)s</a>',
+            'Image_url': '%(sample_image)s',
         },
     },
 }

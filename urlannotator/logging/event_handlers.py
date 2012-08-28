@@ -76,6 +76,7 @@ def log_gold_sample_done(job_id, gold_id, *args, **kwargs):
     params = {
         'gold_sample': gold_id,
         'gold_url': gold.sample.url,
+        'sample_image': gold.sample.screenshot,
         'gold_label': gold.label,
     }
     LogEntry.objects.log(
@@ -124,6 +125,7 @@ def log_sample_classified(job_id, class_id, *args, **kwargs):
         'class_id': class_sample.id,
         'sample_id': class_sample.sample_id,
         'class_url': class_sample.url,
+        'sample_image': class_sample.sample.screenshot,
         'class_label': class_sample.label,
     }
     LogEntry.objects.log(
