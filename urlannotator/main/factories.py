@@ -4,7 +4,7 @@ from celery import group, chain
 
 from urlannotator.classification.models import TrainingSet
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.main.models import TemporarySample, Job, Sample
+from urlannotator.main.models import Job, Sample
 from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample,
     copy_sample_to_job)
@@ -44,16 +44,15 @@ class SampleFactory(object):
                 create_classify_sample.s(label=label, *args, **kwargs)
             ).apply_async()
 
-        temp_sample = TemporarySample(url=url)
-        temp_sample.save()
+        sample = Sample.objects.create(url=url, job=job)
 
         # Groups screensot and content extraction. On both success proceeds
         # to sample creation. Used Celery Chords.
         return chain(group([
-            web_screenshot_extraction.s(sample_id=temp_sample.id, url=url),
-            web_content_extraction.s(sample_id=temp_sample.id, url=url)]),
+            web_screenshot_extraction.s(sample_id=sample.id, url=url),
+            web_content_extraction.s(sample_id=sample.id, url=url)]),
             create_sample.s(
-                temp_sample_id=temp_sample.id,
+                sample_id=sample.id,
                 job_id=job_id,
                 url=url,
                 label=label,

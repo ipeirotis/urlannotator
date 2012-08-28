@@ -357,6 +357,12 @@ class Sample(models.Model):
             # FIXME: Proper worker type handling
             return None
 
+    def is_finished(self):
+        """
+            Whether the sample's creation has been finished.
+        """
+        return self.text and self.screenshot
+
     def get_workers(self):
         """
             Returns workers that have sent this sample (url).
@@ -505,16 +511,6 @@ class Worker(models.Model):
         '''
         # FIXME: Proper job start query.
         return datetime.datetime.now()
-
-
-class TemporarySample(models.Model):
-    """
-        Temporary sample used inbetween creating the real sample by processes
-        responsible for each part.
-    """
-    text = models.TextField()
-    screenshot = models.URLField()
-    url = models.URLField()
 
 
 class GoldSample(models.Model):

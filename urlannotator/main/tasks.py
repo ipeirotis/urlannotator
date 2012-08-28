@@ -3,7 +3,7 @@ from celery.task import current
 from django.db import DatabaseError, IntegrityError
 
 from urlannotator.classification.models import ClassifiedSample
-from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job)
+from urlannotator.main.models import Sample, GoldSample, Job
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 from urlannotator.flow_control import send_event
 
@@ -13,11 +13,14 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
     """ Links/lynx required. Generates html output from those browsers.
     """
     if url is None:
-        url = TemporarySample.objects.get(id=sample_id).url
+        url = Sample.objects.get(id=sample_id).url
 
     text = get_web_text(url)
-    TemporarySample.objects.filter(id=sample_id).update(text=text)
-
+    Sample.objects.filter(id=sample_id).update(text=text)
+    send_event(
+        "EventSampleContentDone",
+        sample_id=sample_id,
+    )
     return True
 
 
@@ -26,7 +29,7 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
     """ CutyCapt required. Generates html output from those browsers.
     """
     if url is None:
-        url = TemporarySample.objects.get(id=sample_id).url
+        url = Sample.objects.get(id=sample_id).url
 
     try:
         screenshot = get_web_screenshot(url)
@@ -34,40 +37,35 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
         current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
 
-    TemporarySample.objects.filter(id=sample_id).update(
-        screenshot=screenshot)
+    Sample.objects.filter(id=sample_id).update(screenshot=screenshot)
 
+    send_event(
+        "EventSampleScreenshotDone",
+        sample_id=sample_id,
+    )
     return True
 
 
 @task()
-def create_sample(extraction_result, temp_sample_id, job_id, url,
+def create_sample(extraction_result, sample_id, job_id, url,
     source_type, source_val='', label=None, silent=False, *args, **kwargs):
     """
-    Creates real sample using TemporarySample. If error while capturing web
-    propagate it. Finally deletes TemporarySample.
+    If error while capturing web propagate it. Finally deletes TemporarySample.
     extraction_result should be [True, True] - otherwise chaining failed.
     """
 
-    sample_id = None
     extracted = all([x is True for x in extraction_result])
-    temp_sample = TemporarySample.objects.get(id=temp_sample_id)
 
     # Checking if all previous tasks succeeded.
     if extracted:
         job = Job.objects.get(id=job_id)
 
         # Proper sample entry
-        sample = Sample(
-            job=job,
-            url=url,
-            text=temp_sample.text,
-            screenshot=temp_sample.screenshot,
+        Sample.objects.filter(id=sample_id).update(
             source_type=source_type,
             source_val=source_val
         )
-        sample.save()
-        sample_id = sample.id
+        sample = Sample.objects.get(id=sample_id)
 
         if not silent:
             # Golden sample
@@ -92,9 +90,6 @@ def create_sample(extraction_result, temp_sample_id, job_id, url,
                     job_id=job.id,
                     sample_id=sample_id,
                 )
-
-    # We don't need this object any more.
-    temp_sample.delete()
 
     return (extracted, sample_id)
 
@@ -159,6 +154,14 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
             source_val=source_val
         )
 
+        send_event(
+            "EventSampleScreenshotDone",
+            sample_id=new_sample.id,
+        )
+        send_event(
+            "EventSampleContentDone",
+            sample_id=new_sample.id,
+        )
         # Golden sample
         if label is not None:
             # GoldSample created sucesfully - pushing event.
