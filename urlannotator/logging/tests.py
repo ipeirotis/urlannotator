@@ -25,6 +25,9 @@ class LoggingTest(TestCase):
         logs = LogEntry.objects.recent_for_job(self.job)
         self.assertTrue(logs)
 
+        logs = LogEntry.objects.recent_for_job()
+        self.assertTrue(logs)
+
         # Lets add a user-visible alert - new sample done.
         params = {
             'sample_id': 0,
@@ -47,6 +50,9 @@ class LoggingTest(TestCase):
 
         # Yet recent logs should be always displayed.
         logs = LogEntry.objects.recent_for_job(self.job)
+        self.assertTrue(logs)
+
+        logs = LogEntry.objects.recent_for_job(num=0)
         self.assertTrue(logs)
 
     def test_config(self):
