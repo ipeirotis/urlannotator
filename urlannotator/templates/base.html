@@ -75,8 +75,8 @@
                             <form style="margin-bottom: 0px" method="POST" action="{% url login %}">
                               <fieldset>
                                 {% csrf_token %}
-                                <input type="text" name="email" value="email">
-                                <input type="password" name="password" value="password">
+                                <input type="text" name="email" placeholder="email">
+                                <input type="password" name="password" placeholder="password">
                                 <button style="display: block" type="submit" class="btn">Log In</button>
                                 <label class="checkbox">
                                   <input type="checkbox" name="remember">Remember me
@@ -123,7 +123,7 @@
           <div class="row-fluid">
             <hr>
             <footer>
-                <p>&copy; 10clouds.com 2012</p>
+                <p><a href="#">Terms of service</a>, <a href="#">Legal</a>, <a href="#">Contact</a>, created by <a href="http://10clouds.com">10Clouds</a></p>
             </footer>
           </div>
         </div>
