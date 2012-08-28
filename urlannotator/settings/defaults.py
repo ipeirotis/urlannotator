@@ -309,10 +309,20 @@ CELERYBEAT_SCHEDULE = {
 # CELERY_ALWAYS_EAGER = True
 TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
+# Tagasauris integretion settings
 TAGASAURIS_LOGIN = 'urlannotator'
 TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'https://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+
+TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
+TAGASAURIS_VOTING_WORKFLOW = 'voting'
+
+TAGASAURIS_CALLBACKS = 'http://127.0.0.1:8000'
+TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/sample/tagasauris/%s/'
+TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/tagasauris/%s/'
 
 # Tools testing flag. If set to True, certain tools will be mocked.
 TOOLS_TESTING = False

@@ -1,6 +1,9 @@
-from tastypie.resources import ModelResource
-from django.conf.urls import url
+import json
 import urllib
+
+from django.conf.urls import url
+
+from tastypie.resources import ModelResource
 
 from urlannotator.main.models import Job, Sample
 from urlannotator.classification.models import ClassifiedSample
@@ -104,7 +107,33 @@ class JobResource(ModelResource):
         return self.create_response(request, resp)
 
 
-class SampleResource(ModelResource):
+class TagasaurisNotifyResource(ModelResource):
+    """ Entry point for externally gathered samples.
+    """
+
+    notification_required = ['worker_id', 'results']
+
+    def parse_notification(self, request):
+        """
+            Initiates classification on passed url using classifier
+            associated with job. Returns task id on success.
+        """
+
+        data = json.loads(request.raw_post_data)
+
+        self.method_check(request, allowed=['post'])
+        for req in self.notification_required:
+            if req not in data:
+                return self.create_response(request,
+                    {'error': 'Missing "%s" parameter.' % req})
+
+        results = data['results']
+        worker_id = data['worker_id']
+
+        return worker_id, results
+
+
+class SampleResource(TagasaurisNotifyResource):
     """ Entry point for externally gathered samples.
     """
 
@@ -115,7 +144,7 @@ class SampleResource(ModelResource):
     def override_urls(self):
         return [
             url(r'^(?P<resource_name>%s)/tagasauris/'
-                '(?P<tagasauris_job_id>[^/]+)/$' % self._meta.resource_name,
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('add_from_tagasauris'),
                 name='sample_add_from_tagasauris'),
         ]
@@ -125,30 +154,65 @@ class SampleResource(ModelResource):
             Initiates classification on passed url using classifier
             associated with job. Returns task id on success.
         """
-        self.method_check(request, allowed=['post'])
-        if 'good_urls' not in request.POST:
-            return self.create_response(request, {'error': 'Wrong url.'})
 
         try:
-            tag_job = TagasaurisJobs.objects.get(
-                sample_gathering_key=kwargs['tagasauris_job_id'])
-            job = tag_job.urlannotator_job
+            job = Job.objects.get(id=kwargs['job_id'])
         except (TagasaurisJobs.DoesNotExist, Job.DoesNotExist):
             return self.create_response(request, {'error': 'Wrong job.'})
 
-        good_urls = request.POST.getlist('good_urls', None)
-        # bad_urls = request.POST.getlist('bad_urls', None)
-        worker_id = urllib.unquote_plus(request.POST['worker_id'])
+        worker_id, results = self.parse_notification(request)
 
         sample_ids = []
-        for url in good_urls:
-            sample = Sample.objects.create_by_worker(
-                job_id=job.id,
-                url=url,
-                label='',
-                source_val=worker_id
-            )
-            sample_ids.append(sample.id)
+        for mediaobject_id, answers in results.iteritems():
+            for answer in answers:
+                for res in answer['results']:
+                    sample = Sample.objects.create_by_worker(
+                        job_id=job.id,
+                        url=res['answer'],
+                        label='',
+                        source_val=worker_id
+                    )
+                    sample_ids.append(sample.id)
+
+        return self.create_response(
+            request,
+            {'request_id': sample_ids}
+        )
+
+
+class VoteResource(TagasaurisNotifyResource):
+    """ Entry point for externally gathered samples.
+    """
+
+    class Meta:
+        resource_name = 'vote'
+        list_allowed_methods = ['post']
+
+    def override_urls(self):
+        return [
+            url(r'^(?P<resource_name>%s)/tagasauris/'
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('add_from_tagasauris'),
+                name='sample_add_from_tagasauris'),
+        ]
+
+    def add_from_tagasauris(self, request, **kwargs):
+        """
+            Initiates classification on passed url using classifier
+            associated with job. Returns task id on success.
+        """
+
+        worker_id, results = self.parse_notification(request)
+
+        sample_ids = []
+        for mediaobject_id, answers in results.iteritems():
+            for answer in answers:
+                if answer['tag'] == 'broken':
+                    pass
+                elif answer['tag'] == 'yes':
+                    pass
+                elif answer['tag'] == 'no':
+                    pass
 
         return self.create_response(
             request,

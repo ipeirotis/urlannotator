@@ -1,14 +1,9 @@
 import hashlib
 import uuid
-import time
 
 from django.conf import settings
 
 from tagapi.api import TagasaurisClient
-
-
-TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
-TAGASAURIS_VOTING_WORKFLOW = 'voting'
 
 
 def make_tagapi_client():
@@ -34,7 +29,7 @@ def samples_to_mediaobjects(samples):
     return mediaobjects
 
 
-def create_job(api_client, job, task_type, mediaobjects=None):
+def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
 
@@ -42,30 +37,37 @@ def create_job(api_client, job, task_type, mediaobjects=None):
     # Before job creation we must configure Tagasauris account and
     # workflows. Account must have disabled billings & workflows need
     # to have "external" flag set.
+
+    kwargs = {
+        "id": ext_id,
+        "title": job.title,
+        "task": {
+            "id": task_type,
+            "instruction": job.description,
+            "paid": "0.0",
+            "keywords": ""
+        },
+    }
+
+    # Setting callback for notify mechanical task.
+    if callback is not None:
+        kwargs.update({
+            "workflow": {
+                "NotifyTask_1": {
+                    "config": {
+                        "urlannotator_callback_url": callback
+                    }
+                }
+            }
+        })
+
+    # Choosing mediaobjects
     if mediaobjects is None:
-        result = api_client.create_job(
-            id=ext_id,
-            title=job.title,
-            task={
-                "id": task_type,
-                "instruction": job.description,
-                "paid": "0.0",
-                "keywords": ""
-            },
-            dummy_media='dummy'
-        )
+        kwargs.update({"dummy_media": "dummy"})
     else:
-        result = api_client.create_job(
-            id=ext_id,
-            title=job.title,
-            task={
-                "id": task_type,
-                "instruction": job.description,
-                "paid": "0.0",
-                "keywords": ""
-            },
-            mediaobjects=mediaobjects
-        )
+        kwargs.update({"mediaobjects": mediaobjects})
+
+    result = api_client.create_job(**kwargs)
 
     # media_import_key = result[0]
     job_creation_key = result[1]
