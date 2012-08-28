@@ -5,9 +5,10 @@ from django.conf.urls import url
 
 from tastypie.resources import ModelResource
 
-from urlannotator.main.models import Job, Sample
+from urlannotator.main.models import (Job, Sample, Worker, LABEL_BROKEN,
+    LABEL_YES, LABEL_NO)
 from urlannotator.classification.models import ClassifiedSample
-from urlannotator.crowdsourcing.models import TagasaurisJobs
+from urlannotator.crowdsourcing.models import SampleMapping, WorkerQualityVote
 
 import logging
 log = logging.getLogger(__name__)
@@ -157,7 +158,7 @@ class SampleResource(TagasaurisNotifyResource):
 
         try:
             job = Job.objects.get(id=kwargs['job_id'])
-        except (TagasaurisJobs.DoesNotExist, Job.DoesNotExist):
+        except Job.DoesNotExist:
             return self.create_response(request, {'error': 'Wrong job.'})
 
         worker_id, results = self.parse_notification(request)
@@ -204,17 +205,32 @@ class VoteResource(TagasaurisNotifyResource):
 
         worker_id, results = self.parse_notification(request)
 
-        sample_ids = []
+        try:
+            worker = Worker.objects.get(external_id=worker_id)
+        except Worker.DoesNotExist:
+            return self.create_response(request,
+                {'error': 'Worker not registered in database.'})
+
+        quality_vote_ids = []
         for mediaobject_id, answers in results.iteritems():
+            sample = SampleMapping.objects.get(
+                external_id=mediaobject_id,
+                crowscourcing_type=SampleMapping.TAGASAURIS
+            ).sample
+
             for answer in answers:
+                quality_vote = WorkerQualityVote(
+                    worker=worker,
+                    sample=sample
+                )
                 if answer['tag'] == 'broken':
-                    pass
+                    quality_vote.label = LABEL_BROKEN
                 elif answer['tag'] == 'yes':
-                    pass
+                    quality_vote.label = LABEL_YES
                 elif answer['tag'] == 'no':
-                    pass
+                    quality_vote.label = LABEL_NO
 
         return self.create_response(
             request,
-            {'request_id': sample_ids}
+            {'quality_vote_ids': quality_vote_ids}
         )

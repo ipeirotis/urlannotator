@@ -13,7 +13,14 @@ from tenclouds.django.jsonfield.fields import JSONField
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 
-LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
+LABEL_BROKEN = 'Broken'
+LABEL_YES = 'Yes'
+LABEL_NO = 'No'
+LABEL_CHOICES = (
+    (LABEL_NO, 'No'),
+    (LABEL_YES, 'Yes'),
+    (LABEL_BROKEN, 'Broken')
+)
 
 
 class Account(models.Model):
