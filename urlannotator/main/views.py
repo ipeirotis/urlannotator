@@ -60,7 +60,6 @@ def alerts_view(request):
         return entry_dict
 
     alert_entries = LogEntry.objects.unread_for_user(request.user)
-    print alert_entries
     alerts = aggregate(alert_entries, 'log_type')
 
     action_entries = LongActionEntry.objects.running_for_user(request.user)
