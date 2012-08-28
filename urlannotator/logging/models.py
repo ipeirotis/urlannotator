@@ -94,9 +94,9 @@ class LogManager(models.Manager):
 
             :param user_visible: whether return only those visible for users
         """
-        logs = self.filter(job=job).order_by('-id')[:num]
+        logs = self.filter(job=job).order_by('-id')
         return [log for log in logs
-            if (not user_visible or log.is_visible_to_users())]
+            if (not user_visible or log.is_visible_to_users())][:num]
 
 
 class LogEntry(models.Model):

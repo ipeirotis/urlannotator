@@ -49,10 +49,13 @@ class JobMonitor(object):
         Requires model class's manager to implement 'latest_for_job(job)',
         where job is an instance of Job model.
         Inheriting classes MUST define get_value(job) method.
+        This class is written to be Mixin-able with celery.Task.
     """
-    def __init__(self, cls, interval=datetime.timedelta(hours=1)):
+    def __init__(self, cls, interval=datetime.timedelta(hours=1), *args,
+            **kwargs):
         self.interval = interval
         self.model_cls = cls
+        super(JobMonitor, self).__init__(*args, **kwargs)
 
     def handle(self, job_set):
         """
