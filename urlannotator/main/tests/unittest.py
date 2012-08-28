@@ -641,11 +641,11 @@ class ApiTests(TestCase):
 
 class TestAdmin(TestCase):
     def setUp(self):
-        self.u = User.objects.create_user(username='test', password='1')
+        self.u = User.objects.create_user(username='test2', password='1')
 
     def testIndex(self):
         c = Client()
-        c.login(username='test', password='1')
+        c.login(username='test2', password='1')
 
         r = c.get(reverse('admin_index'), follow=True)
         self.assertEqual(r.status_code, 404)
@@ -656,7 +656,7 @@ class TestAdmin(TestCase):
         r = c.get(reverse('admin_index'), follow=True)
         self.assertEqual(r.status_code, 200)
 
-        u = User.objects.create_user(username='test2', password='1')
+        u = User.objects.create_user(username='test3', password='1')
         j = Job.objects.create_active(
             account=u.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
