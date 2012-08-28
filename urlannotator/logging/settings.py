@@ -8,6 +8,9 @@ LOG_TYPE_NEW_SAMPLE_DONE = 4  # New sample creation has been finished
 LOG_TYPE_CLASS_TRAIN_START = 5  # Classifier training has been started
 LOG_TYPE_CLASS_TRAIN_DONE = 6  # Classifier training has been finished
 LOG_TYPE_SAMPLE_CLASSIFIED = 7  # A new sample has been classified
+LOG_TYPE_SAMPLE_SCREENSHOT_DONE = 8  # Sample's screenshot has been taken
+LOG_TYPE_SAMPLE_TEXT_DONE = 9  # Sample's text has been extracted
+
 
 # Long action type breakdown:
 LONG_ACTION_TRAINING = 1  # Classifier training
@@ -107,6 +110,28 @@ log_config = {
         'Box_entry': {
             'Title': 'New Sample',
             'Text': '<a href="%(class_url)s">%(class_url)s</a>',
+            'Image_url': '%(sample_image)s',
+        },
+    },
+    LOG_TYPE_SAMPLE_SCREENSHOT_DONE: {
+        'Console_out': 'Sample\'s screenshot has been created (%(log_val)s).',
+        'Single_text': 'New sample screenshot (%(sample_url)s).',
+        'Plural_text': 'New sample screenshots.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'New Screenshot',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+            'Image_url': '%(sample_image)s',
+        },
+    },
+    LOG_TYPE_SAMPLE_TEXT_DONE: {
+        'Console_out': 'Sample\'s text has been extracted (%(log_val)s).',
+        'Single_text': 'New sample content (%(sample_url)s).',
+        'Plural_text': 'New sample contents.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'New Content',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
             'Image_url': '%(sample_image)s',
         },
     },

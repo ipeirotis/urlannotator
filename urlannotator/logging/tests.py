@@ -60,6 +60,7 @@ class LoggingTest(TestCase):
             'sample_id': 0,
             'sample_url': 'test',
             'sample_screenshot': 'test',
+            'sample_image': '',
         }
         log = LogEntry.objects.log(
             log_type=LOG_TYPE_NEW_SAMPLE_DONE,

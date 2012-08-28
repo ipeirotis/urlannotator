@@ -12,6 +12,8 @@ from urlannotator.logging.settings import (
     LOG_TYPE_CLASS_TRAIN_START,
     LOG_TYPE_CLASS_TRAIN_DONE,
     LOG_TYPE_SAMPLE_CLASSIFIED,
+    LOG_TYPE_SAMPLE_SCREENSHOT_DONE,
+    LOG_TYPE_SAMPLE_TEXT_DONE,
 
     LONG_ACTION_TRAINING,
 )
@@ -135,6 +137,38 @@ def log_sample_classified(job_id, class_id, *args, **kwargs):
         *args, **kwargs
     )
 
+
+@task(ignore_result=True)
+def log_sample_screenshot_done(sample_id, *args, **kwargs):
+    sample = Sample.objects.get(id=sample_id)
+    params = {
+        'sample_id': sample_id,
+        'sample_url': sample.url,
+        'sample_image': sample.screenshot,
+    }
+    LogEntry.objects.log(
+        log_type=LOG_TYPE_SAMPLE_SCREENSHOT_DONE,
+        job=sample.job,
+        params=params,
+        *args, **kwargs
+    )
+
+
+@task(ignore_result=True)
+def log_sample_text_done(sample_id, *args, **kwargs):
+    sample = Sample.objects.get(id=sample_id)
+    params = {
+        'sample_id': sample_id,
+        'sample_url': sample.url,
+        'sample_image': sample.screenshot,
+    }
+    LogEntry.objects.log(
+        log_type=LOG_TYPE_SAMPLE_TEXT_DONE,
+        job=sample.job,
+        params=params,
+        *args, **kwargs
+    )
+
 FLOW_DEFINITIONS = [
     (r'^EventNewRawSample$', log_new_sample_start),
     (r'^EventNewSample$', log_sample_done),
@@ -144,4 +178,6 @@ FLOW_DEFINITIONS = [
     (r'^EventClassifierTrained$', log_classifier_trained),
     (r'^EventSampleClassified$', log_sample_classified),
     (r'^EventTrainingSetCompleted$', log_classifier_train_start),
+    (r'^EventSampleScreenshotDone$', log_sample_screenshot_done),
+    (r'^EventSampleContentDone$', log_sample_text_done),
 ]
