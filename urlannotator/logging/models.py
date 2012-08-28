@@ -181,6 +181,7 @@ class LogEntry(models.Model):
             'Image_url': self.format_config_string(['Box_entry', 'Image_url']),
             'By': self.format_config_string(['Box_entry', 'By']),
             'By_id': log_config_get(self.log_type, ['Box_entry', 'By_id']),
+            'Job_id': self.job_id,
         }
         return val
 

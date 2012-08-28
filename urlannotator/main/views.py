@@ -73,20 +73,29 @@ def alerts_view(request):
 
 @login_required
 def updates_box_view(request, job_id):
-    try:
-        job = Job.objects.get(id=job_id)
-    except Job.DoesNotExist:
-        return HttpResponse(json.dumps({'error': 'Project doesn\'t exist'}))
+    if job_id == '0' and request.user.is_superuser:
+        log_entries = LogEntry.objects.recent_for_job(num=0)
+        res = [entry.get_box() for entry in log_entries]
+        print 'aaaa'
+    else:
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return HttpResponse(
+                json.dumps({'error': 'Project doesn\'t exist'})
+            )
 
-    if (job.account != request.user.get_profile()
-        and not request.user.is_superuser):
-        return HttpResponse(json.dumps({'error': 'Project doesn\'t exist'}))
+        if (job.account != request.user.get_profile()
+            and not request.user.is_superuser):
+            return HttpResponse(
+                json.dumps({'error': 'Project doesn\'t exist'})
+            )
 
-    log_entries = LogEntry.objects.recent_for_job(
-        job=job,
-        num=4,
-    )
-    res = [entry.get_box() for entry in log_entries]
+        log_entries = LogEntry.objects.recent_for_job(
+            job=job,
+            num=4,
+        )
+        res = [entry.get_box() for entry in log_entries]
 
     return HttpResponse(json.dumps(res))
 
@@ -762,7 +771,8 @@ def admin_index(request):
     context = {
         'projects': Job.objects.all().order_by('-id'),
     }
-    return render(request, 'main/index.html', RequestContext(request, context))
+    return render(request, 'main/admin_index.html',
+        RequestContext(request, context))
 
 
 def index(request):
