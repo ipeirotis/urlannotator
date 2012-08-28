@@ -9,7 +9,7 @@ from urlannotator.classification.models import TrainingSet, ClassifiedSample
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_job, TAGASAURIS_VOTING_WORKFLOW, samples_to_mediaobjects)
+    create_job, samples_to_mediaobjects)
 from urlannotator.main.models import Sample
 
 
@@ -103,7 +103,8 @@ class SampleVotingManager(Task):
 
         # Creating new job with mediaobjects
         voting_key, voting_hit = create_job(tc, job,
-            TAGASAURIS_VOTING_WORKFLOW,
+            settings.TAGASAURIS_VOTING_WORKFLOW,
+            callback=settings.TAGASAURIS_VOTING_CALLBACK % job.id,
             mediaobjects=mediaobjects)
 
         tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
