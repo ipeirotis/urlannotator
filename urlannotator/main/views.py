@@ -7,7 +7,7 @@ import csv
 import json
 
 from docutils import core
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.template import RequestContext, Context
@@ -74,8 +74,12 @@ def alerts_view(request):
 @login_required
 def updates_box_view(request, job_id):
     try:
-        job = Job.objects.get(id=job_id, account=request.user.get_profile())
+        job = Job.objects.get(id=job_id)
     except Job.DoesNotExist:
+        return HttpResponse(json.dumps({'error': 'Project doesn\'t exist'}))
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         return HttpResponse(json.dumps({'error': 'Project doesn\'t exist'}))
 
     log_entries = LogEntry.objects.recent_for_job(
@@ -448,6 +452,8 @@ def debug_login(request):
     if user is None:
         user = User.objects.create_user(username='test', email='test@test.com',
             password='test')
+        user.is_superuser = True
+        user.save()
         prof = user.get_profile()
         prof.email_registered = True
         prof.activation_key = 'activated'
@@ -467,8 +473,13 @@ def odesk_login(request):
 @login_required
 def project_view(request, id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        proj = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (proj.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -497,8 +508,13 @@ def project_view(request, id):
 @login_required
 def project_workers_view(request, id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -526,9 +542,14 @@ def project_workers_view(request, id):
 @login_required
 def project_worker_view(request, id, worker_id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
         worker = Worker.objects.get(id=worker_id)
     except (Job.DoesNotExist, Worker.DoesNotExist):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -549,9 +570,14 @@ def project_worker_view(request, id, worker_id):
 @login_required
 def project_debug(request, id, debug):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        proj = Job.objects.get(id=id)
     except Job.DoesNotExist:
         request.session['error'] = "Such project doesn't exist."
+        return redirect('index')
+
+    if (proj.account != request.user.get_profile()
+        and not request.user.is_superuser):
+        request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
     if debug == 'draft':
@@ -572,8 +598,13 @@ def project_debug(request, id, debug):
 @login_required
 def project_btm_view(request, id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        proj = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (proj.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -585,8 +616,13 @@ def project_btm_view(request, id):
 @login_required
 def project_data_view(request, id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -603,9 +639,14 @@ def project_data_view(request, id):
 @login_required
 def project_data_detail(request, id, data_id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
         sample = Sample.objects.get(id=data_id, job=job)
     except (Job.DoesNotExist, Sample.DoesNotExist):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -621,8 +662,13 @@ def project_data_detail(request, id, data_id):
 @login_required
 def project_classifier_view(request, id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -703,6 +749,20 @@ def readme_view(request):
     parts = doc_parts(file.read())
     context = {'content': parts['html_body']}
     return render(request, 'main/docs.html', RequestContext(request, context))
+
+
+@login_required
+def admin_index(request):
+    """
+        Listing of all jobs across the system. Usable only by superusers.
+    """
+    if not request.user.is_superuser:
+        raise Http404
+
+    context = {
+        'projects': Job.objects.all().order_by('-id'),
+    }
+    return render(request, 'main/index.html', RequestContext(request, context))
 
 
 def index(request):

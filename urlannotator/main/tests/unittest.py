@@ -637,3 +637,34 @@ class ApiTests(TestCase):
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
+
+
+class TestAdmin(TestCase):
+    def setUp(self):
+        self.u = User.objects.create_user(username='test', password='1')
+
+    def testIndex(self):
+        c = Client()
+        c.login(username='test', password='1')
+
+        r = c.get(reverse('admin_index'), follow=True)
+        self.assertEqual(r.status_code, 404)
+
+        self.u.is_superuser = True
+        self.u.save()
+
+        r = c.get(reverse('admin_index'), follow=True)
+        self.assertEqual(r.status_code, 200)
+
+        u = User.objects.create_user(username='test2', password='1')
+        j = Job.objects.create_active(
+            account=u.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        r = c.get(reverse('admin_index'), follow=True)
+        self.assertIn(j, r.context['projects'])
+
+        r = c.get(reverse('project_view', args=[j.id]), follow=True)
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse('error' in r.context)
