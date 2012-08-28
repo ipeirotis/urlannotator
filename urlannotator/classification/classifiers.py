@@ -133,7 +133,7 @@ class Classifier247(Classifier):
         wait_time = CLASS247_TRAIN_STEP
 
         while not trained:
-            time.sleep(max(wait_time, CLASS247_MAX_WAIT))
+            time.sleep(min(wait_time, CLASS247_MAX_WAIT))
 
             status = writer.get_train_status()
             trained = status == CLASS_TRAIN_STATUS_DONE

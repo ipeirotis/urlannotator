@@ -222,7 +222,7 @@ class Job(models.Model):
         """
         # FIXME: Is it proper way of getting progress?
         div = self.no_of_urls or 1
-        return self.get_urls_collected() / div * 100
+        return 100 * (self.get_urls_collected() / div)
 
     def is_completed(self):
         return self.status == JOB_STATUS_COMPLETED
