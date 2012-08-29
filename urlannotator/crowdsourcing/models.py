@@ -37,8 +37,7 @@ class TagasaurisJobs(models.Model):
         """
             Returns URL under which Own Workforce can vote on labels.
         """
-        # TODO: Proper link
-        return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
+        return settings.TAGASAURIS_HIT_URL % self.voting_hit
 
 
 class SampleMapping(models.Model):
