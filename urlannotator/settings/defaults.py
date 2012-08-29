@@ -318,6 +318,12 @@ TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
 TAGASAURIS_VOTING_WORKFLOW = 'voting'
 
+# TODO: This is ugly... any ideas how to change this?
+TAGASAURIS_NOTIFY = {
+    TAGASAURIS_VOTING_WORKFLOW: 'NotifyTask_1',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_4',
+}
+
 TAGASAURIS_CALLBACKS = 'http://127.0.0.1:8000'
 TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/sample/tagasauris/%s/'

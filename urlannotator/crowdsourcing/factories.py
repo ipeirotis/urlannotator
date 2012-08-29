@@ -29,5 +29,5 @@ class ExternalJobsFactory(object):
         TagasaurisJobs(
             urlannotator_job=job,
             sample_gathering_key=sample_gathering_key,
-            sample_gatering_hit=sample_gathering_hit,
+            sample_gathering_hit=sample_gathering_hit,
         ).save()
