@@ -112,7 +112,7 @@ class TagasaurisNotifyResource(ModelResource):
     """ Entry point for externally gathered samples.
     """
 
-    notification_required = ['worker_id', 'results']
+    notification_required = ['results']
 
     def parse_notification(self, request):
         """
@@ -129,9 +129,8 @@ class TagasaurisNotifyResource(ModelResource):
                     {'error': 'Missing "%s" parameter.' % req})
 
         results = data['results']
-        worker_id = data['worker_id']
 
-        return worker_id, results
+        return results
 
 
 class SampleResource(TagasaurisNotifyResource):
@@ -161,19 +160,20 @@ class SampleResource(TagasaurisNotifyResource):
         except Job.DoesNotExist:
             return self.create_response(request, {'error': 'Wrong job.'})
 
-        worker_id, results = self.parse_notification(request)
+        results = self.parse_notification(request)
 
         sample_ids = []
-        for mediaobject_id, answers in results.iteritems():
-            for answer in answers:
-                for res in answer['results']:
-                    sample = Sample.objects.create_by_worker(
-                        job_id=job.id,
-                        url=res['answer'],
-                        label='',
-                        source_val=worker_id
-                    )
-                    sample_ids.append(sample.id)
+        for worker_id, mediaobjects in results.iteritems():
+            for mediaobject_id, answers in mediaobjects.iteritems():
+                for answer in answers:
+                    for res in answer['results']:
+                        sample = Sample.objects.create_by_worker(
+                            job_id=job.id,
+                            url=res['answers'][0],
+                            label='',
+                            source_val=worker_id
+                        )
+                        sample_ids.append(sample.id)
 
         return self.create_response(
             request,
@@ -203,32 +203,32 @@ class VoteResource(TagasaurisNotifyResource):
             associated with job. Returns task id on success.
         """
 
-        worker_id, results = self.parse_notification(request)
-
-        try:
-            worker = Worker.objects.get(external_id=worker_id)
-        except Worker.DoesNotExist:
-            return self.create_response(request,
-                {'error': 'Worker not registered in database.'})
-
+        results = self.parse_notification(request)
         quality_vote_ids = []
-        for mediaobject_id, answers in results.iteritems():
-            sample = SampleMapping.objects.get(
-                external_id=mediaobject_id,
-                crowscourcing_type=SampleMapping.TAGASAURIS
-            ).sample
 
-            for answer in answers:
-                quality_vote = WorkerQualityVote(
-                    worker=worker,
-                    sample=sample
-                )
-                if answer['tag'] == 'broken':
-                    quality_vote.label = LABEL_BROKEN
-                elif answer['tag'] == 'yes':
-                    quality_vote.label = LABEL_YES
-                elif answer['tag'] == 'no':
-                    quality_vote.label = LABEL_NO
+        for worker_id, mediaobjects in results.iteritems():
+            try:
+                worker = Worker.objects.get(external_id=worker_id)
+                for mediaobject_id, answers in mediaobjects.iteritems():
+                    sample = SampleMapping.objects.get(
+                        external_id=mediaobject_id,
+                        crowscourcing_type=SampleMapping.TAGASAURIS
+                    ).sample
+
+                    for answer in answers:
+                        quality_vote = WorkerQualityVote(
+                            worker=worker,
+                            sample=sample
+                        )
+                        if answer['tag'] == 'broken':
+                            quality_vote.label = LABEL_BROKEN
+                        elif answer['tag'] == 'yes':
+                            quality_vote.label = LABEL_YES
+                        elif answer['tag'] == 'no':
+                            quality_vote.label = LABEL_NO
+            except Worker.DoesNotExist:
+                log.warning('Tagasauris worker with ID:%s '
+                    'not registered in database.' % worker_id)
 
         return self.create_response(
             request,

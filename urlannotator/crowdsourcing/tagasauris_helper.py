@@ -76,7 +76,4 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
     result = api_client.get_job(external_id=ext_id)
     hit = result['hits'][0]
 
-    # Using hit later - example:
-    # ext_url = settings.TAGASAURIS_HIT_URL % hit
-
     return ext_id, hit
