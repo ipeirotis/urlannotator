@@ -42,6 +42,15 @@
     <span class="span3">&nbsp;</span>
   {% endif %}
 </div>
+{% else %}
+<div class="container-fluid">
+  <div class="row-fluid">
+    <div class="span2">&nbsp;</div>
+    <div class="span8">
+    {% include 'main/login_form.html' %}
+    </div>
+  </div>
+</div>
 {% endif %}
 {% endblock %}
 

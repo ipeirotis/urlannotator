@@ -786,4 +786,6 @@ def index(request):
     if request.user.is_authenticated():
         context['projects'] = Job.objects.filter(
             account=request.user.get_profile()).order_by('-id')
+    else:
+        context['form'] = UserLoginForm()
     return render(request, 'main/index.html', RequestContext(request, context))
