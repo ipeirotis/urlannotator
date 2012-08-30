@@ -102,5 +102,7 @@ if settings.DEBUG:
          {'document_root': settings.MEDIA_ROOT}),
         url(r'^project/(?P<id>\d+)/debug/(?P<debug>[^/]+)$',
             'urlannotator.main.views.project_debug', name='project_debug'),
+        url(r'^debug/superuser$',
+            'urlannotator.main.views.debug_superuser', name='debug_su'),
 
     )

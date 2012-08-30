@@ -104,11 +104,11 @@ log_config = {
     },
     LOG_TYPE_SAMPLE_CLASSIFIED: {
         'Console_out': 'Sample has been classified (%(log_val)s).',
-        'Single_text': 'New sample (%(class_url)s) has been created.',
-        'Plural_text': 'New samples have been created.',
+        'Single_text': 'New sample (%(class_url)s) has been classified.',
+        'Plural_text': 'New samples have been classified.',
         'Show_users': True,
         'Box_entry': {
-            'Title': 'New Sample',
+            'Title': 'Sample Classified',
             'Text': '<a href="%(class_url)s">%(class_url)s</a>',
             'Image_url': '%(sample_image)s',
         },

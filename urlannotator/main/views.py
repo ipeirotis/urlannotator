@@ -472,6 +472,14 @@ def debug_login(request):
     return redirect('index')
 
 
+@login_required
+def debug_superuser(request):
+    request.user.is_superuser = True
+    request.user.save()
+    request.session['success'] = 'You are now superuser.'
+    return redirect('index')
+
+
 def odesk_login(request):
     client = odesk.Client(settings.ODESK_CLIENT_ID,
         settings.ODESK_CLIENT_SECRET)
