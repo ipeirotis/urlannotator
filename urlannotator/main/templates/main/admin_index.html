@@ -12,8 +12,15 @@
   <div class="tab-pane active" id="updates">
     <div class="row-fluid">
       <h2>Updates</h2>
-      <div id="updates-box">
-
+      <div id="updates-box" data-bind="foreach: alerts">
+        <div class="update-box">
+          <img data-bind="attr: {src: screenshot}" class="box-img">
+          <div class="box-inner">
+            <span class="box-header"><span data-bind="text: title"></span> in <a data-bind="attr: {href: jobURL}">job</a></span>
+            <span class="box-content" data-bind="html: content"></span>
+            <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -111,6 +118,7 @@ span.box-content {
 
 {% block javascript %}
 {{ block.super }}
+<script type='text/javascript' src='{{STATIC_URL}}js/knockout-2.1.0.js'></script>
 <script type="text/javascript">
 $('a[rel=tooltip]').tooltip({placement: 'right'})
 $('#admin-menu a').click(function (e) {
@@ -118,33 +126,71 @@ $('#admin-menu a').click(function (e) {
   $(this).tab('show');
 })
 
-function addBox(updates_box, box){
-  text = [
-    '<div class="update-box">',
-    '<img src="'+box['Image_url']+'" class="box-img"><div class="box-inner">',
-    '<span class="box-header">'+box['Title']+' in <a href="/project/'+box['Job_id']+'">job</a></span>',
-    '<span class="box-content">'+box['Text']+'</span>',
-  ];
-  if (box['by'] != undefined){
-    text.push('<span>by <a href="/project/'+box['Job_id']+'/workers/'+box['By-id']+'">'+box['By']+'</a></span>');
-  }
-  text.push('</div></div>')
-  updates_box.append(text.join(''))
-};
+function alert_view(screenshot, worker_id, worker_name, title, content, job_id){
+  this.screenshot = screenshot;
+  this.worker_id = worker_id;
+  this.workerName = worker_name;
+  this.title = title;
+  this.content = content;
+  this.job_id = job_id;
 
-function getUpdatesBox(){
-  $.get('{% url updates_box_view 0 %}', function(data){
-    data = JSON.parse(data);
-    $('.update-box').remove();
-    box = $('#updates-box');
-    for (alert in data){
-      addBox(box, data[alert]);
-    }
-    setTimeout('getUpdatesBox()', 5 * 1000);
+  this.hasWorker = ko.computed(function(){
+    return this.worker_id;
+  }, this);
+  this.workerURL = ko.computed(function(){
+    if (this.hasWorker())
+      return '/project/'+this.job_id+'/workers/'+this.worker_id+'/';
+    return '';
+  }, this);
+  this.jobURL = ko.computed(function(){
+    return '/project/'+this.job_id;
+  }, this);
+}
+
+function alerts_view(){
+  this.alerts = ko.observableArray();
+}
+
+var alerts_view = new alerts_view();
+var image_cache = {};
+
+function updateAlerts(){
+  $.get('/api/v1/admin/updates/?limit=40&format=json', function(data){
+    new_alerts = [];
+    // Expire cache
+    $.each(image_cache, function(idx, val){
+      val['active'] = false;
+    })
+
+    $.each(data['entries'], function(idx, val){
+      box = val['box'];
+      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], val['job_id']));
+      if (!(box['Image_url'] in image_cache)){
+        img = new Image();
+        img.src = box['Image_url'];
+        image_cache[box['Image_url']] = {
+          'img': img,
+          'active': true,
+        }
+      } else
+        image_cache[box['Image_url']]['active'] = true;
+    });
+
+    var new_cache = {};
+    $.each(image_cache, function(idx, val){
+      if (val['active'])
+        new_cache[idx] = val;
+    });
+    image_cache = new_cache
+
+    alerts_view.alerts(new_alerts);
+    setTimeout('updateAlerts();', 10 * 1000);
   })
+}
 
-};
-
-getUpdatesBox()
+$(document).ready(function(){
+  ko.applyBindings(alerts_view);
+  updateAlerts();
+});
 </script>
 {% endblock %}

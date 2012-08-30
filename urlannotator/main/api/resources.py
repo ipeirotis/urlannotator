@@ -70,46 +70,6 @@ def sanitize_positive_int(value, err='Wrong parameters.'):
     return value
 
 
-class ClassifiedSampleResource(Resource):
-    """
-        Resource allowing API access to classified samples.
-    """
-    def raw_detail(self, class_id):
-        """
-            Returns raw JSON form of ClassifiedSampleResource.
-
-            Format:
-            `id` - Integer. Classified sample's id.
-            `screenshot` - String. Classified Sample's screenshot URL.
-            `url` - String. Classified sample's URL.
-            `job_id` - Integer. Job's id.
-            `label_probability` - Dict. Dictionary of each label's
-                                  probabilities.
-                `Yes` - Float. Probability of Yes label.
-                `No` - Float. Probability of No label.
-            `label` - String. Sample's label.
-            `sample_url` - String. URL you can query connected sample from.
-            'finished' - Boolean. Whether the sample's classification has
-                         finished.
-        """
-        class_sample = ClassifiedSample.objects.get(id=class_id)
-        # TODO: Add sample URL.
-        screenshot = ''
-        if class_sample.sample:
-            screenshot = class_sample.sample.screenshot
-
-        return {
-            'id': class_sample.id,
-            'screenshot': screenshot,
-            'url': class_sample.url,
-            'job_id': class_sample.job_id,
-            'label_probability': class_sample.label_probability,
-            'label': class_sample.label,
-            'sample_url': '',
-            'finished': class_sample.is_successful(),
-        }
-
-
 def paginate_list(entry_list, limit, offset, page):
     """
         Handles pagination of list of items from arguments into a paginated
@@ -150,6 +110,108 @@ def paginate_list(entry_list, limit, offset, page):
     response['limit'] = limit
     response['offset'] = offset
     return response
+
+
+class AdminSessionAuthentication(SessionAuthentication):
+    def is_authenticated(self, request, **kwargs):
+        res = super(AdminSessionAuthentication, self).is_authenticated(
+            request, **kwargs
+        )
+        if res:
+            return request.user.is_superuser
+        return res
+
+
+class AdminResource(Resource):
+    """
+        Resource allowing API access to admin resources.
+    """
+    class Meta:
+        resource_name = 'admin'
+        authentication = AdminSessionAuthentication()
+
+    def __init__(self, *args, **kwargs):
+        self.alert_resource = AlertResource()
+
+    def apply_authorization_limits(self, request, object_list):
+        if request.user.is_authenticated() and request.user.is_superuser:
+            return object_list.filter(account=request.user.get_profile())
+        return []
+
+    def override_urls(self):
+        return [
+            url(r'^(?P<resource_name>%s)/updates/$'
+                % self._meta.resource_name,
+                self.wrap_view('updates'), name='api_admin_updates'),
+        ]
+
+    def updates(self, request, **kwargs):
+        """
+            Returns list of all updates in the system.
+
+            Parameters (GET):
+            'limit' - Integer. Maximum number of alerts to return.
+                      Defaults to 10.
+            'offset' - Integer. Offset to start listing alerts from.
+                       Defaults to 0.
+        """
+        alerts = LogEntry.objects.recent_for_job(num=0)
+
+        limit = request.GET.get('limit', 10)
+        offset = request.GET.get('offset', 0)
+
+        page = reverse(
+            'api_admin_updates',
+            kwargs={
+                'api_name': 'v1',
+                'resource_name': 'admin',
+            }
+        )
+
+        resp = paginate_list(alerts, limit, offset, page)
+        resp['entries'] = map(self.alert_resource.raw_detail, resp['entries'])
+
+        return self.create_response(request, resp)
+
+
+class ClassifiedSampleResource(Resource):
+    """
+        Resource allowing API access to classified samples.
+    """
+    def raw_detail(self, class_id):
+        """
+            Returns raw JSON form of ClassifiedSampleResource.
+
+            Format:
+            `id` - Integer. Classified sample's id.
+            `screenshot` - String. Classified Sample's screenshot URL.
+            `url` - String. Classified sample's URL.
+            `job_id` - Integer. Job's id.
+            `label_probability` - Dict. Dictionary of each label's
+                                  probabilities.
+                `Yes` - Float. Probability of Yes label.
+                `No` - Float. Probability of No label.
+            `label` - String. Sample's label.
+            `sample_url` - String. URL you can query connected sample from.
+            'finished' - Boolean. Whether the sample's classification has
+                         finished.
+        """
+        class_sample = ClassifiedSample.objects.get(id=class_id)
+        # TODO: Add sample URL.
+        screenshot = ''
+        if class_sample.sample:
+            screenshot = class_sample.sample.screenshot
+
+        return {
+            'id': class_sample.id,
+            'screenshot': screenshot,
+            'url': class_sample.url,
+            'job_id': class_sample.job_id,
+            'label_probability': class_sample.label_probability,
+            'label': class_sample.label,
+            'sample_url': '',
+            'finished': class_sample.is_successful(),
+        }
 
 
 class ClassifierResource(Resource):

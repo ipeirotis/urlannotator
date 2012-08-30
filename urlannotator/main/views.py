@@ -76,7 +76,6 @@ def updates_box_view(request, job_id):
     if job_id == '0' and request.user.is_superuser:
         log_entries = LogEntry.objects.recent_for_job(num=0)
         res = [entry.get_box() for entry in log_entries]
-        print 'aaaa'
     else:
         try:
             job = Job.objects.get(id=job_id)
