@@ -303,6 +303,11 @@ CELERYBEAT_SCHEDULE = {
         'schedule': datetime.timedelta(seconds=10 * 60),
         'args': []
     },
+    'send_validated_samples': {
+        'task': 'urlannotator.classification.event_handlers.SampleVotingManager',
+        'schedule': datetime.timedelta(seconds=3 * 60),
+        'args': []
+    },
 }
 
 # Test runner
