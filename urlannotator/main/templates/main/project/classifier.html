@@ -275,7 +275,8 @@ function updateClassifierHistory(){
           'image': img,
           'active': true,
         };
-      }
+      } else
+        image_cache[val['Image_url']]['active'] = true;
     }
 
     // Update cache

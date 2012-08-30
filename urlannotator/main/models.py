@@ -128,8 +128,8 @@ class Job(models.Model):
     same_domain_allowed = models.PositiveIntegerField(default=0)
     hourly_rate = models.DecimalField(default=0, decimal_places=2,
         max_digits=10)
-    gold_samples = JSONField()
-    classify_urls = JSONField()
+    gold_samples = JSONField(default='[]')
+    classify_urls = JSONField(default='[]')
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
     remaining_urls = models.PositiveIntegerField(default=0)
     collected_urls = models.PositiveIntegerField(default=0)
@@ -148,15 +148,21 @@ class Job(models.Model):
         """
             Returns the URL under which Own Workforce can submit new samples.
         """
-        tag_job = self.tagasaurisjobs
-        return tag_job.get_sample_gathering_url()
+        try:
+            tag_job = self.tagasaurisjobs
+            return tag_job.get_sample_gathering_url()
+        except:
+            return ''
 
     def get_voting_url(self):
         """
             Returns the URL under which Own Workforce can vote on labels.
         """
-        tag_job = self.tagasaurisjobs
-        return tag_job.get_voting_url()
+        try:
+            tag_job = self.tagasaurisjobs
+            return tag_job.get_voting_url()
+        except:
+            return ''
 
     def get_classifier_performance(self):
         """
@@ -237,7 +243,9 @@ class Job(models.Model):
             Returns actual progress (in percents) in the job.
         """
         # FIXME: Is it proper way of getting progress?
-        div = self.no_of_urls or 1
+        if not self.no_of_urls:
+            return 100
+        div = self.no_of_urls
         return 100 * (self.get_urls_collected() / div)
 
     def is_completed(self):

@@ -4,6 +4,7 @@ from django.conf.urls import url
 from django.conf import settings
 from django.middleware.csrf import _sanitize_token, constant_time_compare
 from django.core.urlresolvers import reverse
+from itertools import chain
 
 from tastypie.resources import ModelResource, Resource
 from tastypie.authentication import (ApiKeyAuthentication,
@@ -456,6 +457,74 @@ class JobResource(ModelResource):
                 self.wrap_view('updates_feed'),
                 name='api_job_updates_feed'),
         ]
+
+    def get_detail(self, request, **kwargs):
+        """
+            Returns details of given job.
+
+            Response format:
+            `id` - Integer. Job's id.
+            `title` - String. Job's title.
+            `description` - String. Job's description.
+            `urls_to_collect` - Integer. URLs to collected defined at creation.
+            `urls_collected` - Integer. URLs already collected.
+            `classifier` - String. URL classifier can be queried from.
+            `feed` - String. URL updates feed can be queried from.
+            `no_of_workers` - Integer. Number of workers in the job.
+            `cost` - String. Actual decimal cost of the job.
+            `budget` - String. Decimal job's budget.
+            `progress` - Integer. Percentage of job's completion.
+            `hours_spent` - Integer. No. of hours workers have spent on the job.
+            `sample_gathering_url` - String. URL people can gather samples to.
+                                     (Only Own Workforce jobs)
+            `sample_voting_url` - String. URL people can vote on sample labels.
+                                  (Only Own Workforce jobs)
+        """
+        self.method_check(request, allowed=['get'])
+        kwargs['job_id'] = kwargs['pk']
+        self._check_job(request, **kwargs)
+        job_id = kwargs.get('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong parameters.'},
+                response_class=HttpNotFound,
+            )
+
+        response = {
+            'id': job.id,
+            'title': job.title,
+            'description': job.description,
+            'urls_to_collect': job.no_of_urls,
+            'urls_collected': job.no_of_urls - job.remaining_urls,
+            'classifier': reverse('api_classifier', kwargs={
+                'api_name': 'v1',
+                'resource_name': 'job',
+                'job_id': job_id,
+            }),
+            'feed': reverse('api_job_updates_feed', kwargs={
+                'api_name': 'v1',
+                'resource_name': 'job',
+                'job_id': job_id,
+            }),
+            'no_of_workers': job.get_no_of_workers(),
+            'cost': job.get_cost(),
+            'budget': job.budget,
+            'progress': job.get_progress(),
+            'hours_spent': job.get_hours_spent(),
+        }
+        if job.is_own_workforce():
+            additional = {
+                'sample_gathering_url': job.get_sample_gathering_url(),
+                'sample_voting_url': job.get_voting_url(),
+            }
+            response = dict(chain(response.iteritems(), additional.iteritems()))
+
+        return self.create_response(request, response)
 
     def updates_feed(self, request, **kwargs):
         """

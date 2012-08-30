@@ -4,27 +4,27 @@
 {% block project_content %}
 <div class="row-fluid">
 <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{urls_collected}}</h3>
+  <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
   <span>URLs collected</span>
 </div>
 <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{hours_spent}}</h3>
+  <h3 data-bind="text: hours_spent">{{hours_spent}}</h3>
   <span>Hours spend</span>
 </div>
 <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{no_of_workers}}</h3>
+  <h3 data-bind="text: no_of_workers">{{no_of_workers}}</h3>
   <span>Number of workers</span>
 </div>
 <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{cost}}</h3>
+  <h3 data-bind="text: cost">{{cost}}</h3>
   <span>Cost (USD)</span>
 </div>
 <div class="span2 infobox">
-  <h3>{{budget}}</h3>
+  <h3 data-bind="text: budget">{{budget}}</h3>
   <span>Budget (USD)</span>
 </div>
 <div class="span1 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{progress}}%</h3>
+  <h3><span data-bind="text: progress">{{progress}}</span>%</h3>
   <span>Progress</span>
 </div>
 </div>
@@ -53,8 +53,15 @@
 <div class="row-fluid">
 <div style="width: 20%; float: right;">
   <h3>Updates</h3>
-  <div id="updates-box">
-
+  <div id="updates-box" data-bind="foreach: alerts">
+    <div class="update-box">
+      <img data-bind="attr: {src: screenshot}" class="box-img">
+      <div class="box-inner">
+        <span class="box-header" data-bind="text: title"></span>
+        <span class="box-content" data-bind="html: content"></span>
+        <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
+      </div>
+    </div>
   </div>
 </div>
 <div style="width:80%">
@@ -86,6 +93,7 @@
 
 {% block javascript %}
 {{ block.super }}
+<script type='text/javascript' src='{{STATIC_URL}}js/knockout-2.1.0.js'></script>
 <script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
 <script type="text/javascript">
 var progressGraph; // globally available
@@ -221,33 +229,91 @@ $(document).ready(function() {
       });
    });
 
-function addBox(updates_box, alertEntry, box){
-  text = [
-    '<div class="update-box">',
-    '<img src="'+box['Image_url']+'" class="box-img"><div class="box-inner">',
-    '<span class="box-header">'+box['Title']+'</span>',
-    '<span class="box-content">'+box['Text']+'</span>',
-  ];
-  if (box['by'] != undefined){
-    text.push('<span>by <a href="{% url project_workers_view project.id %}/'+box['By-id']+'`">'+box['By']+'</a></span>');
-  }
-  text.push('</div></div>')
-  updates_box.append(text.join(''))
-};
+function alert_view(screenshot, worker_id, worker_name, title, content){
+  this.screenshot = screenshot;
+  this.worker_id = worker_id;
+  this.workerName = worker_name;
+  this.title = title;
+  this.content = content;
 
-function getUpdatesBox(){
-  $.get("{% url api_job_updates_feed api_name='v1' resource_name='job' job_id=project.id %}?limit=4", function(data){
-    $('.update-box').remove();
-    box = $('#updates-box');
-    for (alert in data['entries']){
-      addBox(box, data['entries'][alert], data['entries'][alert]['box']);
-    }
-    setTimeout('getUpdatesBox()', 5 * 1000);
+  this.hasWorker = ko.computed(function(){
+    return this.worker_id;
+  }, this);
+  this.workerURL = ko.computed(function(){
+    if (this.hasWorker())
+      return '{% url project_workers_view project.id%}/'+this.worker_id+'/';
+    return '';
+  }, this);
+}
+
+function job_view(){
+  this.urls_collected = ko.observable();
+  this.progress = ko.observable();
+  this.hours_spent = ko.observable();
+  this.budget = ko.observable();
+  this.cost = ko.observable();
+  this.no_of_workers = ko.observable();
+  this.gather_url = ko.observable();
+  this.voting_url = ko.observable();
+  this.alerts = ko.observableArray();
+}
+
+var job = new job_view();
+var image_cache = {};
+
+function updateAlerts(url){
+  $.get(url+'?limit=4&format=json', function(data){
+    new_alerts = [];
+    // Expire cache
+    $.each(image_cache, function(idx, val){
+      val['active'] = false;
+    })
+
+    $.each(data['entries'], function(idx, val){
+      box = val['box'];
+      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text']));
+      if (!(box['Image_url'] in image_cache)){
+        img = new Image();
+        img.src = box['Image_url'];
+        image_cache[box['Image_url']] = {
+          'img': img,
+          'active': true,
+        }
+      } else
+        image_cache[box['Image_url']]['active'] = true;
+    });
+
+    var new_cache = {};
+    $.each(image_cache, function(idx, val){
+      if (val['active'])
+        new_cache[idx] = val;
+    });
+    image_cache = new_cache
+
+    job.alerts(new_alerts);
+    setTimeout('updateJob();', 10 * 1000);
   })
+}
 
-};
+function updateJob(){
+  $.get("/api/v1/job/{{project.id}}/?format=json", function(data){
+    job.urls_collected(data['urls_collected']);
+    job.progress(data['progress']);
+    job.hours_spent(data['hours_spent']);
+    job.budget(data['budget']);
+    job.cost(data['cost']);
+    job.no_of_workers(data['no_of_workers']);
+    job.gather_url(data['sample_gathering_url']);
+    job.voting_url(data['sample_voting_url']);
+    updateAlerts(data['feed']);
+  });
+}
 
-getUpdatesBox();
+$(document).ready(function(){
+  ko.applyBindings(job);
+  updateJob();
+  // getUpdatesBox();
+});
 </script>
 {% endblock %}
 
@@ -290,8 +356,6 @@ span.box-header {
 }
 span.box-content {
   display: block;
-}
-div.box-inner {
 }
 </style>
 {% endblock %}
