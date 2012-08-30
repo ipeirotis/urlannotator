@@ -158,6 +158,15 @@ class Job(models.Model):
         tag_job = self.tagasaurisjobs
         return tag_job.get_voting_url()
 
+    def get_classifier_performance(self):
+        """
+            Returns classifier performance as a dict with keys 'TPR', 'TNR',
+            'AUC'.
+        """
+        performances = self.classifierperformance_set.all()
+        ret = max(performances, key=(lambda x: x.date))
+        return ret.value
+
     def is_own_workforce(self):
         return self.data_source == JOB_SOURCE_OWN_WORKFORCE
 
@@ -404,15 +413,11 @@ class Sample(models.Model):
         """
         # TODO: More meaningful probability query? Currently most recent one.
         cs_set = self.classifiedsample_set.all()
-        max_id = -1
-        cs = None
-        yes_prob = 0
-        for cs_it in cs_set:
-            if cs_it.id > max_id:
-                max_id = cs_it.id
-                cs = cs_it
-        if cs:
-            yes_prob = cs.label_probability['Yes']
+        if not cs_set:
+            return 0
+
+        cs = max(cs_set, key=(lambda x: x.id))
+        yes_prob = cs.label_probability['Yes']
         return yes_prob * 100
 
     def get_no_probability(self):
@@ -421,15 +426,11 @@ class Sample(models.Model):
         """
         # TODO: More meaningful probability query? Currently most recent one.
         cs_set = self.classifiedsample_set.all()
-        max_id = -1
-        cs = None
-        no_prob = 0
-        for cs_it in cs_set:
-            if cs_it.id > max_id:
-                max_id = cs_it.id
-                cs = cs_it
-        if cs:
-            no_prob = cs.label_probability['No']
+        if not cs_set:
+            return 0
+
+        cs = max(cs_set, key=(lambda x: x.id))
+        no_prob = cs.label_probability['No']
         return no_prob * 100
 
 # Worker types breakdown:

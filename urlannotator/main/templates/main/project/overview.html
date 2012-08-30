@@ -221,7 +221,7 @@ $(document).ready(function() {
       });
    });
 
-function addBox(updates_box, box){
+function addBox(updates_box, alertEntry, box){
   text = [
     '<div class="update-box">',
     '<img src="'+box['Image_url']+'" class="box-img"><div class="box-inner">',
@@ -229,19 +229,18 @@ function addBox(updates_box, box){
     '<span class="box-content">'+box['Text']+'</span>',
   ];
   if (box['by'] != undefined){
-    text.push('<span>by <a href="{% url project_workers_view project.id %}/'+box['By-id']+'">'+box['By']+'</a></span>');
+    text.push('<span>by <a href="{% url project_workers_view project.id %}/'+box['By-id']+'`">'+box['By']+'</a></span>');
   }
   text.push('</div></div>')
   updates_box.append(text.join(''))
 };
 
 function getUpdatesBox(){
-  $.get('{% url updates_box_view project.id %}', function(data){
-    data = JSON.parse(data);
+  $.get("{% url api_job_updates_feed api_name='v1' resource_name='job' job_id=project.id %}?limit=4", function(data){
     $('.update-box').remove();
     box = $('#updates-box');
-    for (alert in data){
-      addBox(box, data[alert]);
+    for (alert in data['entries']){
+      addBox(box, data['entries'][alert], data['entries'][alert]['box']);
     }
     setTimeout('getUpdatesBox()', 5 * 1000);
   })

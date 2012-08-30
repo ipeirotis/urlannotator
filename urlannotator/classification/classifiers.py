@@ -52,6 +52,7 @@ CLASS247_TRAIN_STEP = 15
 # Maxmimum number of seconds to wait between train status check.
 CLASS247_MAX_WAIT = 10 * 60
 
+
 class Classifier247(Classifier):
 
     def __init__(self, reader_instance, writer_instance, entry_id, factory):
@@ -242,15 +243,15 @@ class SimpleClassifier(Classifier):
         """
             Returns file name under which the classifier is stored.
         """
-        path = os.path.join('/tmp/10c/classifiers', self.model)
+        path = os.path.join('simple-classifiers/', self.model)
         return path
 
     def dump_classifier(self):
         """
             Dumps classifier to a file.
         """
-        if not os.path.exists('/tmp/10c/classifiers'):
-            os.makedirs('/tmp/10c/classifiers')
+        if not os.path.exists('simple-classifiers/'):
+            os.makedirs('simple-classifiers/')
 
         with open(self.get_file_name(), 'wb') as f:
             pickle.dump(self.classifier, f)
@@ -332,11 +333,13 @@ class SimpleClassifier(Classifier):
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
         training_set = TrainingSet.objects.get(id=train_set_id)
+
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {'Yes': 0, 'No': 0}
+        label_probability = {'Yes': 0.0, 'No': 0.0}
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
+
         return label
 
     def classify_with_info(self, class_sample):
@@ -357,11 +360,13 @@ class SimpleClassifier(Classifier):
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
         training_set = TrainingSet.objects.get(id=train_set_id)
+
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {'Yes': 0, 'No': 0}
+        label_probability = {'Yes': 0.0, 'No': 0.0}
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
+
         return label
 
 # Google Storage parameters used in GooglePrediction classifier
@@ -527,6 +532,7 @@ class GooglePredictionClassifier(Classifier):
             label_probability[label] = prob
         sample.label_probability = json.dumps(label_probability)
         sample.save()
+        print sample.label_probability, '##############################'
 
         return label['outputLabel']
 

@@ -27,7 +27,7 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_CHOICES)
+    LABEL_YES, LABEL_NO, LABEL_BROKEN)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats)
 from urlannotator.classification.models import (ClassifierPerformance,
@@ -715,11 +715,11 @@ def project_classifier_view(request, id):
             request.session['classified-samples'] = classified_samples
         return redirect('project_classifier_view', id)
     samples = ClassifiedSample.objects.filter(job=job).exclude(label='')
-    yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
+    yes_labels = samples.filter(label=LABEL_YES)
     yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
-    no_labels = samples.filter(label=LABEL_CHOICES[1][0])
+    no_labels = samples.filter(label=LABEL_NO)
     no_perc = int(no_labels.count() * 100 / (samples.count() or 1))
-    broken_labels = samples.filter(label=LABEL_CHOICES[2][0])
+    broken_labels = samples.filter(label=LABEL_BROKEN)
     broken_perc = int(broken_labels.count() * 100 / (samples.count() or 1))
     context['classifier_stats'] = {
         'count': samples.count(),

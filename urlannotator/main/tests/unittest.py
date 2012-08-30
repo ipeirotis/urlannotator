@@ -587,8 +587,8 @@ class ApiTests(TestCase):
     def testJobs(self):
         resp = self.c.get('/api/v1/job/?format=json', follow=True)
 
-        array = json.loads(resp.content)
-        self.assertIn('meta', array)
+        # Unauthorized
+        self.assertEqual(resp.status_code, 401)
 
         Job.objects.create_active(
             account=self.user.get_profile(),
@@ -598,45 +598,76 @@ class ApiTests(TestCase):
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
             follow=True)
 
-        array = json.loads(resp.content)
-        self.assertIn('status', array)
+        # We are not logged in, can't see the job. Unauthorized
+        self.assertEqual(resp.status_code, 401)
 
-        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/classify/'),
+        self.c.login(username='testing', password='test')
+
+        resp = self.c.get('/api/v1/job/?format=json', follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('meta', array)
+        self.assertEqual(array['meta']['total_count'], 1)
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        self.assertEqual(resp.status_code, 200)
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/2/'),
+            follow=True)
+
+        # Non-existant job.
+        self.assertEqual(resp.status_code, 404)
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/classifier/'),
             follow=True)
 
         array = json.loads(resp.content)
-        self.assertIn('error', array)
+        self.assertIn('absolute_url', array)
+        self.assertIn('no_count', array)
+        self.assertIn('performance', array)
+        self.assertIn('broken_count', array)
+        self.assertIn('yes_count', array)
 
-        resp = self.c.get('%s%s?format=json&url=google.com'
-            % (self.api_url, 'job/4/classify/'), follow=True)
-
-        array = json.loads(resp.content)
-        self.assertIn('error', array)
-
-        resp = self.c.get('%s%s?format=json&request=test'
-            % (self.api_url, 'job/1/classify/status/'), follow=True)
-
-        array = json.loads(resp.content)
-        self.assertIn('error', array)
-
-        resp = self.c.get('%s%s?format=json&url=google.com'
-            % (self.api_url, 'job/1/classify/'), follow=True)
+        # Classify an URL
+        data = {
+            'test-type': 'urls',
+            'url': 'google.com',
+        }
+        resp = self.c.post('%s%s?format=json'
+            % (self.api_url, 'job/1/classifier/classify/'), data=data, follow=True)
 
         array = json.loads(resp.content)
-        request_id = array['request_id']
+        self.assertIn('request_id', array)
+        self.assertIn('status_url', array)
 
-        resp = self.c.get('%s%s?format=json&url=google.com&request=%s'
-            % (self.api_url, 'job/1/classify/status/', request_id),
-            follow=True)
+        req_id = array['request_id']
+        resp = self.c.get('%s%s?format=json&request_id=%d'
+            % (self.api_url, 'job/1/classifier/status/', req_id), follow=True)
 
+        # We are doing it eagerly, should be done already.
         array = json.loads(resp.content)
         self.assertIn('status', array)
+        self.assertIn('sample', array)
 
-        resp = self.c.get('%s%s?format=json&request=test'
-            % (self.api_url, 'job/2/classify/'), follow=True)
+        resp = self.c.get('%s%s?format=json&limit=10'
+            % (self.api_url, 'job/1/classifier/history/'), follow=True)
 
         array = json.loads(resp.content)
-        self.assertIn('error', array)
+        self.assertIn('entries', array)
+        self.assertIn('count', array)
+        count = array['count']
+        self.assertTrue(count > 0)
+
+        resp = self.c.get('%s%s?format=json'
+            % (self.api_url, 'job/1/feed/'), follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('entries', array)
+        self.assertIn('count', array)
+        count = array['count']
+        self.assertTrue(count > 0)
 
 
 class TestAdmin(TestCase):

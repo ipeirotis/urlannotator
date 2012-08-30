@@ -61,6 +61,7 @@ def log_sample_done(job_id, sample_id, *args, **kwargs):
         'sample_id': sample_id,
         'sample_url': sample.url,
         'sample_screenshot': sample.screenshot,
+        'sample_image': sample.screenshot,
     }
 
     LogEntry.objects.log(
