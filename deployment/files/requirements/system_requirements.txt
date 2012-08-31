@@ -8,3 +8,4 @@ cutycapt
 lynx
 links
 xvfb
+python-qt4

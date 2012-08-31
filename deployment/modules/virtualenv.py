@@ -7,6 +7,18 @@ from utils import (show, dir_exists, PROPER_SUDO_PREFIX as SUDO_PREFIX, cget,
     install_without_prompt, remote_files_dir)
 
 
+def copy_to_virtualenv(package):
+    """
+        Copies package from global Python, to local virtualenv.
+    """
+    global_packages = '%s/lib/python2.7/dist-packages/' % cget('global_python')
+    virtual_packages = '%s/lib/python2.7/site-packages/' % cget('virtualenv_dir')
+
+    with settings(warn_only=True, sudo_prefix=SUDO_PREFIX):
+        sudo("link %s/%s %s/%s" % (global_packages, package, virtual_packages,
+            package))
+
+
 def update_virtualenv():
     """Updates virtual Python environment."""
     ve_dir = cget("virtualenv_dir")
@@ -25,6 +37,10 @@ def update_virtualenv():
                 sudo("pip install --no-input --download-cache=%s"
                     " --requirement %s --log=/tmp/pip.log" % (
                         cache, requirements), user=user)
+
+    show(yellow("Linking python-q4 to local virtualenv."))
+    for package in ['PyQt4', 'sip.so']:
+        copy_to_virtualenv(package)
 
 
 def create_virtualenv():
