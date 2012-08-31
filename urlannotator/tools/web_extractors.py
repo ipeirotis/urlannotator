@@ -56,6 +56,10 @@ def get_web_text(url):
     # Simply calling links/lynx
     return extract_words(subprocess.check_output(["links", "-dump", url]))
 
+DEFAULT_QUALITY = 50
+DEF_SCREEN_WIDTH = 1024
+DEF_SCREEN_HEIGHT = 768
+
 
 def get_web_screenshot(url):
     """
@@ -75,9 +79,19 @@ def get_web_screenshot(url):
 
     # Lets create dir for temporary screenshots.
     os.system("mkdir -p %s" % screen_dir)
+
+    url = '"%s"' % url
+    out = '-o %s' % screen_out
+    quality = '-q %d' % DEFAULT_QUALITY
+    format = '-f jpeg'
+    size = '-g %d %d' % (DEF_SCREEN_WIDTH, DEF_SCREEN_HEIGHT)
+    xvfb = '-x'
+
+    params = ' '.join([url, out, quality, format, size, xvfb])
+
     # Capturing web.
-    res = os.system('xvfb-run --auto-servernum cutycapt --url="%s" --out="%s"'
-        % (url, screen_out))
+    res = os.system('python urlannotator/tools/extract_screenshot.py %s'
+        % params)
 
     # Non-zero result code
     if res:

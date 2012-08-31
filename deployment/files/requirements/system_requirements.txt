@@ -4,7 +4,6 @@ mercurial
 python2.7-dev
 libevent-dev
 rabbitmq-server
-cutycapt
 lynx
 links
 xvfb
