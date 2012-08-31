@@ -464,6 +464,15 @@ class WorkerManager(models.Manager):
             **kwargs
         )
 
+    def create_internal(self, *args, **kwargs):
+        if 'worker_type' in kwargs:
+            kwargs.pop('worker_type')
+
+        return self.create(
+            worker_type=WORKER_TYPE_INTERNAL,
+            **kwargs
+        )
+
 
 class Worker(models.Model):
     """

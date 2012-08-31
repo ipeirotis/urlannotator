@@ -768,13 +768,12 @@ class SampleResource(TagasaurisNotifyResource):
 
         sample_ids = []
         for worker_id, mediaobjects in results.iteritems():
-            for mediaobject_id, answers in mediaobjects.iteritems():
+            for _, answers in mediaobjects.iteritems():
                 for answer in answers:
                     for res in answer['results']:
                         sample = Sample.objects.create_by_worker(
                             job_id=job.id,
                             url=res['answers'][0],
-                            label='',
                             source_val=worker_id
                         )
                         sample_ids.append(sample.id)
@@ -813,13 +812,19 @@ class VoteResource(TagasaurisNotifyResource):
         for worker_id, mediaobjects in results.iteritems():
             try:
                 worker = Worker.objects.get(external_id=worker_id)
-                for mediaobject_id, answers in mediaobjects.iteritems():
-                    sample = SampleMapping.objects.get(
-                        external_id=mediaobject_id,
-                        crowscourcing_type=SampleMapping.TAGASAURIS
-                    ).sample
+            except Worker.DoesNotExist:
+                worker = Worker.objects.create_internal(external_id=worker_id)
+                log.warning('Tagasauris worker with ID:%s '
+                    'not registered in database.' % worker_id)
 
-                    for answer in answers:
+            for mediaobject_id, answers in mediaobjects.iteritems():
+                sample = SampleMapping.objects.get(
+                    external_id=mediaobject_id,
+                    crowscourcing_type=SampleMapping.TAGASAURIS
+                ).sample
+
+                for answer in answers:
+                    if answer['tag'] in ['yes', 'no', 'broken']:
                         quality_vote = WorkerQualityVote(
                             worker=worker,
                             sample=sample
@@ -830,9 +835,8 @@ class VoteResource(TagasaurisNotifyResource):
                             quality_vote.label = LABEL_YES
                         elif answer['tag'] == 'no':
                             quality_vote.label = LABEL_NO
-            except Worker.DoesNotExist:
-                log.warning('Tagasauris worker with ID:%s '
-                    'not registered in database.' % worker_id)
+
+                        quality_vote.save()
 
         return self.create_response(
             request,

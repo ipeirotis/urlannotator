@@ -298,11 +298,6 @@ CELERYBEAT_SCHEDULE = {
         'schedule': JOB_MONITOR_INTERVAL,
         'args': []
     },
-    'sample_gatherer': {
-        'task': 'urlannotator.sample_gathering.simple_gatherer.SimpleGatherer',
-        'schedule': datetime.timedelta(seconds=10 * 60),
-        'args': []
-    },
     'send_validated_samples': {
         'task': 'urlannotator.classification.event_handlers.SampleVotingManager',
         'schedule': datetime.timedelta(seconds=3 * 60),
