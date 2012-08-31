@@ -11,11 +11,11 @@ def copy_to_virtualenv(package):
     """
         Copies package from global Python, to local virtualenv.
     """
-    global_packages = '%s/lib/python2.7/dist-packages/' % cget('global_python')
-    virtual_packages = '%s/lib/python2.7/site-packages/' % cget('virtualenv_dir')
+    global_packages = '%s/lib/python2.7/dist-packages' % cget('global_python')
+    virtual_packages = '%s/lib/python2.7/site-packages' % cget('virtualenv_dir')
 
     with settings(warn_only=True, sudo_prefix=SUDO_PREFIX):
-        sudo("link %s/%s %s/%s" % (global_packages, package, virtual_packages,
+        sudo("ln -s %s/%s %s/%s" % (global_packages, package, virtual_packages,
             package))
 
 
