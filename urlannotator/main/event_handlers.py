@@ -74,6 +74,7 @@ class GoldSamplesMonitor(Task):
             if not job.is_gold_samples_done():
                 all_golds = len(job.gold_samples)
                 current_golds = training_set.training_samples.count()
+                print all_golds, current_golds
                 if all_golds == current_golds:
                     job.set_gold_samples_done()
                     send_event(

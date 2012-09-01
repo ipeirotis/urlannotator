@@ -146,7 +146,11 @@ class ClassifierFactoryTests(TestCase):
             job=job,
             type='SimpleClassifier',
         ).count(), 2)
-        cs = ClassifiedSample.objects.all()[0]
+        cs = ClassifiedSample.objects.create_by_owner(
+            job=job,
+            url='http://google.com',
+        )
+        cs = ClassifiedSample.objects.get(id=cs.id)
         self.assertTrue(factory.classify(cs))
 
 

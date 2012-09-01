@@ -1,4 +1,5 @@
 import datetime
+
 from django.conf import settings
 from celery import group, chain
 
@@ -24,11 +25,11 @@ class SampleFactory(object):
         Produce new sample and starts tasks for screen and text extraction.
         Label argument is passed only when we create GoldSample.
         """
-
         # Check if sample with given url exists across the system
         samples = Sample.objects.filter(url=url)
         job = Job.objects.get(id=job_id)
 
+        print 'Making sample', url, 'for', job_id
         # Create a new sample for the job from existing one (if job is
         # missing it). If the job has that sample, create only classified.
         if samples:

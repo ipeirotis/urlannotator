@@ -152,7 +152,6 @@ PROJECT_APPS = (
     'urlannotator.classification',
     'urlannotator.crowdsourcing',
     'urlannotator.flow_control',
-    'urlannotator.sample_gathering',
     'urlannotator.main',
     'urlannotator.tools',
     'urlannotator.statistics',
@@ -279,7 +278,6 @@ CELERY_IMPORTS = (
     'urlannotator.statistics.spent_monitor',
     'urlannotator.statistics.url_monitor',
     'urlannotator.statistics.progress_monitor',
-    'urlannotator.sample_gathering.simple_gatherer',
 )
 
 CELERYBEAT_SCHEDULE = {

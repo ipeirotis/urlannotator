@@ -523,7 +523,7 @@ class GooglePredictionClassifier(Classifier):
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
-        training_set = TrainingSet.objects.get(train_set_id)
+        training_set = TrainingSet.objects.get(id=train_set_id)
         sample.training_set = training_set
 
         sample.label = label['outputLabel']
@@ -532,7 +532,6 @@ class GooglePredictionClassifier(Classifier):
             label_probability[label] = prob
         sample.label_probability = json.dumps(label_probability)
         sample.save()
-        print sample.label_probability, '##############################'
 
         return label['outputLabel']
 
@@ -549,7 +548,7 @@ class GooglePredictionClassifier(Classifier):
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
-        training_set = TrainingSet.objects.get(train_set_id)
+        training_set = TrainingSet.objects.get(id=train_set_id)
         sample.training_set = training_set
 
         sample.label = label['outputLabel']

@@ -486,9 +486,9 @@ class ProjectTests(TestCase):
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
-        # Gold sample + classification request
-        self.assertEqual(ClassifiedSample.objects.all().count(), 2)
-        # Gold sample + new sample (new sample shares url with gold sample)
+        # Classification request
+        self.assertEqual(ClassifiedSample.objects.all().count(), 1)
+        # New sample (new sample shares url with gold sample)
         self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
             1)
 
@@ -497,7 +497,7 @@ class ProjectTests(TestCase):
             {'test-urls': testUrl}, follow=True)
 
         # classification request + old data
-        self.assertEqual(ClassifiedSample.objects.all().count(), 3)
+        self.assertEqual(ClassifiedSample.objects.all().count(), 2)
         # old data + new sample
         self.assertEqual(Sample.objects.filter(job=job).count(),
             1)
@@ -515,7 +515,7 @@ class ProjectTests(TestCase):
             {'test-urls': testUrl}, follow=True)
 
         # classification request + old data
-        self.assertEqual(ClassifiedSample.objects.all().count(), 5)
+        self.assertEqual(ClassifiedSample.objects.all().count(), 3)
         # old data, no new sample since this is the same url
         self.assertEqual(Sample.objects.filter(job=job).count(), 1)
 

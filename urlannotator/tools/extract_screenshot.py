@@ -147,7 +147,7 @@ if __name__ == '__main__':
         logger.setLevel(logging.DEBUG)
 
     if options.xvfb:
-        newArgs = ["xvfb-run", "-a -e log.log", 'python', sys.argv[0]]
+        newArgs = ["xvfb-run", "--auto-servernum", 'python', sys.argv[0]]
         skipArgs = 0
         for i in range(1, len(sys.argv)):
             if skipArgs > 0:
@@ -158,7 +158,12 @@ if __name__ == '__main__':
                 newArgs.append(sys.argv[i])
         logger.debug("Executing %s" % " ".join(newArgs))
         try:
-            os.execvp(newArgs[0], newArgs[1:])
+            res = os.system(' '.join(newArgs))
+
+            if res:
+                raise Exception("Screenshot capture of %s resulted in code %d"
+                    % (options.url, res))
+            sys.exit(0)
         except OSError:
             logger.error("Unable to find '%s'" % newArgs[0])
             print >> sys.stderr, "Error - Unable to find '%s' for -x/--xvfb option" % newArgs[0]

@@ -153,7 +153,8 @@ def TruePositiveMetric(classifier, job, analyze):
     matrix = analyze['modelDescription']['confusionMatrix']
     yesCount = matrix['Yes']['Yes']
     noCount = matrix['Yes']['No']
-    return ('TPR', round(yesCount / (yesCount + noCount), 4))
+    div = (yesCount + noCount) or 1
+    return ('TPR', round(yesCount / div, 4))
 
 
 def TrueNegativeMetric(classifier, job, analyze):
@@ -163,7 +164,8 @@ def TrueNegativeMetric(classifier, job, analyze):
     matrix = analyze['modelDescription']['confusionMatrix']
     yesCount = matrix['No']['Yes']
     noCount = matrix['No']['No']
-    return ('TNR', round(noCount / (yesCount + noCount), 4))
+    div = (yesCount + noCount) or 1
+    return ('TNR', round(noCount / div, 4))
 
 
 def AUCMetric(classifier, job, analyze):

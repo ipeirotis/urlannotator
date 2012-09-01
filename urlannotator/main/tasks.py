@@ -106,6 +106,10 @@ def create_classify_sample(sample_id, source_type, create_classified=True,
     if isinstance(sample_id, tuple):
         sample_id = sample_id[1]
 
+    # Don't classify already classified samples
+    if label:
+        return sample_id
+
     if create_classified:
         try:
             sample = Sample.objects.get(id=sample_id)
