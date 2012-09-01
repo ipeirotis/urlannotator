@@ -528,8 +528,8 @@ class GooglePredictionClassifier(Classifier):
 
         sample.label = label['outputLabel']
         label_probability = {}
-        for label, prob in label['outputMulti']:
-            label_probability[label] = prob
+        for score in label['outputMulti']:
+            label_probability[score['label']] = score['score']
         sample.label_probability = json.dumps(label_probability)
         sample.save()
 
@@ -553,8 +553,8 @@ class GooglePredictionClassifier(Classifier):
 
         sample.label = label['outputLabel']
         label_probability = {}
-        for label, prob in label['outputMulti']:
-            label_probability[label] = prob
+        for score in label['outputMulti']:
+            label_probability[score['label']] = score['score']
         sample.label_probability = json.dumps(label_probability)
         sample.save()
 
