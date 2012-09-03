@@ -360,7 +360,7 @@ class SampleManager(models.Manager):
         self._sanitize(args, kwargs)
         kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
 
-        return self._create_sample(self, *args, **kwargs)
+        return self._create_sample(*args, **kwargs)
 
 
 class Sample(models.Model):
