@@ -55,7 +55,9 @@
   <h3>Updates</h3>
   <div id="updates-box" data-bind="foreach: alerts">
     <div class="update-box">
-      <img data-bind="attr: {src: screenshot}" class="box-img">
+      <div class="box-img">
+        <img data-bind="visible: hasScreenshot, attr: {src: screenshot}" class="box-img">
+      </div>
       <div class="box-inner">
         <span class="box-header" data-bind="text: title"></span>
         <span class="box-content" data-bind="html: content"></span>
@@ -244,6 +246,9 @@ function alert_view(screenshot, worker_id, worker_name, title, content){
       return '{% url project_workers_view project.id%}/'+this.worker_id+'/';
     return '';
   }, this);
+  this.hasScreenshot = ko.computed(function(){
+    return this.screenshot;
+  }, this);
 }
 
 function job_view(){
@@ -344,7 +349,7 @@ div.update-box {
   margin-bottom: 5px;
   clear: both;
 }
-img.box-img {
+.box-img {
   width: 60px;
   height: 60px;
   float: left;
