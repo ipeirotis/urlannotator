@@ -1,4 +1,5 @@
 import datetime
+import urlparse
 # import odesk
 
 from tastypie.models import create_api_key
@@ -324,32 +325,42 @@ SAMPLE_TAGASAURIS_WORKER = 'tagasauris_worker'
 
 
 class SampleManager(models.Manager):
+    def _sanitize(self, args, kwargs):
+        """
+            Sample data sanitization.
+        """
+        url = kwargs.get('url', '')
+
+        # Add missing schema. Defaults to http://
+        if url:
+            result = urlparse.urlsplit(url)
+            if not result.scheme:
+                kwargs['url'] = 'http://%s' % url
+
+    def _create_sample(self, *args, **kwargs):
+        return send_event(
+            'EventNewRawSample',
+            *args, **kwargs
+        )
+
     def create_by_owner(self, *args, **kwargs):
         '''
             Asynchronously creates a new sample with owner as a source.
         '''
-        if 'source_type' in kwargs:
-            kwargs.pop('source_type')
+        self._sanitize(args, kwargs)
+        kwargs['source_type'] = SAMPLE_SOURCE_OWNER
 
-        return send_event(
-            'EventNewRawSample',
-            source_type=SAMPLE_SOURCE_OWNER,
-            *args, **kwargs
-        )
+        return self._create_sample(*args, **kwargs)
 
     def create_by_worker(self, *args, **kwargs):
         '''
             Asynchronously creates a new sample with tagasauris worker as a
             source.
         '''
-        if 'source_type' in kwargs:
-            kwargs.pop('source_type')
+        self._sanitize(args, kwargs)
+        kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
 
-        return send_event(
-            'EventNewRawSample',
-            source_type=SAMPLE_TAGASAURIS_WORKER,
-            *args, **kwargs
-        )
+        return self._create_sample(self, *args, **kwargs)
 
 
 class Sample(models.Model):

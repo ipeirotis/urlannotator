@@ -305,6 +305,16 @@ def project_wizard(request):
         attr_form = WizardAttributesForm(odeskLogged, request.POST)
         addt_form = WizardAdditionalForm(request.POST)
         is_draft = request.POST['submit'] == 'draft'
+
+        context = {'topic_form': topic_form,
+                   'attributes_form': attr_form,
+                   'additional_form': addt_form}
+
+        if not odeskLogged:
+            context['wizard_alert'] = 'Your account is not connected to '\
+            'Odesk. If you want to have more options connect to Odesk at '\
+            '<a href="%s">settings</a> page.''' % reverse('settings')
+
         if (addt_form.is_valid() and
             attr_form.is_valid() and
             topic_form.is_valid()):
@@ -323,11 +333,38 @@ def project_wizard(request):
                 params['no_of_urls'] = 0
 
             if 'file_gold_urls' in request.FILES:
+                url_set = set()
+                label_set = set()
                 try:
                     urls = csv.reader(request.FILES['file_gold_urls'])
-                    gold_samples = [{'url': line[0], 'label': line[1]}
-                        for line in urls]
+                    gold_samples = []
+                    for line in urls:
+                        url = line[0]
+                        label = line[1]
+                        if url in url_set:
+                            continue
+
+                        url_set.add(url)
+                        label_set.add(label)
+                        gold_samples.append({'url': url, 'label': label})
+
+                    if len(url_set) < 6:
+                        context['wizard_error'] = (
+                            'You have to provide at least 6 different '
+                            'gold samples.'
+                        )
+                        return render(request, 'main/project/wizard.html',
+                            RequestContext(request, context))
+
+                    if len(label_set) < 2:
+                        context['wizard_error'] = (
+                            'You have to provide at least 2 different labels.'
+                        )
+                        return render(request, 'main/project/wizard.html',
+                            RequestContext(request, context))
+
                     params['gold_samples'] = json.dumps(gold_samples)
+
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')
@@ -347,13 +384,6 @@ def project_wizard(request):
                 job = Job.objects.create_active(**params)
 
             return redirect('project_view', id=job.id)
-        context = {'topic_form': topic_form,
-                   'attributes_form': attr_form,
-                   'additional_form': addt_form}
-        if not odeskLogged:
-            context['wizard_alert'] = 'Your account is not connected to '\
-            'Odesk. If you want to have more options connect to Odesk at '\
-            '<a href="%s">settings</a> page.''' % reverse('settings')
     return render(request, 'main/project/wizard.html',
         RequestContext(request, context))
 

@@ -183,6 +183,7 @@ def process_execute(*args, **kwargs):
         Args and kwargs are directly passed to multiprocessing.Process.
     """
     from django.db import transaction
+    # Commit current transaction so that new process will have up-to-date DB.
     if transaction.is_dirty():
         transaction.commit()
 
@@ -231,6 +232,7 @@ def train_on_set(set_id, *args, **kwargs):
     # If we are testing tools, continue with synchronized flow.
     if settings.TOOLS_TESTING:
         train(set_id=set_id)
+
     else:
         process_execute(target=prepare_func,
             kwargs={'func': train, 'set_id': set_id})

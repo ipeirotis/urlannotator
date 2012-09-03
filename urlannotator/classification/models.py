@@ -1,4 +1,5 @@
 import json
+import urlparse
 
 from tenclouds.django.jsonfield.fields import JSONField
 from django.db import models
@@ -123,10 +124,18 @@ CLASS_SAMPLE_SOURCE_OWNER = 'owner'
 
 
 class ClassifiedSampleManager(models.Manager):
-    def create_by_owner(self, *args, **kwargs):
-        if 'source_type' in kwargs:
-            kwargs.pop('source_type')
+    def _sanitize(self, args, kwargs):
+        """
+            Sanitizes information passed by users.
+        """
+        url = kwargs['url']
+        if url:
+            result = urlparse.urlsplit(url)
+            if not result.scheme:
+                kwargs['url'] = 'http://%s' % url
 
+    def create_by_owner(self, *args, **kwargs):
+        self._sanitize(args, kwargs)
         kwargs['source_type'] = CLASS_SAMPLE_SOURCE_OWNER
         kwargs['source_val'] = ''
         try:
@@ -146,7 +155,7 @@ class ClassifiedSampleManager(models.Manager):
             Sample.objects.create_by_owner(
                 job_id=kwargs['job'].id,
                 url=kwargs['url'],
-                create_classified=False
+                create_classified=False,
             )
 
         return classified_sample

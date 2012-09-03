@@ -482,7 +482,7 @@ class ProjectTests(TestCase):
 
         self.assertTrue(GoldSample.objects.filter(label='').count() == 0)
 
-        testUrl = 'google.com'
+        testUrl = 'http://google.com'
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
@@ -492,7 +492,6 @@ class ProjectTests(TestCase):
         self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
             1)
 
-        testUrl = 'google.com'
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
@@ -510,7 +509,6 @@ class ProjectTests(TestCase):
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
 
-        testUrl = 'google.com'
         self.c.post(reverse('project_classifier_view', args=[job.id]),
             {'test-urls': testUrl}, follow=True)
 
