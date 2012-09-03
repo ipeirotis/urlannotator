@@ -1,7 +1,7 @@
 <div class="well row-fluid">
-  <div class="span7" style="border-right: 1px solid black; height: 100%">
+  <div class="span7" style="border-right: 1px solid black; height: 100%; min-width: 380px">
     <div>
-      <form method="POST" action="#" class="form-horizontal">
+      <form method="POST" action="{% url login %}" class="form-horizontal">
         <legend>Log in</legend>
         <fieldset>
         {% csrf_token %}
