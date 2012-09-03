@@ -304,13 +304,13 @@ function submitClassify(){
   });
   if (type == 'urls'){
     var urls = form['test-urls'].value.replace('\r', '')
+    $('#test-urls').val('');
     urls = JSON.stringify(urls.split('\n'))
     $.post("{%url api_classifier_classify api_name='v1' resource_name='job' job_id=project.id%}",
       {
         'csrfmiddlewaretoken': form['csrfmiddlewaretoken'].value,
         'urls': urls
       }, function(){
-        $('#test-urls').val('');
       });
   }
   return false;
