@@ -69,7 +69,6 @@ def get_web_screenshot(url):
     Url is put together from s3 server name and object path.
     As result we return url to screenshot.
     """
-
     if settings.TOOLS_TESTING:
         return url
 
@@ -80,14 +79,14 @@ def get_web_screenshot(url):
     # Lets create dir for temporary screenshots.
     os.system("mkdir -p %s" % screen_dir)
 
-    url = '"%s"' % url
+    capture_url = '"%s"' % url
     out = '-o %s' % screen_out
     quality = '-q %d' % DEFAULT_QUALITY
     format = '-f jpeg'
     size = '-g %d %d' % (DEF_SCREEN_WIDTH, DEF_SCREEN_HEIGHT)
     xvfb = '-x'
 
-    params = ' '.join([url, out, quality, format, size, xvfb])
+    params = ' '.join([capture_url, out, quality, format, size, xvfb])
 
     # Capturing web.
     res = os.system('python urlannotator/tools/extract_screenshot.py %s'
