@@ -71,3 +71,21 @@ BROKER_URL = 'amqp://'
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
+
+# Tagasauris settings
+TAGASAURIS_LOGIN = 'urlannotator'
+TAGASAURIS_PASS = 'urlannotator'
+TAGASAURIS_HOST = 'https://devel.tagasauris.com'
+TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+
+# TODO: This is ugly... any ideas how to change this?
+TAGASAURIS_NOTIFY = {
+    TAGASAURIS_VOTING_WORKFLOW: 'NotifyTask_1',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_2',
+}
+
+TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
+TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/sample/tagasauris/%s/'
+TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/tagasauris/%s/'
