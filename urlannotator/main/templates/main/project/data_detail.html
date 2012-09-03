@@ -22,7 +22,7 @@
         <thead></thead>
         <tbody>
           <tr><td>Added on</td><td>{{sample.added_on}}</td></tr>
-          <tr><td>Uploaded by</td><td>{{sample.added_by.first_name}} {{sample.added_by.last_name}}</td></tr>
+          <tr><td>Uploaded by</td><td>{{sample.get_source_worker}}</td></tr>
         </tbody>
       </table>
       <hr>
@@ -43,7 +43,7 @@
           <tr><td>No</td><td>{{sample.get_no_probability}}%</td></tr>
         </tbody>
       </table>
-      
+
     </div>
   </div>
 {% endblock %}
@@ -55,6 +55,6 @@ table#more-information td:first-child {
   width: 140px;
   text-align: right;
   padding-right: 10px;
-} 
+}
 </style>
 {% endblock %}

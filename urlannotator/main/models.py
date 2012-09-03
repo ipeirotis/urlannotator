@@ -174,11 +174,19 @@ class Job(models.Model):
         ret = max(performances, key=(lambda x: x.date))
         return ret.value
 
+    def get_newest_votes(self, num=3):
+        """
+            Returns newest correct votes in the job.
+        """
+        samples = self.classifiedsample_set
+        samples.sort(key=lambda x: x.id)
+        return samples[num:]
+
     def is_own_workforce(self):
         return self.data_source == JOB_SOURCE_OWN_WORKFORCE
 
     def get_status(self):
-        return JOB_STATUS_CHOICES[self.status][1]
+        return self.get_status_display()
 
     def is_draft(self):
         return self.status == JOB_STATUS_DRAFT
@@ -213,9 +221,11 @@ class Job(models.Model):
             Returns number of hours workers have worked on this project
             altogether.
         """
-        # FIXME: Returns number of hours since project activation
-        delta = now() - self.activated
-        return int(delta.total_seconds() / 3600)
+        return reduce(
+            lambda x, y: x.worked_hours + y.worked_hours,
+            WorkerJobAssociation.objects.filter(job=self),
+            0,
+        )
 
     def get_urls_collected(self):
         """
@@ -223,14 +233,31 @@ class Job(models.Model):
         """
         # FIXME: Returns number of urls gathered. Should be number of urls
         #        that has gone through validation and are accepted.
-        return self.no_of_urls - self.remaining_urls
+        return Sample.objects.filter(job=self).count()
+
+    def get_workers(self):
+        """
+            Returns workers associated with the job.
+        """
+        workers = [assoc.worker
+            for assoc in WorkerJobAssociation.objects.filter(job=self)]
+        return workers
 
     def get_no_of_workers(self):
         """
             Returns number of workers that have worked on this project.
         """
-        # FIXME: Returns number of all workers.
-        return Worker.objects.all().count()
+        return WorkerJobAssociation.objects.filter(job=self).count()
+
+    def get_top_workers(self, num=3):
+        """
+            Returns `num` top of workers.
+        """
+        workers = self.get_workers()
+        workers.sort(
+            key=lambda w: w.get_links_collected_for_job(self)
+        )
+        return workers[num:]
 
     def get_cost(self):
         """
@@ -243,11 +270,10 @@ class Job(models.Model):
         """
             Returns actual progress (in percents) in the job.
         """
-        # FIXME: Is it proper way of getting progress?
         if not self.no_of_urls:
             return 100
         div = self.no_of_urls
-        return 100 * (self.get_urls_collected() / div)
+        return min((100 * self.get_urls_collected()) / div, 100)
 
     def is_completed(self):
         return self.status == JOB_STATUS_COMPLETED
@@ -360,6 +386,15 @@ class SampleManager(models.Manager):
         self._sanitize(args, kwargs)
         kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
 
+        # Add worker-job association.
+        worker = Worker.objects.get_or_create_tagasauris(
+            worker_id=kwargs['source_val']
+        )
+        WorkerJobAssociation.objects.associate(
+            job=kwargs['job'],
+            worker=worker,
+        )
+
         return self._create_sample(*args, **kwargs)
 
 
@@ -373,7 +408,7 @@ class Sample(models.Model):
     screenshot = models.URLField()
     source_type = models.CharField(max_length=100, blank=False)
     source_val = models.CharField(max_length=100, blank=True, null=True)
-    added_on = models.DateField(auto_now_add=True)
+    added_on = models.DateTimeField(auto_now_add=True)
 
     objects = SampleManager()
 
@@ -390,7 +425,7 @@ class Sample(models.Model):
             return None
         elif self.source_type == SAMPLE_TAGASAURIS_WORKER:
             # FIXME: Proper worker type handling
-            return None
+            return Worker.object.get_tagasauris(worker_id=self.source_val)
 
     def is_finished(self):
         """
@@ -403,7 +438,7 @@ class Sample(models.Model):
             Returns workers that have sent this sample (url).
         """
         #  FIXME: Support for multiple workers sending the same url.
-        return [self.source_type]
+        return []
 
     def get_yes_votes(self):
         """
@@ -455,33 +490,44 @@ class Sample(models.Model):
 # Worker types breakdown:
 # odesk - worker from odesk. External id points to user's odesk id.
 # internal - worker registered in our system. External id is the user's id.
+# tagasauris - worker provided by tagasauris.
 WORKER_TYPE_ODESK = 0
 WORKER_TYPE_INTERNAL = 1
+WORKER_TYPE_TAGASAURIS = 2
 
 WORKER_TYPES = (
     (WORKER_TYPE_ODESK, 'oDesk'),
-    (WORKER_TYPE_INTERNAL, 'internal')
-
+    (WORKER_TYPE_INTERNAL, 'internal'),
+    (WORKER_TYPE_TAGASAURIS, 'tagasauris'),
 )
 
 
 class WorkerManager(models.Manager):
     def create_odesk(self, *args, **kwargs):
-        if 'worker_type' in kwargs:
-            kwargs.pop('worker_type')
+        kwargs['worker_type'] = WORKER_TYPE_ODESK
 
-        return self.create(
-            worker_type=WORKER_TYPE_ODESK,
-            **kwargs
-        )
+        return self.create(**kwargs)
+
+    def create_tagasauris(self, *args, **kwargs):
+        kwargs['worker_type'] = WORKER_TYPE_TAGASAURIS
+
+        return self.create(**kwargs)
 
     def create_internal(self, *args, **kwargs):
-        if 'worker_type' in kwargs:
-            kwargs.pop('worker_type')
+        kwargs['worker_type'] = WORKER_TYPE_INTERNAL
 
-        return self.create(
-            worker_type=WORKER_TYPE_INTERNAL,
-            **kwargs
+        return self.create(**kwargs)
+
+    def get_tagasauris(self, worker_id):
+        return self.get(
+            worker_type=WORKER_TYPE_TAGASAURIS,
+            external_id=worker_id,
+        )
+
+    def get_or_create_tagasauris(self, worker_id):
+        return self.get_or_create(
+            worker_type=WORKER_TYPE_TAGASAURIS,
+            external_id=worker_id,
         )
 
 
@@ -547,6 +593,23 @@ class Worker(models.Model):
         '''
         # FIXME: Proper job start query.
         return datetime.datetime.now()
+
+
+class WorkerJobManager(models.Manager):
+    def associate(self, job, worker):
+        exists = self.filter(job=job, worker=worker).count()
+        if not exists:
+            self.create(job=job, worker=worker)
+
+
+class WorkerJobAssociation(models.Model):
+    """
+        Holds worker associations with jobs they have participated in.
+    """
+    job = models.ForeignKey(Job)
+    worker = models.ForeignKey(Worker)
+    started_on = models.DateTimeField(auto_now_add=True)
+    worked_hours = models.PositiveIntegerField(default=0)
 
 
 class GoldSample(models.Model):

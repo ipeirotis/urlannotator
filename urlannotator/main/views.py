@@ -31,7 +31,7 @@ from urlannotator.main.models import (Account, Job, Worker, Sample,
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats)
 from urlannotator.classification.models import (ClassifierPerformance,
-    ClassifiedSample)
+    ClassifiedSample, TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
 
 
@@ -781,6 +781,30 @@ def project_classifier_view(request, id):
     context['performance_AUC'] = ','.join(context['performance_AUC'])
     return render(request, 'main/project/classifier.html',
         RequestContext(request, context))
+
+
+@login_required
+def project_classifier_data(request, id):
+    try:
+        job = Job.objects.get(id=id)
+    except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    response = HttpResponse(mimetype='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=training_data.csv'
+
+    writer = csv.writer(response)
+    training_set = TrainingSet.objects.newest_for_job(job=job)
+    for sample in training_set.training_samples.all():
+        writer.writerow([sample.sample.url, sample.label])
+
+    return response
 
 
 def doc_parts(input_string):

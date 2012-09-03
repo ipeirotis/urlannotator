@@ -476,6 +476,34 @@ class AlertResource(Resource):
         }
 
 
+class WorkerResource(Resource):
+    """
+        Resource allowing API access to Workers.
+    """
+    def raw_detail(self, worker_id, job_id):
+        """
+            Returns worker's details in regards to given job.
+
+            Response format:
+            `id` - Integer. Worker's id.
+            `urls_collected` - Integer. Number of urls collected.
+            `hours_spent` - Integer. Number of hours spent in the job.
+            `votes_added` - Integer. Number of votes worker has done.
+            `earned` - Float. Amount of money worker has earned in job.
+            `start_time` - String. Work start time.
+        """
+        worker = Worker.objects.get(id=worker_id)
+        job = Job.objects.get(id=job_id)
+        return {
+            'id': worker.id,
+            'urls_collected': worker.get_links_collected_for_job(job),
+            'hours_spent': worker.get_hours_spent_for_job(job),
+            'votes_added': worker.get_votes_added_for_job(job),
+            'earned': worker.get_earned_for_job(job),
+            'start_time': worker.get_job_start_time(job),
+        }
+
+
 class JobResource(ModelResource):
     """
         Resource allowing API access to Jobs
@@ -490,6 +518,7 @@ class JobResource(ModelResource):
     def __init__(self, *args, **kwargs):
         self.classifier_resource = ClassifierResource()
         self.alert_resource = AlertResource()
+        self.worker_resource = WorkerResource()
         super(JobResource, self).__init__(*args, **kwargs)
 
     def apply_authorization_limits(self, request, object_list):
@@ -518,7 +547,32 @@ class JobResource(ModelResource):
                 % self._meta.resource_name,
                 self.wrap_view('updates_feed'),
                 name='api_job_updates_feed'),
+            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/'
+                r'worker/(?P<worker_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('worker'),
+                name='api_job_worker'),
+
         ]
+
+    def worker(self, request, **kwargs):
+        """
+            Returns worker's details.
+        """
+        self.method_check(request, allowed=['get'])
+        kwargs['job_id'] = kwargs['pk']
+        self._check_job(request, **kwargs)
+        job_id = kwargs.get('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+        worker_id = kwargs.get('worker_id', 0)
+        worker_id = sanitize_positive_int(worker_id)
+
+        return self.create_response(
+            request,
+            self.worker_resource.raw_detail(
+                job_id=job_id,
+                worker_id=worker_id,
+            )
+        )
 
     def get_detail(self, request, **kwargs):
         """
@@ -557,12 +611,16 @@ class JobResource(ModelResource):
                 response_class=HttpNotFound,
             )
 
+        top_workers = job.get_top_workers()
+        top_workers = [self.worker_resource(job_id=job.id, worker_id=x.id)
+            for x in top_workers]
+
         response = {
             'id': job.id,
             'title': job.title,
             'description': job.description,
             'urls_to_collect': job.no_of_urls,
-            'urls_collected': job.no_of_urls - job.remaining_urls,
+            'urls_collected': job.get_urls_collected(),
             'classifier': reverse('api_classifier', kwargs={
                 'api_name': 'v1',
                 'resource_name': 'job',
@@ -578,6 +636,7 @@ class JobResource(ModelResource):
             'budget': job.budget,
             'progress': job.get_progress(),
             'hours_spent': job.get_hours_spent(),
+            'top_workers': top_workers,
         }
         if job.is_own_workforce():
             additional = {

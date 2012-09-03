@@ -72,6 +72,8 @@ except ImportError:
     pass
 
 
+# CELERY_ALWAYS_EAGER = True
+
 # Broker for celery
 BROKER_URL = 'amqp://'
 
