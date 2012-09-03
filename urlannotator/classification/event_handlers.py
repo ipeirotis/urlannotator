@@ -53,13 +53,6 @@ class SampleVotingManager(Task):
         newly delivered samples.
     """
 
-    def get_mapped_samples(self, job):
-        """ Samples already mapped in external service.
-        """
-        mapped_samples = SampleMapping.objects.select_related('sample').filter(
-            sample__job=job)
-        return [ms.sample for ms in mapped_samples]
-
     def get_unmapped_samples(self):
         """ New Samples since last update. We should send those to external
             voting service.
@@ -79,7 +72,7 @@ class SampleVotingManager(Task):
 
         for job in jobs:
             job_samples = [s for s in all_samples if s.job == job]
-            initialized = len(self.get_mapped_samples(job)) > 0
+            initialized = job.tagasaurisjobs.voting_key is not None
             yield job, job_samples, initialized
 
     def initialize_job(self, job, new_samples):
@@ -91,25 +84,29 @@ class SampleVotingManager(Task):
         # Creates sample to mediaobject mapping
         mediaobjects = samples_to_mediaobjects(new_samples)
 
-        for sample, mediaobject in mediaobjects.items():
-            SampleMapping(
-                sample=sample,
-                external_id=mediaobject['id'],
-                crowscourcing_type=SampleMapping.TAGASAURIS,
-            ).save()
-
         # Objects to send.
-        mediaobjects = mediaobjects.values()
+        mo_values = mediaobjects.values()
 
         # Creating new job with mediaobjects
         voting_key, voting_hit = create_job(tc, job,
             settings.TAGASAURIS_VOTING_WORKFLOW,
             callback=settings.TAGASAURIS_VOTING_CALLBACK % job.id,
-            mediaobjects=mediaobjects)
+            mediaobjects=mo_values)
 
         tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
         tag_jobs.voting_key = voting_key
-        tag_jobs.voting_hit = voting_hit
+
+        if voting_hit is not None:
+            # Update mapping if HIT was generaed. TODO: Not sure if we should
+            # check is tagasauris get all our screenshots.
+            for sample, mediaobject in mediaobjects.items():
+                SampleMapping(
+                    sample=sample,
+                    external_id=mediaobject['id'],
+                    crowscourcing_type=SampleMapping.TAGASAURIS,
+                ).save()
+            tag_jobs.voting_hit = voting_hit
+
         tag_jobs.save()
 
     def update_job(self, job, new_samples):
@@ -139,6 +136,14 @@ class SampleVotingManager(Task):
         tc.job_add_media(
             external_ids=[mo['id'] for mo in mediaobjects],
             external_id=job.tagasaurisjobs.voting_key)
+
+        # In case if tagasauris job was created without screenshots earlier.
+        if job.tagasaurisjobs.voting_hit is None:
+            result = tc.get_job(external_id=job.tagasaurisjobs.voting_key)
+            voting_hit = result['hits'][0] if result['hits'] else None
+            if voting_hit is not None:
+                job.tagasaurisjobs.voting_hit = voting_hit
+                job.tagasaurisjobs.save()
 
     def run(self, *args, **kwargs):
         """ Main task function.
