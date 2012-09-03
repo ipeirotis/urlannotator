@@ -31,13 +31,19 @@ class TagasaurisJobs(models.Model):
         """
             Returns URL under which Own Workforce can submit new samples.
         """
-        return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
+        if self.sample_gathering_hit is not None:
+            return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
+
+        return ''
 
     def get_voting_url(self):
         """
             Returns URL under which Own Workforce can vote on labels.
         """
-        return settings.TAGASAURIS_HIT_URL % self.voting_hit
+        if self.voting_hit is not None:
+            return settings.TAGASAURIS_HIT_URL % self.voting_hit
+
+        return ''
 
 
 class SampleMapping(models.Model):

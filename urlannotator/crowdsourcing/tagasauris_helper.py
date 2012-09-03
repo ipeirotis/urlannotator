@@ -55,7 +55,7 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
             "workflow": {
                 settings.TAGASAURIS_NOTIFY[task_type]: {
                     "config": {
-                        "urlannotator_callback_url": callback
+                        "notify_url": callback
                     }
                 }
             }
@@ -74,6 +74,6 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
     api_client.wait_for_complete(job_creation_key)
 
     result = api_client.get_job(external_id=ext_id)
-    hit = result['hits'][0]
+    hit = result['hits'][0] if result['hits'] else None
 
     return ext_id, hit
