@@ -7,12 +7,16 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core import mail
+from tastypie.exceptions import ImmediateHttpResponse
 
 from social_auth.models import UserSocialAuth
 
 from urlannotator.main.models import Account, Job, Worker, Sample, GoldSample
 from urlannotator.classification.models import ClassifiedSample
 from urlannotator.main.factories import SampleFactory
+from urlannotator.main.api.resources import (sanitize_positive_int,
+    paginate_list, AlertResource)
+from urlannotator.logging.models import LogEntry
 
 
 class SampleFactoryTest(TestCase):
@@ -618,6 +622,22 @@ class ApiTests(TestCase):
         # Non-existant job.
         self.assertEqual(resp.status_code, 404)
 
+        resp = self.c.get('%s%s?format=json'
+            % (self.api_url, 'job/1/feed/'), follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('entries', array)
+        self.assertIn('count', array)
+        count = array['count']
+        self.assertTrue(count > 0)
+
+    def testClassifier(self):
+        self.c.login(username='testing', password='test')
+        Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/classifier/'),
             follow=True)
 
@@ -658,14 +678,79 @@ class ApiTests(TestCase):
         count = array['count']
         self.assertTrue(count > 0)
 
-        resp = self.c.get('%s%s?format=json'
-            % (self.api_url, 'job/1/feed/'), follow=True)
+    def testTools(self):
+        num = '0'
+        self.assertEqual(sanitize_positive_int(num), 0)
 
-        array = json.loads(resp.content)
-        self.assertIn('entries', array)
-        self.assertIn('count', array)
-        count = array['count']
-        self.assertTrue(count > 0)
+        with self.assertRaises(ImmediateHttpResponse):
+            for num in ['-1', '0x20', None, 'testing', -1]:
+                sanitize_positive_int(num)
+
+        num = '20'
+        self.assertEqual(sanitize_positive_int(num), 20)
+
+        test_list = range(20)
+        with self.assertRaises(ImmediateHttpResponse):
+            paginate_list(test_list, -1, 0, '')
+            paginate_list(test_list, 0, -1, '')
+
+        res = paginate_list(test_list, 10, 0, '')
+        self.assertEqual(res['next_page'], '?limit=10&offset=10')
+        self.assertEqual(res['entries'], test_list[:10])
+        self.assertEqual(res['total_count'], 20)
+        self.assertEqual(res['count'], 10)
+        self.assertEqual(res['offset'], 0)
+        self.assertEqual(res['limit'], 10)
+
+        res = paginate_list(test_list, 20, 10, '')
+        self.assertEqual(res['next_page'], '?limit=20&offset=10')
+        self.assertEqual(res['entries'], test_list[10:20])
+        self.assertEqual(res['total_count'], 20)
+        self.assertEqual(res['count'], 10)
+        self.assertEqual(res['offset'], 10)
+        self.assertEqual(res['limit'], 20)
+
+    def testAlertResource(self):
+        self.c.login(username='testing', password='test')
+        Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        log = LogEntry.objects.all()[:1][0]
+        res = AlertResource().raw_detail(log=log)
+        self.assertEqual(res['id'], log.id)
+        self.assertEqual(res['type'], log.log_type)
+        self.assertEqual(res['job_id'], log.job_id)
+        self.assertEqual(res['date'], log.date.strftime('%Y-%m-%d %H:%M:%S'))
+        self.assertEqual(res['single_text'], log.get_single_text())
+        self.assertEqual(res['plural_text'], log.get_plural_text())
+        self.assertEqual(res['box'], log.get_box())
+
+    def testWorker(self):
+        self.c.login(username='testing', password='test')
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        Sample.objects.create_by_worker(
+            url='http://google.com',
+            job_id=job.id,
+            source_val='1',
+        )
+
+        w = Worker.objects.get_tagasauris(worker_id='1')
+        res = self.c.get('%sjob/%s/worker/%s/?format=json'
+            % (self.api_url,job.id, w.id))
+
+        res = json.loads(res.content)
+        self.assertEqual(res['earned'], 0)
+        self.assertEqual(res['hours_spent'], 0)
+        self.assertEqual(res['id'], w.id)
+        self.assertEqual(len(res['urls_collected']), 1)
+        self.assertEqual(len(res['votes_added']), 0)
+        self.assertIn('start_time', res)
 
 
 class TestAdmin(TestCase):

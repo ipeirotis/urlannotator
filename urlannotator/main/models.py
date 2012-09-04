@@ -180,7 +180,7 @@ class Job(models.Model):
         """
         samples = self.classifiedsample_set
         samples.sort(key=lambda x: x.id)
-        return samples[num:]
+        return samples[:num]
 
     def is_own_workforce(self):
         return self.data_source == JOB_SOURCE_OWN_WORKFORCE
@@ -257,7 +257,7 @@ class Job(models.Model):
         workers.sort(
             key=lambda w: w.get_links_collected_for_job(self)
         )
-        return workers[num:]
+        return workers[:num]
 
     def get_cost(self):
         """
@@ -387,11 +387,13 @@ class SampleManager(models.Manager):
         kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
 
         # Add worker-job association.
-        worker = Worker.objects.get_or_create_tagasauris(
+        worker, created = Worker.objects.get_or_create_tagasauris(
             worker_id=kwargs['source_val']
         )
+        job = Job.objects.get(id=kwargs['job_id'])
+
         WorkerJobAssociation.objects.associate(
-            job=kwargs['job'],
+            job=job,
             worker=worker,
         )
 
@@ -610,6 +612,8 @@ class WorkerJobAssociation(models.Model):
     worker = models.ForeignKey(Worker)
     started_on = models.DateTimeField(auto_now_add=True)
     worked_hours = models.PositiveIntegerField(default=0)
+
+    objects = WorkerJobManager()
 
 
 class GoldSample(models.Model):

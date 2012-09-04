@@ -95,8 +95,8 @@ def paginate_list(entry_list, limit, offset, page):
 
     response = {}
     response['total_count'] = total_count
-    return_alerts = entry_list[offset:limit]
-    response['count'] = len(return_alerts)
+    return_list = entry_list[offset:limit]
+    response['count'] = len(return_list)
 
     new_offset = offset + limit
     if new_offset >= total_count:
@@ -106,7 +106,7 @@ def paginate_list(entry_list, limit, offset, page):
         next_page = '%s?limit=%s&offset=%s' % (page, limit, new_offset)
 
     response['next_page'] = next_page
-    response['entries'] = return_alerts
+    response['entries'] = return_list
     response['limit'] = limit
     response['offset'] = offset
     return response
@@ -490,17 +490,21 @@ class WorkerResource(Resource):
             `hours_spent` - Integer. Number of hours spent in the job.
             `votes_added` - Integer. Number of votes worker has done.
             `earned` - Float. Amount of money worker has earned in job.
-            `start_time` - String. Work start time.
+            `start_time` - String. Work start time in format %Y-%m-%d %H:%M:%S
+                           as of datetime.strftime().
         """
         worker = Worker.objects.get(id=worker_id)
         job = Job.objects.get(id=job_id)
+
+        start_time = worker.get_job_start_time(job)
+        urls_collected = worker.get_links_collected_for_job(job)
         return {
             'id': worker.id,
-            'urls_collected': worker.get_links_collected_for_job(job),
+            'urls_collected': [url.url for url in urls_collected],
             'hours_spent': worker.get_hours_spent_for_job(job),
             'votes_added': worker.get_votes_added_for_job(job),
             'earned': worker.get_earned_for_job(job),
-            'start_time': worker.get_job_start_time(job),
+            'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
         }
 
 
@@ -559,7 +563,6 @@ class JobResource(ModelResource):
             Returns worker's details.
         """
         self.method_check(request, allowed=['get'])
-        kwargs['job_id'] = kwargs['pk']
         self._check_job(request, **kwargs)
         job_id = kwargs.get('job_id', 0)
         job_id = sanitize_positive_int(job_id)
@@ -711,6 +714,7 @@ class JobResource(ModelResource):
         """
             Checks if user can access requested job.
         """
+        self.is_authenticated(request)
         job_id = kwargs.get('job_id', None)
         job_id = sanitize_positive_int(job_id)
 
