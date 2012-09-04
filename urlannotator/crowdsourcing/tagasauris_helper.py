@@ -53,17 +53,26 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
     if callback is not None:
         kwargs.update({
             "workflow": {
+                # NOTE: Here we can modify number of workers/media per hit but
+                # i dont see use of it now.
+                # settings.TAGASAURIS_SURVEY[task_type]: {
+                #     "config": {
+                #         "workers_per_hit": 1,
+                #         "media_per_hit": 1,
+                #     }
+                # },
                 settings.TAGASAURIS_NOTIFY[task_type]: {
                     "config": {
                         "notify_url": callback
                     }
-                }
+                },
             }
         })
 
     # Choosing mediaobjects
     if mediaobjects is None:
-        kwargs.update({"dummy_media": "dummy"})
+        kwargs.update({"dummy_media":
+            ["dummy-" + str(no) for no in xrange(job.no_of_urls)]})
     else:
         kwargs.update({"mediaobjects": mediaobjects})
 

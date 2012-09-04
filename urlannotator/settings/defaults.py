@@ -310,7 +310,7 @@ TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 # Tagasauris integretion settings
 TAGASAURIS_LOGIN = 'urlannotator'
 TAGASAURIS_PASS = 'urlannotator'
-TAGASAURIS_HOST = 'https://devel.tagasauris.com'
+TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 
 TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
