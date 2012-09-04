@@ -65,7 +65,7 @@ except ImportError:
 
 
 # Broker for celery
-BROKER_URL = 'amqp://'
+BROKER_URL = 'amqp://guest@localhost:5673/'
 
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')

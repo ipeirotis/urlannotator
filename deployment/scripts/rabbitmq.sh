@@ -5,6 +5,8 @@
 rabbitmqctl -n %(project_name)s status
 if [ $? != 0 ]
 then
+    export RABBITMQ_NODE_PORT=5673
+    export RABBITMQ_NODENAME="%(project_name)s"
     exec rabbitmq-server
 else
     rabbitmqctl -n %(project_name)s stop_app
