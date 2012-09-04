@@ -516,7 +516,7 @@ class JobResource(ModelResource):
         queryset = Job.objects.all()
         resource_name = 'job'
         list_allowed_methods = ['get', 'post']
-        authentication = SessionAuthentication()
+        # authentication = SessionAuthentication()
         include_absolute_url = True
 
     def __init__(self, *args, **kwargs):
