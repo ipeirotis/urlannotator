@@ -221,11 +221,11 @@ class Job(models.Model):
             Returns number of hours workers have worked on this project
             altogether.
         """
-        return reduce(
-            lambda x, y: x.worked_hours + y.worked_hours,
-            WorkerJobAssociation.objects.filter(job=self),
-            0,
-        )
+        spent = 0
+        for assoc in WorkerJobAssociation.objects.filter(job=self):
+            spent += assoc.worked_hours
+
+        return spent
 
     def get_urls_collected(self):
         """

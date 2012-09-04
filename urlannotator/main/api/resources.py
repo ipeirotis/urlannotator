@@ -306,7 +306,7 @@ class ClassifierResource(Resource):
                 )
                 request_ids.append({
                     'id': classified_sample.id,
-                    'url': url,
+                    'url': class_url,
                 })
         else:
             classify_url = request.POST.get('url', None)
@@ -753,7 +753,6 @@ class JobResource(ModelResource):
         """
         self.method_check(request, allowed=['get'])
         self._check_job(request, **kwargs)
-
         return self.classifier_resource.classify_status(request, **kwargs)
 
     def classifier_classify(self, request, **kwargs):

@@ -15,7 +15,7 @@ from urlannotator.main.models import Account, Job, Worker, Sample, GoldSample
 from urlannotator.classification.models import ClassifiedSample
 from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
-    paginate_list, AlertResource)
+    paginate_list, AlertResource, ClassifiedSampleResource)
 from urlannotator.logging.models import LogEntry
 
 
@@ -669,6 +669,34 @@ class ApiTests(TestCase):
         self.assertIn('status', array)
         self.assertIn('sample', array)
 
+        # Classify some URL
+        urls = ['google.com', 'google.com']
+        data = {
+            'test-type': 'urls',
+            'urls': json.dumps(urls),
+        }
+        resp = self.c.post('%s%s?format=json'
+            % (self.api_url, 'job/1/classifier/classify/'), data=data, follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('request_id', array)
+        self.assertIn('status_url', array)
+
+        idx = 0
+        for req in array['request_id']:
+            self.assertEqual(req['url'], urls[idx])
+            idx += 1
+
+        for req_id in array['request_id']:
+            resp = self.c.get('%s%s?format=json&request_id=%d'
+                % (self.api_url, 'job/1/classifier/status/', req_id['id']), follow=True)
+
+            # We are doing it eagerly, should be done already.
+            array = json.loads(resp.content)
+            self.assertIn('status', array)
+            self.assertIn('sample', array)
+
+
         resp = self.c.get('%s%s?format=json&limit=10'
             % (self.api_url, 'job/1/classifier/history/'), follow=True)
 
@@ -682,8 +710,8 @@ class ApiTests(TestCase):
         num = '0'
         self.assertEqual(sanitize_positive_int(num), 0)
 
-        with self.assertRaises(ImmediateHttpResponse):
-            for num in ['-1', '0x20', None, 'testing', -1]:
+        for num in ['-1', '0x20', None, 'testing', -1]:
+            with self.assertRaises(ImmediateHttpResponse):
                 sanitize_positive_int(num)
 
         num = '20'
@@ -727,7 +755,41 @@ class ApiTests(TestCase):
         self.assertEqual(res['plural_text'], log.get_plural_text())
         self.assertEqual(res['box'], log.get_box())
 
-    def testWorker(self):
+    def testClassifiedSampleResource(self):
+        self.c.login(username='testing', password='test')
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        cs = ClassifiedSample.objects.create(job=job)
+        res = ClassifiedSampleResource().raw_detail(class_id=cs.id)
+        self.assertEqual(res['finished'], cs.is_successful())
+        self.assertEqual(res['job_id'], job.id)
+        self.assertEqual(res['screenshot'], '')
+        self.assertEqual(res['url'], cs.url)
+        self.assertEqual(res['sample_url'], '')
+        self.assertEqual(res['label_probability'], cs.label_probability)
+        self.assertEqual(res['id'], cs.id)
+        self.assertEqual(res['label'], cs.label)
+
+        sample = Sample.objects.all()[0]
+        cs.sample = sample
+        cs.url = sample.url
+        cs.save()
+
+        res = ClassifiedSampleResource().raw_detail(class_id=cs.id)
+        self.assertEqual(res['finished'], cs.is_successful())
+        self.assertEqual(res['screenshot'], sample.screenshot)
+        self.assertEqual(res['url'], sample.url)
+
+        sample.screenshot = 'test'
+        sample.save()
+
+        res = ClassifiedSampleResource().raw_detail(class_id=cs.id)
+        self.assertEqual(res['screenshot'], sample.screenshot)
+
+    def testWorkerResource(self):
         self.c.login(username='testing', password='test')
         job = Job.objects.create_active(
             account=self.user.get_profile(),
