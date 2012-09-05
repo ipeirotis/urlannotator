@@ -609,7 +609,7 @@ class JobResource(ModelResource):
             )
 
         top_workers = job.get_top_workers()
-        top_workers = [self.worker_resource.get_detail(job_id=job.id, worker_id=x.id)
+        top_workers = [self.worker_resource.raw_detail(job_id=job.id, worker_id=x.id)
             for x in top_workers]
 
         response = {
