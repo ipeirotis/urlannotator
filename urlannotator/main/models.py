@@ -427,7 +427,7 @@ class Sample(models.Model):
             return None
         elif self.source_type == SAMPLE_TAGASAURIS_WORKER:
             # FIXME: Proper worker type handling
-            return Worker.object.get_tagasauris(worker_id=self.source_val)
+            return Worker.objects.get_tagasauris(worker_id=self.source_val)
 
     def is_finished(self):
         """
@@ -447,21 +447,37 @@ class Sample(models.Model):
             Returns amount of YES votes received by this sample.
         """
         # FIXME: Actual votes.
-        return 0
+        votes = self.workerqualityvote_set.all()
+        num = 0
+        for v in votes:
+            if v.label == LABEL_YES:
+                num += 1
+        return num
 
     def get_no_votes(self):
         """
             Returns amount of NO votes received by this sample.
         """
         # FIXME: Actual votes.
-        return 0
+        votes = self.workerqualityvote_set.all()
+        num = 0
+        for v in votes:
+            if v.label == LABEL_NO:
+                num += 1
+        return num
 
     def get_broken_votes(self):
         """
             Returns amount of BROKEN votes received by this sample.
         """
         # FIXME: Actual votes.
-        return 0
+        votes = self.workerqualityvote_set.all()
+        num = 0
+        for v in votes:
+            if v.label == LABEL_BROKEN:
+                num += 1
+
+        return num
 
     def get_yes_probability(self):
         """
