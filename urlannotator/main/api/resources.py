@@ -522,9 +522,7 @@ class JobResource(ModelResource):
         super(JobResource, self).__init__(*args, **kwargs)
 
     def apply_authorization_limits(self, request, object_list):
-        if request.user.is_authenticated():
-            return object_list.filter(account=request.user.get_profile())
-        return []
+        return object_list.filter(account=request.user.get_profile())
 
     def override_urls(self):
         return [
