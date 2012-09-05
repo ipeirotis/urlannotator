@@ -19,8 +19,7 @@ class ProgressMonitor(JobMonitor, Task):
         )
 
     def get_value(self, job):
-        div = job.no_of_urls or 1
-        return 100 * (job.no_of_urls - job.remaining_urls) / div
+        return job.get_progress()
 
     def run(self, interval=datetime.timedelta(hours=1), *args, **kwargs):
         self.interval = interval
