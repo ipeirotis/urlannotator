@@ -38,7 +38,7 @@ def configure():
                 source, destination, context, mode="644")
 
     scripts = ['supervisorctl.sh', 'supervisord.sh', 'rabbitmq.sh',
-        'celery-worker.sh']
+        'celery-worker.sh', 'supervisord-rabbitmq.sh']
     for script_name in scripts:
         source = pjoin(cget("local_root"), 'deployment', 'scripts', script_name)
         destination = pjoin(cget("script_dir"), script_name)
@@ -49,17 +49,28 @@ def run_supevisordctl(command):
     """Start supervisor process."""
     conf = pjoin(cget('service_dir'), 'supervisor', 'config',
         'supervisord.conf')
+    rabbitmq_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+        'supervisord-rabbitmq.conf')
     show(yellow("Running supervisorctrl: %s." % command))
-    return sudo('supervisorctl --configuration="%s" %s' % (conf, command))
+    res = sudo('supervisorctl --configuration="%s" %s' % (conf, command))
+    if res != 0:
+        res = sudo('supervisorctl --configuration="%s" %s'
+            % (rabbitmq_conf, command))
+    return res
 
 
 def start_supervisor():
     """Start supervisor process."""
     conf = pjoin(cget('service_dir'), 'supervisor', 'config',
         'supervisord.conf')
+    rabbitmq_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+        'supervisord-rabbitmq.conf')
     pname = cget('supervisor_process_id')
     show(yellow("Starting supervisor with id: %s." % pname))
-    return sudo('supervisord --configuration="%s"' % conf)
+    res = sudo('supervisord --configuration="%s"' % conf)
+    if res != 0:
+        res = sudo('supervisord --configuration="%s"' % rabbitmq_conf)
+    return res
 
 
 def reload():

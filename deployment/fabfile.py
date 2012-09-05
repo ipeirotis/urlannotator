@@ -207,9 +207,14 @@ def sync_db():
     run_django_cmd("migrate", args="--noinput")
 
 
-def configure_services():
+def configure_services(setup=False):
     """Ensures correct init and running scripts for services are installed."""
     supervisor.configure()
+    if setup:
+        rabbitmq_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+            'supervisord-rabbitmq.conf')
+        supervisor.configure(conf=rabbitmq_conf)
+        supervisor.start(conf=rabbitmq_conf)
     nginx.configure()
 
 
@@ -411,7 +416,7 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     sync_db()
 
     # Uploads settings and scripts for services.
-    configure_services()
+    configure_services(setup=setup_environment)
     # Reload services to load new config.
     __reload_services()
 
