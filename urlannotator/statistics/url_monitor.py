@@ -19,7 +19,7 @@ class URLMonitor(JobMonitor, Task):
         )
 
     def get_value(self, job):
-        return job.no_of_urls - job.remaining_urls
+        return job.get_urls_collected()
 
     def run(self, interval=datetime.timedelta(hours=1), *args, **kwargs):
         self.interval = interval
