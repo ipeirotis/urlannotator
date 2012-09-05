@@ -45,32 +45,23 @@ def configure():
         upload_template_with_perms(source, destination, context, mode="755")
 
 
-def run_supevisordctl(command):
+def run_supevisordctl(command, conf=None):
     """Start supervisor process."""
-    conf = pjoin(cget('service_dir'), 'supervisor', 'config',
-        'supervisord.conf')
-    rabbitmq_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
-        'supervisord-rabbitmq.conf')
+    if not conf:
+        conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+            'supervisord.conf')
     show(yellow("Running supervisorctrl: %s." % command))
-    res = sudo('supervisorctl --configuration="%s" %s' % (conf, command))
-    if res != 0:
-        res = sudo('supervisorctl --configuration="%s" %s'
-            % (rabbitmq_conf, command))
-    return res
+    return sudo('supervisorctl --configuration="%s" %s' % (conf, command))
 
 
-def start_supervisor():
+def start_supervisor(conf=None):
     """Start supervisor process."""
-    conf = pjoin(cget('service_dir'), 'supervisor', 'config',
-        'supervisord.conf')
-    rabbitmq_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
-        'supervisord-rabbitmq.conf')
+    if not conf:
+        conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+            'supervisord.conf')
     pname = cget('supervisor_process_id')
     show(yellow("Starting supervisor with id: %s." % pname))
-    res = sudo('supervisord --configuration="%s"' % conf)
-    if res != 0:
-        res = sudo('supervisord --configuration="%s"' % rabbitmq_conf)
-    return res
+    return sudo('supervisord --configuration="%s"' % conf)
 
 
 def reload():
