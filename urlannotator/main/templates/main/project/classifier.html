@@ -123,6 +123,9 @@
 {{ block.super }}
 <script type='text/javascript' src='{{STATIC_URL}}js/knockout-2.1.0.js'></script>
 <script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
+<script src="{{STATIC_URL}}js/models/classifier_history.js" type="text/javascript"></script>
+<script src="{{STATIC_URL}}js/models/classifier_stats.js" type="text/javascript"></script>
+
 <script type="text/javascript">
 $('#radio-urls').change(function(obj) {
         $('.input-test-texts').css('display', 'none');
@@ -179,71 +182,12 @@ $(document).ready(function() {
       });
    });
 
-function classifier_stats(){
-  this.yesCount = ko.observable({{classifier_stats.yes_labels.val}});
-  this.brokenCount = ko.observable({{classifier_stats.broken_labels.val}});
-  this.noCount = ko.observable({{classifier_stats.no_labels.val}});
-
-  this.allCount = ko.computed(function() {
-    return this.yesCount() + this.noCount() + this.brokenCount();
-  }, this);
-  this.yesPerc = ko.computed(function(){
-    div = this.allCount();
-    if (div == 0){
-      div = 1
-    }
-    return 100 * this.yesCount() / div;
-  }, this);
-  this.noPerc = ko.computed(function() {
-    div = this.allCount();
-    if (div == 0){
-      div = 1
-    }
-    return 100 * this.noCount() / div;
-  }, this);
-  this.brokenPerc = ko.computed(function() {
-    div = this.allCount();
-    if (div == 0){
-      div = 1
-    }
-    return 100 * this.brokenCount() / div;
-  }, this);
-}
-
 var classifierStats = new classifier_stats();
+classifierStats.yesCount({{classifier_stats.yes_labels.val}})
+classifierStats.noCount({{classifier_stats.no_labels.val}})
+classifierStats.brokenCount({{classifier_stats.broken_labels.val}})
 
-var entry = function(screenshot, url, label, yes_prob, no_prob, broken_prob, finished){
-  this.screenshot = screenshot;
-  this.url = url;
-  this.label = label;
-  this.yes_prob = yes_prob;
-  this.no_prob = no_prob;
-  this.broken_prob = broken_prob;
-  this.finished = finished;
-
-  this.probability = ko.computed(function(){
-    return this.yes_prob + '% ' + this.no_prob + '% ' + this.broken_prob + '%';
-  }, this);
-  this.hasScreenshot = ko.computed(function(){
-    return this.screenshot && this.screenshot != '';
-  }, this);
-  this.getLabel = ko.computed(function(){
-    if (this.finished)
-      return this.label;
-    return 'PENDING';
-  }, this);
-  this.getProbability = ko.computed(function(){
-    if (this.finished)
-      return this.probability();
-    return '-';
-  }, this);
-};
-
-function history_fun(){
-  this.entries = ko.observableArray();
-};
-
-var history = new history_fun()
+var history = new classifier_history()
 
 function updateClassifierStats(){
   $.get("{%url api_classifier api_name='v1' resource_name='job' job_id=project.id%}", function(data){
@@ -266,7 +210,7 @@ function updateClassifierHistory(){
 
     for (en in data['entries']){
       el = data['entries'][en]
-      new_entries.push(new entry(el['screenshot'], el['url'], el['label'], el['label_probability']['Yes'], el['label_probability']['No'], 0, el['finished']));
+      new_entries.push(new classifier_history_entry(el['screenshot'], el['url'], el['label'], el['label_probability']['Yes'], el['label_probability']['No'], 0, el['finished']));
 
       if (!(el['id'] in image_cache)){
         img = new Image();

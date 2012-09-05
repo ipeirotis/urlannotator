@@ -97,6 +97,7 @@
 {{ block.super }}
 <script type='text/javascript' src='{{STATIC_URL}}js/knockout-2.1.0.js'></script>
 <script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
+<script src="{{STATIC_URL}}js/models/job.js" type="text/javascript"></script>
 <script type="text/javascript">
 var progressGraph; // globally available
 $(document).ready(function() {
@@ -231,39 +232,7 @@ $(document).ready(function() {
       });
    });
 
-function alert_view(screenshot, worker_id, worker_name, title, content){
-  this.screenshot = screenshot;
-  this.worker_id = worker_id;
-  this.workerName = worker_name;
-  this.title = title;
-  this.content = content;
-
-  this.hasWorker = ko.computed(function(){
-    return this.worker_id;
-  }, this);
-  this.workerURL = ko.computed(function(){
-    if (this.hasWorker())
-      return '{% url project_workers_view project.id%}/'+this.worker_id+'/';
-    return '';
-  }, this);
-  this.hasScreenshot = ko.computed(function(){
-    return this.screenshot;
-  }, this);
-}
-
-function job_view(){
-  this.urls_collected = ko.observable();
-  this.progress = ko.observable();
-  this.hours_spent = ko.observable();
-  this.budget = ko.observable();
-  this.cost = ko.observable();
-  this.no_of_workers = ko.observable();
-  this.gather_url = ko.observable();
-  this.voting_url = ko.observable();
-  this.alerts = ko.observableArray();
-}
-
-var job = new job_view();
+var job = new job();
 var image_cache = {};
 
 function updateAlerts(url){
@@ -276,7 +245,7 @@ function updateAlerts(url){
 
     $.each(data['entries'], function(idx, val){
       box = val['box'];
-      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text']));
+      new_alerts.push(new alert(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}));
       if (!(box['Image_url'] in image_cache)){
         img = new Image();
         img.src = box['Image_url'];
