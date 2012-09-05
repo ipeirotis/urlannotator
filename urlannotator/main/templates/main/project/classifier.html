@@ -292,9 +292,12 @@ function updateClassifierHistory(){
   })
 }
 
+var csrftoken;
+
 function submitClassify(){
   var form = document.forms['classifyForm'];
   var type = 'urls';
+  csrftoken = form['csrfmiddlewaretoken'].value;
   $.each(form['test-type'], function(idx, val){
     if (val.checked)
     {
@@ -308,6 +311,7 @@ function submitClassify(){
     urls = JSON.stringify(urls.split('\n'))
     $.post("{%url api_classifier_classify api_name='v1' resource_name='job' job_id=project.id%}",
       {
+        'csrftoken': form['csrfmiddlewaretoken'].value,
         'csrfmiddlewaretoken': form['csrfmiddlewaretoken'].value,
         'urls': urls
       }, function(){

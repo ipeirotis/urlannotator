@@ -615,6 +615,9 @@ class ApiTests(TestCase):
             follow=True)
 
         self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertIn('sample_gathering_url', array)
+        self.assertIn('sample_voting_url', array)
 
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/2/'),
             follow=True)
@@ -631,9 +634,42 @@ class ApiTests(TestCase):
         count = array['count']
         self.assertTrue(count > 0)
 
+        u = User.objects.create_user(username='test2', password='!')
+        self.c.login(username='test2', password='!')
+
+        job = Job.objects.create_active(
+            account=u.get_profile(),
+            data_source=0,
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        resp = self.c.get('%sjob/%d/?format=json' % (self.api_url, job.id),
+            follow=True)
+
+        # We are not logged in, can't see the job. Unauthorized
+        array = json.loads(resp.content)
+        self.assertNotIn('sample_gathering_url', array)
+        self.assertNotIn('sample_voting_url', array)
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        # Can't access others' job
+        self.assertEqual(resp.status_code, 404)
+
+        u.is_superuser = True
+        u.save()
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        # Can access others' jobs if superuser
+        self.assertEqual(resp.status_code, 200)
+
+
     def testClassifier(self):
         self.c.login(username='testing', password='test')
-        Job.objects.create_active(
+        job = Job.objects.create_active(
             account=self.user.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
@@ -669,8 +705,18 @@ class ApiTests(TestCase):
         self.assertIn('status', array)
         self.assertIn('sample', array)
 
+        data = {
+            'test-type': 'urls',
+        }
+        resp = self.c.post('%s%s?format=json'
+            % (self.api_url, 'job/1/classifier/classify/'), data=data, follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('error', array)
+        self.assertEqual(resp.status_code, 404)
+
         # Classify some URL
-        urls = ['google.com', 'google.com']
+        urls = ['google.com', 'google.com', '']
         data = {
             'test-type': 'urls',
             'urls': json.dumps(urls),
@@ -687,6 +733,9 @@ class ApiTests(TestCase):
             self.assertEqual(req['url'], urls[idx])
             idx += 1
 
+        # Last item shouldn't appear in the response
+        self.assertEqual(idx, len(urls) - 1)
+
         for req_id in array['request_id']:
             resp = self.c.get('%s%s?format=json&request_id=%d'
                 % (self.api_url, 'job/1/classifier/status/', req_id['id']), follow=True)
@@ -696,7 +745,6 @@ class ApiTests(TestCase):
             self.assertIn('status', array)
             self.assertIn('sample', array)
 
-
         resp = self.c.get('%s%s?format=json&limit=10'
             % (self.api_url, 'job/1/classifier/history/'), follow=True)
 
@@ -705,6 +753,23 @@ class ApiTests(TestCase):
         self.assertIn('count', array)
         count = array['count']
         self.assertTrue(count > 0)
+
+        resp = self.c.get('%s%s?format=json&request_id=%d'
+            % (self.api_url, 'job/1/classifier/status/', 5), follow=True)
+
+        # We are doing it eagerly, should be done already.
+        array = json.loads(resp.content)
+        self.assertIn('error', array)
+        self.assertEqual(resp.status_code, 404)
+
+        cs = ClassifiedSample.objects.create(job=job)
+        resp = self.c.get('%s%s?format=json&request_id=%d'
+            % (self.api_url, 'job/1/classifier/status/', cs.id), follow=True)
+
+        # We are doing it eagerly, should be done already.
+        array = json.loads(resp.content)
+        self.assertIn('status', array)
+        self.assertEqual(len(array), 1)
 
     def testTools(self):
         num = '0'
@@ -813,6 +878,41 @@ class ApiTests(TestCase):
         self.assertEqual(len(res['urls_collected']), 1)
         self.assertEqual(len(res['votes_added']), 0)
         self.assertIn('start_time', res)
+
+    def testAdmin(self):
+        resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
+
+        # Not logged in users can't access admin resource
+        self.assertEqual(resp.status_code, 401)
+
+        self.c.login(username='testing', password='test')
+        resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
+
+        # No-superuser users can't access admin resource
+        self.assertEqual(resp.status_code, 401)
+
+        u = User.objects.create_user(username='test2', password='!')
+        u.is_superuser = True
+        u.save()
+
+        self.c.login(username='test2', password='!')
+        resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertEqual(array['total_count'], 0)
+
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertTrue(array['total_count'] > 0)
+        self.assertEqual(len(array['entries']), array['count'])
 
 
 class TestAdmin(TestCase):

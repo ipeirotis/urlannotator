@@ -133,11 +133,6 @@ class AdminResource(Resource):
     def __init__(self, *args, **kwargs):
         self.alert_resource = AlertResource()
 
-    def apply_authorization_limits(self, request, object_list):
-        if request.user.is_authenticated() and request.user.is_superuser:
-            return object_list.filter(account=request.user.get_profile())
-        return []
-
     def override_urls(self):
         return [
             url(r'^(?P<resource_name>%s)/updates/$'
@@ -155,6 +150,7 @@ class AdminResource(Resource):
             'offset' - Integer. Offset to start listing alerts from.
                        Defaults to 0.
         """
+        self.is_authenticated(request)
         alerts = LogEntry.objects.recent_for_job(num=0)
 
         limit = request.GET.get('limit', 10)
@@ -379,7 +375,7 @@ class ClassifierResource(Resource):
             return self.create_response(
                 request,
                 {'error': 'Wrong request id.'},
-                request_class=HttpNotFound,
+                response_class=HttpNotFound,
             )
 
         resp = {}
@@ -516,7 +512,7 @@ class JobResource(ModelResource):
         queryset = Job.objects.all()
         resource_name = 'job'
         list_allowed_methods = ['get', 'post']
-        # authentication = SessionAuthentication()
+        authentication = SessionAuthentication()
         include_absolute_url = True
 
     def __init__(self, *args, **kwargs):
