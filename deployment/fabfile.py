@@ -5,6 +5,7 @@ from fabric.colors import red, yellow, green, blue, magenta
 from fabric.api import abort, task, env, hide, settings, sudo, cd
 
 from modules import nginx, supervisor
+from modules.supervisor import start_supervisor
 from modules.virtualenv import update_virtualenv, create_virtualenv,\
     setup_virtualenv
 from modules.utils import show, put_file_with_perms,\
@@ -212,9 +213,8 @@ def configure_services(setup=False):
     supervisor.configure()
     if setup:
         rabbitmq_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
-            'supervisord-rabbitmq.conf')
-        supervisor.configure(conf=rabbitmq_conf)
-        supervisor.start(conf=rabbitmq_conf)
+            'supervisor-rabbitmq.conf')
+        start_supervisor(conf=rabbitmq_conf)
     nginx.configure()
 
 
