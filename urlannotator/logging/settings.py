@@ -10,7 +10,8 @@ LOG_TYPE_CLASS_TRAIN_DONE = 6  # Classifier training has been finished
 LOG_TYPE_SAMPLE_CLASSIFIED = 7  # A new sample has been classified
 LOG_TYPE_SAMPLE_SCREENSHOT_DONE = 8  # Sample's screenshot has been taken
 LOG_TYPE_SAMPLE_TEXT_DONE = 9  # Sample's text has been extracted
-
+LOG_TYPE_SAMPLE_SCREENSHOT_FAIL = 10  # Error while taking screenshot
+LOG_TYPE_SAMPLE_TEXT_FAIL = 11  # Error while getting content
 
 # Long action type breakdown:
 LONG_ACTION_TRAINING = 1  # Classifier training
@@ -133,6 +134,28 @@ log_config = {
             'Title': 'New Content',
             'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
             'Image_url': '%(sample_image)s',
+        },
+    },
+    LOG_TYPE_SAMPLE_SCREENSHOT_FAIL: {
+        'Console_out': 'Error while taking screenshot (%(sample_url)s)'
+                       ' - code %(error_code)d.',
+        'Single_text': 'Sample screenshot failed (%(sample_url)s).',
+        'Plural_text': 'Sample screenshots failed.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Screenshot failed',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+        },
+    },
+    LOG_TYPE_SAMPLE_TEXT_FAIL: {
+        'Console_out': 'Error while getting content (%(sample_url)s)'
+                       ' - code %(error_code)d.',
+        'Single_text': 'Sample content failed (%(sample_url)s).',
+        'Plural_text': 'Sample contents failed.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Content failed',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
         },
     },
 }

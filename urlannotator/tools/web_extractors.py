@@ -11,6 +11,9 @@ from itertools import ifilter
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 
+from urlannotator.tools.utils import os_result_to_code
+from urlannotator.tools.webkit2png import error_code_to_exception
+
 SCREEN_DUMPS_BUCKET_NAME = "urlannotator_web_screenshot"
 S3_SERVER_NAME = "https://s3.amazonaws.com/"
 
@@ -54,7 +57,8 @@ def get_web_text(url):
         return 'test'
 
     # Simply calling links/lynx
-    return extract_words(subprocess.check_output(["links", "-dump", url]))
+    text = subprocess.check_output(["links", "-dump", url])
+    return extract_words(text)
 
 DEFAULT_QUALITY = 50
 DEF_SCREEN_WIDTH = 1024
@@ -92,10 +96,10 @@ def get_web_screenshot(url):
     res = os.system('python urlannotator/tools/extract_screenshot.py %s'
         % params)
 
+    res = os_result_to_code(res)
     # Non-zero result code
     if res:
-        raise Exception("Screenshot capture of %s resulted in code %s"
-            % (url, res))
+        error_code_to_exception(res)
 
     conn = S3Connection(settings.AWS_ACCESS_KEY_ID,
         settings.AWS_SECRET_ACCESS_KEY)

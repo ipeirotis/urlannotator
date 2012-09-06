@@ -31,7 +31,8 @@
 #     auto server number '--auto-servernum' and then settings the server num to
 #     a number? What sorcery is this?
 
-from webkit2png import WebkitRenderer
+from webkit2png import (WebkitRenderer, BaseWebkitException,
+    error_code_to_exception)
 
 import sys
 import signal
@@ -43,6 +44,8 @@ from optparse import OptionParser
 from PyQt4.QtGui import QApplication
 from PyQt4.QtCore import qVersion, QTimer
 from PyQt4.QtNetwork import QNetworkProxy
+
+from utils import os_result_to_code
 
 VERSION = "20091224"
 LOG_FILENAME = 'webkit2png.log'
@@ -159,10 +162,10 @@ if __name__ == '__main__':
         logger.debug("Executing %s" % " ".join(newArgs))
         try:
             res = os.system(' '.join(newArgs))
-
+            res = os_result_to_code(res)
             if res:
-                raise Exception("Screenshot capture of %s resulted in code %d"
-                    % (options.url, res))
+                sys.exit(res)
+
             sys.exit(0)
         except OSError:
             logger.error("Unable to find '%s'" % newArgs[0])
@@ -211,9 +214,14 @@ if __name__ == '__main__':
                 if "plugins" in options.features:
                     renderer.qWebSettings[QWebSettings.PluginsEnabled] = True
 
-            renderer.render_to_file(url=options.url, file_object=options.output)
-            options.output.close()
-            QApplication.exit(0)
+            try:
+                res = 0
+                renderer.render_to_file(url=options.url, file_object=options.output)
+            except BaseWebkitException, e:
+                res = e.status_code
+            finally:
+                options.output.close()
+                QApplication.exit(res)
         except RuntimeError, e:
             logger.error("main: %s" % e)
             print >> sys.stderr, e

@@ -29,7 +29,6 @@ class SampleFactory(object):
         samples = Sample.objects.filter(url=url)
         job = Job.objects.get(id=job_id)
 
-        print 'Making sample', url, 'for', job_id
         # Create a new sample for the job from existing one (if job is
         # missing it). If the job has that sample, create only classified.
         if samples:
@@ -47,11 +46,13 @@ class SampleFactory(object):
 
         sample = Sample.objects.create(url=url, job=job)
 
-        # Groups screensot and content extraction. On both success proceeds
+        # Groups screenshot and content extraction. On both success proceeds
         # to sample creation. Used Celery Chords.
-        return chain(group([
-            web_screenshot_extraction.s(sample_id=sample.id, url=url),
-            web_content_extraction.s(sample_id=sample.id, url=url)]),
+        return chain(
+            group(
+                web_screenshot_extraction.s(sample_id=sample.id, url=url),
+                web_content_extraction.s(sample_id=sample.id, url=url)
+            ),
             create_sample.s(
                 sample_id=sample.id,
                 job_id=job_id,
@@ -59,10 +60,12 @@ class SampleFactory(object):
                 label=label,
                 *args, **kwargs
             ),
-            create_classify_sample.s(
-                label=label,
-                *args, **kwargs
-            )
+            # Workarounded in create_sample task. Should be reverted when
+            # celery supports putting groups inside chains.
+            # create_classify_sample.s(
+            #     label=label,
+            #     *args, **kwargs
+            # )
         ).apply_async(
             expires=datetime.datetime.now() + datetime.timedelta(days=1)
         )

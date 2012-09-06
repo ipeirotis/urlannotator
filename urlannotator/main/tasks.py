@@ -1,3 +1,5 @@
+import subprocess
+
 from celery import task
 from celery.task import current
 from django.db import DatabaseError, IntegrityError
@@ -6,6 +8,7 @@ from urlannotator.classification.models import ClassifiedSample
 from urlannotator.main.models import Sample, GoldSample, Job
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 from urlannotator.flow_control import send_event
+from urlannotator.tools.webkit2png import BadURLException
 
 
 @task()
@@ -15,7 +18,18 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
     if url is None:
         url = Sample.objects.get(id=sample_id).url
 
-    text = get_web_text(url)
+    try:
+        text = get_web_text(url)
+    except subprocess.CalledProcessError, e:
+        # Something wrong has happened to links. Couldn't find documentation on
+        # error codes - assume bad stuff has happened that retrying won't fix.
+        send_event(
+            'EventSampleContentFail',
+            sample_id=sample_id,
+            error_code=e.returncode
+        )
+        return False
+
     Sample.objects.filter(id=sample_id).update(text=text)
     send_event(
         "EventSampleContentDone",
@@ -33,6 +47,13 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
 
     try:
         screenshot = get_web_screenshot(url)
+    except BadURLException, e:
+        send_event(
+            "EventSampleScreenshotFail",
+            sample_id=sample_id,
+            error_code=e.status_code,
+        )
+        return False
     except Exception, e:
         current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
@@ -91,6 +112,16 @@ def create_sample(extraction_result, sample_id, job_id, url,
                     sample_id=sample_id,
                 )
 
+    # Celery Chain workaround until celery works fine with groups and chains
+    create_classify_sample.delay(
+        sample_id=sample_id,
+        label=label,
+        source_type=source_type,
+        source_val=source_val,
+        job_id=job_id,
+        url=url,
+        *args, **kwargs
+    )
     return (extracted, sample_id)
 
 

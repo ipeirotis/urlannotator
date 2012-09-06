@@ -35,6 +35,27 @@ from PyQt4.QtGui import (QApplication, QMainWindow, QPixmap, QImage, QColor,
 from PyQt4.QtWebKit import QWebSettings, QWebPage, QWebView
 
 
+class BaseWebkitException(Exception):
+    status_code = 0
+
+
+class BadURLException(BaseWebkitException):
+    status_code = 1
+
+
+exceptions = {
+    1: BadURLException,
+}
+
+
+def error_code_to_exception(code):
+    """
+        Raises an exception according to given error code.
+    """
+    error_class = exceptions.get(code)
+    raise error_class()
+
+
 # Class for Website-Rendering. Uses QWebPage, which
 # requires a running QtGui to work.
 class WebkitRenderer(QObject):
@@ -314,6 +335,7 @@ class _WebkitRendererHelper(QObject):
         if not self.__loading_result:
             if self.logger:
                 self.logger.warning("Failed to load %s" % url)
+                raise BadURLException("Failed to load %s" % url)
 
         # Set initial viewport (the size of the "window")
         size = self._page.mainFrame().contentsSize()

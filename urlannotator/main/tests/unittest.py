@@ -29,7 +29,7 @@ class SampleFactoryTest(TestCase):
             gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
     def testSimpleSample(self):
-        test_url = 'google.com'
+        test_url = 'http://google.com'
 
         with self.settings(TOOLS_TESTING=False):
             sf = SampleFactory()
