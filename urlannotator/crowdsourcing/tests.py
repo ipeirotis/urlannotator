@@ -1,13 +1,12 @@
-import unittest
-
 from django.contrib.auth.models import User
+from django.test import TestCase
 
 from urlannotator.crowdsourcing.quality.algorithms import MajorityVoting
 from urlannotator.crowdsourcing.models import WorkerQualityVote
 from urlannotator.main.models import LABEL_YES, LABEL_NO, Job, Worker, Sample
 
 
-class MajorityVotingTest(unittest.TestCase):
+class MajorityVotingTest(TestCase):
 
     def test_(self):
         mv = MajorityVoting()
