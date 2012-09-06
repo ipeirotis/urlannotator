@@ -1,9 +1,10 @@
 import datetime
 import os
 import tempfile
+import sys
 from django.core.urlresolvers import reverse_lazy
 
-DEBUG = True
+DEBUG = not 'celery' in sys.argv
 TEMPLATE_DEBUG = DEBUG
 JS_DEBUG = DEBUG
 
