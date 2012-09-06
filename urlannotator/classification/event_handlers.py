@@ -175,7 +175,6 @@ class ProcessVotesManager(Task):
 
             for sample in job.sample_set.all():
                 votes = WorkerQualityVote.objects.filter(sample=sample)
-                print votes
                 new_label = quality_algorithm.process_votes(votes)
 
                 if new_label is not None:
