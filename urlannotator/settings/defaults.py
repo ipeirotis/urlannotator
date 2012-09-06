@@ -301,6 +301,12 @@ CELERYBEAT_SCHEDULE = {
         'schedule': datetime.timedelta(seconds=3 * 60),
         'args': []
     },
+    'process_votes': {
+        'task': 'urlannotator.classification.event_handlers.ProcessVotesManager',
+        'schedule': datetime.timedelta(seconds=3 * 60),
+        'args': []
+    },
+
 }
 
 # Test runner

@@ -9,6 +9,10 @@ class MajorityVoting(object):
     def __init__(self):
         self.votes = []
 
+    def process_votes(self, votes):
+        map(self.add_vote, (v.label for v in votes))
+        return self.get_majority()
+
     def add_vote(self, vote):
         self.votes.append(vote)
 
@@ -22,17 +26,3 @@ class MajorityVoting(object):
         if self.votes != []:
             return Counter(self.votes).most_common(1)[0][0]
         return None
-
-        # counter = 0
-        # candidate = None
-
-        # for v in self.votes:
-        #     if counter == 0:
-        #         candidate = v
-        #         counter += 1
-        #     elif v == candidate:
-        #         counter += 1
-        #     else:
-        #         counter -= 1
-
-        # return candidate

@@ -3,12 +3,20 @@ from django.conf import settings
 from urlannotator.main.models import Worker, Sample, LABEL_CHOICES, Job
 
 
+class WorkerQualityVoteManager(models.Manager):
+    def new_vote(self, *args, **kwargs):
+        return self.create(**kwargs)
+
+
 class WorkerQualityVote(models.Model):
     worker = models.ForeignKey(Worker)
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
     added_on = models.DateField(auto_now_add=True)
     is_valid = models.BooleanField(default=True)
+    is_new = models.BooleanField(default=True)
+
+    objects = WorkerQualityVoteManager()
 
 
 class BeatTheMachineSamples(Sample):

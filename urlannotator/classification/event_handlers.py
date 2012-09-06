@@ -5,12 +5,15 @@ from celery.task import current
 from django.conf import settings
 
 from urlannotator.flow_control import send_event
-from urlannotator.classification.models import TrainingSet, ClassifiedSample
+from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
+    TrainingSample)
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
+from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
+    WorkerQualityVote)
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_job, samples_to_mediaobjects)
-from urlannotator.main.models import Sample
+from urlannotator.crowdsourcing.factories import quality_factory
+from urlannotator.main.models import Sample, Job
 
 
 @task()
@@ -31,8 +34,7 @@ class ClassifierTrainingManager(Task):
 
             # If classifier is not trained, retry later
             if not job.is_classifier_trained():
-                registry.tasks[ClassifierTrainingManager.name].retry(
-                    countdown=3 * 60)
+                current.retry(countdown=3 * 60)
 
             # classifier = classifier_factory.create_classifier(job.id)
             # # train_samples = [train_sample.sample for train_sample in
@@ -158,6 +160,32 @@ class SampleVotingManager(Task):
                 self.initialize_job(job, new_samples)
 
 send_for_voting = registry.tasks[SampleVotingManager.name]
+
+
+@task()
+class ProcessVotesManager(Task):
+    def run(*args, **kwargs):
+        active_jobs = Job.objects.get_active()
+
+        for job in active_jobs:
+            ts = TrainingSet(job=job)
+            ts.save()
+
+            quality_algorithm = quality_factory.create_algorithm(job)
+
+            for sample in job.sample_set.all():
+                votes = WorkerQualityVote.objects.filter(sample=sample)
+                print votes
+                new_label = quality_algorithm.process_votes(votes)
+
+                if new_label is not None:
+                    TrainingSample(
+                        set=ts,
+                        sample=sample,
+                        label=new_label
+                    ).save()
+
+process_votes = registry.tasks[ProcessVotesManager.name]
 
 
 @task
@@ -288,6 +316,7 @@ FLOW_DEFINITIONS = [
     (r'^EventNewSample$', update_classified_sample),
     (r'^EventSamplesValidated$', add_samples),
     (r'^EventSamplesVoting$', send_for_voting),
+    (r'^EventProcessVotes$', process_votes),
     (r'^EventNewClassifySample$', classify),
     # (r'EventTrainClassifier', classify),
     (r'^EventTrainingSetCompleted$', train_on_set),

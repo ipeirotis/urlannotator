@@ -3,6 +3,7 @@ from django.conf import settings
 from urlannotator.crowdsourcing.models import TagasaurisJobs
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_job)
+from urlannotator.crowdsourcing.quality.algorithms import MajorityVoting
 from urlannotator.main.models import Job
 
 import logging
@@ -31,3 +32,11 @@ class ExternalJobsFactory(object):
             sample_gathering_key=sample_gathering_key,
             sample_gathering_hit=sample_gathering_hit,
         ).save()
+
+
+class QualityAlgorithmFactory(object):
+
+    def create_algorithm(self, job, *args, **kwargs):
+        return MajorityVoting()
+
+quality_factory = QualityAlgorithmFactory()

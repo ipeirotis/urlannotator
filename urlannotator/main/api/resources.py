@@ -881,18 +881,18 @@ class VoteResource(TagasaurisNotifyResource):
 
                 for answer in answers:
                     if answer['tag'] in ['yes', 'no', 'broken']:
-                        quality_vote = WorkerQualityVote(
-                            worker=worker,
-                            sample=sample
-                        )
                         if answer['tag'] == 'broken':
-                            quality_vote.label = LABEL_BROKEN
+                            label = LABEL_BROKEN
                         elif answer['tag'] == 'yes':
-                            quality_vote.label = LABEL_YES
+                            label = LABEL_YES
                         elif answer['tag'] == 'no':
-                            quality_vote.label = LABEL_NO
+                            label = LABEL_NO
 
-                        quality_vote.save()
+                        WorkerQualityVote.objects.new_vote(
+                            worker=worker,
+                            sample=sample,
+                            label=label
+                        )
 
         return self.create_response(
             request,
