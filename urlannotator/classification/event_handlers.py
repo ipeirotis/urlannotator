@@ -171,8 +171,8 @@ class SampleVotingManager(Task):
                 #       causing bad stuff to happen with worker's RAM
                 #       management (10x increase, never garbaged).
                 pass
-        tr.print_diff()
-        print 'After event'
+            tr.print_diff()
+            print 'After loop'
 
 
 send_for_voting = registry.tasks[SampleVotingManager.name]
