@@ -281,6 +281,10 @@ CELERY_IMPORTS = (
     'urlannotator.statistics.progress_monitor',
 )
 
+# Respawn a worker after 3 tasks done. Memory leaks shall not prevail!
+CELERYD_MAX_TASKS_PER_CHILD = 3
+CELERY_MAX_CACHED_RESULTS = 5
+
 CELERYBEAT_SCHEDULE = {
     'spent_monitor': {
         'task': 'urlannotator.statistics.spent_monitor.SpentMonitor',

@@ -1,5 +1,3 @@
-import datetime
-
 from celery import task, registry, Task
 
 from urlannotator.statistics.job_monitor import JobMonitor
@@ -20,9 +18,5 @@ class ProgressMonitor(JobMonitor, Task):
 
     def get_value(self, job):
         return job.get_progress()
-
-    def run(self, interval=datetime.timedelta(hours=1), *args, **kwargs):
-        self.interval = interval
-        super(self.__class__, self).run(*args, **kwargs)
 
 progress_monitor = registry.tasks[ProgressMonitor.name]

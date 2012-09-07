@@ -1,5 +1,3 @@
-import datetime
-
 from celery import task, registry, Task
 
 from urlannotator.main.models import SpentStatistics
@@ -20,10 +18,5 @@ class SpentMonitor(JobMonitor, Task):
 
     def get_value(self, job):
         return job.budget
-
-    def run(self, interval=datetime.timedelta(hours=1), *args, **kwargs):
-        self.interval = interval
-        super(self.__class__, self).run(*args, **kwargs)
-
 
 spent_monitor = registry.tasks[SpentMonitor.name]
