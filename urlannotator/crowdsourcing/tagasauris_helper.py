@@ -47,26 +47,31 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
             "paid": "0.0",
             "keywords": ""
         },
+        "workflow": {
+            settings.TAGASAURIS_SURVEY[task_type]: {
+                "config": {
+                    "hit_instructions": job.description
+                }
+            },
+        }
     }
 
     # Setting callback for notify mechanical task.
     if callback is not None:
-        kwargs.update({
-            "workflow": {
-                # NOTE: Here we can modify number of workers/media per hit but
-                # i dont see use of it now.
-                # settings.TAGASAURIS_SURVEY[task_type]: {
-                #     "config": {
-                #         "workers_per_hit": 1,
-                #         "media_per_hit": 1,
-                #     }
-                # },
-                settings.TAGASAURIS_NOTIFY[task_type]: {
-                    "config": {
-                        "notify_url": callback
-                    }
-                },
-            }
+        kwargs["workflow"].update({
+            # NOTE: Here we can modify number of workers/media per hit but
+            # i dont see use of it now.
+            # settings.TAGASAURIS_SURVEY[task_type]: {
+            #     "config": {
+            #         "workers_per_hit": 1,
+            #         "media_per_hit": 1,
+            #     }
+            # },
+            settings.TAGASAURIS_NOTIFY[task_type]: {
+                "config": {
+                    "notify_url": callback
+                }
+            },
         })
 
     # Choosing mediaobjects
