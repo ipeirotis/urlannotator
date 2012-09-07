@@ -16,7 +16,7 @@ from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.main.models import Sample, Job
 
 
-@task()
+@task(ignore_result=True)
 class ClassifierTrainingManager(Task):
     """ Manage training of classifiers.
     """
@@ -49,7 +49,7 @@ class ClassifierTrainingManager(Task):
 add_samples = registry.tasks[ClassifierTrainingManager.name]
 
 
-@task()
+@task(ignore_result=True)
 class SampleVotingManager(Task):
     """ Task periodically executed for update external voting service with
         newly delivered samples.
@@ -162,7 +162,7 @@ class SampleVotingManager(Task):
 send_for_voting = registry.tasks[SampleVotingManager.name]
 
 
-@task()
+@task(ignore_result=True)
 class ProcessVotesManager(Task):
     def run(*args, **kwargs):
         active_jobs = Job.objects.get_active()
@@ -187,7 +187,7 @@ class ProcessVotesManager(Task):
 process_votes = registry.tasks[ProcessVotesManager.name]
 
 
-@task
+@task(ignore_result=True)
 def update_classified_sample(sample_id, *args, **kwargs):
     """
         Monitors sample creation and updates classify requests with this sample
@@ -206,7 +206,6 @@ def update_classified_sample(sample_id, *args, **kwargs):
         send_event("EventNewClassifySample",
             sample_id=class_sample.id,
             from_name='update_classified')
-    return None
 
 
 def process_execute(*args, **kwargs):
@@ -249,7 +248,7 @@ def train(set_id):
     )
 
 
-@task
+@task(ignore_result=True)
 def train_on_set(set_id, *args, **kwargs):
     """
         Trains classifier on newly created training set
@@ -275,7 +274,7 @@ def train_on_set(set_id, *args, **kwargs):
     # send_event('EventNewJobInitializationCompleted')
 
 
-@task
+@task(ignore_result=True)
 def classify(sample_id, from_name='', *args, **kwargs):
     """
         Classifies given samples
