@@ -40,7 +40,7 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
 
 @task()
 def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
-    """ CutyCapt required. Generates html output from those browsers.
+    """ Generates html output from those browsers.
     """
     if url is None:
         url = Sample.objects.get(id=sample_id).url
@@ -112,16 +112,21 @@ def create_sample(extraction_result, sample_id, job_id, url,
                     sample_id=sample_id,
                 )
 
-    # Celery Chain workaround until celery works fine with groups and chains
-    create_classify_sample.delay(
-        sample_id=sample_id,
-        label=label,
-        source_type=source_type,
-        source_val=source_val,
-        job_id=job_id,
-        url=url,
-        *args, **kwargs
-    )
+        # Celery Chain workaround until celery works fine with groups
+        # and chains
+        create_classify_sample.delay(
+            sample_id=sample_id,
+            label=label,
+            source_type=source_type,
+            source_val=source_val,
+            job_id=job_id,
+            url=url,
+            *args, **kwargs
+        )
+    else:
+        # Extraction failed, cleanup.
+        Sample.objects.filter(id=sample_id).delete()
+
     return (extracted, sample_id)
 
 
@@ -129,8 +134,8 @@ def create_sample(extraction_result, sample_id, job_id, url,
 def create_classify_sample(sample_id, source_type, create_classified=True,
     label='', source_val='', *args, **kwargs):
     """
-    Creates classified sample from existing sample, therefore we don't need
-    web extraction.
+        Creates classified sample from existing sample, therefore we don't need
+        web extraction.
     """
 
     # We are given a tuple with create_sample results
@@ -149,16 +154,14 @@ def create_classify_sample(sample_id, source_type, create_classified=True,
                 label = ''
 
             # Proper sample entry
-            class_sample = ClassifiedSample(
+            class_sample = ClassifiedSample.objects.create(
                 job=sample.job,
                 url=sample.url,
                 sample=sample,
                 label=label,
                 source_type=source_type,
-                source_val=source_val
+                source_val=source_val,
             )
-
-            class_sample.save()
 
             # Sample created sucesfully - pushing event.
             send_event(

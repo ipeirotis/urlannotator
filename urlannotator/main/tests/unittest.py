@@ -50,6 +50,21 @@ class SampleFactoryTest(TestCase):
         s = urllib2.urlopen(sample.screenshot)
         self.assertEqual(s.headers.type, 'image/jpeg')
 
+        # Check for broken urls - sample shouldn't be created
+        with self.settings(TOOLS_TESTING=False):
+            sf = SampleFactory()
+            res = sf.new_sample(
+                job_id=self.job.id,
+                url=test_url,
+                source_type=''
+            )
+        res.get()
+
+        query = Sample.objects.filter(job=self.job, url=test_url)
+
+        self.assertEqual(query.count(), 1)
+
+
 
 class JobFactoryTest(TestCase):
     def setUp(self):
