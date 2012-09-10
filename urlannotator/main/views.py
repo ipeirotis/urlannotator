@@ -20,6 +20,7 @@ from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.views.decorators.cache import cache_page
 from django.conf import settings
+from itertools import ifilter
 from oauth2client.file import Storage
 from oauth2client.client import OAuth2WebServerFlow
 
@@ -245,7 +246,7 @@ def settings_view(request):
 
     if profile.odesk_uid:
         w = Worker.objects.get(external_id=profile.odesk_uid)
-        context['odesk'] = {'name': w.get_name_as(request.user)}
+        context['odesk'] = {'name': w.get_name}
 
     if request.method == "POST":
         if 'submit' in request.POST:
@@ -565,21 +566,16 @@ def project_workers_view(request, id):
         return redirect('index')
 
     context = {'project': job}
-    # FIXME: Proper worker gathering. We should include multiple addition of
-    #        the same sample by different workers.
-    samples = Sample.objects.filter(job=job)
     workers = []
-    for sample in samples:
-        worker = sample.get_source_worker()
-        if worker:
-            workers.append({
-                'id': worker.id,
-                'name': worker.get_name_as(request.user),
-                'quality': worker.estimated_quality,
-                'votes_added': len(worker.get_votes_added_for_job(job)),
-                'links_collected': worker.get_links_collected_for_job(job),
-                'hours_spent': worker.get_hours_spent_for_job(job)
-            })
+    for worker in job.get_workers():
+        workers.append({
+            'id': worker.id,
+            'name': worker.get_name,
+            'quality': worker.estimated_quality,
+            'votes_added': worker.get_votes_added_count_for_job(job),
+            'urls_collected': worker.get_urls_collected_count_for_job(job),
+            'hours_spent': worker.get_hours_spent_for_job(job)
+        })
     context['workers'] = workers
     return render(request, 'main/project/workers.html',
         RequestContext(request, context))
@@ -600,14 +596,19 @@ def project_worker_view(request, id, worker_id):
         return redirect('index')
 
     context = {'project': job}
-    worker = {
-        'name': worker.get_name_as(request.user),
-        'links_collected': worker.get_links_collected_for_job(job),
-        'votes_added': worker.get_votes_added_for_job(job),
+    account = request.user.get_profile()
+    assocs = worker.workerjobassociation_set.all()
+    assocs = ifilter(lambda x: x.job.account == account, assocs)
+    projects = (w.job.get_link_with_title() for w in assocs)
+    context['worker'] = {
+        'name': worker.get_name,
+        'urls_collected': worker.get_urls_collected_count_for_job(job),
+        'votes_added': worker.get_votes_added_count_for_job(job),
         'hours_spent': worker.get_hours_spent_for_job(job),
         'quality': worker.estimated_quality,
         'earned': worker.get_earned_for_job(job),
         'work_started': worker.get_job_start_time(job),
+        'projects': projects,
     }
     return render(request, 'main/project/worker.html',
         RequestContext(request, context))

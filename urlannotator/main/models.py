@@ -9,6 +9,7 @@ from django.db.models import F
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.utils.timezone import now
+from itertools import ifilter
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.flow_control import send_event
@@ -145,6 +146,9 @@ class Job(models.Model):
             'id': self.id,
         })
 
+    def get_link_with_title(self):
+        return '<a href="%s">%s</a>' % (self.get_absolute_url(), self.title)
+
     def get_sample_gathering_url(self):
         """
             Returns the URL under which Own Workforce can submit new samples.
@@ -255,7 +259,7 @@ class Job(models.Model):
         """
         workers = self.get_workers()
         workers.sort(
-            key=lambda w: w.get_links_collected_for_job(self)
+            key=lambda w: w.get_urls_collected_for_job(self)
         )
         return workers[:num]
 
@@ -417,17 +421,26 @@ class Sample(models.Model):
     class Meta:
         unique_together = ('job', 'url')
 
+    @staticmethod
+    def get_worker(source_type, source_val):
+        """
+            Returns a worker that corresponds to given (`source_type`,
+            `source_val`) pair.
+        """
+        if source_type == SAMPLE_SOURCE_OWNER:
+            # If the sample's creator is owner, ignore source worker.
+            return None
+        elif source_type == SAMPLE_TAGASAURIS_WORKER:
+            return Worker.objects.get_tagasauris(worker_id=source_val)
+
     def get_source_worker(self):
         '''
             Returns a worker that has sent this sample.
         '''
-        # FIXME: Add support for more sources.
-        if self.source_type == SAMPLE_SOURCE_OWNER:
-            # If the sample's creator is owner, ignore source worker.
-            return None
-        elif self.source_type == SAMPLE_TAGASAURIS_WORKER:
-            # FIXME: Proper worker type handling
-            return Worker.objects.get_tagasauris(worker_id=self.source_val)
+        return self.get_worker(
+            source_type=self.source_type,
+            source_val=self.source_val,
+        )
 
     def is_finished(self):
         """
@@ -439,8 +452,10 @@ class Sample(models.Model):
         """
             Returns workers that have sent this sample (url).
         """
-        #  FIXME: Support for multiple workers sending the same url.
-        return []
+        workers = set()
+        for cs in self.classifiedsample_set.all():
+            workers.add(cs.get_source_worker())
+        return workers
 
     def get_yes_votes(self):
         """
@@ -519,6 +534,11 @@ WORKER_TYPES = (
     (WORKER_TYPE_TAGASAURIS, 'tagasauris'),
 )
 
+worker_type_to_sample_source = {
+    WORKER_TYPE_TAGASAURIS: SAMPLE_TAGASAURIS_WORKER,
+    WORKER_TYPE_INTERNAL: SAMPLE_SOURCE_OWNER,
+}
+
 
 class WorkerManager(models.Manager):
     def create_odesk(self, *args, **kwargs):
@@ -560,10 +580,12 @@ class Worker(models.Model):
 
     objects = WorkerManager()
 
-    def get_name_as(self, requesting_user):
+    def __unicode__(self):
+        return self.get_name()
+
+    def get_name(self):
         """
-            Returns worker's name. Uses requesting_user's ceredentials if
-            necessary.
+            Returns worker's name.
         """
         # FIXME: Uncomment when proper odesk external id handling is done
 
@@ -575,27 +597,47 @@ class Worker(models.Model):
         #     return r['dev_full_name']
         return 'Temp Name %d' % self.id
 
-    def get_links_collected_for_job(self, job):
+    def get_urls_collected_count_for_job(self, job):
         """
-            Returns links collected by given worker for given job.
+            Returns count of urls collected by worker for given job.
         """
-        # FIXME: Actual links collected query
-        s = Sample.objects.filter(job=job)
+        return len(self.get_urls_collected_for_job(job))
+
+    def get_urls_collected_for_job(self, job):
+        """
+            Returns urls collected by given worker for given job.
+        """
+        from urlannotator.classification.models import ClassifiedSample
+        s = ClassifiedSample.objects.filter(
+            job=job,
+            source_type=worker_type_to_sample_source[self.worker_type],
+            source_val=self.external_id,
+        )
         return s
 
     def get_hours_spent_for_job(self, job):
         """
             Returns hours spent by given worker for given job.
         """
-        # FIXME: Proper time tracking. Now returns 0.
-        return 0
+        try:
+            assoc = WorkerJobAssociation.objects.get(job=job, worker=self)
+            return assoc.worked_hours
+        except WorkerJobAssociation.DoesNotExist:
+            return 0
+
+    def get_votes_added_count_for_job(self, job):
+        """
+            Returns count of votes added by given worker for given job.
+        """
+        return sum(1 for vote in self.get_votes_added_for_job(job))
 
     def get_votes_added_for_job(self, job):
         """
             Returns votes added by given worker for given job.
         """
-        # FIXME: Proper votes query. Now returns empty set.
-        return []
+        return ifilter(
+            lambda x: x.sample.job == job, self.workerqualityvote_set.all()
+        )
 
     def get_earned_for_job(self, job):
         """
@@ -609,8 +651,12 @@ class Worker(models.Model):
         '''
             Returns the time the worker started to work on the job at.
         '''
-        # FIXME: Proper job start query.
-        return datetime.datetime.now()
+        try:
+            assoc = WorkerJobAssociation.objects.get(job=job, worker=self)
+        except WorkerJobAssociation.DoesNotExist:
+            return datetime.datetime.now()
+
+        return assoc.started_on
 
 
 class WorkerJobManager(models.Manager):

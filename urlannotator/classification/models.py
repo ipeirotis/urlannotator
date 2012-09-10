@@ -196,3 +196,12 @@ class ClassifiedSample(models.Model):
 
     def is_successful(self):
         return self.get_status() == CLASSIFIED_SAMPLE_SUCCESS
+
+    def get_source_worker(self):
+        """
+            Returns a worker who has sent this sample.
+        """
+        return Sample.get_worker(
+            source_type=self.source_type,
+            source_val=self.source_val,
+        )

@@ -493,12 +493,11 @@ class WorkerResource(Resource):
         job = Job.objects.get(id=job_id)
 
         start_time = worker.get_job_start_time(job)
-        urls_collected = worker.get_links_collected_for_job(job)
         return {
             'id': worker.id,
-            'urls_collected': [url.url for url in urls_collected],
+            'urls_collected': worker.get_urls_collected_count_for_job(job),
             'hours_spent': worker.get_hours_spent_for_job(job),
-            'votes_added': worker.get_votes_added_for_job(job),
+            'votes_added': worker.get_votes_added_count_for_job(job),
             'earned': worker.get_earned_for_job(job),
             'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
         }
