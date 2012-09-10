@@ -1,4 +1,3 @@
-from pympler import tracker
 from multiprocessing.pool import Process
 
 from celery import task, Task, registry
@@ -48,9 +47,6 @@ class ClassifierTrainingManager(Task):
 
 
 add_samples = registry.tasks[ClassifierTrainingManager.name]
-
-
-tr = tracker.SummaryTracker()
 
 
 @task(ignore_result=True)
@@ -154,8 +150,6 @@ class SampleVotingManager(Task):
     def run(self, *args, **kwargs):
         """ Main task function.
         """
-        tr.print_diff()
-        print 'Before event'
         unmapped_samples = self.get_unmapped_samples()
         jobs = self.get_jobs(unmapped_samples)
 
@@ -171,8 +165,6 @@ class SampleVotingManager(Task):
                 #       causing bad stuff to happen with worker's RAM
                 #       management (10x increase, never garbaged).
                 pass
-            tr.print_diff()
-            print 'After loop'
 
 
 send_for_voting = registry.tasks[SampleVotingManager.name]
