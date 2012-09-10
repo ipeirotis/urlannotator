@@ -65,7 +65,6 @@ class SampleFactoryTest(TestCase):
         self.assertEqual(query.count(), 1)
 
 
-
 class JobFactoryTest(TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -681,7 +680,6 @@ class ApiTests(TestCase):
         # Can access others' jobs if superuser
         self.assertEqual(resp.status_code, 200)
 
-
     def testClassifier(self):
         self.c.login(username='testing', password='test')
         job = Job.objects.create_active(
@@ -917,7 +915,7 @@ class ApiTests(TestCase):
         array = json.loads(resp.content)
         self.assertEqual(array['total_count'], 0)
 
-        job = Job.objects.create_active(
+        Job.objects.create_active(
             account=self.user.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )

@@ -138,10 +138,11 @@ if __name__ == '__main__':
     # Parse command line arguments and validate them (as far as we can)
     (options, args) = parser.parse_args()
     if len(args) != 1:
-        parser.error("incorrect number of arguments")
+        parser.error("Incorrect number of arguments.")
+
+    options.url = args[0]
     if options.display and options.xvfb:
         parser.error("options -x and -d are mutually exclusive")
-    options.url = args[0]
 
     logging.basicConfig(filename=options.logfile, level=logging.WARN)
 
@@ -152,13 +153,15 @@ if __name__ == '__main__':
     if options.xvfb:
         newArgs = ["xvfb-run", "--auto-servernum", 'python', sys.argv[0]]
         skipArgs = 0
-        for i in range(1, len(sys.argv)):
+        # URL MUST be the last argument
+        for i in range(1, len(sys.argv) - 1):
             if skipArgs > 0:
                 skipArgs -= 1
             elif sys.argv[i] in ["-x", "--xvfb"]:
-                skipArgs = 0  # following: width and height
+                skipArgs = 0
             else:
                 newArgs.append(sys.argv[i])
+        newArgs.append('"%s"' % options.url)
         logger.debug("Executing %s" % " ".join(newArgs))
         try:
             res = os.system(' '.join(newArgs))
@@ -178,9 +181,13 @@ if __name__ == '__main__':
     else:
         options.output = open(options.output, "w")
 
+    # Revert url quote sanitization. QUrl will encode the url later on.
+    options.url = options.url.replace('%22', '"')
+
     logger.debug(
         "Version %s, Python %s, Qt %s", VERSION, sys.version, qVersion()
     )
+
 
     # Technically, this is a QtGui application, because QWebPage requires it
     # to be. But because we will have no user interaction, and rendering can

@@ -65,32 +65,23 @@ DEF_SCREEN_WIDTH = 1024
 DEF_SCREEN_HEIGHT = 768
 
 
-def get_web_screenshot(url):
+def capture_web_screenshot(url, out_path):
     """
-    Using CutyCapt application we create new file to which we point creating
-    new s3 object on aws.
-    This screenshot becomes public because we want permanent link for it.
-    Url is put together from s3 server name and object path.
-    As result we return url to screenshot.
+        Performs screenshot capture of the `url` to `out_path` destination.
+        Throws exceptions depending on return code.
+        See webkit2png.error_code_to_exception(code) for reference.
     """
-    if settings.TOOLS_TESTING:
-        return url
-
-    slugified_url = slugify(url)
-    screen_dir = "urlannotator_web_screenshot"
-    screen_out = "%s/%s.jpeg" % (screen_dir, slugified_url)
-
-    # Lets create dir for temporary screenshots.
-    os.system("mkdir -p %s" % screen_dir)
+    # Sanitize url
+    url = url.replace('"', '%22')
 
     capture_url = '"%s"' % url
-    out = '-o %s' % screen_out
+    out = '-o %s' % out_path
     quality = '-q %d' % DEFAULT_QUALITY
     format = '-f jpeg'
     size = '-g %d %d' % (DEF_SCREEN_WIDTH, DEF_SCREEN_HEIGHT)
     xvfb = '-x'
 
-    params = ' '.join([capture_url, out, quality, format, size, xvfb])
+    params = ' '.join([out, quality, format, size, xvfb, capture_url])
 
     # Capturing web.
     res = os.system('python urlannotator/tools/extract_screenshot.py %s'
@@ -101,16 +92,21 @@ def get_web_screenshot(url):
     if res:
         error_code_to_exception(res)
 
+
+def upload_to_s3(filename, key=''):
+    """
+        Uploads given filename to s3 bucket and makes it public. Returns URL
+        of uploaded resource.
+
+        :param key: Key of the uploaded resource. Defaults to `filename`.
+    """
     conn = S3Connection(settings.AWS_ACCESS_KEY_ID,
         settings.AWS_SECRET_ACCESS_KEY)
     bucket = conn.create_bucket(SCREEN_DUMPS_BUCKET_NAME)
     k = Key(bucket)
-    k.key = url
+    k.key = key if key else filename
     # Set key to desired screenshot.
-    k.set_contents_from_filename(screen_out)
-
-    # Removing file from disc
-    os.system('rm %s' % screen_out)
+    k.set_contents_from_filename(filename)
 
     # Give access to view screen.
     k.make_public()
@@ -124,3 +120,29 @@ def get_web_screenshot(url):
 
     # Url for public screen (without any expiration date)
     return S3_SERVER_NAME + SCREEN_DUMPS_BUCKET_NAME + '/' + name
+
+
+def get_web_screenshot(url):
+    """
+    Create new file to which we point creating new s3 object on aws.
+    This screenshot becomes make_publiclic because we want permanent link for it.
+    Url is put together from s3 server name and object path.
+    As result we return url to screenshot.
+    """
+    if settings.TOOLS_TESTING:
+        return url
+
+    slugified_url = slugify(url)
+    screen_dir = "urlannotator_web_screenshot"
+    screen_out = "%s/%s.jpeg" % (screen_dir, slugified_url)
+
+    # Lets create dir for temporary screenshots.
+    os.system("mkdir -p %s" % screen_dir)
+    capture_web_screenshot(url=url, out_path=screen_out)
+
+    url = upload_to_s3(screen_out)
+
+    # Removing file from disc
+    os.system('rm %s' % screen_out)
+
+    return url
