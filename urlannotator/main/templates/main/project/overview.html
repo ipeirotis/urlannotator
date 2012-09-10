@@ -70,10 +70,10 @@
   <h3>Newest Correct Voted Data</h3>
   <table class="table">
     <thead>
-      <tr><td>Preview</td><td>URL</td><td>Added on</td></tr>
+      <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
     </thead>
-    <tbody>
-      <tr><td>P</td><td>URL</td><td>Datetime</td></tr>
+    <tbody data-bind="foreach: newest_votes">
+      <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url"></td><td data-bind="text: added_on"></td></tr>
     </tbody>
   </table>
   <hr>
@@ -82,10 +82,10 @@
   <h3>Top workers</h3>
   <table class="table">
     <thead>
-      <tr><td>Worker name</td><td>Links collected</td><td>Hours Spent</td></tr>
+      <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
     </thead>
-    <tbody>
-      <tr><td>Luke Vader</td><td>542</td><td>3</td></tr>
+    <tbody data-bind="foreach: top_workers">
+      <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
     </tbody>
   </table>
 </div>
@@ -269,6 +269,35 @@ function updateAlerts(url){
   })
 }
 
+function updateTopWorkers(workers){
+  new_workers = [];
+  $.each(workers, function(key, val){
+    new_worker = new worker();
+    new_worker.id(val['id']);
+    new_worker.urls_collected(val['urls_collected']);
+    new_worker.name(val['name']);
+    new_worker.hours_spent(val['hours_spent']);
+    new_worker.votes_added(val['votes_added']);
+    new_worker.earned(val['earned']);
+    new_worker.start_time(val['start_time']);
+    new_workers.push(new_worker);
+  });
+  job.top_workers(new_workers);
+}
+
+function updateNewestVotes(votes){
+  new_votes = [];
+  $.each(votes, function(key, val){
+    new_vote = new vote();
+    new_vote.screenshot(val['screenshot']);
+    new_vote.url(val['url']);
+    new_vote.added_on(val['added_on']);
+    new_vote.label(val['label'])
+    new_votes.push(new_vote);
+  });
+  job.newest_votes(new_votes);
+}
+
 function updateJob(){
   $.get("/api/v1/job/{{project.id}}/?format=json", function(data){
     job.urls_collected(data['urls_collected']);
@@ -280,6 +309,8 @@ function updateJob(){
     job.gather_url(data['sample_gathering_url']);
     job.voting_url(data['sample_voting_url']);
     updateAlerts(data['feed']);
+    updateTopWorkers(data['top_workers']);
+    updateNewestVotes(data['newest_votes']);
   });
 }
 

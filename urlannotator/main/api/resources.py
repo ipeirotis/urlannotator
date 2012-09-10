@@ -15,7 +15,7 @@ from django.utils.http import same_origin
 
 from urlannotator.main.models import (Job, Sample, Worker, LABEL_BROKEN,
     LABEL_YES, LABEL_NO)
-from urlannotator.classification.models import ClassifiedSample
+from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.crowdsourcing.models import SampleMapping, WorkerQualityVote
 from urlannotator.logging.models import LogEntry
 
@@ -488,6 +488,7 @@ class WorkerResource(Resource):
             `earned` - Float. Amount of money worker has earned in job.
             `start_time` - String. Work start time in format %Y-%m-%d %H:%M:%S
                            as of datetime.strftime().
+            `name` - String. Name of the worker.
         """
         worker = Worker.objects.get(id=worker_id)
         job = Job.objects.get(id=job_id)
@@ -500,6 +501,7 @@ class WorkerResource(Resource):
             'votes_added': worker.get_votes_added_count_for_job(job),
             'earned': worker.get_earned_for_job(job),
             'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'name': worker.get_name(),
         }
 
 
@@ -611,6 +613,17 @@ class JobResource(ModelResource):
         top_workers = [self.worker_resource.raw_detail(job_id=job.id, worker_id=x.id)
             for x in top_workers]
 
+        newest_votes = job.get_newest_votes()
+        date = TrainingSet.objects.newest_for_job(job=job).revision
+        date = date.strftime('%Y-%m-%d %H:%M:%S')
+        newest_votes = [{
+            'screenshot': s.sample.screenshot,
+            'url': s.sample.url,
+            'label': s.label,
+            'added_on': s.sample.added_on,
+            'date': date,
+        } for s in newest_votes]
+
         response = {
             'id': job.id,
             'title': job.title,
@@ -633,6 +646,7 @@ class JobResource(ModelResource):
             'progress': job.get_progress(),
             'hours_spent': job.get_hours_spent(),
             'top_workers': top_workers,
+            'newest_votes': newest_votes,
         }
         if job.is_own_workforce():
             additional = {

@@ -888,8 +888,8 @@ class ApiTests(TestCase):
         self.assertEqual(res['earned'], 0)
         self.assertEqual(res['hours_spent'], 0)
         self.assertEqual(res['id'], w.id)
-        self.assertEqual(len(res['urls_collected']), 1)
-        self.assertEqual(len(res['votes_added']), 0)
+        self.assertEqual(res['urls_collected'], 1)
+        self.assertEqual(res['votes_added'], 0)
         self.assertIn('start_time', res)
 
     def testAdmin(self):

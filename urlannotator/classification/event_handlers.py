@@ -276,11 +276,6 @@ def train_on_set(set_id, *args, **kwargs):
         process_execute(target=prepare_func,
             kwargs={'func': train, 'set_id': set_id})
 
-    # Gold samples created (since we are here), classifier created (checked).
-    # Job has been fully initialized
-    # TODO: Move to job.activate()?
-    # send_event('EventNewJobInitializationCompleted')
-
 
 @task(ignore_result=True)
 def classify(sample_id, from_name='', *args, **kwargs):

@@ -182,9 +182,14 @@ class Job(models.Model):
         """
             Returns newest correct votes in the job.
         """
-        samples = self.classifiedsample_set
-        samples.sort(key=lambda x: x.id)
-        return samples[:num]
+        from urlannotator.classification.models import (TrainingSet,
+            TrainingSample)
+        training_set = TrainingSet.objects.newest_for_job(job=self)
+        samples = TrainingSample.objects.filter(
+            set=training_set,
+            label=LABEL_YES,
+        ).order_by('-id')[:num]
+        return samples
 
     def is_own_workforce(self):
         return self.data_source == JOB_SOURCE_OWN_WORKFORCE
@@ -235,9 +240,14 @@ class Job(models.Model):
         """
             Returns number of urls collected.
         """
-        # FIXME: Returns number of urls gathered. Should be number of urls
-        #        that has gone through validation and are accepted.
-        return Sample.objects.filter(job=self).count()
+        from urlannotator.classification.models import (TrainingSet,
+            TrainingSample)
+        training_set = TrainingSet.objects.newest_for_job(job=self)
+        samples = TrainingSample.objects.filter(
+            set=training_set,
+            label=LABEL_YES,
+        )
+        return samples.count()
 
     def get_workers(self):
         """
@@ -259,7 +269,7 @@ class Job(models.Model):
         """
         workers = self.get_workers()
         workers.sort(
-            key=lambda w: w.get_urls_collected_for_job(self)
+            key=lambda w: w.get_urls_collected_count_for_job(self)
         )
         return workers[:num]
 
