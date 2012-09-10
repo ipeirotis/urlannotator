@@ -20,6 +20,7 @@ class ExternalJobsFactory(object):
 
         c = make_tagapi_client()
 
+        # TODO: Need to add backoff on Tagasauris job creation fail.
         # TODO: we can run it in tasks with proper polling/callback with info
         # of job creation status.
         sample_gathering_key, sample_gathering_hit = create_job(c, job,
