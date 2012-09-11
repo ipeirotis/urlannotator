@@ -42,6 +42,9 @@ TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 # Interval between a job monitor check. Defaults to 15 minutes.
 JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
 
+# Interval between statistics entries, to store a new one.
+JOB_MONITOR_ENTRY_INTERVAL = datetime.timedelta(hours=1)
+
 SOCIAL_AUTH_CREATE_USERS = False
 
 SOCIAL_AUTH_PIPELINE = (
@@ -289,17 +292,17 @@ CELERYBEAT_SCHEDULE = {
     'spent_monitor': {
         'task': 'urlannotator.statistics.spent_monitor.SpentMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'args': []
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'url_monitor': {
         'task': 'urlannotator.statistics.url_monitor.URLMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'args': []
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'progress_monitor': {
         'task': 'urlannotator.statistics.progress_monitor.ProgressMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'args': []
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'send_validated_samples': {
         'task': 'urlannotator.classification.event_handlers.SampleVotingManager',
@@ -337,7 +340,7 @@ TAGASAURIS_SURVEY = {
     TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Survey_6',
 }
 
-TAGASAURIS_CALLBACKS = 'http://77.252.224.78:8000'
+TAGASAURIS_CALLBACKS = 'http://127.0.0.1'
 TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/sample/tagasauris/%s/'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
