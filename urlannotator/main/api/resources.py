@@ -30,7 +30,8 @@ class SessionAuthentication(Authentication):
         if getattr(request, '_dont_enforce_csrf_checks', False):
             return request.user.is_authenticated()
 
-        csrf_token = _sanitize_token(request.COOKIES.get(settings.CSRF_COOKIE_NAME, ''))
+        csrf_token = _sanitize_token(request.COOKIES.get(
+            settings.CSRF_COOKIE_NAME, ''))
 
         if request.is_secure():
             referer = request.META.get('HTTP_REFERER')
@@ -228,7 +229,8 @@ class ClassifierResource(Resource):
         # QuerySets are executed lazily
         yes_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_YES)
         no_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_NO)
-        broken_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_BROKEN)
+        broken_labels = ClassifiedSample.objects.filter(job=job,
+            label=LABEL_BROKEN)
 
         return self.create_response(
             request, {
@@ -424,7 +426,8 @@ class ClassifierResource(Resource):
             page=base_url,
         )
         entries = [e.id for e in resp['entries']]
-        resp['entries'] = map(self.classified_sample_resource.raw_detail, entries)
+        resp['entries'] = map(self.classified_sample_resource.raw_detail,
+            entries)
         return self.create_response(request, resp)
 
 ALERTS_DEFAULT_LIMIT = 20
@@ -609,8 +612,8 @@ class JobResource(ModelResource):
             )
 
         top_workers = job.get_top_workers()
-        top_workers = [self.worker_resource.raw_detail(job_id=job.id, worker_id=x.id)
-            for x in top_workers]
+        top_workers = [self.worker_resource.raw_detail(job_id=job.id,
+            worker_id=x.id) for x in top_workers]
 
         newest_votes = job.get_newest_votes()
         training_set = TrainingSet.objects.newest_for_job(job=job)
