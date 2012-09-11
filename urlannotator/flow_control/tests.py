@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from urlannotator.flow_control import send_event
 from urlannotator.flow_control.test import FlowControlMixin
+from urlannotator.flow_control.event_handlers import test_task_2
 
 
 class TestEventBusSender(TestCase):
@@ -22,10 +23,9 @@ class TestEventBusSender(TestCase):
         os.remove(file_name)
 
 
-class TestEvenFlowSuppressing(FlowControlMixin, TestCase):
+class TestEventFlowSuppressing(FlowControlMixin, TestCase):
 
-    def suppress_events(self):
-        return ['TestEvent', ]
+    suppress_events = ['TestEvent', ]
 
     def test_suppression(self):
         event_name, file_name, file_content = \
@@ -38,13 +38,11 @@ class TestEvenFlowSuppressing(FlowControlMixin, TestCase):
         self.assertFalse(os.path.isfile(file_name))
 
 
-class TestEvenFlowAltering(FlowControlMixin, TestCase):
+class TestEventFlowAltering(FlowControlMixin, TestCase):
 
-    def flow_definition(self):
-        from urlannotator.flow_control.event_handlers import test_task_2
-        return [
-            (r'^TestEvent$', test_task_2),
-        ]
+    flow_definition = [
+        (r'^TestEvent$', test_task_2),
+    ]
 
     def test_altering(self):
         event_name, file_name, file_content = \

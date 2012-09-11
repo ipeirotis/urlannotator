@@ -83,7 +83,7 @@ class JobMonitor(StatsMonitor):
         return Job.objects.get_active()
 
     def new_stats(self, obj, value, delta):
-        return Job(
+        return self.model_cls(
             job=obj,
             value=value,
             delta=delta
@@ -101,7 +101,7 @@ class WorkerMonitor(StatsMonitor):
         return Worker.objects.all()
 
     def new_stats(self, obj, value, delta):
-        return Worker(
+        return self.model_cls(
             worker=obj,
             value=value,
             delta=delta

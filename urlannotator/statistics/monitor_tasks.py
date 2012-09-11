@@ -1,6 +1,6 @@
 from celery import task, registry, Task
 
-from urlannotator.statistics.job_monitor import JobMonitor, WorkerMonitor
+from urlannotator.statistics.monitors import JobMonitor, WorkerMonitor
 from urlannotator.main.models import (ProgressStatistics, SpentStatistics,
     URLStatistics, LinksStatistics)
 

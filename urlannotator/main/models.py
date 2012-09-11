@@ -237,7 +237,7 @@ class Job(models.Model):
         sum_res = WorkerJobAssociation.objects.filter(job=self).\
             aggregate(Sum('worked_hours'))
         sum_res = sum_res['worked_hours__sum']
-        return sum_res if sum_res else 03
+        return sum_res if sum_res else 0
 
     def get_urls_collected(self):
         """

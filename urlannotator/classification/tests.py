@@ -9,6 +9,7 @@ from urlannotator.classification.classifiers import Classifier247
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample, ClassifierPerformance)
 from urlannotator.classification.factories import classifier_factory
+from urlannotator.classification.event_handlers import process_votes
 from urlannotator.crowdsourcing.event_handlers import initialize_external_jobs
 from urlannotator.crowdsourcing.models import WorkerQualityVote
 from urlannotator.flow_control.test import FlowControlMixin
@@ -196,11 +197,9 @@ class LongTrainingTest(FlowControlMixin, TransactionTestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='test', password='test')
 
-    def flow_definition(self):
-        old = super(LongTrainingTest, self).flow_definition()
-
-        new = [entry for entry in old if entry[1] != initialize_external_jobs]
-        return new
+    def get_flow_definition(self):
+        old = super(LongTrainingTest, self).get_flow_definition()
+        return [entry for entry in old if entry[1] != initialize_external_jobs]
 
     def testLongTraining(self):
         with override_settings(TOOLS_TESTING=False):
@@ -218,6 +217,11 @@ class LongTrainingTest(FlowControlMixin, TransactionTestCase):
 
 
 class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
+
+    flow_definition = [
+        (r'^EventProcessVotes$', process_votes),
+    ]
+
     def setUp(self):
         self.user = User.objects.create_user(username='test', password='test')
         self.worker = Worker.objects.create_odesk(external_id=123)
@@ -230,12 +234,6 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
             job=self.job,
             url=""
         )
-
-    def flow_definition(self):
-        from urlannotator.classification.event_handlers import process_votes
-        return [
-            (r'^EventProcessVotes$', process_votes),
-        ]
 
     def testVotesProcess(self):
 

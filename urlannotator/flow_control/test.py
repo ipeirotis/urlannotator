@@ -4,10 +4,13 @@ from celery import registry
 
 
 class FlowControlMixin(object):
+    """ Add flow_definition and/or suppress_events for event flow edition.
+        Alternative for flow_definition property is get_flow_definition method.
+    """
 
     def _new_registered(self):
-        flow = self.flow_definition()
-        suppress_events = self.suppress_events()
+        flow = getattr(self, 'flow_definition', self.get_flow_definition())
+        suppress_events = getattr(self, 'suppress_events', [])
 
         for matcher, task_func in flow:
             if type(matcher) is str:
@@ -22,6 +25,8 @@ class FlowControlMixin(object):
             we don't need to care of workers not beeing restarted.
         """
 
+        res = super(FlowControlMixin, self)._pre_setup()
+
         # Ensures that all celery tasks are loaded and registered in celery and
         # urlannotator event system.
         from event_system import EventBusSender
@@ -35,7 +40,7 @@ class FlowControlMixin(object):
         # Switching configuration for new one.
         bus_sender.registered = list(self._new_registered())
 
-        return super(FlowControlMixin, self)._pre_setup()
+        return res
 
     def _post_teardown(self):
         """ Restores original flow definitions.
@@ -47,13 +52,8 @@ class FlowControlMixin(object):
 
         super(FlowControlMixin, self)._post_teardown()
 
-    def flow_definition(self):
+    def get_flow_definition(self):
         """ This can be overriden with custom flow definitions.
             Returns list of tuples (pattern, task).
         """
         return self._original_registered
-
-    def suppress_events(self):
-        """ Override this function with list of events to suppress.
-        """
-        return []
