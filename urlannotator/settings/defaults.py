@@ -273,9 +273,7 @@ CELERY_IMPORTS = (
     'urlannotator.flow_control.event_system',
     'urlannotator.flow_control.event_handlers',
     'urlannotator.main.event_handlers',
-    'urlannotator.statistics.spent_monitor',
-    'urlannotator.statistics.url_monitor',
-    'urlannotator.statistics.progress_monitor',
+    'urlannotator.statistics.monitor_tasks',
 )
 
 # Respawn a worker after 10 tasks done. Memory leaks shall not prevail!
