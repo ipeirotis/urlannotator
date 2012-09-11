@@ -2,13 +2,12 @@
 
 import os
 from defaults import *
-from imagescale2 import DEF_PORT
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-        'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
+        # 'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
     }
 }
 
@@ -20,7 +19,6 @@ CELERY_RESULT_BACKEND = 'amqp://'
 BROKER_URL = 'amqp://'
 
 SITE_URL = '127.0.0.1:8000'
-IMAGESCALE_URL = '127.0.0.1:%d' % DEF_PORT
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

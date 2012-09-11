@@ -632,7 +632,6 @@ def project_worker_view(request, id, worker_id):
         'work_started': worker.get_job_start_time(job),
         'projects': projects,
     }
-    context['worker'] = worker
     return render(request, 'main/project/worker.html',
         RequestContext(request, context))
 

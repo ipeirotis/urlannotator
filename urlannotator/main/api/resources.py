@@ -482,7 +482,7 @@ class WorkerResource(Resource):
             Response format:
             `id` - Integer. Worker's id.
             `urls_collected` - Integer. Number of urls collected.
-            `hours_spent` - Integer. Number of hours spent in the job.
+            `hours_spent` - String. Decimal number of hours spent in the job.
             `votes_added` - Integer. Number of votes worker has done.
             `earned` - Float. Amount of money worker has earned in job.
             `start_time` - String. Work start time in format %Y-%m-%d %H:%M:%S

@@ -3,6 +3,7 @@ import os
 import tempfile
 import sys
 from django.core.urlresolvers import reverse_lazy
+from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
 
 DEBUG = not 'celery' in sys.argv
 TEMPLATE_DEBUG = DEBUG
@@ -354,3 +355,5 @@ TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
 
 # Tools testing flag. If set to True, certain tools will be mocked.
 TOOLS_TESTING = False
+
+IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT

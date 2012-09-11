@@ -2,7 +2,6 @@
 
 import os
 from defaults import *
-from imagescale2 import DEF_PORT
 
 DATABASES = {
     'default': {
@@ -12,7 +11,7 @@ DATABASES = {
 }
 
 SITE_URL = 'urlannotator.10clouds.com'
-IMAGESCALE_URL = 'urlannotator.10clouds.com:' + DEF_PORT
+IMAGESCALE_URL = 'urlannotator.10clouds.com:' + IMAGESCALE_DEF_PORT
 
 EMAIL_BACKEND = 'urlannotator.main.backends.email.EmailBackend'
 

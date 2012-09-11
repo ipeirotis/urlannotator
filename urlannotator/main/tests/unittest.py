@@ -898,7 +898,7 @@ class ApiTests(TestCase):
 
         res = json.loads(res.content)
         self.assertEqual(res['earned'], 0)
-        self.assertEqual(res['hours_spent'], 0)
+        self.assertEqual(res['hours_spent'], '0')
         self.assertEqual(res['id'], w.id)
         self.assertEqual(res['urls_collected'], 1)
         self.assertEqual(res['votes_added'], 0)

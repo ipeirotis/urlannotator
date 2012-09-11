@@ -234,8 +234,10 @@ class Job(models.Model):
             Returns number of hours workers have worked on this project
             altogether.
         """
-        return WorkerJobAssociation.objects.filter(job=self).\
+        sum_res = WorkerJobAssociation.objects.filter(job=self).\
             aggregate(Sum('worked_hours'))
+        sum_res = sum_res['worked_hours__sum']
+        return sum_res if sum_res else 03
 
     def get_urls_collected(self):
         """
@@ -480,6 +482,7 @@ class Sample(models.Model):
             'key': self.get_screenshot_key(),
         }
         r = requests.get('http://' + settings.IMAGESCALE_URL, params=params)
+        print r.content, r.status_code
         return r.content
 
     def get_small_thumbnail(self):
@@ -576,6 +579,7 @@ WORKER_TYPES = (
 worker_type_to_sample_source = {
     WORKER_TYPE_TAGASAURIS: SAMPLE_TAGASAURIS_WORKER,
     WORKER_TYPE_INTERNAL: SAMPLE_SOURCE_OWNER,
+    WORKER_TYPE_ODESK: SAMPLE_SOURCE_OWNER,
 }
 
 
