@@ -1,5 +1,6 @@
 import urllib2
 import threading
+import subprocess
 from Queue import Queue
 
 from django.test import TestCase
@@ -7,25 +8,33 @@ from django.test.utils import override_settings
 
 from urlannotator.tools.web_extractors import get_web_screenshot, get_web_text
 from urlannotator.tools.synchronization import RWSynchronize247, POSIXLock
+from urlannotator.tools.webkit2png import BaseWebkitException
 
 
 class WebExtractorsTests(TestCase):
 
     @override_settings(TOOLS_TESTING=False)
     def testWebTextExtractor(self):
-        text = get_web_text('google.com')
+        text = get_web_text('http://google.com')
         self.assertTrue('google' in text)
 
+        # Bad url should raise an exception
+        with self.assertRaises(subprocess.CalledProcessError):
+            get_web_text('weeeeeeeeeeeeeeeeeeeeeee')
         # text = get_web_text('10clouds.com')
         # self.assertTrue('10Clouds' in text)
         # self.assertTrue('We make great apps' in text)
 
     @override_settings(TOOLS_TESTING=False)
     def testWebScreenshotExtractor(self):
-        screenshot = get_web_screenshot('google.com')
+        screenshot = get_web_screenshot('http://google.com')
 
         s = urllib2.urlopen(screenshot)
         self.assertEqual(s.headers.type, 'image/jpeg')
+
+        # Bad url should raise an exception
+        with self.assertRaises(BaseWebkitException):
+            get_web_screenshot('weeeeeeeeeeeeeeeeeeeeeee')
 
 
 class SynchronizationTests(TestCase):

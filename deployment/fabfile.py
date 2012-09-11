@@ -5,6 +5,7 @@ from fabric.colors import red, yellow, green, blue, magenta
 from fabric.api import abort, task, env, hide, settings, sudo, cd
 
 from modules import nginx, supervisor
+from modules.supervisor import start_supervisor
 from modules.virtualenv import update_virtualenv, create_virtualenv,\
     setup_virtualenv
 from modules.utils import show, put_file_with_perms,\
@@ -207,9 +208,13 @@ def sync_db():
     run_django_cmd("migrate", args="--noinput")
 
 
-def configure_services():
+def configure_services(setup=False):
     """Ensures correct init and running scripts for services are installed."""
     supervisor.configure()
+    if setup:
+        rabbitmq_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+            'supervisor-rabbitmq.conf')
+        start_supervisor(conf=rabbitmq_conf)
     nginx.configure()
 
 
@@ -411,7 +416,7 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     sync_db()
 
     # Uploads settings and scripts for services.
-    configure_services()
+    configure_services(setup=setup_environment)
     # Reload services to load new config.
     __reload_services()
 

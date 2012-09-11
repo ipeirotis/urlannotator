@@ -3,12 +3,20 @@ from django.conf import settings
 from urlannotator.main.models import Worker, Sample, LABEL_CHOICES, Job
 
 
+class WorkerQualityVoteManager(models.Manager):
+    def new_vote(self, *args, **kwargs):
+        return self.create(**kwargs)
+
+
 class WorkerQualityVote(models.Model):
     worker = models.ForeignKey(Worker)
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
-    added_on = models.DateField()
+    added_on = models.DateField(auto_now_add=True)
     is_valid = models.BooleanField(default=True)
+    is_new = models.BooleanField(default=True)
+
+    objects = WorkerQualityVoteManager()
 
 
 class BeatTheMachineSamples(Sample):
@@ -31,14 +39,19 @@ class TagasaurisJobs(models.Model):
         """
             Returns URL under which Own Workforce can submit new samples.
         """
-        return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
+        if self.sample_gathering_hit is not None:
+            return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
+
+        return ''
 
     def get_voting_url(self):
         """
             Returns URL under which Own Workforce can vote on labels.
         """
-        # TODO: Proper link
-        return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
+        if self.voting_hit is not None:
+            return settings.TAGASAURIS_HIT_URL % self.voting_hit
+
+        return ''
 
 
 class SampleMapping(models.Model):

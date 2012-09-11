@@ -7,5 +7,6 @@
     "default_prefix": "urlannotator",
     "projects_dir": "/home/urlannotator/",
     "project_display_name": "URLAnnotator",
-    "autodoc_excluded_apps": []
+    "autodoc_excluded_apps": [],
+    "global_python": "/usr"
 }

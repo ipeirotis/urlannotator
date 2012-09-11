@@ -1,11 +1,14 @@
+import subprocess
+
 from celery import task
 from celery.task import current
 from django.db import DatabaseError, IntegrityError
 
 from urlannotator.classification.models import ClassifiedSample
-from urlannotator.main.models import (TemporarySample, Sample, GoldSample, Job)
+from urlannotator.main.models import Sample, GoldSample, Job
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 from urlannotator.flow_control import send_event
+from urlannotator.tools.webkit2png import BadURLException
 
 
 @task()
@@ -13,61 +16,81 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
     """ Links/lynx required. Generates html output from those browsers.
     """
     if url is None:
-        url = TemporarySample.objects.get(id=sample_id).url
+        url = Sample.objects.get(id=sample_id).url
 
-    text = get_web_text(url)
-    TemporarySample.objects.filter(id=sample_id).update(text=text)
+    try:
+        text = get_web_text(url)
+
+        Sample.objects.filter(id=sample_id).update(text=text)
+        send_event(
+            "EventSampleContentDone",
+            sample_id=sample_id,
+        )
+    except subprocess.CalledProcessError, e:
+        # Something wrong has happened to links. Couldn't find documentation on
+        # error codes - assume bad stuff has happened that retrying won't fix.
+        send_event(
+            'EventSampleContentFail',
+            sample_id=sample_id,
+            error_code=e.returncode
+        )
+        return False
+    except DatabaseError, e:
+        current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
+            60 * 60 * 24))
 
     return True
 
 
 @task()
 def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
-    """ CutyCapt required. Generates html output from those browsers.
+    """ Generates html output from those browsers.
     """
     if url is None:
-        url = TemporarySample.objects.get(id=sample_id).url
+        url = Sample.objects.get(id=sample_id).url
 
     try:
         screenshot = get_web_screenshot(url)
+        Sample.objects.filter(id=sample_id).update(screenshot=screenshot)
+
+        send_event(
+            "EventSampleScreenshotDone",
+            sample_id=sample_id,
+        )
+    except BadURLException, e:
+        send_event(
+            "EventSampleScreenshotFail",
+            sample_id=sample_id,
+            error_code=e.status_code,
+        )
+        return False
     except Exception, e:
         current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
-
-    TemporarySample.objects.filter(id=sample_id).update(
-        screenshot=screenshot)
 
     return True
 
 
 @task()
-def create_sample(extraction_result, temp_sample_id, job_id, url,
+def create_sample(extraction_result, sample_id, job_id, url,
     source_type, source_val='', label=None, silent=False, *args, **kwargs):
     """
-    Creates real sample using TemporarySample. If error while capturing web
-    propagate it. Finally deletes TemporarySample.
+    If error while capturing web propagate it. Finally deletes TemporarySample.
     extraction_result should be [True, True] - otherwise chaining failed.
     """
 
-    sample_id = None
     extracted = all([x is True for x in extraction_result])
-    temp_sample = TemporarySample.objects.get(id=temp_sample_id)
 
     # Checking if all previous tasks succeeded.
     if extracted:
         job = Job.objects.get(id=job_id)
 
         # Proper sample entry
-        sample = Sample(
-            job=job,
-            url=url,
-            text=temp_sample.text,
-            screenshot=temp_sample.screenshot,
+        Sample.objects.filter(id=sample_id).update(
             source_type=source_type,
             source_val=source_val
         )
-        sample.save()
-        sample_id = sample.id
+        sample = Sample.objects.get(id=sample_id)
 
         if not silent:
             # Golden sample
@@ -93,8 +116,20 @@ def create_sample(extraction_result, temp_sample_id, job_id, url,
                     sample_id=sample_id,
                 )
 
-    # We don't need this object any more.
-    temp_sample.delete()
+        # Celery Chain workaround until celery works fine with groups
+        # and chains
+        create_classify_sample.delay(
+            sample_id=sample_id,
+            label=label,
+            source_type=source_type,
+            source_val=source_val,
+            job_id=job_id,
+            url=url,
+            *args, **kwargs
+        )
+    else:
+        # Extraction failed, cleanup.
+        Sample.objects.filter(id=sample_id).delete()
 
     return (extracted, sample_id)
 
@@ -103,13 +138,17 @@ def create_sample(extraction_result, temp_sample_id, job_id, url,
 def create_classify_sample(sample_id, source_type, create_classified=True,
     label='', source_val='', *args, **kwargs):
     """
-    Creates classified sample from existing sample, therefore we don't need
-    web extraction.
+        Creates classified sample from existing sample, therefore we don't need
+        web extraction.
     """
 
     # We are given a tuple with create_sample results
     if isinstance(sample_id, tuple):
         sample_id = sample_id[1]
+
+    # Don't classify already classified samples
+    if label:
+        return sample_id
 
     if create_classified:
         try:
@@ -119,16 +158,14 @@ def create_classify_sample(sample_id, source_type, create_classified=True,
                 label = ''
 
             # Proper sample entry
-            class_sample = ClassifiedSample(
+            class_sample = ClassifiedSample.objects.create(
                 job=sample.job,
                 url=sample.url,
                 sample=sample,
                 label=label,
                 source_type=source_type,
-                source_val=source_val
+                source_val=source_val,
             )
-
-            class_sample.save()
 
             # Sample created sucesfully - pushing event.
             send_event(
@@ -159,6 +196,14 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
             source_val=source_val
         )
 
+        send_event(
+            "EventSampleScreenshotDone",
+            sample_id=new_sample.id,
+        )
+        send_event(
+            "EventSampleContentDone",
+            sample_id=new_sample.id,
+        )
         # Golden sample
         if label is not None:
             # GoldSample created sucesfully - pushing event.

@@ -7,12 +7,16 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core import mail
+from tastypie.exceptions import ImmediateHttpResponse
 
 from social_auth.models import UserSocialAuth
 
 from urlannotator.main.models import Account, Job, Worker, Sample, GoldSample
-from urlannotator.classification.models import ClassifiedSample
+from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.factories import SampleFactory
+from urlannotator.main.api.resources import (sanitize_positive_int,
+    paginate_list, AlertResource, ClassifiedSampleResource)
+from urlannotator.logging.models import LogEntry
 
 
 class SampleFactoryTest(TestCase):
@@ -25,7 +29,7 @@ class SampleFactoryTest(TestCase):
             gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
     def testSimpleSample(self):
-        test_url = 'google.com'
+        test_url = 'http://google.com'
 
         with self.settings(TOOLS_TESTING=False):
             sf = SampleFactory()
@@ -45,6 +49,20 @@ class SampleFactoryTest(TestCase):
 
         s = urllib2.urlopen(sample.screenshot)
         self.assertEqual(s.headers.type, 'image/jpeg')
+
+        # Check for broken urls - sample shouldn't be created
+        with self.settings(TOOLS_TESTING=False):
+            sf = SampleFactory()
+            res = sf.new_sample(
+                job_id=self.job.id,
+                url=test_url,
+                source_type=''
+            )
+        res.get()
+
+        query = Sample.objects.filter(job=self.job, url=test_url)
+
+        self.assertEqual(query.count(), 1)
 
 
 class JobFactoryTest(TestCase):
@@ -482,22 +500,21 @@ class ProjectTests(TestCase):
 
         self.assertTrue(GoldSample.objects.filter(label='').count() == 0)
 
-        testUrl = 'google.com'
+        testUrl = 'http://google.com'
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
-        # Gold sample + classification request
-        self.assertEqual(ClassifiedSample.objects.all().count(), 2)
-        # Gold sample + new sample (new sample shares url with gold sample)
+        # Classification request
+        self.assertEqual(ClassifiedSample.objects.all().count(), 1)
+        # New sample (new sample shares url with gold sample)
         self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
             1)
 
-        testUrl = 'google.com'
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
         # classification request + old data
-        self.assertEqual(ClassifiedSample.objects.all().count(), 3)
+        self.assertEqual(ClassifiedSample.objects.all().count(), 2)
         # old data + new sample
         self.assertEqual(Sample.objects.filter(job=job).count(),
             1)
@@ -510,12 +527,11 @@ class ProjectTests(TestCase):
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
 
-        testUrl = 'google.com'
         self.c.post(reverse('project_classifier_view', args=[job.id]),
             {'test-urls': testUrl}, follow=True)
 
         # classification request + old data
-        self.assertEqual(ClassifiedSample.objects.all().count(), 5)
+        self.assertEqual(ClassifiedSample.objects.all().count(), 3)
         # old data, no new sample since this is the same url
         self.assertEqual(Sample.objects.filter(job=job).count(), 1)
 
@@ -587,10 +603,10 @@ class ApiTests(TestCase):
     def testJobs(self):
         resp = self.c.get('/api/v1/job/?format=json', follow=True)
 
-        array = json.loads(resp.content)
-        self.assertIn('meta', array)
+        # Unauthorized
+        self.assertEqual(resp.status_code, 401)
 
-        Job.objects.create_active(
+        job = Job.objects.create_active(
             account=self.user.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
@@ -598,42 +614,358 @@ class ApiTests(TestCase):
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
             follow=True)
 
-        array = json.loads(resp.content)
-        self.assertIn('status', array)
+        # We are not logged in, can't see the job. Unauthorized
+        self.assertEqual(resp.status_code, 401)
 
-        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/classify/'),
+        self.c.login(username='testing', password='test')
+
+        resp = self.c.get('/api/v1/job/?format=json', follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('meta', array)
+        self.assertEqual(array['meta']['total_count'], 1)
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertIn('sample_gathering_url', array)
+        self.assertIn('sample_voting_url', array)
+        self.assertIn('newest_votes', array)
+        self.assertTrue(array['newest_votes'])
+
+        TrainingSet.objects.filter(job=job).delete()
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertIn('sample_gathering_url', array)
+        self.assertIn('sample_voting_url', array)
+        self.assertIn('newest_votes', array)
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/2/'),
+            follow=True)
+
+        # Non-existant job.
+        self.assertEqual(resp.status_code, 404)
+
+        resp = self.c.get('%s%s?format=json'
+            % (self.api_url, 'job/1/feed/'), follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('entries', array)
+        self.assertIn('count', array)
+        count = array['count']
+        self.assertTrue(count > 0)
+
+        u = User.objects.create_user(username='test2', password='!')
+        self.c.login(username='test2', password='!')
+
+        job = Job.objects.create_active(
+            account=u.get_profile(),
+            data_source=0,
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        resp = self.c.get('%sjob/%d/?format=json' % (self.api_url, job.id),
+            follow=True)
+
+        # We are not logged in, can't see the job. Unauthorized
+        array = json.loads(resp.content)
+        self.assertNotIn('sample_gathering_url', array)
+        self.assertNotIn('sample_voting_url', array)
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        # Can't access others' job
+        self.assertEqual(resp.status_code, 404)
+
+        u.is_superuser = True
+        u.save()
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        # Can access others' jobs if superuser
+        self.assertEqual(resp.status_code, 200)
+
+    def testClassifier(self):
+        self.c.login(username='testing', password='test')
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/classifier/'),
             follow=True)
 
         array = json.loads(resp.content)
-        self.assertIn('error', array)
+        self.assertIn('absolute_url', array)
+        self.assertIn('no_count', array)
+        self.assertIn('performance', array)
+        self.assertIn('broken_count', array)
+        self.assertIn('yes_count', array)
 
-        resp = self.c.get('%s%s?format=json&url=google.com'
-            % (self.api_url, 'job/4/classify/'), follow=True)
-
-        array = json.loads(resp.content)
-        self.assertIn('error', array)
-
-        resp = self.c.get('%s%s?format=json&request=test'
-            % (self.api_url, 'job/1/classify/status/'), follow=True)
-
-        array = json.loads(resp.content)
-        self.assertIn('error', array)
-
-        resp = self.c.get('%s%s?format=json&url=google.com'
-            % (self.api_url, 'job/1/classify/'), follow=True)
+        # Classify an URL
+        data = {
+            'test-type': 'urls',
+            'url': 'google.com',
+        }
+        resp = self.c.post('%s%s?format=json'
+            % (self.api_url, 'job/1/classifier/classify/'), data=data, follow=True)
 
         array = json.loads(resp.content)
-        request_id = array['request_id']
+        self.assertIn('request_id', array)
+        self.assertIn('status_url', array)
 
-        resp = self.c.get('%s%s?format=json&url=google.com&request=%s'
-            % (self.api_url, 'job/1/classify/status/', request_id),
-            follow=True)
+        req_id = array['request_id']
+        resp = self.c.get('%s%s?format=json&request_id=%d'
+            % (self.api_url, 'job/1/classifier/status/', req_id), follow=True)
 
+        # We are doing it eagerly, should be done already.
         array = json.loads(resp.content)
         self.assertIn('status', array)
+        self.assertIn('sample', array)
 
-        resp = self.c.get('%s%s?format=json&request=test'
-            % (self.api_url, 'job/2/classify/'), follow=True)
+        data = {
+            'test-type': 'urls',
+        }
+        resp = self.c.post('%s%s?format=json'
+            % (self.api_url, 'job/1/classifier/classify/'), data=data, follow=True)
 
         array = json.loads(resp.content)
         self.assertIn('error', array)
+        self.assertEqual(resp.status_code, 404)
+
+        # Classify some URL
+        urls = ['google.com', 'google.com', '']
+        data = {
+            'test-type': 'urls',
+            'urls': json.dumps(urls),
+        }
+        resp = self.c.post('%s%s?format=json'
+            % (self.api_url, 'job/1/classifier/classify/'), data=data, follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('request_id', array)
+        self.assertIn('status_url', array)
+
+        idx = 0
+        for req in array['request_id']:
+            self.assertEqual(req['url'], urls[idx])
+            idx += 1
+
+        # Last item shouldn't appear in the response
+        self.assertEqual(idx, len(urls) - 1)
+
+        for req_id in array['request_id']:
+            resp = self.c.get('%s%s?format=json&request_id=%d'
+                % (self.api_url, 'job/1/classifier/status/', req_id['id']), follow=True)
+
+            # We are doing it eagerly, should be done already.
+            array = json.loads(resp.content)
+            self.assertIn('status', array)
+            self.assertIn('sample', array)
+
+        resp = self.c.get('%s%s?format=json&limit=10'
+            % (self.api_url, 'job/1/classifier/history/'), follow=True)
+
+        array = json.loads(resp.content)
+        self.assertIn('entries', array)
+        self.assertIn('count', array)
+        count = array['count']
+        self.assertTrue(count > 0)
+
+        resp = self.c.get('%s%s?format=json&request_id=%d'
+            % (self.api_url, 'job/1/classifier/status/', 5), follow=True)
+
+        # We are doing it eagerly, should be done already.
+        array = json.loads(resp.content)
+        self.assertIn('error', array)
+        self.assertEqual(resp.status_code, 404)
+
+        cs = ClassifiedSample.objects.create(job=job)
+        resp = self.c.get('%s%s?format=json&request_id=%d'
+            % (self.api_url, 'job/1/classifier/status/', cs.id), follow=True)
+
+        # We are doing it eagerly, should be done already.
+        array = json.loads(resp.content)
+        self.assertIn('status', array)
+        self.assertEqual(len(array), 1)
+
+    def testTools(self):
+        num = '0'
+        self.assertEqual(sanitize_positive_int(num), 0)
+
+        for num in ['-1', '0x20', None, 'testing', -1]:
+            with self.assertRaises(ImmediateHttpResponse):
+                sanitize_positive_int(num)
+
+        num = '20'
+        self.assertEqual(sanitize_positive_int(num), 20)
+
+        test_list = range(20)
+        with self.assertRaises(ImmediateHttpResponse):
+            paginate_list(test_list, -1, 0, '')
+            paginate_list(test_list, 0, -1, '')
+
+        res = paginate_list(test_list, 10, 0, '')
+        self.assertEqual(res['next_page'], '?limit=10&offset=10')
+        self.assertEqual(res['entries'], test_list[:10])
+        self.assertEqual(res['total_count'], 20)
+        self.assertEqual(res['count'], 10)
+        self.assertEqual(res['offset'], 0)
+        self.assertEqual(res['limit'], 10)
+
+        res = paginate_list(test_list, 20, 10, '')
+        self.assertEqual(res['next_page'], '?limit=20&offset=10')
+        self.assertEqual(res['entries'], test_list[10:20])
+        self.assertEqual(res['total_count'], 20)
+        self.assertEqual(res['count'], 10)
+        self.assertEqual(res['offset'], 10)
+        self.assertEqual(res['limit'], 20)
+
+    def testAlertResource(self):
+        self.c.login(username='testing', password='test')
+        Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        log = LogEntry.objects.all()[:1][0]
+        res = AlertResource().raw_detail(log=log)
+        self.assertEqual(res['id'], log.id)
+        self.assertEqual(res['type'], log.log_type)
+        self.assertEqual(res['job_id'], log.job_id)
+        self.assertEqual(res['date'], log.date.strftime('%Y-%m-%d %H:%M:%S'))
+        self.assertEqual(res['single_text'], log.get_single_text())
+        self.assertEqual(res['plural_text'], log.get_plural_text())
+        self.assertEqual(res['box'], log.get_box())
+
+    def testClassifiedSampleResource(self):
+        self.c.login(username='testing', password='test')
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        cs = ClassifiedSample.objects.create(job=job)
+        res = ClassifiedSampleResource().raw_detail(class_id=cs.id)
+        self.assertEqual(res['finished'], cs.is_successful())
+        self.assertEqual(res['job_id'], job.id)
+        self.assertEqual(res['screenshot'], '')
+        self.assertEqual(res['url'], cs.url)
+        self.assertEqual(res['sample_url'], '')
+        self.assertEqual(res['label_probability'], cs.label_probability)
+        self.assertEqual(res['id'], cs.id)
+        self.assertEqual(res['label'], cs.label)
+
+        sample = Sample.objects.all()[0]
+        cs.sample = sample
+        cs.url = sample.url
+        cs.save()
+
+        res = ClassifiedSampleResource().raw_detail(class_id=cs.id)
+        self.assertEqual(res['finished'], cs.is_successful())
+        self.assertEqual(res['screenshot'], sample.screenshot)
+        self.assertEqual(res['url'], sample.url)
+
+        sample.screenshot = 'test'
+        sample.save()
+
+        res = ClassifiedSampleResource().raw_detail(class_id=cs.id)
+        self.assertEqual(res['screenshot'], sample.screenshot)
+
+    def testWorkerResource(self):
+        self.c.login(username='testing', password='test')
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        Sample.objects.create_by_worker(
+            url='http://google.com',
+            job_id=job.id,
+            source_val='1',
+        )
+
+        w = Worker.objects.get_tagasauris(worker_id='1')
+        res = self.c.get('%sjob/%s/worker/%s/?format=json'
+            % (self.api_url,job.id, w.id))
+
+        res = json.loads(res.content)
+        self.assertEqual(res['earned'], 0)
+        self.assertEqual(res['hours_spent'], 0)
+        self.assertEqual(res['id'], w.id)
+        self.assertEqual(res['urls_collected'], 1)
+        self.assertEqual(res['votes_added'], 0)
+        self.assertIn('start_time', res)
+
+    def testAdmin(self):
+        resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
+
+        # Not logged in users can't access admin resource
+        self.assertEqual(resp.status_code, 401)
+
+        self.c.login(username='testing', password='test')
+        resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
+
+        # No-superuser users can't access admin resource
+        self.assertEqual(resp.status_code, 401)
+
+        u = User.objects.create_user(username='test2', password='!')
+        u.is_superuser = True
+        u.save()
+
+        self.c.login(username='test2', password='!')
+        resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertEqual(array['total_count'], 0)
+
+        Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertTrue(array['total_count'] > 0)
+        self.assertEqual(len(array['entries']), array['count'])
+
+
+class TestAdmin(TestCase):
+    def setUp(self):
+        self.u = User.objects.create_user(username='test2', password='1')
+
+    def testIndex(self):
+        c = Client()
+        c.login(username='test2', password='1')
+
+        r = c.get(reverse('admin_index'), follow=True)
+        self.assertEqual(r.status_code, 404)
+
+        self.u.is_superuser = True
+        self.u.save()
+
+        r = c.get(reverse('admin_index'), follow=True)
+        self.assertEqual(r.status_code, 200)
+
+        u = User.objects.create_user(username='test3', password='1')
+        j = Job.objects.create_active(
+            account=u.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        r = c.get(reverse('admin_index'), follow=True)
+        self.assertIn(j, r.context['projects'])
+
+        r = c.get(reverse('project_view', args=[j.id]), follow=True)
+        self.assertEqual(r.status_code, 200)
+        self.assertFalse('error' in r.context)

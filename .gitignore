@@ -10,3 +10,7 @@ prediction.dat
 doc/_*/
 doc/source
 urlannotator_web_screenshot/
+celerybeat-schedule
+reports/
+simple-classifiers/
+

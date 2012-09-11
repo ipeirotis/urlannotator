@@ -4,7 +4,7 @@ from tasks import send_validated_samples
 from factories import ExternalJobsFactory
 
 
-@task()
+@task(ignore_result=True)
 class SamplesValidationManager(Task):
     """ Manage validation of new samples and batches it for training classifier.
     """
@@ -25,7 +25,7 @@ class SamplesValidationManager(Task):
 new_sample_task = registry.tasks[SamplesValidationManager.name]
 
 
-@task()
+@task(ignore_result=True)
 class ExternalJobsManager(Task):
     """ Manage creation of external jobs creation.
     """

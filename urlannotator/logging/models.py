@@ -88,15 +88,27 @@ class LogManager(models.Manager):
         entries.update(read=True)
         return res
 
-    def recent_for_job(self, job, num=4, user_visible=True):
+    def recent_for_job(self, job=None, num=4, user_visible=True):
         """
             Returns `num` recent logs for given job.
 
+            :param job: job logs should be returned for. If `None`,
+                        display all.
+            :param num: up to how many results should be returned. 0 means all.
             :param user_visible: whether return only those visible for users
         """
-        logs = self.filter(job=job).order_by('-id')[:num]
-        return [log for log in logs
+        if job:
+            logs = self.filter(job=job).order_by('-id')
+        else:
+            logs = self.all().order_by('-id')
+
+        recent_list = [log for log in logs
             if (not user_visible or log.is_visible_to_users())]
+
+        if num:
+            return recent_list[:num]
+        else:
+            return recent_list
 
 
 class LogEntry(models.Model):
@@ -169,6 +181,7 @@ class LogEntry(models.Model):
             'Image_url': self.format_config_string(['Box_entry', 'Image_url']),
             'By': self.format_config_string(['Box_entry', 'By']),
             'By_id': log_config_get(self.log_type, ['Box_entry', 'By_id']),
+            'Job_id': self.job_id,
         }
         return val
 

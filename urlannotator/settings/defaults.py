@@ -1,9 +1,10 @@
 import datetime
 import os
 import tempfile
+import sys
 from django.core.urlresolvers import reverse_lazy
 
-DEBUG = True
+DEBUG = not 'celery' in sys.argv
 TEMPLATE_DEBUG = DEBUG
 JS_DEBUG = DEBUG
 
@@ -37,9 +38,6 @@ STATIC_URL = '/statics/'
 # urlannotator.classification.classifiers module
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
-
-# Interval between a job monitor check. Defaults to 15 minutes.
-JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
 
 SOCIAL_AUTH_CREATE_USERS = False
 
@@ -152,7 +150,6 @@ PROJECT_APPS = (
     'urlannotator.classification',
     'urlannotator.crowdsourcing',
     'urlannotator.flow_control',
-    'urlannotator.sample_gathering',
     'urlannotator.main',
     'urlannotator.tools',
     'urlannotator.statistics',
@@ -279,40 +276,81 @@ CELERY_IMPORTS = (
     'urlannotator.statistics.spent_monitor',
     'urlannotator.statistics.url_monitor',
     'urlannotator.statistics.progress_monitor',
-    'urlannotator.sample_gathering.simple_gatherer',
 )
+
+# Respawn a worker after 10 tasks done. Memory leaks shall not prevail!
+CELERYD_MAX_TASKS_PER_CHILD = 10
+CELERY_MAX_CACHED_RESULTS = 5
+
+# Interval between a job monitor check. Defaults to 15 minutes.
+JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
+WORKER_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
+
+# Interval between statistics entries, to store a new one.
+JOB_MONITOR_ENTRY_INTERVAL = datetime.timedelta(hours=1)
 
 CELERYBEAT_SCHEDULE = {
     'spent_monitor': {
-        'task': 'urlannotator.statistics.spent_monitor.SpentMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.SpentMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'args': []
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'url_monitor': {
-        'task': 'urlannotator.statistics.url_monitor.URLMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.URLMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'args': []
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'progress_monitor': {
-        'task': 'urlannotator.statistics.progress_monitor.ProgressMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.ProgressMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
+    },
+    'links_monitor': {
+        'task': 'urlannotator.statistics.monitor_tasks.LinksMonitor',
+        'schedule': WORKER_MONITOR_INTERVAL,
+        'kwargs': {'interval': datetime.timedelta(days=1)}
+    },
+    'send_validated_samples': {
+        'task': 'urlannotator.classification.event_handlers.SampleVotingManager',
+        'schedule': datetime.timedelta(seconds=3 * 60),
         'args': []
     },
-    'sample_gatherer': {
-        'task': 'urlannotator.sample_gathering.simple_gatherer.SimpleGatherer',
-        'schedule': datetime.timedelta(seconds=10 * 60),
+    'process_votes': {
+        'task': 'urlannotator.classification.event_handlers.ProcessVotesManager',
+        'schedule': datetime.timedelta(seconds=3 * 60),
         'args': []
     },
+
 }
 
 # Test runner
 # CELERY_ALWAYS_EAGER = True
 TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
+# Tagasauris integretion settings
 TAGASAURIS_LOGIN = 'urlannotator'
 TAGASAURIS_PASS = 'urlannotator'
-TAGASAURIS_HOST = 'https://devel.tagasauris.com'
+TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+
+TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
+TAGASAURIS_VOTING_WORKFLOW = 'voting'
+
+# TODO: This is ugly... any ideas how to change this?
+TAGASAURIS_NOTIFY = {
+    TAGASAURIS_VOTING_WORKFLOW: 'NotifyTask_1',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_4',
+}
+TAGASAURIS_SURVEY = {
+    TAGASAURIS_VOTING_WORKFLOW: 'Survey_2',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Survey_6',
+}
+
+TAGASAURIS_CALLBACKS = 'http://127.0.0.1'
+TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/sample/tagasauris/%s/'
+TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/tagasauris/%s/'
 
 # Tools testing flag. If set to True, certain tools will be mocked.
 TOOLS_TESTING = False

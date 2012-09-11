@@ -7,7 +7,7 @@ from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 
 
-@task()
+@task(ignore_result=True)
 class EventRawSampleManager(Task):
     """
         Manage factories to handle creation of new samples.
@@ -22,7 +22,7 @@ class EventRawSampleManager(Task):
 new_raw_sample_task = registry.tasks[EventRawSampleManager.name]
 
 
-@task()
+@task(ignore_result=True)
 class JobFactoryManager(Task):
     """
         Manages factories handling Job initialization (from db entry).
@@ -37,7 +37,7 @@ class JobFactoryManager(Task):
 new_job_task = registry.tasks[JobFactoryManager.name]
 
 
-@task()
+@task(ignore_result=True)
 class GoldSamplesMonitor(Task):
     """
         Monitors gold samples creation, and issues classificator training

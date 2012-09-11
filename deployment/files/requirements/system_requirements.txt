@@ -4,9 +4,9 @@ mercurial
 python2.7-dev
 libevent-dev
 rabbitmq-server
-cutycapt
 lynx
 links
 xvfb
 libjpeg8
 libjpeg62-dev
+python-qt4

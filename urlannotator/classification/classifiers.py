@@ -45,8 +45,12 @@ class Classifier(object):
         raise NotImplementedError
 
 
-# Number of seconds between Classifier247 subclassifier's train status check.
-CLASS247_TRAIN_STATUS_CHECK = 10 * 60
+# Number of seconds between steps Classifier247 subclassifier's train status
+# check.
+CLASS247_TRAIN_STEP = 15
+
+# Maxmimum number of seconds to wait between train status check.
+CLASS247_MAX_WAIT = 10 * 60
 
 
 class Classifier247(Classifier):
@@ -127,12 +131,14 @@ class Classifier247(Classifier):
         )
 
         trained = writer.get_train_status() == CLASS_TRAIN_STATUS_DONE
+        wait_time = CLASS247_TRAIN_STEP
 
         while not trained:
-            time.sleep(CLASS247_TRAIN_STATUS_CHECK)
+            time.sleep(min(wait_time, CLASS247_MAX_WAIT))
 
             status = writer.get_train_status()
             trained = status == CLASS_TRAIN_STATUS_DONE
+            wait_time += CLASS247_TRAIN_STEP
 
         entry = ClassifierModel.objects.get(id=self.id)
         job = entry.job
@@ -237,15 +243,15 @@ class SimpleClassifier(Classifier):
         """
             Returns file name under which the classifier is stored.
         """
-        path = os.path.join('/tmp/10c/classifiers', self.model)
+        path = os.path.join('simple-classifiers/', self.model)
         return path
 
     def dump_classifier(self):
         """
             Dumps classifier to a file.
         """
-        if not os.path.exists('/tmp/10c/classifiers'):
-            os.makedirs('/tmp/10c/classifiers')
+        if not os.path.exists('simple-classifiers/'):
+            os.makedirs('simple-classifiers/')
 
         with open(self.get_file_name(), 'wb') as f:
             pickle.dump(self.classifier, f)
@@ -327,11 +333,13 @@ class SimpleClassifier(Classifier):
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
         training_set = TrainingSet.objects.get(id=train_set_id)
+
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {'Yes': 0, 'No': 0}
+        label_probability = {'Yes': 0.0, 'No': 0.0}
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
+
         return label
 
     def classify_with_info(self, class_sample):
@@ -352,11 +360,13 @@ class SimpleClassifier(Classifier):
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
         training_set = TrainingSet.objects.get(id=train_set_id)
+
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {'Yes': 0, 'No': 0}
+        label_probability = {'Yes': 0.0, 'No': 0.0}
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
+
         return label
 
 # Google Storage parameters used in GooglePrediction classifier
@@ -513,13 +523,13 @@ class GooglePredictionClassifier(Classifier):
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
-        training_set = TrainingSet.objects.get(train_set_id)
+        training_set = TrainingSet.objects.get(id=train_set_id)
         sample.training_set = training_set
 
         sample.label = label['outputLabel']
         label_probability = {}
-        for label, prob in label['outputMulti']:
-            label_probability[label] = prob
+        for score in label['outputMulti']:
+            label_probability[score['label']] = score['score']
         sample.label_probability = json.dumps(label_probability)
         sample.save()
 
@@ -538,13 +548,13 @@ class GooglePredictionClassifier(Classifier):
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
-        training_set = TrainingSet.objects.get(train_set_id)
+        training_set = TrainingSet.objects.get(id=train_set_id)
         sample.training_set = training_set
 
         sample.label = label['outputLabel']
         label_probability = {}
-        for label, prob in label['outputMulti']:
-            label_probability[label] = prob
+        for score in label['outputMulti']:
+            label_probability[score['label']] = float(score['score']) * 100
         sample.label_probability = json.dumps(label_probability)
         sample.save()
 

@@ -1,0 +1,30 @@
+<div class="well row-fluid">
+  <div class="span7" style="border-right: 1px solid black; height: 100%; min-width: 380px">
+    <div>
+      <form method="POST" action="{% url login %}" class="form-horizontal">
+        <legend>Log in</legend>
+        <fieldset>
+        {% csrf_token %}
+          {% include 'form.html' %}
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">SIGN IN</button>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+    <div class="row-fluid">
+      <div class="span3">&nbsp;</div>
+      <div class="span5">
+        <p>Forgot password? <a href="{% url password_reset %}">Reset it</a>!</p>
+        <p>Not member? <a href="{% url register %}">Register</a>!</p>
+      </div>
+    </div>
+  </div>
+  <div class="span4">
+    <p style="margin-top: 20px;">Login via other services</p>
+    <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'google-oauth2'%}">Google</a>
+    <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'twitter'%}">Twitter</a>
+    <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'facebook'%}">Facebook</a>
+    <a class="btn btn-primary btn-small" href="{% url odesk_login %}">Odesk</a>
+  </div>
+</div>

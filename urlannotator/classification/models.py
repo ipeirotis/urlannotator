@@ -1,4 +1,5 @@
 import json
+import urlparse
 
 from tenclouds.django.jsonfield.fields import JSONField
 from django.db import models
@@ -47,30 +48,6 @@ class ClassifierPerformance(Statistics):
     objects = PerformanceManager()
 
 
-class PerformancePerHourManager(models.Manager):
-    def latest_for_job(self, job):
-        """
-            Returns performance statistic for given job.
-        """
-        els = super(PerformancePerHourManager, self).\
-            get_query_set().filter(job=job).order_by('-date')
-        if not els.count():
-            return None
-
-        return els[0]
-
-
-class ClassifierPerformancePerHour(Statistics):
-    """
-        Keeps track of classifer performance for each job per hour.
-    """
-    job = models.ForeignKey(Job)
-    date = models.DateTimeField(auto_now_add=True)
-    value = JSONField()
-
-    objects = PerformancePerHourManager()
-
-
 def create_stats(sender, instance, created, **kwargs):
     """
         Creates a brand new statistics' entry for new job.
@@ -78,7 +55,6 @@ def create_stats(sender, instance, created, **kwargs):
     if created:
         val = json.dumps({})
         ClassifierPerformance.objects.create(job=instance, value=val)
-        ClassifierPerformancePerHour.objects.create(job=instance, value=val)
 
 post_save.connect(create_stats, sender=Job)
 
@@ -123,10 +99,18 @@ CLASS_SAMPLE_SOURCE_OWNER = 'owner'
 
 
 class ClassifiedSampleManager(models.Manager):
-    def create_by_owner(self, *args, **kwargs):
-        if 'source_type' in kwargs:
-            kwargs.pop('source_type')
+    def _sanitize(self, args, kwargs):
+        """
+            Sanitizes information passed by users.
+        """
+        url = kwargs['url']
+        if url:
+            result = urlparse.urlsplit(url)
+            if not result.scheme:
+                kwargs['url'] = 'http://%s' % url
 
+    def create_by_owner(self, *args, **kwargs):
+        self._sanitize(args, kwargs)
         kwargs['source_type'] = CLASS_SAMPLE_SOURCE_OWNER
         kwargs['source_val'] = ''
         try:
@@ -146,7 +130,7 @@ class ClassifiedSampleManager(models.Manager):
             Sample.objects.create_by_owner(
                 job_id=kwargs['job'].id,
                 url=kwargs['url'],
-                create_classified=False
+                create_classified=False,
             )
 
         return classified_sample
@@ -196,3 +180,12 @@ class ClassifiedSample(models.Model):
 
     def is_successful(self):
         return self.get_status() == CLASSIFIED_SAMPLE_SUCCESS
+
+    def get_source_worker(self):
+        """
+            Returns a worker who has sent this sample.
+        """
+        return Sample.get_worker(
+            source_type=self.source_type,
+            source_val=self.source_val,
+        )

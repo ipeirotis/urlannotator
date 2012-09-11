@@ -53,7 +53,7 @@
               <a class="brand" href="{% url index %}">URL annotator</a>
               <div class="nav-collapse">
                 <ul class="nav">
-                  <li class="active"><a href="{% url readme_view %}">Documents</a></li>
+                  <li class="active"><a href="{% url readme_view %}">Documentation</a></li>
                 </ul>
                 <ul class="nav pull-right">
                   {% if user.is_authenticated %}
@@ -75,8 +75,8 @@
                             <form style="margin-bottom: 0px" method="POST" action="{% url login %}">
                               <fieldset>
                                 {% csrf_token %}
-                                <input type="text" name="email" value="email">
-                                <input type="password" name="password" value="password">
+                                <input type="text" name="email" placeholder="email">
+                                <input type="password" name="password" placeholder="password">
                                 <button style="display: block" type="submit" class="btn">Log In</button>
                                 <label class="checkbox">
                                   <input type="checkbox" name="remember">Remember me
@@ -123,7 +123,7 @@
           <div class="row-fluid">
             <hr>
             <footer>
-                <p>&copy; 10clouds.com 2012</p>
+                <p><a href="#">Terms of service</a>, <a href="#">Legal</a>, <a href="#">Contact</a>, created by <a href="http://10clouds.com">10Clouds</a></p>
             </footer>
           </div>
         </div>
@@ -136,6 +136,33 @@
               $('#loginDiv').bind('click', function (e) { e.stopPropagation() })
             </script>
             <script type="text/javascript">
+              function csrfSafeMethod(method) {
+                  // these HTTP methods do not require CSRF protection
+                  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+              }
+              function sameOrigin(url) {
+                  // test that a given url is a same-origin URL
+                  // url could be relative or scheme relative or absolute
+                  var host = document.location.host; // host + port
+                  var protocol = document.location.protocol;
+                  var sr_origin = '//' + host;
+                  var origin = protocol + sr_origin;
+                  // Allow absolute or scheme relative URLs to same origin
+                  return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+                      (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+                      // or any other URL that isn't scheme relative or absolute i.e relative.
+                      !(/^(\/\/|http:|https:).*/.test(url));
+              }
+              $.ajaxSetup({
+                  beforeSend: function(xhr, settings) {
+                      if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
+                          // Send the token to same-origin, relative URLs only.
+                          // Send the token only if the method warrants CSRF protection
+                          // Using the CSRFToken value acquired earlier
+                          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                      }
+                  }
+              });
               function insertAlert(text, id){
                 text = '<div id="alert-'+id+'" class="alert alert-info fade in our-alert"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
                 $('#alert-box').prepend(text);

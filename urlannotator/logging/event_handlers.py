@@ -12,6 +12,10 @@ from urlannotator.logging.settings import (
     LOG_TYPE_CLASS_TRAIN_START,
     LOG_TYPE_CLASS_TRAIN_DONE,
     LOG_TYPE_SAMPLE_CLASSIFIED,
+    LOG_TYPE_SAMPLE_SCREENSHOT_DONE,
+    LOG_TYPE_SAMPLE_TEXT_DONE,
+    LOG_TYPE_SAMPLE_SCREENSHOT_FAIL,
+    LOG_TYPE_SAMPLE_TEXT_FAIL,
 
     LONG_ACTION_TRAINING,
 )
@@ -41,7 +45,7 @@ def log_new_job_done(job_id, *args, **kwargs):
 def log_new_sample_start(job_id, url, *args, **kwargs):
     job = Job.objects.get(id=job_id)
     params = {
-        'url': url,
+        'sample_url': url,
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_NEW_SAMPLE_START,
@@ -59,6 +63,7 @@ def log_sample_done(job_id, sample_id, *args, **kwargs):
         'sample_id': sample_id,
         'sample_url': sample.url,
         'sample_screenshot': sample.screenshot,
+        'sample_image': sample.screenshot,
     }
 
     LogEntry.objects.log(
@@ -76,6 +81,7 @@ def log_gold_sample_done(job_id, gold_id, *args, **kwargs):
     params = {
         'gold_sample': gold_id,
         'gold_url': gold.sample.url,
+        'sample_image': gold.sample.screenshot,
         'gold_label': gold.label,
     }
     LogEntry.objects.log(
@@ -124,11 +130,77 @@ def log_sample_classified(job_id, class_id, *args, **kwargs):
         'class_id': class_sample.id,
         'sample_id': class_sample.sample_id,
         'class_url': class_sample.url,
+        'sample_image': class_sample.sample.screenshot,
         'class_label': class_sample.label,
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_SAMPLE_CLASSIFIED,
         job=job,
+        params=params,
+        *args, **kwargs
+    )
+
+
+@task(ignore_result=True)
+def log_sample_screenshot_done(sample_id, *args, **kwargs):
+    sample = Sample.objects.get(id=sample_id)
+    params = {
+        'sample_id': sample_id,
+        'sample_url': sample.url,
+        'sample_image': sample.screenshot,
+    }
+    LogEntry.objects.log(
+        log_type=LOG_TYPE_SAMPLE_SCREENSHOT_DONE,
+        job=sample.job,
+        params=params,
+        *args, **kwargs
+    )
+
+
+@task(ignore_result=True)
+def log_sample_text_done(sample_id, *args, **kwargs):
+    sample = Sample.objects.get(id=sample_id)
+    params = {
+        'sample_id': sample_id,
+        'sample_url': sample.url,
+        'sample_image': sample.screenshot,
+    }
+    LogEntry.objects.log(
+        log_type=LOG_TYPE_SAMPLE_TEXT_DONE,
+        job=sample.job,
+        params=params,
+        *args, **kwargs
+    )
+
+
+@task(ignore_result=True)
+def log_sample_text_fail(sample_id, error_code, *args, **kwargs):
+    sample = Sample.objects.get(id=sample_id)
+    params = {
+        'sample_id': sample_id,
+        'sample_url': sample.url,
+        'sample_image': sample.screenshot,
+        'error_code': error_code
+    }
+    LogEntry.objects.log(
+        log_type=LOG_TYPE_SAMPLE_TEXT_FAIL,
+        job=sample.job,
+        params=params,
+        *args, **kwargs
+    )
+
+
+@task(ignore_result=True)
+def log_sample_screenshot_fail(sample_id, error_code, *args, **kwargs):
+    sample = Sample.objects.get(id=sample_id)
+    params = {
+        'sample_id': sample_id,
+        'sample_url': sample.url,
+        'error_code': error_code,
+    }
+    LogEntry.objects.log(
+        log_type=LOG_TYPE_SAMPLE_SCREENSHOT_FAIL,
+        job=sample.job,
         params=params,
         *args, **kwargs
     )
@@ -142,4 +214,8 @@ FLOW_DEFINITIONS = [
     (r'^EventClassifierTrained$', log_classifier_trained),
     (r'^EventSampleClassified$', log_sample_classified),
     (r'^EventTrainingSetCompleted$', log_classifier_train_start),
+    (r'^EventSampleScreenshotDone$', log_sample_screenshot_done),
+    (r'^EventSampleScreenshotFail$', log_sample_screenshot_fail),
+    (r'^EventSampleContentDone$', log_sample_text_done),
+    (r'^EventSampleContentFail$', log_sample_text_fail),
 ]

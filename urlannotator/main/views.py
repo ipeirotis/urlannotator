@@ -20,6 +20,7 @@ from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.views.decorators.cache import cache_page
 from django.conf import settings
+from itertools import ifilter
 from oauth2client.file import Storage
 from oauth2client.client import OAuth2WebServerFlow
 
@@ -27,11 +28,11 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_CHOICES)
+    LABEL_YES, LABEL_NO, LABEL_BROKEN)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats)
 from urlannotator.classification.models import (ClassifierPerformance,
-    ClassifiedSample)
+    ClassifiedSample, TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
 
 
@@ -73,16 +74,28 @@ def alerts_view(request):
 
 @login_required
 def updates_box_view(request, job_id):
-    try:
-        job = Job.objects.get(id=job_id, account=request.user.get_profile())
-    except Job.DoesNotExist:
-        return HttpResponse(json.dumps({'error': 'Project doesn\'t exist'}))
+    if job_id == '0' and request.user.is_superuser:
+        log_entries = LogEntry.objects.recent_for_job(num=0)
+        res = [entry.get_box() for entry in log_entries]
+    else:
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return HttpResponse(
+                json.dumps({'error': 'Project doesn\'t exist'})
+            )
 
-    log_entries = LogEntry.objects.recent_for_job(
-        job=job,
-        num=4,
-    )
-    res = [entry.get_box() for entry in log_entries]
+        if (job.account != request.user.get_profile()
+            and not request.user.is_superuser):
+            return HttpResponse(
+                json.dumps({'error': 'Project doesn\'t exist'})
+            )
+
+        log_entries = LogEntry.objects.recent_for_job(
+            job=job,
+            num=4,
+        )
+        res = [entry.get_box() for entry in log_entries]
 
     return HttpResponse(json.dumps(res))
 
@@ -113,6 +126,10 @@ def register_view(request):
     """
     if request.method == "GET":
         context = {'form': NewUserForm()}
+        error = request.session.pop('error', None)
+        if error:
+            context['error'] = error
+
         return render(request, 'main/register.html',
             RequestContext(request, context))
     else:
@@ -246,7 +263,7 @@ def settings_view(request):
         context['twitter'] = l[0]
 
     if profile.odesk_uid:
-        w = Worker.objects.get_odesk(external_id=profile.odesk_uid)
+        w = Worker.objects.get(external_id=profile.odesk_uid)
         context['odesk'] = {'name': w.get_name()}
 
     if request.method == "POST":
@@ -307,6 +324,16 @@ def project_wizard(request):
         attr_form = WizardAttributesForm(odeskLogged, request.POST)
         addt_form = WizardAdditionalForm(request.POST)
         is_draft = request.POST['submit'] == 'draft'
+
+        context = {'topic_form': topic_form,
+                   'attributes_form': attr_form,
+                   'additional_form': addt_form}
+
+        if not odeskLogged:
+            context['wizard_alert'] = 'Your account is not connected to '\
+            'Odesk. If you want to have more options connect to Odesk at '\
+            '<a href="%s">settings</a> page.''' % reverse('settings')
+
         if (addt_form.is_valid() and
             attr_form.is_valid() and
             topic_form.is_valid()):
@@ -325,11 +352,38 @@ def project_wizard(request):
                 params['no_of_urls'] = 0
 
             if 'file_gold_urls' in request.FILES:
+                url_set = set()
+                label_set = set()
                 try:
                     urls = csv.reader(request.FILES['file_gold_urls'])
-                    gold_samples = [{'url': line[0], 'label': line[1]}
-                        for line in urls]
+                    gold_samples = []
+                    for line in urls:
+                        url = line[0]
+                        label = line[1]
+                        if url in url_set:
+                            continue
+
+                        url_set.add(url)
+                        label_set.add(label)
+                        gold_samples.append({'url': url, 'label': label})
+
+                    if len(url_set) < 6:
+                        context['wizard_error'] = (
+                            'You have to provide at least 6 different '
+                            'gold samples.'
+                        )
+                        return render(request, 'main/project/wizard.html',
+                            RequestContext(request, context))
+
+                    if len(label_set) < 2:
+                        context['wizard_error'] = (
+                            'You have to provide at least 2 different labels.'
+                        )
+                        return render(request, 'main/project/wizard.html',
+                            RequestContext(request, context))
+
                     params['gold_samples'] = json.dumps(gold_samples)
+
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')
@@ -349,13 +403,6 @@ def project_wizard(request):
                 job = Job.objects.create_active(**params)
 
             return redirect('project_view', id=job.id)
-        context = {'topic_form': topic_form,
-                   'attributes_form': attr_form,
-                   'additional_form': addt_form}
-        if not odeskLogged:
-            context['wizard_alert'] = 'Your account is not connected to '\
-            'Odesk. If you want to have more options connect to Odesk at '\
-            '<a href="%s">settings</a> page.''' % reverse('settings')
     return render(request, 'main/project/wizard.html',
         RequestContext(request, context))
 
@@ -462,6 +509,8 @@ def debug_login(request):
     if user is None:
         user = User.objects.create_user(username='test', email='test@test.com',
             password='test')
+        user.is_superuser = True
+        user.save()
         prof = user.get_profile()
         prof.email_registered = True
         prof.activation_key = 'activated'
@@ -469,6 +518,14 @@ def debug_login(request):
     user = authenticate(username='test', password='test')
     login(request, user)
     request.session['success'] = 'You have successfully logged in.'
+    return redirect('index')
+
+
+@login_required
+def debug_superuser(request):
+    request.user.is_superuser = True
+    request.user.save()
+    request.session['success'] = 'You are now superuser.'
     return redirect('index')
 
 
@@ -481,8 +538,13 @@ def odesk_login(request):
 @login_required
 def project_view(request, id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        proj = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (proj.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -511,27 +573,27 @@ def project_view(request, id):
 @login_required
 def project_workers_view(request, id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
     context = {'project': job}
-    # FIXME: Proper worker gathering. We should include multiple addition of
-    #        the same sample by different workers.
-    samples = Sample.objects.filter(job=job)
     workers = []
-    for sample in samples:
-        worker = sample.get_source_worker()
-        if worker and worker.can_show_to_user():
-            workers.append({
-                'id': worker.id,
-                'name': worker.get_name(),
-                'quality': worker.estimated_quality,
-                'votes_added': len(worker.get_votes_added_for_job(job)),
-                'links_collected': worker.get_links_collected_for_job(job),
-                'hours_spent': worker.get_hours_spent_for_job(job)
-            })
+    for worker in job.get_workers():
+        workers.append({
+            'id': worker.id,
+            'name': worker.get_name,
+            'quality': worker.estimated_quality,
+            'votes_added': worker.get_votes_added_count_for_job(job),
+            'urls_collected': worker.get_urls_collected_count_for_job(job),
+            'hours_spent': worker.get_hours_spent_for_job(job)
+        })
     context['workers'] = workers
     return render(request, 'main/project/workers.html',
         RequestContext(request, context))
@@ -540,7 +602,7 @@ def project_workers_view(request, id):
 @login_required
 def project_worker_view(request, id, worker_id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
         worker = Worker.objects.get(id=worker_id)
     except (Job.DoesNotExist, Worker.DoesNotExist):
         request.session['error'] = 'The user does not exist.'
@@ -550,15 +612,25 @@ def project_worker_view(request, id, worker_id):
         request.session['error'] = 'The user does not exist.'
         return redirect('index')
 
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
     context = {'project': job}
-    worker = {
-        'name': worker.get_name(),
-        'links_collected': worker.get_links_collected_for_job(job),
-        'votes_added': worker.get_votes_added_for_job(job),
+    account = request.user.get_profile()
+    assocs = worker.workerjobassociation_set.all()
+    assocs = ifilter(lambda x: x.job.account == account, assocs)
+    projects = (w.job.get_link_with_title() for w in assocs)
+    context['worker'] = {
+        'name': worker.get_name,
+        'urls_collected': worker.get_urls_collected_count_for_job(job),
+        'votes_added': worker.get_votes_added_count_for_job(job),
         'hours_spent': worker.get_hours_spent_for_job(job),
         'quality': worker.estimated_quality,
         'earned': worker.get_earned_for_job(job),
         'work_started': worker.get_job_start_time(job),
+        'projects': projects,
     }
     context['worker'] = worker
     return render(request, 'main/project/worker.html',
@@ -568,9 +640,14 @@ def project_worker_view(request, id, worker_id):
 @login_required
 def project_debug(request, id, debug):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        proj = Job.objects.get(id=id)
     except Job.DoesNotExist:
         request.session['error'] = "Such project doesn't exist."
+        return redirect('index')
+
+    if (proj.account != request.user.get_profile()
+        and not request.user.is_superuser):
+        request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
     if debug == 'draft':
@@ -591,8 +668,13 @@ def project_debug(request, id, debug):
 @login_required
 def project_btm_view(request, id):
     try:
-        proj = Job.objects.get(id=id, account=request.user.get_profile())
+        proj = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (proj.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -604,14 +686,20 @@ def project_btm_view(request, id):
 @login_required
 def project_data_view(request, id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
     context = {
         'project': job,
-        'data_set': Sample.objects.filter(job=job),
+        'data_set': (sample for sample in Sample.objects.filter(job=job)
+            if sample.is_finished()),
     }
 
     return render(request, 'main/project/data.html',
@@ -621,9 +709,14 @@ def project_data_view(request, id):
 @login_required
 def project_data_detail(request, id, data_id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
         sample = Sample.objects.get(id=data_id, job=job)
     except (Job.DoesNotExist, Sample.DoesNotExist):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -639,8 +732,13 @@ def project_data_detail(request, id, data_id):
 @login_required
 def project_classifier_view(request, id):
     try:
-        job = Job.objects.get(id=id, account=request.user.get_profile())
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -678,11 +776,11 @@ def project_classifier_view(request, id):
             request.session['classified-samples'] = classified_samples
         return redirect('project_classifier_view', id)
     samples = ClassifiedSample.objects.filter(job=job).exclude(label='')
-    yes_labels = samples.filter(label=LABEL_CHOICES[0][0])
+    yes_labels = samples.filter(label=LABEL_YES)
     yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
-    no_labels = samples.filter(label=LABEL_CHOICES[1][0])
+    no_labels = samples.filter(label=LABEL_NO)
     no_perc = int(no_labels.count() * 100 / (samples.count() or 1))
-    broken_labels = samples.filter(label=LABEL_CHOICES[2][0])
+    broken_labels = samples.filter(label=LABEL_BROKEN)
     broken_perc = int(broken_labels.count() * 100 / (samples.count() or 1))
     context['classifier_stats'] = {
         'count': samples.count(),
@@ -690,23 +788,47 @@ def project_classifier_view(request, id):
         'no_labels': {'val': no_labels.count(), 'perc': no_perc},
         'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
 
-    context['performance_TPM'] = []
-    context['performance_TNM'] = []
+    context['performance_TPR'] = []
+    context['performance_TNR'] = []
     context['performance_AUC'] = []
     for perf in ClassifierPerformance.objects.filter(job=job).order_by('date'):
         date = perf.date.strftime('%Y,%m-1,%d,%H,%M,%S')
-        context['performance_TPM'].append(
-            '[Date.UTC(%s),%d]' % (date, perf.value.get('TPM', 0)))
-        context['performance_TNM'].append(
-            '[Date.UTC(%s),%d]' % (date, perf.value.get('TNM', 0)))
+        context['performance_TPR'].append(
+            '[Date.UTC(%s),%d]' % (date, perf.value.get('TPR', 0)))
+        context['performance_TNR'].append(
+            '[Date.UTC(%s),%d]' % (date, perf.value.get('TNR', 0)))
         context['performance_AUC'].append(
             '[Date.UTC(%s),%d]' % (date, perf.value.get('AUC', 0)))
 
-    context['performance_TPM'] = ','.join(context['performance_TPM'])
-    context['performance_TNM'] = ','.join(context['performance_TNM'])
+    context['performance_TPR'] = ','.join(context['performance_TPR'])
+    context['performance_TNR'] = ','.join(context['performance_TNR'])
     context['performance_AUC'] = ','.join(context['performance_AUC'])
     return render(request, 'main/project/classifier.html',
         RequestContext(request, context))
+
+
+@login_required
+def project_classifier_data(request, id):
+    try:
+        job = Job.objects.get(id=id)
+    except Job.DoesNotExist:
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    if (job.account != request.user.get_profile()
+        and not request.user.is_superuser):
+        request.session['error'] = 'The project does not exist.'
+        return redirect('index')
+
+    response = HttpResponse(mimetype='text/csv')
+    response['Content-Disposition'] = 'attachment; filename=training_data.csv'
+
+    writer = csv.writer(response)
+    training_set = TrainingSet.objects.newest_for_job(job=job)
+    for sample in training_set.training_samples.all():
+        writer.writerow([sample.sample.url, sample.label])
+
+    return response
 
 
 def doc_parts(input_string):
@@ -723,6 +845,21 @@ def readme_view(request):
     return render(request, 'main/docs.html', RequestContext(request, context))
 
 
+@login_required
+def admin_index(request):
+    """
+        Listing of all jobs across the system. Usable only by superusers.
+    """
+    if not request.user.is_superuser:
+        raise Http404
+
+    context = {
+        'projects': Job.objects.all().order_by('-id'),
+    }
+    return render(request, 'main/admin_index.html',
+        RequestContext(request, context))
+
+
 def index(request):
     context = {}
     if 'error' in request.session:
@@ -734,4 +871,6 @@ def index(request):
     if request.user.is_authenticated():
         context['projects'] = Job.objects.filter(
             account=request.user.get_profile()).order_by('-id')
+    else:
+        context['form'] = UserLoginForm()
     return render(request, 'main/index.html', RequestContext(request, context))

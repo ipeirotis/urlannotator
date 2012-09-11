@@ -4,13 +4,15 @@ from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import Sample, Job
+from urlannotator.main.models import Sample, Job, Worker, LABEL_YES, LABEL_NO
 from urlannotator.classification.classifiers import Classifier247
 from urlannotator.classification.models import (TrainingSet, Classifier,
-    ClassifiedSample)
+    ClassifiedSample, ClassifierPerformance)
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.crowdsourcing.event_handlers import initialize_external_jobs
+from urlannotator.crowdsourcing.models import WorkerQualityVote
 from urlannotator.flow_control.test import FlowControlMixin
+from urlannotator.flow_control import send_event
 
 
 class Classifier247Tests(TestCase):
@@ -126,6 +128,42 @@ class TrainingSetManagerTests(TestCase):
             job.id)
 
 
+class ClassifierPerformanceTests(TestCase):
+    def testPerformance(self):
+        u = User.objects.create_user(username='testing', password='test')
+
+        job = Job.objects.create_active(
+            account=u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
+        )
+
+        self.assertTrue(ClassifierPerformance.objects.latest_for_job(job))
+        ClassifierPerformance.objects.all().delete()
+        self.assertFalse(ClassifierPerformance.objects.latest_for_job(job))
+
+
+class ClassifiedSampleTests(TestCase):
+    def testClassified(self):
+        u = User.objects.create_user(username='testing', password='test')
+
+        job = Job.objects.create_active(
+            account=u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
+        )
+        with self.assertRaises(KeyError):
+            ClassifiedSample.objects.create_by_owner(job=job)
+        cs = ClassifiedSample.objects.create_by_owner(
+            job=job,
+            url='http://google.com',
+        )
+        # Refresh the Classified Sample
+        cs = ClassifiedSample.objects.get(id=cs.id)
+        self.assertFalse(cs.is_pending())
+        self.assertTrue(cs.is_successful())
+        # Sample created by job owner - None worker.
+        self.assertEqual(cs.get_source_worker(), None)
+
+
 class ClassifierFactoryTests(TestCase):
 
     def setUp(self):
@@ -146,7 +184,11 @@ class ClassifierFactoryTests(TestCase):
             job=job,
             type='SimpleClassifier',
         ).count(), 2)
-        cs = ClassifiedSample.objects.all()[0]
+        cs = ClassifiedSample.objects.create_by_owner(
+            job=job,
+            url='http://google.com',
+        )
+        cs = ClassifiedSample.objects.get(id=cs.id)
         self.assertTrue(factory.classify(cs))
 
 
@@ -173,3 +215,64 @@ class LongTrainingTest(FlowControlMixin, TransactionTestCase):
 
     def tearDown(self):
         self.u.delete()
+
+
+class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='test', password='test')
+        self.worker = Worker.objects.create_odesk(external_id=123)
+        self.job = Job.objects.create(
+            account=self.user.get_profile()
+        )
+        self.job.activate()
+        self.sample = Sample.objects.create(
+            source_val='asd',
+            job=self.job,
+            url=""
+        )
+
+    def flow_definition(self):
+        from urlannotator.classification.event_handlers import process_votes
+        return [
+            (r'^EventProcessVotes$', process_votes),
+        ]
+
+    def testVotesProcess(self):
+
+        def newVote(label):
+            return WorkerQualityVote.objects.new_vote(
+                sample=self.sample,
+                worker=self.worker,
+                label=label
+            )
+
+        newVote(LABEL_YES)
+        newVote(LABEL_YES)
+        newVote(LABEL_YES)
+
+        send_event('EventProcessVotes')
+
+        ts = TrainingSet.objects.newest_for_job(self.job)
+        self.assertEqual(len(ts.training_samples.all()), 1)
+
+        training_sample = ts.training_samples.all()[0]
+        self.assertEqual(training_sample.label, LABEL_YES)
+
+        newVote(LABEL_NO)
+        newVote(LABEL_NO)
+        newVote(LABEL_NO)
+        newVote(LABEL_NO)
+
+        send_event('EventProcessVotes')
+
+        ts = TrainingSet.objects.newest_for_job(self.job)
+        self.assertEqual(len(ts.training_samples.all()), 1)
+
+        training_sample = ts.training_samples.all()[0]
+        self.assertEqual(training_sample.label, LABEL_NO)
+
+    def tearDown(self):
+        self.user.delete()
+        self.worker.delete()
+        self.job.delete()
+        self.sample.delete()
