@@ -196,7 +196,7 @@ class ClassifiedSampleResource(Resource):
         # TODO: Add sample URL.
         screenshot = ''
         if class_sample.sample:
-            screenshot = class_sample.sample.screenshot
+            screenshot = class_sample.sample.get_small_thumbnail_url()
 
         return {
             'id': class_sample.id,
@@ -620,7 +620,7 @@ class JobResource(ModelResource):
         if training_set:
             date = training_set.revision.strftime('%Y-%m-%d %H:%M:%S')
             newest_votes = [{
-                'screenshot': s.sample.screenshot,
+                'screenshot': s.sample.get_small_thumbnail_url(),
                 'url': s.sample.url,
                 'label': s.label,
                 'added_on': s.sample.added_on,

@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.utils.timezone import now
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from itertools import ifilter
 from tenclouds.django.jsonfield.fields import JSONField
 
@@ -484,11 +485,31 @@ class Sample(models.Model):
         r = requests.get('http://' + settings.IMAGESCALE_URL, params=params)
         return r.content
 
+    def get_small_thumbnail_url(self):
+        """
+            Returns url which serves sample's small thumbnail.
+        """
+        return self.get_thumbnail_url('small')
+
     def get_small_thumbnail(self):
         """
             Returns a small (60x60) thumbnail to use in samples list, etc.
         """
         return self.get_thumbnail(width=60, height=60)
+
+    def get_thumbnail_url(self, size):
+        """
+            Returns url which serves sample's thumbnail in given size.
+
+            :param size: one of `size`, `large`
+        """
+        return reverse('sample_thumbnail', args=[self.id, size])
+
+    def get_large_thumbnail_url(self):
+        """
+            Returns url which serves sample's small thumbnail.
+        """
+        return self.get_thumbnail_url('large')
 
     def get_large_thumbnail(self):
         """

@@ -62,8 +62,8 @@ def log_sample_done(job_id, sample_id, *args, **kwargs):
     params = {
         'sample_id': sample_id,
         'sample_url': sample.url,
-        'sample_screenshot': sample.screenshot,
-        'sample_image': sample.screenshot,
+        'sample_screenshot': sample.get_small_thumbnail_url(),
+        'sample_image': sample.get_small_thumbnail_url(),
     }
 
     LogEntry.objects.log(
@@ -81,7 +81,7 @@ def log_gold_sample_done(job_id, gold_id, *args, **kwargs):
     params = {
         'gold_sample': gold_id,
         'gold_url': gold.sample.url,
-        'sample_image': gold.sample.screenshot,
+        'sample_image': gold.sample.get_small_thumbnail_url(),
         'gold_label': gold.label,
     }
     LogEntry.objects.log(
@@ -130,7 +130,7 @@ def log_sample_classified(job_id, class_id, *args, **kwargs):
         'class_id': class_sample.id,
         'sample_id': class_sample.sample_id,
         'class_url': class_sample.url,
-        'sample_image': class_sample.sample.screenshot,
+        'sample_image': class_sample.sample.get_small_thumbnail_url(),
         'class_label': class_sample.label,
     }
     LogEntry.objects.log(
@@ -147,7 +147,7 @@ def log_sample_screenshot_done(sample_id, *args, **kwargs):
     params = {
         'sample_id': sample_id,
         'sample_url': sample.url,
-        'sample_image': sample.screenshot,
+        'sample_image': sample.get_small_thumbnail_url(),
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_SAMPLE_SCREENSHOT_DONE,
@@ -163,7 +163,7 @@ def log_sample_text_done(sample_id, *args, **kwargs):
     params = {
         'sample_id': sample_id,
         'sample_url': sample.url,
-        'sample_image': sample.screenshot,
+        'sample_image': sample.get_small_thumbnail_url(),
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_SAMPLE_TEXT_DONE,
@@ -179,7 +179,7 @@ def log_sample_text_fail(sample_id, error_code, *args, **kwargs):
     params = {
         'sample_id': sample_id,
         'sample_url': sample.url,
-        'sample_image': sample.screenshot,
+        'sample_image': sample.get_small_thumbnail_url(),
         'error_code': error_code
     }
     LogEntry.objects.log(

@@ -51,4 +51,8 @@ function job(){
   this.alerts = ko.observableArray();
   this.top_workers = ko.observableArray();
   this.newest_votes = ko.observableArray();
+
+  this.hasOwnWorkforceLinks = ko.computed(function(){
+    return (this.gather_url() != "") && (this.voting_url() != "");
+  }, this);
 }
