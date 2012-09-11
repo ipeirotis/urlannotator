@@ -31,8 +31,7 @@
 #     auto server number '--auto-servernum' and then settings the server num to
 #     a number? What sorcery is this?
 
-from webkit2png import (WebkitRenderer, BaseWebkitException,
-    error_code_to_exception)
+from webkit2png import WebkitRenderer, BaseWebkitException
 
 import sys
 import signal
@@ -44,6 +43,7 @@ from optparse import OptionParser
 from PyQt4.QtGui import QApplication
 from PyQt4.QtCore import qVersion, QTimer
 from PyQt4.QtNetwork import QNetworkProxy
+from PyQt4.QtWebKit import QWebSettings
 
 from utils import os_result_to_code
 
@@ -188,7 +188,6 @@ if __name__ == '__main__':
         "Version %s, Python %s, Qt %s", VERSION, sys.version, qVersion()
     )
 
-
     # Technically, this is a QtGui application, because QWebPage requires it
     # to be. But because we will have no user interaction, and rendering can
     # not start before 'app.exec_()' is called, we have to trigger our "main"
@@ -223,7 +222,10 @@ if __name__ == '__main__':
 
             try:
                 res = 0
-                renderer.render_to_file(url=options.url, file_object=options.output)
+                renderer.render_to_file(
+                    url=options.url,
+                    file_object=options.output
+                )
             except BaseWebkitException, e:
                 res = e.status_code
             finally:

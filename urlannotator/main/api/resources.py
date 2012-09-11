@@ -7,8 +7,7 @@ from django.core.urlresolvers import reverse
 from itertools import chain
 
 from tastypie.resources import ModelResource, Resource
-from tastypie.authentication import (ApiKeyAuthentication,
-    Authentication)
+from tastypie.authentication import Authentication
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpUnauthorized, HttpNotFound, HttpBadRequest
 from django.utils.http import same_origin
