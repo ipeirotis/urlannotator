@@ -613,15 +613,19 @@ class JobResource(ModelResource):
             for x in top_workers]
 
         newest_votes = job.get_newest_votes()
-        date = TrainingSet.objects.newest_for_job(job=job).revision
-        date = date.strftime('%Y-%m-%d %H:%M:%S')
-        newest_votes = [{
-            'screenshot': s.sample.screenshot,
-            'url': s.sample.url,
-            'label': s.label,
-            'added_on': s.sample.added_on,
-            'date': date,
-        } for s in newest_votes]
+        training_set = TrainingSet.objects.newest_for_job(job=job)
+        if training_set:
+            date = training_set.revision.strftime('%Y-%m-%d %H:%M:%S')
+            newest_votes = [{
+                'screenshot': s.sample.screenshot,
+                'url': s.sample.url,
+                'label': s.label,
+                'added_on': s.sample.added_on,
+                'date': date,
+            } for s in newest_votes]
+
+        else:
+            newest_votes = []
 
         response = {
             'id': job.id,

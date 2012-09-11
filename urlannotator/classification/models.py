@@ -48,30 +48,6 @@ class ClassifierPerformance(Statistics):
     objects = PerformanceManager()
 
 
-class PerformancePerHourManager(models.Manager):
-    def latest_for_job(self, job):
-        """
-            Returns performance statistic for given job.
-        """
-        els = super(PerformancePerHourManager, self).\
-            get_query_set().filter(job=job).order_by('-date')
-        if not els.count():
-            return None
-
-        return els[0]
-
-
-class ClassifierPerformancePerHour(Statistics):
-    """
-        Keeps track of classifer performance for each job per hour.
-    """
-    job = models.ForeignKey(Job)
-    date = models.DateTimeField(auto_now_add=True)
-    value = JSONField()
-
-    objects = PerformancePerHourManager()
-
-
 def create_stats(sender, instance, created, **kwargs):
     """
         Creates a brand new statistics' entry for new job.
@@ -79,7 +55,6 @@ def create_stats(sender, instance, created, **kwargs):
     if created:
         val = json.dumps({})
         ClassifierPerformance.objects.create(job=instance, value=val)
-        ClassifierPerformancePerHour.objects.create(job=instance, value=val)
 
 post_save.connect(create_stats, sender=Job)
 

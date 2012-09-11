@@ -151,20 +151,16 @@ class SampleVotingManager(Task):
         """ Main task function.
         """
         unmapped_samples = self.get_unmapped_samples()
-        jobs = self.get_jobs(unmapped_samples)
+        try:
+            jobs = self.get_jobs(unmapped_samples)
 
-        for job, new_samples, initialized in jobs:
-            try:
+            for job, new_samples, initialized in jobs:
                 if initialized:
                     self.update_job(job, new_samples)
                 else:
                     self.initialize_job(job, new_samples)
-            except Exception:
-                # Suppress all exceptions.
-                # TODO: Handle possible exceptions properly here. They are
-                #       causing bad stuff to happen with worker's RAM
-                #       management (10x increase, never garbaged).
-                pass
+        except Exception:
+            pass
 
 
 send_for_voting = registry.tasks[SampleVotingManager.name]

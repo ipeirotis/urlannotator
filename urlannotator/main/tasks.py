@@ -20,6 +20,12 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
 
     try:
         text = get_web_text(url)
+
+        Sample.objects.filter(id=sample_id).update(text=text)
+        send_event(
+            "EventSampleContentDone",
+            sample_id=sample_id,
+        )
     except subprocess.CalledProcessError, e:
         # Something wrong has happened to links. Couldn't find documentation on
         # error codes - assume bad stuff has happened that retrying won't fix.
@@ -29,12 +35,10 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
             error_code=e.returncode
         )
         return False
+    except DatabaseError, e:
+        current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
+            60 * 60 * 24))
 
-    Sample.objects.filter(id=sample_id).update(text=text)
-    send_event(
-        "EventSampleContentDone",
-        sample_id=sample_id,
-    )
     return True
 
 
@@ -47,6 +51,12 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
 
     try:
         screenshot = get_web_screenshot(url)
+        Sample.objects.filter(id=sample_id).update(screenshot=screenshot)
+
+        send_event(
+            "EventSampleScreenshotDone",
+            sample_id=sample_id,
+        )
     except BadURLException, e:
         send_event(
             "EventSampleScreenshotFail",
@@ -58,12 +68,6 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
         current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
 
-    Sample.objects.filter(id=sample_id).update(screenshot=screenshot)
-
-    send_event(
-        "EventSampleScreenshotDone",
-        sample_id=sample_id,
-    )
     return True
 
 

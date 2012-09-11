@@ -12,7 +12,7 @@ from tastypie.exceptions import ImmediateHttpResponse
 from social_auth.models import UserSocialAuth
 
 from urlannotator.main.models import Account, Job, Worker, Sample, GoldSample
-from urlannotator.classification.models import ClassifiedSample
+from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
     paginate_list, AlertResource, ClassifiedSampleResource)
@@ -606,7 +606,7 @@ class ApiTests(TestCase):
         # Unauthorized
         self.assertEqual(resp.status_code, 401)
 
-        Job.objects.create_active(
+        job = Job.objects.create_active(
             account=self.user.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
@@ -632,6 +632,18 @@ class ApiTests(TestCase):
         array = json.loads(resp.content)
         self.assertIn('sample_gathering_url', array)
         self.assertIn('sample_voting_url', array)
+        self.assertIn('newest_votes', array)
+        self.assertTrue(array['newest_votes'])
+
+        TrainingSet.objects.filter(job=job).delete()
+        resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
+            follow=True)
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertIn('sample_gathering_url', array)
+        self.assertIn('sample_voting_url', array)
+        self.assertIn('newest_votes', array)
 
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/2/'),
             follow=True)
