@@ -212,9 +212,9 @@ def configure_services(setup=False):
     """Ensures correct init and running scripts for services are installed."""
     supervisor.configure()
     if setup:
-        rabbitmq_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
-            'supervisor-rabbitmq.conf')
-        start_supervisor(conf=rabbitmq_conf)
+        services_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+            'supervisor-services.conf')
+        start_supervisor(conf=services_conf)
     nginx.configure()
 
 

@@ -38,7 +38,7 @@ def configure():
                 source, destination, context, mode="644")
 
     scripts = ['supervisorctl.sh', 'supervisord.sh', 'rabbitmq.sh',
-        'celery-worker.sh', 'supervisord-rabbitmq.sh', 'supervisorctl-rabbitmq.sh']
+        'celery-worker.sh', 'supervisord-services.sh', 'supervisorctl-services.sh']
     for script_name in scripts:
         source = pjoin(cget("local_root"), 'deployment', 'scripts', script_name)
         destination = pjoin(cget("script_dir"), script_name)

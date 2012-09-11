@@ -482,7 +482,6 @@ class Sample(models.Model):
             'key': self.get_screenshot_key(),
         }
         r = requests.get('http://' + settings.IMAGESCALE_URL, params=params)
-        print r.content, r.status_code
         return r.content
 
     def get_small_thumbnail(self):
