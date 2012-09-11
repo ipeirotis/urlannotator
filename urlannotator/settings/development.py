@@ -7,7 +7,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-        # 'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
+        'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
     }
 }
 
@@ -70,13 +70,6 @@ try:
     }
 except ImportError:
     pass
-
-
-# CELERY_ALWAYS_EAGER = True
-# TOOLS_TESTING = True
-
-# Broker for celery
-BROKER_URL = 'amqp://'
 
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')

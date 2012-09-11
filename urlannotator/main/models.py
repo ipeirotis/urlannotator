@@ -5,7 +5,7 @@ import urlparse
 from tastypie.models import create_api_key
 
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Sum
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.utils.timezone import now
@@ -230,11 +230,8 @@ class Job(models.Model):
             Returns number of hours workers have worked on this project
             altogether.
         """
-        spent = 0
-        for assoc in WorkerJobAssociation.objects.filter(job=self):
-            spent += assoc.worked_hours
-
-        return spent
+        return WorkerJobAssociation.objects.filter(job=self).\
+            aggregate(Sum('worked_hours'))
 
     def get_urls_collected(self):
         """
@@ -632,6 +629,16 @@ class Worker(models.Model):
             source_type=worker_type_to_sample_source[self.worker_type]
         ).count()
 
+    def log_time_for_job(self, job, time):
+        """
+            Logs time worker has worker for given job for.
+
+            :param time: a Decimal instance, or any other type that a Decimal
+                         can be constructed from.
+        """
+        assoc = WorkerJobAssociation.objects.filter(job=job, worker=self)
+        assoc.update(worked_hours=F('worked_hours') + time)
+
     def get_hours_spent_for_job(self, job):
         """
             Returns hours spent by given worker for given job.
@@ -690,7 +697,8 @@ class WorkerJobAssociation(models.Model):
     job = models.ForeignKey(Job)
     worker = models.ForeignKey(Worker)
     started_on = models.DateTimeField(auto_now_add=True)
-    worked_hours = models.PositiveIntegerField(default=0)
+    worked_hours = models.DecimalField(default=0, decimal_places=2,
+        max_digits=10)
 
     objects = WorkerJobManager()
 
