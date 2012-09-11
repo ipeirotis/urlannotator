@@ -618,12 +618,19 @@ class Worker(models.Model):
             Returns urls collected by given worker for given job.
         """
         from urlannotator.classification.models import ClassifiedSample
-        s = ClassifiedSample.objects.filter(
+        return ClassifiedSample.objects.filter(
             job=job,
             source_type=worker_type_to_sample_source[self.worker_type],
+            source_val=self.external_id)
+
+    def get_links_collected(self):
+        """ Returns number of links collected.
+        """
+        from urlannotator.classification.models import ClassifiedSample
+        return ClassifiedSample.objects.filter(
             source_val=self.external_id,
-        )
-        return s
+            source_type=worker_type_to_sample_source[self.worker_type]
+        ).count()
 
     def get_hours_spent_for_job(self, job):
         """
@@ -770,6 +777,29 @@ class URLStatistics(models.Model):
     delta = models.IntegerField(default=0)
 
     objects = URLStatManager()
+
+
+class LinksStatManager(models.Manager):
+    def latest_for_worker(self, worker):
+        """ Returns url collected statistic for given worker.
+        """
+        els = super(LinksStatManager, self).get_query_set().filter(
+            worker=worker).order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class LinksStatistics(models.Model):
+    """ Keeps track of urls collected for worker per day.
+    """
+    worker = models.ForeignKey(Worker)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = LinksStatManager()
 
 
 def create_stats(sender, instance, created, **kwargs):

@@ -39,12 +39,6 @@ STATIC_URL = '/statics/'
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
-# Interval between a job monitor check. Defaults to 15 minutes.
-JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
-
-# Interval between statistics entries, to store a new one.
-JOB_MONITOR_ENTRY_INTERVAL = datetime.timedelta(hours=1)
-
 SOCIAL_AUTH_CREATE_USERS = False
 
 SOCIAL_AUTH_PIPELINE = (
@@ -288,21 +282,33 @@ CELERY_IMPORTS = (
 CELERYD_MAX_TASKS_PER_CHILD = 10
 CELERY_MAX_CACHED_RESULTS = 5
 
+# Interval between a job monitor check. Defaults to 15 minutes.
+JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
+WORKER_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
+
+# Interval between statistics entries, to store a new one.
+JOB_MONITOR_ENTRY_INTERVAL = datetime.timedelta(hours=1)
+
 CELERYBEAT_SCHEDULE = {
     'spent_monitor': {
-        'task': 'urlannotator.statistics.spent_monitor.SpentMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.SpentMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'url_monitor': {
-        'task': 'urlannotator.statistics.url_monitor.URLMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.URLMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'progress_monitor': {
-        'task': 'urlannotator.statistics.progress_monitor.ProgressMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.ProgressMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
+    },
+    'links_monitor': {
+        'task': 'urlannotator.statistics.monitor_tasks.LinksMonitor',
+        'schedule': WORKER_MONITOR_INTERVAL,
+        'kwargs': {'interval': datetime.timedelta(days=1)}
     },
     'send_validated_samples': {
         'task': 'urlannotator.classification.event_handlers.SampleVotingManager',

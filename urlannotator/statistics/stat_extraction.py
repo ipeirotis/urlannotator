@@ -4,7 +4,7 @@ import json
 from django.utils.timezone import now
 
 from urlannotator.main.models import (SpentStatistics, ProgressStatistics,
-    URLStatistics)
+    URLStatistics, LinksStatistics)
 from urlannotator.classification.models import ClassifierPerformance
 
 
@@ -16,12 +16,11 @@ def format_date_val(val):
     return '[Date.UTC(%s),%d]' % (arg_string, val['delta'])
 
 
-def extract_stat(cls, job):
+def extract_stat(cls, stats):
     """
         Returns a string representing a list of statistics samples formatted
         for use in Highcharts. The closest, earliest value is always used.
     """
-    stats = cls.objects.filter(job=job).order_by('date')
     stats_count = stats.count()
     now_time = now()
     idx = 1
@@ -63,21 +62,32 @@ def extract_progress_stats(job, context):
     '''
         Extracts job's progress statistics as difference per hour.
     '''
-    context['progress_stats'] = extract_stat(ProgressStatistics, job)
+    stats = ProgressStatistics.objects.filter(job=job).order_by('date')
+    context['progress_stats'] = extract_stat(ProgressStatistics, stats)
 
 
 def extract_spent_stats(job, context):
     '''
         Extracts job's money spent statistics as difference per hour.
     '''
-    context['spent_stats'] = extract_stat(SpentStatistics, job)
+    stats = SpentStatistics.objects.filter(job=job).order_by('date')
+    context['spent_stats'] = extract_stat(SpentStatistics, stats)
 
 
 def extract_url_stats(job, context):
     '''
         Extracts job's url statistics as difference per hour.
     '''
-    context['url_stats'] = extract_stat(URLStatistics, job)
+    stats = URLStatistics.objects.filter(job=job).order_by('date')
+    context['url_stats'] = extract_stat(URLStatistics, stats)
+
+
+def extract_workerlinks_stats(worker, context):
+    '''
+        Extracts job's url statistics as difference per hour.
+    '''
+    stats = LinksStatistics.objects.filter(worker=worker).order_by('date')
+    context['workerlinks_stats'] = extract_stat(LinksStatistics, stats)
 
 
 def extract_stat_by_val(cls, job, val_fun):
