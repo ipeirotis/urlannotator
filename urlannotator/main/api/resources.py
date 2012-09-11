@@ -882,12 +882,7 @@ class VoteResource(TagasaurisNotifyResource):
         quality_vote_ids = []
 
         for worker_id, mediaobjects in results.iteritems():
-            try:
-                worker = Worker.objects.get(external_id=worker_id)
-            except Worker.DoesNotExist:
-                worker = Worker.objects.create_internal(external_id=worker_id)
-                log.warning('Tagasauris worker with ID:%s '
-                    'not registered in database.' % worker_id)
+            worker = Worker.objects.get_or_create_tagasauris(worker_id)
 
             for mediaobject_id, answers in mediaobjects.iteritems():
                 sample = SampleMapping.objects.get(
