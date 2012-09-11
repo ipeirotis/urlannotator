@@ -230,8 +230,10 @@ class Job(models.Model):
             Returns number of hours workers have worked on this project
             altogether.
         """
-        return WorkerJobAssociation.objects.filter(job=self).\
+        sum_res = WorkerJobAssociation.objects.filter(job=self).\
             aggregate(Sum('worked_hours'))
+        sum_res = sum_res['worked_hours__sum']
+        return sum_res if sum_res else 0
 
     def get_urls_collected(self):
         """

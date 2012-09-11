@@ -5,9 +5,8 @@ from django.contrib.auth.models import User
 
 from urlannotator.main.models import (Job, SpentStatistics, URLStatistics,
     ProgressStatistics)
-from urlannotator.statistics.spent_monitor import spent_monitor
-from urlannotator.statistics.url_monitor import url_monitor
-from urlannotator.statistics.progress_monitor import progress_monitor
+from urlannotator.statistics.monitor_tasks import (spent_monitor, url_monitor,
+    progress_monitor)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats,
     update_classifier_stats)
