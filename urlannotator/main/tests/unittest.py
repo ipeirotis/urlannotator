@@ -870,14 +870,14 @@ class ApiTests(TestCase):
 
         res = ClassifiedSampleResource().raw_detail(class_id=cs.id)
         self.assertEqual(res['finished'], cs.is_successful())
-        self.assertEqual(res['screenshot'], sample.screenshot)
+        self.assertEqual(res['screenshot'], sample.get_small_thumbnail_url())
         self.assertEqual(res['url'], sample.url)
 
         sample.screenshot = 'test'
         sample.save()
 
         res = ClassifiedSampleResource().raw_detail(class_id=cs.id)
-        self.assertEqual(res['screenshot'], sample.screenshot)
+        self.assertEqual(res['screenshot'], sample.get_small_thumbnail_url())
 
     def testWorkerResource(self):
         self.c.login(username='testing', password='test')
