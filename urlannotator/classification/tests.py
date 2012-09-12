@@ -5,7 +5,8 @@ from django.test.utils import override_settings
 from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job, Worker, LABEL_YES, LABEL_NO
-from urlannotator.classification.classifiers import Classifier247
+from urlannotator.classification.classifiers import (Classifier247,
+    Classifier as ClassifierObject)
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample, ClassifierPerformance)
 from urlannotator.classification.factories import classifier_factory
@@ -57,6 +58,18 @@ class Classifier247Tests(TestCase):
         self.assertNotEqual(self.classifier247.classify(test_sample), None)
         self.assertNotEqual(self.classifier247.classify_with_info(test_sample),
             None)
+
+
+class ClassifierTests(TestCase):
+    def testClassifier(self):
+        classifier = ClassifierObject()
+
+        self.assertRaises(NotImplementedError, classifier.train)
+        self.assertRaises(NotImplementedError, classifier.update, [0])
+        self.assertRaises(NotImplementedError, classifier.classify, [0])
+        self.assertRaises(NotImplementedError, classifier.analyze)
+        self.assertRaises(NotImplementedError, classifier.get_train_status)
+        self.assertRaises(NotImplementedError, classifier.classify_with_info, [0])
 
 
 class SimpleClassifierTests(TestCase):

@@ -1,6 +1,8 @@
 import re
-
-from celery import registry
+import mock
+from itertools import chain
+from contextlib import contextmanager
+from celery import task, registry
 
 
 class FlowControlMixin(object):
@@ -57,3 +59,62 @@ class FlowControlMixin(object):
             Returns list of tuples (pattern, task).
         """
         return self._original_registered
+
+
+@task()
+def mocked_task(*args, **kwargs):
+    """
+        Empty mocked celery task.
+    """
+    pass
+
+hardcoded_mocks = [
+    ('urlannotator.main.factories.web_content_extraction', mocked_task),
+    ('urlannotator.main.factories.web_screenshot_extraction', mocked_task),
+]
+
+
+def apply_patches(mocks=[]):
+    """
+        Applies passed list of mocks and hardcoded list of always-patched
+        objects.
+
+        :rtype: List of patchers.
+    """
+    mocks = chain(mocks, hardcoded_mocks)
+    return map(lambda x: mock.patch(
+        target=x[0],
+        new=x[1],
+    ), mocks)
+
+
+@contextmanager
+def ToolsMocked(mocks=[]):
+    """
+        Context manager to mock tools and any additional objects.
+
+        :param mocks: Optional list of 2-tuples (target, mock). For each tuple,
+                      `target` will be imported and mocked with `mock`.
+                      Be careful when specifying `target` and refer to
+                      mock.patch of mock module for additional information.
+    """
+    patchers = apply_patches(mocks)
+    map(lambda x: x.start(), patchers)
+    yield
+    map(lambda x: x.stop(), patchers)
+
+
+class ToolsMockedMixin(object):
+    """
+        Mixin to be used with TestCase that mocks web extraction tools.
+        Use attribute `mocks` to hold a list of 2-tuples (`target`, `mock`)
+        for custom mocking. See mock.patch of mock module for reference.
+    """
+    def _pre_setup(self):
+        self.patchers = apply_patches(getattr(self, 'mocks', []))
+        map(lambda x: x.start(), self.patchers)
+        super(ToolsMockedMixin, self)._pre_setup()
+
+    def _post_teardown(self):
+        super(ToolsMockedMixin, self)._post_teardown()
+        map(lambda x: x.stop(), self.patchers)
