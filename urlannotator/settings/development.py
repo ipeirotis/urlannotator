@@ -2,6 +2,11 @@
 
 import os
 from defaults import *
+# Import everything from imagescale2, but rename DEF_PORT
+# to IMAGESCALE_DEF_PORT
+from imagescale2 import *
+from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
+
 
 DATABASES = {
     'default': {
@@ -71,6 +76,7 @@ try:
 except ImportError:
     pass
 
+IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):

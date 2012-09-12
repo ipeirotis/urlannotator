@@ -2,6 +2,11 @@
 
 import os
 from defaults import *
+# Import everything from imagescale2, but rename DEF_PORT
+# to IMAGESCALE_DEF_PORT
+from imagescale2 import *
+from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
+
 
 DATABASES = {
     'default': {
