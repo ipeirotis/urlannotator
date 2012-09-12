@@ -36,7 +36,8 @@ class LongActionManager(models.Manager):
 
 class LongActionEntry(models.Model):
     """
-        Contains entries from current long-term running actions for a given job
+        Contains entries from **current** long-term running actions for
+        a given job. When action is finished corresponding entry is deleted.
     """
     LONG_ACTIONS = (
         (LONG_ACTION_TRAINING, "Classifier is being trained"),
