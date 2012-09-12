@@ -17,7 +17,7 @@
         "config", "id_rsa", "id_rsa.pub"
     ],
     "supervisor_files": [
-        "supervisord.conf", "project.conf", "supervisor-rabbitmq.conf", "rabbitmq.conf"
+        "supervisord.conf", "project.conf", "supervisor-services.conf", "services.conf"
     ],
     "nginx_sites_enabled": [
         "urlannotator"
