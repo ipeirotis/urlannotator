@@ -11,7 +11,7 @@ DATABASES = {
 }
 
 SITE_URL = 'urlannotator.10clouds.com'
-IMAGESCALE_URL = 'urlannotator.10clouds.com:' + IMAGESCALE_DEF_PORT
+IMAGESCALE_URL = 'urlannotator.10clouds.com:%d' % IMAGESCALE_DEF_PORT
 
 EMAIL_BACKEND = 'urlannotator.main.backends.email.EmailBackend'
 
