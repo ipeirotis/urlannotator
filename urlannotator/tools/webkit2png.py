@@ -52,7 +52,7 @@ def error_code_to_exception(code):
     """
         Raises an exception according to given error code.
     """
-    error_class = exceptions.get(code)
+    error_class = exceptions.get(code, BaseWebkitException)
     raise error_class()
 
 

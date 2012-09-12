@@ -8,7 +8,7 @@ from urlannotator.classification.models import ClassifiedSample
 from urlannotator.main.models import Sample, GoldSample, Job
 from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
 from urlannotator.flow_control import send_event
-from urlannotator.tools.webkit2png import BadURLException
+from urlannotator.tools.webkit2png import BaseWebkitException
 
 
 @task()
@@ -57,7 +57,7 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
             "EventSampleScreenshotDone",
             sample_id=sample_id,
         )
-    except BadURLException, e:
+    except BaseWebkitException, e:
         send_event(
             "EventSampleScreenshotFail",
             sample_id=sample_id,
