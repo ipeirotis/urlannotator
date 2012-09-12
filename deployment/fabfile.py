@@ -208,20 +208,20 @@ def sync_db():
     run_django_cmd("migrate", args="--noinput")
 
 
-def configure_services(setup=False):
+def configure_services():
     """Ensures correct init and running scripts for services are installed."""
     supervisor.configure()
-    if setup:
-        services_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
-            'supervisor-services.conf')
-        start_supervisor(conf=services_conf)
     nginx.configure()
 
 
-def __reload_services():
+def __reload_services(setup=False):
     """Reloads previously configured services"""
     nginx.reload()
     supervisor.reload()
+    if setup:
+        services_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+            'supervisor-services.conf')
+        supervisor.reload(conf=services_conf)
 
 
 def set_instance_conf():
@@ -416,9 +416,9 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     sync_db()
 
     # Uploads settings and scripts for services.
-    configure_services(setup=setup_environment)
+    configure_services()
     # Reload services to load new config.
-    __reload_services()
+    __reload_services(setup=setup_environment)
 
     # Configure and build documentation
     #doc.configure()

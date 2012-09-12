@@ -64,17 +64,17 @@ def start_supervisor(conf=None):
     return sudo('supervisord --configuration="%s"' % conf)
 
 
-def reload():
+def reload(conf=None):
     """Start or restart supervisor process."""
     ve_dir = cget("virtualenv_dir")
     activate = pjoin(ve_dir, "bin", "activate")
     show(yellow("Reloading supervisor."))
     with prefix("source %s" % activate):
         with settings(hide("stderr", "stdout", "running"), warn_only=True):
-            res = run_supevisordctl('reload')
+            res = run_supevisordctl('reload', conf=conf)
             if res.return_code != 0:
                 show(yellow("Supervisor unavailable, starting new process."))
-                res = start_supervisor()
+                res = start_supervisor(conf=conf)
                 if res.return_code != 0:
                     show(red("Error starting supervisor!."))
 
