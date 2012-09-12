@@ -335,14 +335,15 @@ TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
 TAGASAURIS_VOTING_WORKFLOW = 'voting'
 
-# TODO: This is ugly... any ideas how to change this?
+# TODO: XXX: This is ugly... any ideas how to change this?
+# NOTE: Please when editing workflows in tagasauris admin update this settings.
 TAGASAURIS_NOTIFY = {
     TAGASAURIS_VOTING_WORKFLOW: 'NotifyTask_1',
-    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_4',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_2',
 }
 TAGASAURIS_SURVEY = {
-    TAGASAURIS_VOTING_WORKFLOW: 'Survey_2',
-    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Survey_6',
+    TAGASAURIS_VOTING_WORKFLOW: 'Survey_0',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Survey_0',
 }
 
 TAGASAURIS_CALLBACKS = 'http://127.0.0.1'
