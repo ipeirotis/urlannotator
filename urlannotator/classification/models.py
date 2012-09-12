@@ -166,15 +166,6 @@ class ClassifiedSample(models.Model):
             return CLASSIFIED_SAMPLE_SUCCESS
         return CLASSIFIED_SAMPLE_PENDING
 
-    def get_source_worker(self):
-        """
-            Returns a worker that has created this sample. `None` otherwise.
-        """
-        return Worker.objects.get_worker(
-            source_type=self.source_type,
-            source_val=self.source_val,
-        )
-
     def is_pending(self):
         return self.get_status() == CLASSIFIED_SAMPLE_PENDING
 

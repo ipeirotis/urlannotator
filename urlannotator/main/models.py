@@ -637,15 +637,6 @@ class WorkerManager(models.Manager):
             worker_type=WORKER_TYPE_ODESK,
         )
 
-    def get_worker(self, source_type, source_val, **kwargs):
-        """
-            Returns worker that corresponds to source_type, source_val pair.
-        """
-        worker_type = sample_source_to_worker.get(
-            source_type, WORKER_TYPE_INTERNAL
-        )
-        return self.get(worker_type=worker_type, external_id=source_val)
-
 
 class Worker(models.Model):
     """

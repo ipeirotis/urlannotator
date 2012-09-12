@@ -15,6 +15,9 @@ DATABASES = {
     }
 }
 
+JOB_DEFAULT_CLASSIFIER = 'Classifier247'
+TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
+
 SITE_URL = 'urlannotator.10clouds.com'
 IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 
