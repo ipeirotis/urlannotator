@@ -13,7 +13,6 @@ from urlannotator.tools.webkit2png import BaseWebkitException
 
 class WebExtractorsTests(TestCase):
 
-    @override_settings(TOOLS_TESTING=False)
     def testWebTextExtractor(self):
         text = get_web_text('http://google.com')
         self.assertTrue('google' in text)
@@ -25,7 +24,6 @@ class WebExtractorsTests(TestCase):
         # self.assertTrue('10Clouds' in text)
         # self.assertTrue('We make great apps' in text)
 
-    @override_settings(TOOLS_TESTING=False)
     def testWebScreenshotExtractor(self):
         screenshot = get_web_screenshot('http://google.com')
 

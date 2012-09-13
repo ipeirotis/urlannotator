@@ -12,9 +12,10 @@ from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     update_classifier_stats)
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.classification.models import ClassifierPerformance
+from urlannotator.flow_control.test import ToolsMockedMixin
 
 
-class testJobMonitors(TestCase):
+class testJobMonitors(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -42,7 +43,7 @@ class testJobMonitors(TestCase):
             self.assertEqual(cls.objects.filter(job=self.job).count(), 2)
 
 
-class testStatExtraction(TestCase):
+class testStatExtraction(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')

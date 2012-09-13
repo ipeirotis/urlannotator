@@ -350,6 +350,3 @@ TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/sample/tagasauris/%s/'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/tagasauris/%s/'
-
-# Tools testing flag. If set to True, certain tools will be mocked.
-TOOLS_TESTING = False

@@ -264,13 +264,8 @@ def train_on_set(set_id, *args, **kwargs):
     if not job.is_classifier_created():
         train_on_set.retry(countdown=30)
 
-    # If we are testing tools, continue with synchronized flow.
-    if settings.TOOLS_TESTING:
-        train(set_id=set_id)
-
-    else:
-        process_execute(target=prepare_func,
-            kwargs={'func': train, 'set_id': set_id})
+    process_execute(target=prepare_func,
+        kwargs={'func': train, 'set_id': set_id})
 
 
 @task(ignore_result=True)

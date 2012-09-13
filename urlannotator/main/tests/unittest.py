@@ -17,6 +17,7 @@ from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
     paginate_list, AlertResource, ClassifiedSampleResource)
 from urlannotator.logging.models import LogEntry
+from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
 
 
 class SampleFactoryTest(TestCase):
@@ -24,20 +25,20 @@ class SampleFactoryTest(TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
 
-        self.job = Job.objects.create_active(
-            account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+        with ToolsMocked():
+            self.job = Job.objects.create_active(
+                account=self.u.get_profile(),
+                gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
     def testSimpleSample(self):
         test_url = 'http://google.com'
 
-        with self.settings(TOOLS_TESTING=False):
-            sf = SampleFactory()
-            res = sf.new_sample(
-                job_id=self.job.id,
-                url=test_url,
-                source_type=''
-            )
+        sf = SampleFactory()
+        res = sf.new_sample(
+            job_id=self.job.id,
+            url=test_url,
+            source_type=''
+        )
         res.get()
 
         query = Sample.objects.filter(job=self.job, url=test_url)
@@ -51,13 +52,12 @@ class SampleFactoryTest(TestCase):
         self.assertEqual(s.headers.type, 'image/jpeg')
 
         # Check for broken urls - sample shouldn't be created
-        with self.settings(TOOLS_TESTING=False):
-            sf = SampleFactory()
-            res = sf.new_sample(
-                job_id=self.job.id,
-                url=test_url,
-                source_type=''
-            )
+        sf = SampleFactory()
+        res = sf.new_sample(
+            job_id=self.job.id,
+            url=test_url,
+            source_type=''
+        )
         res.get()
 
         query = Sample.objects.filter(job=self.job, url=test_url)
@@ -65,7 +65,7 @@ class SampleFactoryTest(TestCase):
         self.assertEqual(query.count(), 1)
 
 
-class JobFactoryTest(TestCase):
+class JobFactoryTest(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
 
@@ -87,7 +87,7 @@ class JobFactoryTest(TestCase):
         self.assertEqual(GoldSample.objects.all().exclude(label='').count(), 1)
 
 
-class BaseNotLoggedInTests(TestCase):
+class BaseNotLoggedInTests(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.c = Client()
 
@@ -181,7 +181,7 @@ class BaseNotLoggedInTests(TestCase):
         self.assertEqual(resp.status_code, 302)
 
 
-class LoggedInTests(TestCase):
+class LoggedInTests(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -223,7 +223,7 @@ class LoggedInTests(TestCase):
         self.assertIn('error', resp.context)
 
 
-class SettingsTests(TestCase):
+class SettingsTests(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -318,7 +318,7 @@ class SettingsTests(TestCase):
         self.assertIn('twitter', resp.context)
 
 
-class ProjectTests(TestCase):
+class ProjectTests(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -584,7 +584,7 @@ class ProjectTests(TestCase):
             self.assertTrue(resp.context['sample'])
 
 
-class DocsTest(TestCase):
+class DocsTest(ToolsMockedMixin, TestCase):
     def testDocs(self):
         c = Client()
 
@@ -592,7 +592,7 @@ class DocsTest(TestCase):
         self.assertTrue(True)
 
 
-class ApiTests(TestCase):
+class ApiTests(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.api_url = '/api/v1/'
@@ -940,7 +940,7 @@ class ApiTests(TestCase):
         self.assertEqual(len(array['entries']), array['count'])
 
 
-class TestAdmin(TestCase):
+class TestAdmin(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='test2', password='1')
 

@@ -13,11 +13,11 @@ from urlannotator.classification.factories import classifier_factory
 from urlannotator.classification.event_handlers import process_votes
 from urlannotator.crowdsourcing.event_handlers import initialize_external_jobs
 from urlannotator.crowdsourcing.models import WorkerQualityVote
-from urlannotator.flow_control.test import FlowControlMixin
+from urlannotator.flow_control.test import FlowControlMixin, ToolsMockedMixin
 from urlannotator.flow_control import send_event
 
 
-class Classifier247Tests(TestCase):
+class Classifier247Tests(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -72,7 +72,7 @@ class ClassifierTests(TestCase):
         self.assertRaises(NotImplementedError, classifier.classify_with_info, [0])
 
 
-class SimpleClassifierTests(TestCase):
+class SimpleClassifierTests(ToolsMockedMixin, TestCase):
 
     @override_settings(JOB_DEFAULT_CLASSIFIER='SimpleClassifier')
     def setUp(self):
@@ -124,7 +124,7 @@ class SimpleClassifierTests(TestCase):
         self.assertNotEqual(sc.classify_with_info(test_sample), None)
 
 
-class TrainingSetManagerTests(TestCase):
+class TrainingSetManagerTests(ToolsMockedMixin, TestCase):
 
     def testTrainingSet(self):
         job = Job()
@@ -142,7 +142,7 @@ class TrainingSetManagerTests(TestCase):
             job.id)
 
 
-class ClassifierPerformanceTests(TestCase):
+class ClassifierPerformanceTests(ToolsMockedMixin, TestCase):
     def testPerformance(self):
         u = User.objects.create_user(username='testing', password='test')
 
@@ -156,7 +156,7 @@ class ClassifierPerformanceTests(TestCase):
         self.assertFalse(ClassifierPerformance.objects.latest_for_job(job))
 
 
-class ClassifiedSampleTests(TestCase):
+class ClassifiedSampleTests(ToolsMockedMixin, TestCase):
     def testClassified(self):
         u = User.objects.create_user(username='testing', password='test')
 
@@ -178,7 +178,7 @@ class ClassifiedSampleTests(TestCase):
         self.assertEqual(cs.get_source_worker(), None)
 
 
-class ClassifierFactoryTests(TestCase):
+class ClassifierFactoryTests(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -215,15 +215,14 @@ class LongTrainingTest(FlowControlMixin, TransactionTestCase):
         return [entry for entry in old if entry[1] != initialize_external_jobs]
 
     def testLongTraining(self):
-        with override_settings(TOOLS_TESTING=False):
-            job = Job.objects.create_active(
-                account=self.u.get_profile(),
-                gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
-            time.sleep(2)
+        job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+        time.sleep(2)
 
-            # Refresh our job object
-            job = Job.objects.get(id=job.id)
-            self.assertTrue(job.is_classifier_trained())
+        # Refresh our job object
+        job = Job.objects.get(id=job.id)
+        self.assertTrue(job.is_classifier_trained())
 
     def tearDown(self):
         self.u.delete()

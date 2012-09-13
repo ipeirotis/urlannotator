@@ -5,9 +5,10 @@ from urlannotator.main.models import Job
 from urlannotator.logging.models import LogEntry
 from urlannotator.logging.settings import (LOG_TYPE_NEW_SAMPLE_DONE,
     LOG_TYPE_JOB_INIT_START)
+from urlannotator.flow_control.test import ToolsMockedMixin
 
 
-class LoggingTest(TestCase):
+class LoggingTest(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
 

@@ -4,6 +4,8 @@ from itertools import chain
 from contextlib import contextmanager
 from celery import task, registry
 
+from urlannotator.classification.event_handlers import train
+
 
 class FlowControlMixin(object):
     """ Add flow_definition and/or suppress_events for event flow edition.
@@ -66,11 +68,32 @@ def mocked_task(*args, **kwargs):
     """
         Empty mocked celery task.
     """
-    pass
+    return True
 
+
+def eager_train(kwargs, *args, **kwds):
+    train(set_id=kwargs['set_id'])
+
+
+# Mocks:
+# - website screenshot and content extraction to do nothing,
+# - classifier training to be eager, not in separate process,
+# - skip tagasauris job initialization on job creation
+#
+# Mocking HOWTO:
+# The target has to be a qualified name (module+name) of the object you want to
+# mock. The module name is the DIRECT IMPORTER of the object you want to mock.
+# I.e `web_content_extraction` is used and imported in `urlannotator.main
+# .factories`.
+# What does that mean? If you import the element from a brand new place, it
+# WON'T be mocked.
+# Examples of function mocking are the first 3 mocks on the list below.
+# Example of class method mocking is the 4th mock on the list below.
 hardcoded_mocks = [
     ('urlannotator.main.factories.web_content_extraction', mocked_task),
     ('urlannotator.main.factories.web_screenshot_extraction', mocked_task),
+    ('urlannotator.classification.event_handlers.process_execute', eager_train),
+    ('urlannotator.crowdsourcing.event_handlers.ExternalJobsFactory.initialize_job', mock.Mock()),
 ]
 
 

@@ -13,9 +13,6 @@ log = logging.getLogger(__name__)
 class ExternalJobsFactory(object):
 
     def initialize_job(self, job_id, *args, **kwargs):
-        if settings.TOOLS_TESTING:
-            return
-
         job = Job.objects.get(id=job_id)
 
         c = make_tagapi_client()
