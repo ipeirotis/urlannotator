@@ -53,6 +53,6 @@ function job(){
   this.newest_votes = ko.observableArray();
 
   this.hasOwnWorkforceLinks = ko.computed(function(){
-    return (this.gather_url() != "") && (this.voting_url() != "");
+    return (this.gather_url() != "") || (this.voting_url() != "");
   }, this);
 }
