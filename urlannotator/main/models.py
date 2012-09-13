@@ -629,7 +629,7 @@ class WorkerManager(models.Manager):
         return self.get_or_create(
             worker_type=WORKER_TYPE_TAGASAURIS,
             external_id=worker_id,
-        )
+        )[0]
 
     def get_odesk(self, external_id):
         return self.get(
