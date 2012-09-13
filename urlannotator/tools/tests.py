@@ -4,7 +4,6 @@ import subprocess
 from Queue import Queue
 
 from django.test import TestCase
-from django.test.utils import override_settings
 
 from urlannotator.tools.web_extractors import get_web_screenshot, get_web_text
 from urlannotator.tools.synchronization import RWSynchronize247, POSIXLock
