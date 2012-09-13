@@ -197,6 +197,8 @@ class ClassifiedSampleResource(Resource):
         screenshot = ''
         if class_sample.sample:
             screenshot = class_sample.sample.get_small_thumbnail_url()
+        for label in class_sample.label_probability:
+            class_sample.label_probability[label] *= 100
 
         return {
             'id': class_sample.id,
@@ -623,7 +625,7 @@ class JobResource(ModelResource):
                 'screenshot': s.sample.get_small_thumbnail_url(),
                 'url': s.sample.url,
                 'label': s.label,
-                'added_on': s.sample.added_on,
+                'added_on': s.sample.added_on.strftime('%Y-%m-%d %H:%M:%S'),
                 'date': date,
             } for s in newest_votes]
 
