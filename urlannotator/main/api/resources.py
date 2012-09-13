@@ -885,7 +885,7 @@ class VoteResource(TagasaurisNotifyResource):
         quality_vote_ids = []
 
         for worker_id, mediaobjects in results.iteritems():
-            worker = Worker.objects.get_or_create_tagasauris(worker_id)
+            worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
 
             for mediaobject_id, answers in mediaobjects.iteritems():
                 sample = SampleMapping.objects.get(
