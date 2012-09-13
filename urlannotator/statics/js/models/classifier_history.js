@@ -10,7 +10,7 @@ var classifier_history_entry = function(screenshot, url, label, yes_prob, no_pro
   this.finished = finished;
 
   this.probability = ko.computed(function(){
-    return this.yes_prob + '% ' + this.no_prob + '% ' + this.broken_prob + '%';
+    return this.yes_prob*100 + '% ' + this.no_prob*100 + '% ' + this.broken_prob*100 + '%';
   }, this);
   this.hasScreenshot = ko.computed(function(){
     return this.screenshot && this.screenshot != '';
