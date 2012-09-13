@@ -64,6 +64,17 @@ class SampleFactoryTest(TestCase):
 
         self.assertEqual(query.count(), 1)
 
+        test_url = 'http://10.0.1.120/all_raccoon_websites.exe'
+        sf.new_sample(
+            job_id=self.job.id,
+            url=test_url,
+            source_type='',
+        )
+
+        query = Sample.objects.filter(job=self.job, url=test_url)
+
+        self.assertEqual(query.count(), 0)
+
 
 class JobFactoryTest(ToolsMockedMixin, TestCase):
     def setUp(self):

@@ -30,7 +30,7 @@
         <td class="hoursSpentCol">{{p.get_hours_spent}}</td>
         <td class="totalCostCol">{{p.get_cost}}</td>
         <td class="budgetCol">{{p.budget}}</td>
-        <td class="classfierCol">0</td>
+        <td class="classfierCol">{{p.get_classifier_performance}}</td>
         <td class="progressCol">{{p.get_progress}}%</td>
       </tr>
     {% endfor %}

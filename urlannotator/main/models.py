@@ -181,7 +181,7 @@ class Job(models.Model):
         """
         performances = self.classifierperformance_set.all()
         ret = max(performances, key=(lambda x: x.date))
-        return ret.value
+        return ret.value.get('AUC', 0)
 
     def get_newest_votes(self, num=3):
         """
@@ -724,7 +724,8 @@ class Worker(models.Model):
             Returns votes added by given worker for given job.
         """
         return ifilter(
-            lambda x: x.sample.job == job, self.workerqualityvote_set.all()
+            lambda x: x.sample.job == job and x.worker == self,
+            self.workerqualityvote_set.all()
         )
 
     def get_earned_for_job(self, job):

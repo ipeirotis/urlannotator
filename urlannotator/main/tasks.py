@@ -6,7 +6,8 @@ from django.db import DatabaseError, IntegrityError
 
 from urlannotator.classification.models import ClassifiedSample
 from urlannotator.main.models import Sample, GoldSample, Job
-from urlannotator.tools.web_extractors import get_web_text, get_web_screenshot
+from urlannotator.tools.web_extractors import (get_web_text, get_web_screenshot,
+    is_proper_url)
 from urlannotator.flow_control import send_event
 from urlannotator.tools.webkit2png import BaseWebkitException
 
@@ -17,6 +18,9 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
     """
     if url is None:
         url = Sample.objects.get(id=sample_id).url
+
+    if not is_proper_url(url):
+        return False
 
     try:
         text = get_web_text(url)
@@ -48,6 +52,9 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
     """
     if url is None:
         url = Sample.objects.get(id=sample_id).url
+
+    if not is_proper_url(url):
+        return False
 
     try:
         screenshot = get_web_screenshot(url)

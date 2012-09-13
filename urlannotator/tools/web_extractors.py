@@ -3,10 +3,12 @@ import urlparse
 import subprocess
 import os
 import re
+import socket
+import struct
 
 from django.conf import settings
 from django.template.defaultfilters import slugify
-from itertools import ifilter
+from itertools import ifilter, imap
 
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
@@ -48,6 +50,60 @@ def extract_words(text):
     text = re.sub(r'[_]{2,}', '_', text)
     text = re.sub(r'[\.]{2,}', '.', text)
     return text
+
+
+def makeMask(n):
+    """
+        Return a mask of n bits as a long integer.
+    """
+    right_offset = 32 - n
+    right_bytes = (1L << right_offset) - 1
+    full_mask = 0xFFFFFFFF
+    return full_mask ^ right_bytes
+
+
+def dottedQuadToNum(ip):
+    """
+        Convert decimal dotted string to long integer.
+        Supports all formats suitable for C inet_aton function.
+    """
+    return struct.unpack('>L', socket.inet_aton(ip))[0]
+
+
+def addressInNetwork(ip, net, bits):
+    """
+        Is an address in a network.
+    """
+    bits = makeMask(bits)
+    return ip & bits == net & bits
+
+
+def is_proper_url(url):
+    """
+        Checks whether the URL points to a valid location.
+    """
+    _, netloc, _, _, _, _ = urlparse.urlparse(url)
+    # Improper netloc
+    if not netloc:
+        return False
+
+    # IPv4 address?
+    try:
+        address = dottedQuadToNum(netloc)
+        disallowed_ipv4 = [
+            (dottedQuadToNum('10.0.0.0'), 8),
+            (dottedQuadToNum('172.16.0.0'), 12),
+            (dottedQuadToNum('192.168.0.0'), 16),
+            (dottedQuadToNum('127.0.0.1'), 32),
+        ]
+        res = map(lambda x: addressInNetwork(address, x[0], x[1]), disallowed_ipv4)
+        if any(res):
+            return False
+    except:
+        # Address is not a valid IPv4 address
+        pass
+
+    return True
 
 
 def get_web_text(url):
