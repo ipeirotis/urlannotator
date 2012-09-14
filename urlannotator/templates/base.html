@@ -204,11 +204,11 @@
                   for (action in actions){
                     insertAction(actions[action], action)
                   };
-                  setTimeout("checkAlerts()", 10 * 1000);
                 });
               }
 
               checkAlerts();
+              setInterval(checkAlerts, 10 * 1000);
             </script>
         {% endblock %}
         <!-- end scripts -->

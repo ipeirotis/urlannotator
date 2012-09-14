@@ -194,7 +194,6 @@ function updateClassifierStats(){
     classifierStats.yesCount(data['yes_count']);
     classifierStats.noCount(data['no_count']);
     classifierStats.brokenCount(data['broken_count']);
-    setTimeout("updateClassifierStats()", 10 * 1000);
   })
 }
 
@@ -232,7 +231,6 @@ function updateClassifierHistory(){
     image_cache = new_cache
 
     history.entries(new_entries)
-    setTimeout("updateClassifierHistory()", 10 * 1000);
   })
 }
 
@@ -269,6 +267,8 @@ $(document).ready(function(){
   ko.applyBindings(history, $('#classifier-history')[0]);
   updateClassifierStats();
   updateClassifierHistory();
+  setInterval(updateClassifierStats, 10 * 1000);
+  setInterval(updateClassifierHistory, 10 * 1000);
 })
 </script>
 {% endblock %}
