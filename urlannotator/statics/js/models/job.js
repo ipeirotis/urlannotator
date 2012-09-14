@@ -18,7 +18,7 @@ function vote(){
 }
 
 
-function alert(screenshot, worker_id, worker_name, title, content, job_id){
+function alert_view(screenshot, worker_id, worker_name, title, content, job_id){
   this.screenshot = screenshot;
   this.worker_id = worker_id;
   this.workerName = worker_name;

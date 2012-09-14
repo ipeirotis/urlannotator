@@ -245,7 +245,7 @@ function updateAlerts(url){
 
     $.each(data['entries'], function(idx, val){
       box = val['box'];
-      new_alerts.push(new alert(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}));
+      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}));
       if (!(box['Image_url'] in image_cache)){
         img = new Image();
         img.src = box['Image_url'];
