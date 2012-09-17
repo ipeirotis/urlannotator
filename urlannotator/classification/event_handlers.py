@@ -8,8 +8,7 @@ from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
     TrainingSample)
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
-    WorkerQualityVote)
+from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_job, samples_to_mediaobjects)
 from urlannotator.crowdsourcing.factories import quality_factory

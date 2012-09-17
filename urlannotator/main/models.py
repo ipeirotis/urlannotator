@@ -765,16 +765,12 @@ class WorkerJobAssociation(models.Model):
     started_on = models.DateTimeField(auto_now_add=True)
     worked_hours = models.DecimalField(default=0, decimal_places=2,
         max_digits=10)
-    correct_labels = models.PositiveIntegerField(default=0)
-    all_votes = models.PositiveIntegerField(default=0)
+    data = JSONField(default={})
 
     objects = WorkerJobManager()
 
     def get_estimated_quality(self):
-        if not self.all_votes:
-            return 0
-
-        return self.correct_labels / self.all_votes
+        return self.data.get('estimated_quality', 0)
 
 
 class GoldSample(models.Model):

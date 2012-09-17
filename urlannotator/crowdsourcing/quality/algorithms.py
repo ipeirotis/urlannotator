@@ -154,26 +154,40 @@ class CrowdsourcingQualityAlgorithm(object):
             samples.iteritems()
         )
         # Clear all entries to be ready to recompute them
-        for job in Job.objects.filter(id__in=jobs_set).select_related('workerjobassociation_set'):
-            job.workerjobassociation_set.update(correct_labels=0, all_votes=0)
+        for job in Job.objects.filter(id__in=jobs_set).select_related('workerjobassociation_set').iterator():
+            job.workerjobassociation_set.update(data={})
 
+        assoc_set = set()
         for sample_id, correct_label in data:
             sample = samples[sample_id]
-            votes = sample.workerqualityvote_set.all()
+            votes = sample.workerqualityvote_set.all().iterator()
             for vote in votes:
-                kwargs = {'all_votes': F('all_votes') + 1}
-                if vote.label == correct_label:
-                    kwargs['correct_labels'] = F('correct_labels') + 1
-                WorkerJobAssociation.objects.filter(
+                assoc = WorkerJobAssociation.objects.get(
                     job_id=sample.job_id,
                     worker_id=vote.worker_id,
-                ).update(**kwargs)
+                )
+                assoc.data['all_votes'] = assoc.data.get('all_votes', 0) + 1
+                if vote.label == correct_label:
+                    correct = assoc.data.get('correct_labels', 0)
+                    assoc.data['correct_labels'] = correct + 1
+                assoc.save()
+                assoc_set.add(assoc.id)
+
+        for assoc in WorkerJobAssociation.objects.filter(id__in=assoc_set).iterator():
+            assoc.data['estimated_quality'] = self.calculate_quality(assoc=assoc)
+            assoc.save()
 
 
 class MajorityVoting(CrowdsourcingQualityAlgorithm):
     """
     Simple majority voting algorithm.
     """
+
+    def calculate_quality(self, assoc):
+        if not assoc.data['all_votes']:
+            return 0
+
+        return assoc.data.get('correct_labels', 0) / assoc.data['all_votes']
 
     def extract_decisions(self):
         votes = {}
