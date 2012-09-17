@@ -82,14 +82,18 @@ def is_proper_url(url):
     """
         Checks whether the URL points to a valid location.
     """
-    _, netloc, _, _, _, _ = urlparse.urlparse(url)
-    # Improper netloc
-    if not netloc:
+    _, netloc, path, _, _, _ = urlparse.urlparse(url)
+    url = netloc if netloc else path
+
+    # Remove port from the url.
+    url = url.split(':', 1)[0]
+
+    if not url or url == 'localhost':
         return False
 
     # IPv4 address?
     try:
-        address = dottedQuadToNum(netloc)
+        address = dottedQuadToNum(url)
         disallowed_ipv4 = [
             (dottedQuadToNum('10.0.0.0'), 8),
             (dottedQuadToNum('172.16.0.0'), 12),

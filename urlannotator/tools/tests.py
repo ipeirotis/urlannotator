@@ -5,7 +5,8 @@ from Queue import Queue
 
 from django.test import TestCase
 
-from urlannotator.tools.web_extractors import get_web_screenshot, get_web_text
+from urlannotator.tools.web_extractors import (get_web_screenshot, get_web_text,
+    is_proper_url)
 from urlannotator.tools.synchronization import RWSynchronize247, POSIXLock
 from urlannotator.tools.webkit2png import BaseWebkitException
 
@@ -171,3 +172,21 @@ class POSIXCacheTest(TestCase):
 
         # Make sure we will unlink no longer used resources.
         self.assertFalse(id(lock.lock) == lock_id)
+
+
+class URLCheckTest(TestCase):
+    def testURLCheck(self):
+        tests = [
+            ('127.0.0.1', False),
+            (':10', False),
+            (':', False),
+            ('10.0.0.1:2414', False),
+            ('172.16.0.1:21021', False),
+            ('192.168.0.100', False),
+            ('213.241.87.50', True),
+            ('213.241.87.50:80', True),
+            ('213.241.87.50:232232', True),
+        ]
+
+        for test in tests:
+            self.assertEqual(is_proper_url(test[0]), test[1])

@@ -2,13 +2,11 @@ import os
 import mock
 import sys
 
-from django.test import LiveServerTestCase
 from defaults import *
 # Import everything from imagescale2, but rename DEF_PORT
 # to IMAGESCALE_DEF_PORT
 from imagescale2 import *
 from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
-from urlannotator.main.tests.selenium_tests import *
 
 
 DATABASES = {
@@ -82,6 +80,8 @@ except ImportError:
 IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 
 # Mock selenium tests, so that they are not run locally
+from django.test import LiveServerTestCase
+from urlannotator.main.tests.selenium_tests import *
 class DummyLiveServerTestCase(LiveServerTestCase):
     pass
 
