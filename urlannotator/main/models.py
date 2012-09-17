@@ -4,8 +4,6 @@ import hashlib
 import urlparse
 # import odesk
 
-from tastypie.models import create_api_key
-
 from django.db import models
 from django.db.models import F, Sum
 from django.contrib.auth.models import User
@@ -49,7 +47,6 @@ def create_user_profile(sender, instance, created, **kwargs):
         Account.objects.create(user=instance)
 
 post_save.connect(create_user_profile, sender=User)
-post_save.connect(create_api_key, sender=User)
 
 # Job source types
 JOB_SOURCE_ODESK_FREE = 0
