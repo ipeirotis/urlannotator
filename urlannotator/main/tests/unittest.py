@@ -11,7 +11,8 @@ from tastypie.exceptions import ImmediateHttpResponse
 
 from social_auth.models import UserSocialAuth
 
-from urlannotator.main.models import Account, Job, Worker, Sample, GoldSample
+from urlannotator.main.models import (Account, Job, Worker, Sample, GoldSample,
+    WorkerJobAssociation)
 from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
@@ -562,6 +563,10 @@ class ProjectTests(ToolsMockedMixin, TestCase):
 
         Worker.objects.create_odesk(external_id='1')
         w = Worker.objects.get_odesk(external_id='1')
+        WorkerJobAssociation.objects.associate(
+            job=job,
+            worker=w,
+        )
         if w:
             resp = self.c.get(
                 reverse('project_worker_view', args=[job.id, w.id]),

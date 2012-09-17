@@ -1,10 +1,15 @@
 from django.db import models
 from django.conf import settings
-from urlannotator.main.models import Worker, Sample, LABEL_CHOICES, Job
+from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
+    WorkerJobAssociation)
 
 
 class WorkerQualityVoteManager(models.Manager):
     def new_vote(self, *args, **kwargs):
+        WorkerJobAssociation.objects.associate(
+            job=kwargs['sample'].job,
+            worker=kwargs['worker'],
+        )
         return self.create(**kwargs)
 
 
@@ -17,6 +22,9 @@ class WorkerQualityVote(models.Model):
     is_new = models.BooleanField(default=True)
 
     objects = WorkerQualityVoteManager()
+
+    class Meta:
+        unique_together = ['worker', 'sample']
 
 
 class BeatTheMachineSamples(Sample):

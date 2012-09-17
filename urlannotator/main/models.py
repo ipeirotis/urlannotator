@@ -641,8 +641,6 @@ class Worker(models.Model):
     """
     external_id = models.CharField(max_length=100)
     worker_type = models.IntegerField(max_length=100, choices=WORKER_TYPES)
-    estimated_quality = models.DecimalField(default=0, decimal_places=5,
-        max_digits=7)
 
     objects = WorkerManager()
 
@@ -744,6 +742,12 @@ class Worker(models.Model):
 
         return assoc.started_on
 
+    def get_estimated_quality_for_job(self, job):
+        """
+            Retuns worker's estimated quality for given job.
+        """
+        return self.workerjobassociation_set.get(job=job).get_estimated_quality()
+
 
 class WorkerJobManager(models.Manager):
     def associate(self, job, worker):
@@ -761,8 +765,16 @@ class WorkerJobAssociation(models.Model):
     started_on = models.DateTimeField(auto_now_add=True)
     worked_hours = models.DecimalField(default=0, decimal_places=2,
         max_digits=10)
+    correct_labels = models.PositiveIntegerField(default=0)
+    all_votes = models.PositiveIntegerField(default=0)
 
     objects = WorkerJobManager()
+
+    def get_estimated_quality(self):
+        if not self.all_votes:
+            return 0
+
+        return self.correct_labels / self.all_votes
 
 
 class GoldSample(models.Model):

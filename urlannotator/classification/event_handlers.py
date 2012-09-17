@@ -172,21 +172,17 @@ class ProcessVotesManager(Task):
         active_jobs = Job.objects.get_active()
 
         for job in active_jobs:
-            ts = TrainingSet(job=job)
-            ts.save()
+            ts = TrainingSet.objects.create(job=job)
 
             quality_algorithm = quality_factory.create_algorithm(job)
 
-            for sample in job.sample_set.all():
-                votes = WorkerQualityVote.objects.filter(sample=sample)
-                new_label = quality_algorithm.process_votes(votes)
-
-                if new_label is not None:
-                    TrainingSample(
-                        set=ts,
-                        sample=sample,
-                        label=new_label
-                    ).save()
+            for sample_id, label in quality_algorithm.extract_decisions():
+                sample = Sample.objects.get(id=sample_id)
+                TrainingSample.objects.create(
+                    set=ts,
+                    sample=sample,
+                    label=label,
+                )
 
 process_votes = registry.tasks[ProcessVotesManager.name]
 

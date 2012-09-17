@@ -589,7 +589,7 @@ def project_workers_view(request, id):
         workers.append({
             'id': worker.id,
             'name': worker.get_name,
-            'quality': worker.estimated_quality,
+            'quality': worker.get_estimated_quality_for_job(job),
             'votes_added': worker.get_votes_added_count_for_job(job),
             'urls_collected': worker.get_urls_collected_count_for_job(job),
             'hours_spent': worker.get_hours_spent_for_job(job)
@@ -627,7 +627,7 @@ def project_worker_view(request, id, worker_id):
         'urls_collected': worker.get_urls_collected_count_for_job(job),
         'votes_added': worker.get_votes_added_count_for_job(job),
         'hours_spent': worker.get_hours_spent_for_job(job),
-        'quality': worker.estimated_quality,
+        'quality': worker.get_estimated_quality_for_job(job),
         'earned': worker.get_earned_for_job(job),
         'work_started': worker.get_job_start_time(job),
         'projects': projects,

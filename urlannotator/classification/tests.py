@@ -236,7 +236,6 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(username='test', password='test')
-        self.worker = Worker.objects.create_odesk(external_id=123)
         self.job = Job.objects.create(
             account=self.user.get_profile()
         )
@@ -246,19 +245,21 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
             job=self.job,
             url=""
         )
+        self.workers = [Worker.objects.create_odesk(external_id=x)
+            for x in xrange(10)]
 
     def testVotesProcess(self):
 
-        def newVote(label):
+        def newVote(worker, label):
             return WorkerQualityVote.objects.new_vote(
                 sample=self.sample,
-                worker=self.worker,
+                worker=worker,
                 label=label
             )
 
-        newVote(LABEL_YES)
-        newVote(LABEL_YES)
-        newVote(LABEL_YES)
+        newVote(self.workers[0], LABEL_YES)
+        newVote(self.workers[1], LABEL_YES)
+        newVote(self.workers[2], LABEL_YES)
 
         send_event('EventProcessVotes')
 
@@ -268,10 +269,10 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
         training_sample = ts.training_samples.all()[0]
         self.assertEqual(training_sample.label, LABEL_YES)
 
-        newVote(LABEL_NO)
-        newVote(LABEL_NO)
-        newVote(LABEL_NO)
-        newVote(LABEL_NO)
+        newVote(self.workers[3], LABEL_NO)
+        newVote(self.workers[4], LABEL_NO)
+        newVote(self.workers[5], LABEL_NO)
+        newVote(self.workers[6], LABEL_NO)
 
         send_event('EventProcessVotes')
 
@@ -283,6 +284,7 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
 
     def tearDown(self):
         self.user.delete()
-        self.worker.delete()
+        for w in self.workers:
+            w.delete()
         self.job.delete()
         self.sample.delete()
