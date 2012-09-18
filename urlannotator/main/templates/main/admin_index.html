@@ -46,7 +46,7 @@
         <tbody>
         {% for p in projects %}
           <tr>
-            <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">(i)</a></td>
+            <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">(i)</a> <a href="#" onclick="stopVoting({{p.id}});">stop voting</a> <a href="#" onclick="stopGathering({{p.id}})">stop sample gathering</a></td>
             <td class="statusCol">{{p.get_status}}</td>
             <td class="beatMachineCol">--</td>
             <td class="linksCol">{{p.get_urls_collected}}</td>
@@ -187,6 +187,14 @@ function updateAlerts(){
     alerts_view.alerts(new_alerts);
     setTimeout('updateAlerts();', 10 * 1000);
   })
+}
+
+function stopVoting(job_id){
+  $.get('/api/v1/admin/job/' + job_id + '/stop_voting/');
+}
+
+function stopGathering(job_id){
+  $.get('/api/v1/admin/job/' + job_id + '/stop_sample_gathering/');
 }
 
 $(document).ready(function(){

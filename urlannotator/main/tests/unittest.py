@@ -874,7 +874,6 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.assertEqual(res['job_id'], job.id)
         self.assertEqual(res['screenshot'], '')
         self.assertEqual(res['url'], cs.url)
-        self.assertEqual(res['sample_url'], '')
         self.assertEqual(res['label_probability'], cs.label_probability)
         self.assertEqual(res['id'], cs.id)
         self.assertEqual(res['label'], cs.label)
@@ -943,7 +942,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         array = json.loads(resp.content)
         self.assertEqual(array['total_count'], 0)
 
-        Job.objects.create_active(
+        job = Job.objects.create_active(
             account=self.user.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
         )
@@ -954,6 +953,19 @@ class ApiTests(ToolsMockedMixin, TestCase):
         array = json.loads(resp.content)
         self.assertTrue(array['total_count'] > 0)
         self.assertEqual(len(array['entries']), array['count'])
+
+
+        resp = self.c.get('%sadmin/job/%d/stop_sample_gathering/?format=json' % (self.api_url, job.id))
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertEqual(array['result'], 'SUCCESS')
+
+        resp = self.c.get('%sadmin/job/%d/stop_voting/?format=json' % (self.api_url, job.id))
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertEqual(array['result'], 'SUCCESS')
 
 
 class TestAdmin(ToolsMockedMixin, TestCase):

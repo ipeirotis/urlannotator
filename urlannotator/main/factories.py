@@ -129,7 +129,6 @@ class JobFactory(object):
             Initializes new job's elements from given job entry's id.
         """
 
-        # TODO: Add remaining elements of a job
         job = Job.objects.get(id=job_id)
 
         self.create_training_set(job)

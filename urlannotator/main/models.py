@@ -161,6 +161,21 @@ class Job(models.Model):
         except:
             return ''
 
+    def stop_sample_gathering(self):
+        """
+            Stops underlying sample gathering job.
+        """
+        # TODO: Insert Tagasauris API call here.
+        #       Refer to OANNOTATOR-203
+        try:
+            tag_job = self.tagasaurisjobs
+            tag_job.sample_gathering_hit = ''
+            tag_job.save()
+        except:
+            pass
+        finally:
+            return True
+
     def get_voting_url(self):
         """
             Returns the URL under which Own Workforce can vote on labels.
@@ -170,6 +185,21 @@ class Job(models.Model):
             return tag_job.get_voting_url()
         except:
             return ''
+
+    def stop_voting(self):
+        """
+            Stops underlying voting job.
+        """
+        # TODO: Insert Tagasauris API call here.
+        #       Refer to OANNOTATOR-203
+        try:
+            tag_job = self.tagasaurisjobs
+            tag_job.voting_hit = ''
+            tag_job.save()
+        except:
+            pass
+        finally:
+            return True
 
     def get_classifier_performance(self):
         """
@@ -557,7 +587,6 @@ class Sample(models.Model):
         """
             Returns probability of YES label on this sample.
         """
-        # TODO: More meaningful probability query? Currently most recent one.
         cs_set = self.classifiedsample_set.all()
         if not cs_set:
             return 0
@@ -570,7 +599,6 @@ class Sample(models.Model):
         """
             Returns probability of NO label on this sample.
         """
-        # TODO: More meaningful probability query? Currently most recent one.
         cs_set = self.classifiedsample_set.all()
         if not cs_set:
             return 0
@@ -655,6 +683,7 @@ class Worker(models.Model):
             Returns worker's name.
         """
         # FIXME: Uncomment when proper odesk external id handling is done
+        #        Refer to OANNOTATOR-222
         # if self.worker_type == WORKER_TYPE_ODESK:
         #     client = odesk.Client(settings.ODESK_CLIENT_ID,
         #         settings.ODESK_CLIENT_SECRET,

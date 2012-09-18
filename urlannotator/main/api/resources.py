@@ -138,7 +138,62 @@ class AdminResource(Resource):
             url(r'^(?P<resource_name>%s)/updates/$'
                 % self._meta.resource_name,
                 self.wrap_view('updates'), name='api_admin_updates'),
+            url(r'^(?P<resource_name>%s)/job/(?P<job_id>[^/]+)/stop_sample_gathering/$'
+                % self._meta.resource_name,
+                self.wrap_view('stop_sample_gathering'), name='api_stop_sample_gathering'),
+            url(r'^(?P<resource_name>%s)/job/(?P<job_id>[^/]+)/stop_voting/$'
+                % self._meta.resource_name,
+                self.wrap_view('stop_voting'), name='api_stop_voting'),
         ]
+
+    def stop_sample_gathering(self, request, **kwargs):
+        """
+            Stops underlying job's sample gathering.
+
+            Parameters (GET):
+            None
+        """
+        self.is_authenticated(request)
+        job_id = kwargs.get('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(request,
+                {'error': "Job doesn't exist."},
+                response_class=HttpNotFound,
+            )
+        try:
+            job.stop_sample_gathering()
+            return self.create_response(request,
+                {'result': 'SUCCESS'})
+        except Exception, e:
+            return self.create_response(request,
+                {'error': e.message})
+
+    def stop_voting(self, request, **kwargs):
+        """
+            Stops underlying job's sample gathering.
+        """
+        self.is_authenticated(request)
+        job_id = kwargs.get('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(request,
+                {'error': "Job doesn't exist."},
+                response_class=HttpNotFound,
+            )
+        try:
+            job.stop_voting()
+            return self.create_response(request,
+                {'result': 'SUCCESS'})
+        except Exception, e:
+            return self.create_response(request,
+                {'error': e.message})
 
     def updates(self, request, **kwargs):
         """
@@ -193,7 +248,6 @@ class ClassifiedSampleResource(Resource):
                          finished.
         """
         class_sample = ClassifiedSample.objects.get(id=class_id)
-        # TODO: Add sample URL.
         screenshot = ''
         if class_sample.sample:
             screenshot = class_sample.sample.get_small_thumbnail_url()
@@ -207,7 +261,6 @@ class ClassifiedSampleResource(Resource):
             'job_id': class_sample.job_id,
             'label_probability': class_sample.label_probability,
             'label': class_sample.label,
-            'sample_url': '',
             'finished': class_sample.is_successful(),
         }
 
@@ -554,7 +607,6 @@ class JobResource(ModelResource):
                 r'worker/(?P<worker_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('worker'),
                 name='api_job_worker'),
-
         ]
 
     def worker(self, request, **kwargs):

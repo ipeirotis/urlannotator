@@ -423,6 +423,7 @@ def odesk_complete(request):
     auth, user = client.auth.get_token(request.GET['frob'])
     # FIXME: Add proper ciphertext support when its ready. Replace uid with
     #        the ciphertext to use as an identifier.
+    #        Refer to OANNOTATOR-221
     # cipher = client.getciphertext()
     cipher = user['uid']
 

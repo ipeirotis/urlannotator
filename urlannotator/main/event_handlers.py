@@ -43,14 +43,7 @@ class GoldSamplesMonitor(Task):
         Monitors gold samples creation, and issues classificator training
         if a complete set of gold samples has been prepared.
     """
-
-    def __init__(self):
-        self.samples = []
-
     def run(self, gold_id, *args, **kwargs):
-        # FIXME: Mock
-        self.samples.append(gold_id)
-
         gold_sample = GoldSample.objects.get(id=gold_id)
         job = gold_sample.sample.job
 
@@ -59,11 +52,11 @@ class GoldSamplesMonitor(Task):
             registry.tasks[GoldSamplesMonitor.name].retry(countdown=30)
 
         training_set = TrainingSet.objects.newest_for_job(job)
-        TrainingSample(
+        TrainingSample.objects.create(
             set=training_set,
             sample=gold_sample.sample,
             label=gold_sample.label
-        ).save()
+        )
 
         lock_key = 'TrainingSampleLock-%d' % job.id
         # Send training set completed event. Used here as we are certain no
