@@ -1,7 +1,7 @@
 =============
 URL Annotator
 =============
-Last modified: August 27, 2012
+Last modified: September 18, 2012
 
 
 Source/How to get it
@@ -78,6 +78,30 @@ On local machine:
 - Install basic requirements
 
 	sudo pip install -r urlannotator/deployment/files/requirements/base.txt
+
+- Install PyQt4:
+
+    sudo apt-get install python-qt4
+
+- Check your python-qt4 version:
+
+    sudo apt-cache show python-qt4
+
+- If your python-qt4 version is below 4.9.0:
+
+    sudo apt-get install python-qt4-dev
+
+    sudo apt-get install libqt4-dev
+
+    Download and install SIP from http://www.riverbankcomputing.com/software/sip/download
+
+    Download and install python-qt4 from http://www.riverbankcomputing.com/software/pyqt/download
+
+- Link PyQt4 and sip.so into your virtual env
+
+    ln -s /usr/lib/python2.7/dist-packages/PyQt4 .env/lib/python2.7/site-packages/PyQt4
+
+    ln -s /usr/lib/python2.7/dist-packages/sip.so .env/lib/python2.7/site-packages/sip.so
 
 - Create database
 
