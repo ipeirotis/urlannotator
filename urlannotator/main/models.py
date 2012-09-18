@@ -271,9 +271,10 @@ class Job(models.Model):
         """
             Returns number of urls collected.
         """
-        samples = self.sample_set.all().iterator()
+        samples = self.sample_set.all().select_related('goldsample').iterator()
+        gold_samples = [gold['url'] for gold in self.gold_samples]
 
-        collected = ifilter(lambda x: not x.is_gold_sample(), samples)
+        collected = filter(lambda x: not x.is_gold_sample() and not x.url in gold_samples, samples)
         return sum(1 for _ in collected)
 
     def get_workers(self):
@@ -605,8 +606,7 @@ class Sample(models.Model):
 
     def is_gold_sample(self):
         try:
-            self.goldsample
-            return True
+            return self.goldsample is not None
         except:
             return False
 
