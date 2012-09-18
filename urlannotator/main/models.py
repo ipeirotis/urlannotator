@@ -32,14 +32,14 @@ class Account(models.Model):
     """
         Model representing additional user data. Used as user profile.
     """
-    user = models.ForeignKey(User)
+    user = models.OneToOneField(User)
     activation_key = models.CharField(default='', max_length=100)
     email_registered = models.BooleanField(default=False)
     odesk_key = models.CharField(default='', max_length=100)
     odesk_uid = models.CharField(default='', max_length=100)
     full_name = models.CharField(default='', max_length=100)
     alerts = models.BooleanField(default=False)
-    worker_entry = models.ForeignKey('Worker', null=True, blank=True)
+    worker_entry = models.OneToOneField('Worker', null=True, blank=True)
 
 
 def create_user_profile(sender, instance, created, **kwargs):
@@ -271,14 +271,10 @@ class Job(models.Model):
         """
             Returns number of urls collected.
         """
-        from urlannotator.classification.models import (TrainingSet,
-            TrainingSample)
-        training_set = TrainingSet.objects.newest_for_job(job=self)
-        samples = TrainingSample.objects.filter(
-            set=training_set,
-            label=LABEL_YES,
-        )
-        return samples.count()
+        samples = self.sample_set.all().iterator()
+
+        collected = ifilter(lambda x: not x.is_gold_sample(), samples)
+        return sum(1 for _ in collected)
 
     def get_workers(self):
         """
@@ -607,6 +603,13 @@ class Sample(models.Model):
         no_prob = cs.label_probability['No']
         return no_prob * 100
 
+    def is_gold_sample(self):
+        try:
+            self.goldsample
+            return True
+        except:
+            return False
+
 # Worker types breakdown:
 # odesk - worker from odesk. External id points to user's odesk id.
 # internal - worker registered in our system. External id is the user's id.
@@ -807,7 +810,7 @@ class GoldSample(models.Model):
         Sample uploaded by project owner. It is already classified and is used
         to train classifier.
     """
-    sample = models.ForeignKey(Sample)
+    sample = models.OneToOneField(Sample)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
 
 
