@@ -458,6 +458,7 @@ def odesk_complete(request):
             profile.odesk_key = auth
             profile.full_name = '%s %s' % (user['first_name'],
                 user['last_name'])
+            profile.save()
             u = authenticate(username=u.username, password='1')
             login(request, u)
 
