@@ -53,7 +53,7 @@ On local machine:
 
 - Install easy_install
 
-	sudo apt-get install python-setuptools python-dev build-essential
+	sudo apt-get install python-setuptools python-dev build-essential rabbitmq-server
 
 - Install pip
 
