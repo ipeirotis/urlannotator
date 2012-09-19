@@ -47,7 +47,14 @@
   <div class="row-fluid">
     <div class="span2">&nbsp;</div>
     <div class="span8">
-    {% include 'main/login_form.html' %}
+    <p>This service allows you to generate algorithm that will be able to recognize sites that match given description. For example you could be interested in sites about cars or badgers :) </p>
+
+<p>What happens under the hood is quite complex but for user it's quite simple and focuses on creating proper description of the websites that you are interested. As a user, all you have to do is to prepare description in form:<br/>
+“I would like to find websites about badgers. They should be sites with their descriptions and behaviors. I'm not interested in blog sites or any sites that could be subjective.”
+Description that you provide will be presented to other people so keep that in mind to make it simple and clear.<p>
+
+
+<p>Next, we take that description and using oDesk and Tagasauris we ask many people to give us examples of sites that matches your description. When we gather enough number of such websites (you can specify how much) we validate it using project named Troia. It is cutting edge algorithm that can tell which workers that were providing description were doing their job good and which ones were doing it badly. After deciding on which URLs are useful we put them into classification algorithm. It will be trained on such URLs and after that it should be able to recognize sites that match that your description.<p>
     </div>
   </div>
 </div>
