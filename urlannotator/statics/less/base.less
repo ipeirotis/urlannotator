@@ -1,0 +1,30 @@
+@import 'bootstrap/variables.less';
+@import 'bootstrap/mixins.less';
+
+div.navbar.navbar-fixed-top {
+  .brand {
+    padding:16px 20px 24px 0px;
+  }
+  .dropdown .caret {
+    margin-top:18px;
+  }
+  .navbar-inner {
+    background:url('/statics/img/url_anno_header_navbar_bg.png') repeat-x 0px 0px;
+    .container {
+      div.nav-collapse {
+        ul.nav {
+          li {
+            a {
+              line-height: 39px;
+            }
+            &.active {
+              a {
+                background-color: transparent;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
