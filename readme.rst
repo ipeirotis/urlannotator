@@ -93,9 +93,13 @@ On local machine:
 
     sudo apt-get install libqt4-dev
 
-    Download and install SIP from http://www.riverbankcomputing.com/software/sip/download
+    Download and install SIP from http://www.riverbankcomputing.com/software/sip/download via command:
 
-    Download and install python-qt4 from http://www.riverbankcomputing.com/software/pyqt/download
+    cd /tmp && curl http://www.riverbankcomputing.com/static/Downloads/sip4/sip-4.13.3.tar.gz | tar -zxv && cd /tmp/sip-4.13.3 && python configure.py && sudo make && sudo make install
+
+    Download and install python-qt4 from http://www.riverbankcomputing.com/software/pyqt/download via command:
+
+    cd /tmp && curl http://www.riverbankcomputing.com/static/Downloads/PyQt4/PyQt-x11-gpl-4.9.4.tar.gz | tar -zxv && cd /tmp/PyQt-x11-gpl-4.9.4 && python configure.py && sudo make && sudo make install
 
 - Link PyQt4 and sip.so into your virtual env
 
