@@ -269,7 +269,7 @@ class Job(models.Model):
 
     def get_urls_collected(self):
         """
-            Returns number of urls collected.
+            Returns number of urls collected (samples without gold samples).
         """
         samples = self.sample_set.all().select_related('goldsample').iterator()
         gold_samples = [gold['url'] for gold in self.gold_samples]
@@ -584,7 +584,8 @@ class Sample(models.Model):
 
     def get_yes_probability(self):
         """
-            Returns probability of YES label on this sample.
+            Returns probability of YES label on this sample, that is the
+            percentage from the most recent classification.
         """
         cs_set = self.classifiedsample_set.all()
         if not cs_set:
@@ -596,7 +597,8 @@ class Sample(models.Model):
 
     def get_no_probability(self):
         """
-            Returns probability of NO label on this sample.
+            Returns probability of NO label on this sample, that is the
+            percentage from the most recent classification.
         """
         cs_set = self.classifiedsample_set.all()
         if not cs_set:
@@ -656,6 +658,12 @@ class WorkerManager(models.Manager):
         )
 
     def get_or_create_tagasauris(self, worker_id):
+        """
+            Gets or creates Tagasauris worker with given id.
+            Returns a 2-tuple (object, created):
+            `worker` - the Worker object
+            `created` - whether the object has been created or not.
+        """
         return self.get_or_create(
             worker_type=WORKER_TYPE_TAGASAURIS,
             external_id=worker_id,
@@ -707,6 +715,7 @@ class Worker(models.Model):
         """
             Returns urls collected by given worker for given job.
         """
+        # Importing here due to loop imports higher in the scope.
         from urlannotator.classification.models import ClassifiedSample
         return ClassifiedSample.objects.filter(
             job=job,
@@ -716,6 +725,7 @@ class Worker(models.Model):
     def get_links_collected(self):
         """ Returns number of links collected.
         """
+        # Importing here due to loop imports higher in the scope.
         from urlannotator.classification.models import ClassifiedSample
         return ClassifiedSample.objects.filter(
             source_val=self.external_id,
