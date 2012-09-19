@@ -552,8 +552,10 @@ class Sample(models.Model):
             Returns workers that have sent this sample (url).
         """
         workers = set()
-        for cs in self.classifiedsample_set.all():
-            workers.add(cs.get_source_worker())
+        for cs in self.classifiedsample_set.all().iterator():
+            worker = cs.get_source_worker()
+            if worker and worker.can_show_to_user():
+                workers.add(worker)
         return workers
 
     def get_yes_votes(self):
