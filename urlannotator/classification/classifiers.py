@@ -544,16 +544,9 @@ class GooglePredictionClassifier(Classifier):
             'storageDataLocation': 'urlannotator/%s' % name
         }
 
-        # We have to always check for training status due to different
-        # instances of the classifier in different threads. YET only one is
-        # used at a time.
-        try:
-            status = self.papi.get(id=self.model).execute()
-            if status['trainingStatus'] == 'DONE':
-                self.papi.update(body=body).execute()
-        except:
-            # Model doesn't exist (first training).
-            self.papi.insert(body=body).execute()
+        # Always overwrite current classifier due to possible changes in old
+        # samples' classification.
+        self.papi.insert(body=body).execute()
 
         # Update classifier entry.
         params = entry.parameters

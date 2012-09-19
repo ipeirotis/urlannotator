@@ -449,20 +449,20 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
             return MockGooglePrediction()
 
         target = 'urlannotator.main.factories.settings.JOB_DEFAULT_CLASSIFIER'
-        patch = mock.patch(target, new='GooglePredictionClassifier')
-        patch.start()
+        self.patch = mock.patch(target, new='GooglePredictionClassifier')
+        self.patch.start()
 
         target = 'urlannotator.classification.classifiers.build'
-        patch_api = mock.patch(target, new=build)
-        patch_api.start()
+        self.patch_api = mock.patch(target, new=build)
+        self.patch_api.start()
 
         target = 'urlannotator.classification.classifiers.GSConnection'
-        patch_bucket = mock.patch(target)
-        patch_bucket.start()
+        self.patch_bucket = mock.patch(target)
+        self.patch_bucket.start()
 
         target = 'urlannotator.classification.classifiers.Key'
-        patch_key = mock.patch(target)
-        patch_key.start()
+        self.patch_key = mock.patch(target)
+        self.patch_key.start()
 
         u = User.objects.create_user(username='testing', password='test')
 
@@ -486,6 +486,7 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
 
         results['get'] = Exception()
         train_set = job.trainingset_set.all()[0]
+        classifier.train(samples=train_set.training_samples.all())
         classifier.train(set_id=train_set.id, turn_off=True)
         job.set_classifier_trained()
 
@@ -499,7 +500,13 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
         self.assertEqual(classifier.classify(sample=cs), 'Yes')
         self.assertEqual(classifier.classify_with_info(sample=cs), results['predict'])
 
-        patch_key.stop()
-        patch_bucket.stop()
-        patch_api.stop()
-        patch.stop()
+        # What if we remove the classfier's id?!?!
+        classifier.model = None
+        self.assertEqual(classifier.classify(sample=cs), None)
+        self.assertEqual(classifier.classify_with_info(sample=cs), None)
+
+    def tearDown(self):
+        self.patch_key.stop()
+        self.patch_bucket.stop()
+        self.patch_api.stop()
+        self.patch.stop()
