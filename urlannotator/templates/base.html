@@ -135,6 +135,7 @@
             <script type="text/javascript">
               $('#loginDiv').bind('click', function (e) { e.stopPropagation() })
             </script>
+            {% if user.is_authenticated %}
             <script type="text/javascript">
               function csrfSafeMethod(method) {
                   // these HTTP methods do not require CSRF protection
@@ -210,6 +211,7 @@
               checkAlerts();
               setInterval(checkAlerts, 10 * 1000);
             </script>
+            {% endif %}
         {% endblock %}
         <!-- end scripts -->
 
