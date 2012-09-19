@@ -147,7 +147,7 @@ On remote machine:
 - Follow steps from local machine setup up to the point ``Create Google Prediction credentials``
 - Install development requirements
 
-	sudo pip install -r urlannotator/deployment/files/requirements/devel.txt
+	pip install -r urlannotator/deployment/files/requirements/devel.txt
 
 - Configure settings template at deployment/files/django/settings_template.py
 - Create local settings file at deployment/files/django/local.py
