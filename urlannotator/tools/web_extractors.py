@@ -19,15 +19,6 @@ from urlannotator.tools.webkit2png import error_code_to_exception
 SCREEN_DUMPS_BUCKET_NAME = "urlannotator_web_screenshot"
 S3_SERVER_NAME = "https://s3.amazonaws.com/"
 
-
-def url_status(url):
-    (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
-    conn = httplib.HTTPConnection(netloc)
-    conn.request("HEAD",
-        urlparse.urlunparse(('', '', path, params, query, fragment)))
-    res = conn.getresponse()
-    print res.status
-
 BLACKLISTED_WORDS = ['img']
 
 
