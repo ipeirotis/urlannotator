@@ -104,10 +104,9 @@ class ClassifiedSampleManager(models.Manager):
             Sanitizes information passed by users.
         """
         url = kwargs['url']
-        if url:
-            result = urlparse.urlsplit(url)
-            if not result.scheme:
-                kwargs['url'] = 'http://%s' % url
+        result = urlparse.urlsplit(url)
+        if not result.scheme:
+            kwargs['url'] = 'http://%s' % url
 
     def create_by_owner(self, *args, **kwargs):
         self._sanitize(args, kwargs)

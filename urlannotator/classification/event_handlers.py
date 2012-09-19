@@ -281,11 +281,7 @@ def classify(sample_id, from_name='', *args, **kwargs):
 
     classifier = classifier_factory.create_classifier(job.id)
     label = classifier.classify(class_sample)
-    if not label:
-        label = 'No'
-    class_sample = ClassifiedSample.objects.get(id=sample_id)
-    class_sample.label = label
-    class_sample.save()
+    ClassifiedSample.objects.filter(id=sample_id).update(label=label)
     send_event(
         'EventSampleClassified',
         job_id=job.id,

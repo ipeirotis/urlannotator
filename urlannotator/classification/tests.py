@@ -1,3 +1,4 @@
+import shutil
 import time
 import mock
 
@@ -8,7 +9,8 @@ from django.contrib.auth.models import User
 from urlannotator.main.models import Sample, Job, Worker, LABEL_YES, LABEL_NO
 from urlannotator.classification.classifiers import (Classifier247,
     Classifier as ClassifierObject, ClassifierTrainingCriticalError,
-    ClassifierTrainingError, CLASS_TRAIN_STATUS_DONE)
+    ClassifierTrainingError, CLASS_TRAIN_STATUS_DONE,
+    CLASS_TRAIN_STATUS_RUNNING)
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample, ClassifierPerformance)
 from urlannotator.classification.factories import classifier_factory
@@ -64,6 +66,8 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
         self.assertNotEqual(self.classifier247.classify(test_sample), None)
         self.assertNotEqual(self.classifier247.classify_with_info(test_sample),
             None)
+        training_set = self.job.trainingset_set.all()[0]
+        self.classifier247.update(training_set.training_samples.all())
 
     def testTrainingErrors(self):
         training_set = self.job.trainingset_set.all()[0]
@@ -211,6 +215,19 @@ class SimpleClassifierTests(ToolsMockedMixin, TestCase):
 
         test_sample = self.classified[0]
         # Classifier already trained
+        self.assertNotEqual(sc.classify(test_sample), None)
+        self.assertNotEqual(sc.classify_with_info(test_sample), None)
+
+        shutil.rmtree('simple-classifiers', ignore_errors=True)
+        sc = classifier_factory.create_classifier_from_id(sc_id)
+
+        # What happens if we remove the classifiers cache?
+        self.assertEqual(sc.classify(test_sample), None)
+        self.assertEqual(sc.classify_with_info(test_sample), None)
+
+        # Now train, and recheck results
+        sc.train(set_id=training_set.id)
+
         self.assertNotEqual(sc.classify(test_sample), None)
         self.assertNotEqual(sc.classify_with_info(test_sample), None)
 
@@ -379,3 +396,110 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
             w.delete()
         self.job.delete()
         self.sample.delete()
+
+
+class GooglePredictionTests(ToolsMockedMixin, TestCase):
+
+    def testGoogleP(self):
+        results = {
+            'insert': '',
+            'analyze': {
+                'modelDescription': {
+                    'confusionMatrix': {
+                        'Yes': {
+                            'Yes': 1,
+                            'No': 0,
+                        },
+                        'No': {
+                            'Yes': 0,
+                            'No': 1,
+                        }
+                    }
+                }
+            },
+        }
+
+        class MockGooglePrediction(object):
+            def trainedmodels(self, *args, **kwargs):
+                return self
+
+            def insert(self, *args, **kwargs):
+                self.method = 'insert'
+                return self
+
+            def analyze(self, *args, **kwargs):
+                self.method = 'analyze'
+                return self
+
+            def execute(self, *args, **kwargs):
+                result = results[self.method]
+                if isinstance(result, Exception):
+                    raise result
+                return result
+
+            def predict(self, *args, **kwargs):
+                self.method = 'predict'
+                return self
+
+            def get(self, *args, **kwargs):
+                self.method = 'get'
+                return self
+
+        def build(*args, **kwargs):
+            return MockGooglePrediction()
+
+        target = 'urlannotator.main.factories.settings.JOB_DEFAULT_CLASSIFIER'
+        patch = mock.patch(target, new='GooglePredictionClassifier')
+        patch.start()
+
+        target = 'urlannotator.classification.classifiers.build'
+        patch_api = mock.patch(target, new=build)
+        patch_api.start()
+
+        target = 'urlannotator.classification.classifiers.GSConnection'
+        patch_bucket = mock.patch(target)
+        patch_bucket.start()
+
+        target = 'urlannotator.classification.classifiers.Key'
+        patch_key = mock.patch(target)
+        patch_key.start()
+
+        u = User.objects.create_user(username='testing', password='test')
+
+        job = Job.objects.create_active(
+            account=u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+
+        classifier = classifier_factory.create_classifier(job.id)
+        classifier.analyze()
+
+        results['analyze'] = Exception()
+        classifier.analyze()
+
+        results['get'] = {'trainingStatus': 'test'}
+        self.assertEqual(classifier.get_train_status(), 'test')
+        results['get'] = Exception()
+        self.assertEqual(classifier.get_train_status(), CLASS_TRAIN_STATUS_RUNNING)
+        results['get'] = {'trainingStatus': 'ERROR: test'}
+        with self.assertRaises(ClassifierTrainingCriticalError):
+            classifier.get_train_status()
+
+        results['get'] = Exception()
+        train_set = job.trainingset_set.all()[0]
+        classifier.train(set_id=train_set.id, turn_off=True)
+        job.set_classifier_trained()
+
+        results['predict'] = {'outputLabel': 'Yes', 'outputMulti': [{'label': 'Yes', 'score': 1},{'label': 'No', 'score': 0}]}
+        cs = ClassifiedSample.objects.create_by_owner(
+            job=job,
+            url='http://google.com',
+        )
+        # Refresh the Classified Sample
+        cs = ClassifiedSample.objects.get(id=cs.id)
+        self.assertEqual(classifier.classify(sample=cs), 'Yes')
+        self.assertEqual(classifier.classify_with_info(sample=cs), results['predict'])
+
+        patch_key.stop()
+        patch_bucket.stop()
+        patch_api.stop()
+        patch.stop()

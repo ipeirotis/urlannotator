@@ -48,7 +48,7 @@ class Classifier(object):
     def train(self, samples=[], turn_off=True, set_id=0):
         raise NotImplementedError
 
-    def update(self, samples):
+    def update(self, samples=[], turn_off=True, set_id=0):
         raise NotImplementedError
 
     def classify(self, sample):
@@ -280,9 +280,6 @@ class SimpleClassifier(Classifier):
         """
             Creates a set of words the sample's text consists of.
         """
-        if not hasattr(sample, 'text') and hasattr(sample, 'sample'):
-            sample = sample.sample
-
         words = nltk.word_tokenize(sample.text)
         words = set(words)
         feature_set = {}
@@ -326,6 +323,9 @@ class SimpleClassifier(Classifier):
             }
         }
         return res
+
+    def update(self, *args, **kwargs):
+        return self.train(*args, **kwargs)
 
     def train(self, samples=[], turn_off=True, set_id=0):
         """
@@ -376,10 +376,7 @@ class SimpleClassifier(Classifier):
         if self.classifier is None:
             return None
 
-        sample = class_sample
-        if not hasattr(class_sample, 'text'):
-            sample = class_sample.sample
-        label = self.classifier.classify(self.get_features(sample))
+        label = self.classifier.classify(self.get_features(class_sample.sample))
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
@@ -403,10 +400,7 @@ class SimpleClassifier(Classifier):
         if self.classifier is None:
             return None
 
-        sample = class_sample
-        if not hasattr(class_sample, 'text'):
-            sample = class_sample.sample
-        label = self.classifier.classify(self.get_features(sample))
+        label = self.classifier.classify(self.get_features(class_sample.sample))
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
@@ -479,6 +473,8 @@ class GooglePredictionClassifier(Classifier):
             if 'ERROR' in message:
                 raise ClassifierTrainingCriticalError(message)
             return message
+        except ClassifierTrainingCriticalError:
+            raise
         except:
             # Model doesn't exist (first training).
             return CLASS_TRAIN_STATUS_RUNNING
@@ -608,7 +604,7 @@ class GooglePredictionClassifier(Classifier):
         sample.label = label['outputLabel']
         label_probability = {}
         for score in label['outputMulti']:
-            label_probability[score['label']] = float(score['score']) * 100
+            label_probability[score['label']] = score['score']
         sample.label_probability = json.dumps(label_probability)
         sample.save()
 
