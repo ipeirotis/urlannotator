@@ -12,6 +12,8 @@ LOG_TYPE_SAMPLE_SCREENSHOT_DONE = 8  # Sample's screenshot has been taken
 LOG_TYPE_SAMPLE_TEXT_DONE = 9  # Sample's text has been extracted
 LOG_TYPE_SAMPLE_SCREENSHOT_FAIL = 10  # Error while taking screenshot
 LOG_TYPE_SAMPLE_TEXT_FAIL = 11  # Error while getting content
+LOG_TYPE_CLASSIFIER_TRAINING_ERROR = 12  # Error while training. Can retry.
+LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR = 13  # Fatal error while training. Aborted.
 
 # Long action type breakdown:
 LONG_ACTION_TRAINING = 1  # Classifier training
@@ -156,6 +158,21 @@ log_config = {
         'Box_entry': {
             'Title': 'Content failed',
             'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+        },
+    },
+    LOG_TYPE_CLASSIFIER_TRAINING_ERROR: {
+        'Console_out': 'Error while training classifier for job (%(job_id)d)'
+                       ' - %(error_message)s.',
+    },
+    LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR: {
+        'Console_out': 'Fatal error while training classifier for job '
+                       '(%(job_id)d) - %(error_message)s.',
+        'Single_text': 'Fatal error while training classifier.',
+        'Plural_text': 'Fatal error while training classifiers.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Fatal error',
+            'Text': 'Classifier training failed.',
         },
     },
 }

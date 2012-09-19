@@ -1,4 +1,5 @@
 import time
+import mock
 
 from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
@@ -6,7 +7,8 @@ from django.contrib.auth.models import User
 
 from urlannotator.main.models import Sample, Job, Worker, LABEL_YES, LABEL_NO
 from urlannotator.classification.classifiers import (Classifier247,
-    Classifier as ClassifierObject)
+    Classifier as ClassifierObject, ClassifierTrainingCriticalError,
+    ClassifierTrainingError, CLASS_TRAIN_STATUS_DONE)
 from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample, ClassifierPerformance)
 from urlannotator.classification.factories import classifier_factory
@@ -15,6 +17,10 @@ from urlannotator.crowdsourcing.event_handlers import initialize_external_jobs
 from urlannotator.crowdsourcing.models import WorkerQualityVote
 from urlannotator.flow_control.test import FlowControlMixin, ToolsMockedMixin
 from urlannotator.flow_control import send_event
+from urlannotator.logging.models import LogEntry
+from urlannotator.logging.settings import (
+    LOG_TYPE_CLASSIFIER_TRAINING_ERROR,
+    LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR)
 
 
 class Classifier247Tests(ToolsMockedMixin, TestCase):
@@ -58,6 +64,91 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
         self.assertNotEqual(self.classifier247.classify(test_sample), None)
         self.assertNotEqual(self.classifier247.classify_with_info(test_sample),
             None)
+
+    def testTrainingErrors(self):
+        training_set = self.job.trainingset_set.all()[0]
+
+        def retryException(self):
+            self.test = getattr(self, 'test', 0)
+            if not self.test:
+                self.test = 1
+                raise ClassifierTrainingError('test')
+            else:
+                return CLASS_TRAIN_STATUS_DONE
+
+        def criticalError(self):
+            raise ClassifierTrainingCriticalError('test')
+
+        # Lower training wait time.
+        target = 'urlannotator.classification.classifiers.CLASS247_TRAIN_STEP'
+        patch_time = mock.patch(target, new=1)
+        patch_time.start()
+
+        target = 'urlannotator.classification.classifiers.SimpleClassifier.get_train_status'
+
+        # Test retry-safe error
+        patch = mock.patch(target, new=retryException)
+        patch.start()
+        self.job.unset_classifier_trained()
+        self.classifier247.train(training_set.training_samples.all())
+        patch.stop()
+        job = Job.objects.get(id=self.job.id)
+        self.assertTrue(job.is_classifier_trained())
+        self.assertEqual(LogEntry.objects.filter(
+            job=job,
+            log_type=LOG_TYPE_CLASSIFIER_TRAINING_ERROR,
+        ).count(), 1)
+
+        log = LogEntry.objects.get(
+            job=job,
+            log_type=LOG_TYPE_CLASSIFIER_TRAINING_ERROR,
+        )
+
+        # Test log entry values
+        console_text = ('Error while training classifier for job (%d)'
+                       ' - %s.') % (job.id, 'test')
+        self.assertEqual(log.get_console_text(), console_text)
+
+        # Test critical error
+        patch = mock.patch(target, new=criticalError)
+        patch.start()
+        self.job.unset_classifier_trained()
+        self.classifier247.train(training_set.training_samples.all())
+        patch.stop()
+        job = Job.objects.get(id=self.job.id)
+        self.assertTrue(job.is_classifier_trained())
+        self.assertEqual(LogEntry.objects.filter(
+            job=job,
+            log_type=LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR,
+        ).count(), 1)
+
+        log = LogEntry.objects.get(
+            job=job,
+            log_type=LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR,
+        )
+
+        # Test log entry values
+        console_text = ('Fatal error while training classifier for job '
+                       '(%d) - %s.') % (job.id, 'test')
+        self.assertEqual(log.get_console_text(), console_text)
+
+        # What if someone forgets to provide retrying behaviour of train class?
+        # Just log it and abort.
+        target = 'urlannotator.classification.classifiers.Classifier247._train'
+
+        patch = mock.patch(target, new=retryException)
+        patch.start()
+        self.job.unset_classifier_trained()
+        self.classifier247.train(training_set.training_samples.all())
+        patch.stop()
+        job = Job.objects.get(id=self.job.id)
+        self.assertFalse(job.is_classifier_trained())
+        self.assertEqual(LogEntry.objects.filter(
+            job=job,
+            log_type=LOG_TYPE_CLASSIFIER_TRAINING_ERROR,
+        ).count(), 1)
+
+        patch_time.stop()
 
 
 class ClassifierTests(TestCase):

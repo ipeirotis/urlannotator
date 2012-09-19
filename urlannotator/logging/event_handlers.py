@@ -16,6 +16,8 @@ from urlannotator.logging.settings import (
     LOG_TYPE_SAMPLE_TEXT_DONE,
     LOG_TYPE_SAMPLE_SCREENSHOT_FAIL,
     LOG_TYPE_SAMPLE_TEXT_FAIL,
+    LOG_TYPE_CLASSIFIER_TRAINING_ERROR,
+    LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR,
 
     LONG_ACTION_TRAINING,
 )
@@ -205,6 +207,39 @@ def log_sample_screenshot_fail(sample_id, error_code, *args, **kwargs):
         *args, **kwargs
     )
 
+
+@task(ignore_result=True)
+def log_classifier_train_error(job_id, message, *args, **kwargs):
+    job = Job.objects.get(id=job_id)
+    params = {
+        'error_message': message,
+    }
+    LogEntry.objects.log(
+        log_type=LOG_TYPE_CLASSIFIER_TRAINING_ERROR,
+        job=job,
+        params=params,
+        *args, **kwargs
+    )
+
+
+@task(ignore_result=True)
+def log_classifier_critical_train_error(job_id, message, *args, **kwargs):
+    job = Job.objects.get(id=job_id)
+    params = {
+        'error_message': message,
+    }
+    LogEntry.objects.log(
+        log_type=LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR,
+        job=job,
+        params=params,
+        *args, **kwargs
+    )
+    LongActionEntry.objects.finish_action(
+        job=job,
+        action_type=LONG_ACTION_TRAINING,
+        *args, **kwargs
+    )
+
 FLOW_DEFINITIONS = [
     (r'^EventNewRawSample$', log_new_sample_start),
     (r'^EventNewSample$', log_sample_done),
@@ -217,5 +252,6 @@ FLOW_DEFINITIONS = [
     (r'^EventSampleScreenshotDone$', log_sample_screenshot_done),
     (r'^EventSampleScreenshotFail$', log_sample_screenshot_fail),
     (r'^EventSampleContentDone$', log_sample_text_done),
-    (r'^EventSampleContentFail$', log_sample_text_fail),
+    (r'^EventClassifierTrainError$', log_classifier_train_error),
+    (r'^EventClassifierCriticalTrainError$', log_classifier_critical_train_error),
 ]

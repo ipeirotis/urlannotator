@@ -17,12 +17,31 @@ from urlannotator.classification.models import (Classifier as ClassifierModel,
     TrainingSet)
 from urlannotator.tools.synchronization import RWSynchronize247
 from urlannotator.statistics.stat_extraction import update_classifier_stats
+from urlannotator.flow_control import send_event
+from urlannotator.main.models import Job
 
 # Classifier training statuses breakdown:
 # CLASS_TRAIN_STATUS_DONE - training has been completed.
 # CLASS_TRAIN_STATUS_RUNNING - training is still in progress.
+# CLASS_TRAIN_STATUS_ERROR - error occured while training.
 CLASS_TRAIN_STATUS_DONE = 'DONE'
 CLASS_TRAIN_STATUS_RUNNING = 'RUNNING'
+CLASS_TRAIN_STATUS_ERROR = 'ERROR'
+
+
+class ClassifierTrainingError(Exception):
+    """
+        Exception indicating an error has occured during classifier training.
+        It is safe to retry the task.
+    """
+    pass
+
+
+class ClassifierTrainingCriticalError(Exception):
+    """
+        Error that should stop training, without attempting to retry.
+    """
+    pass
 
 
 class Classifier(object):
@@ -106,7 +125,28 @@ class Classifier247(Classifier):
 
         try:
 
-            func(*args, **kwargs)
+            entry = ClassifierModel.objects.get(id=self.id)
+            try:
+                func(*args, **kwargs)
+            except ClassifierTrainingError, e:
+                # Retry-safe error has been propagated up to here whilst
+                # it should've been handled in the `func`. Log it and abort.
+                send_event(
+                    "EventClassifierTrainError",
+                    job_id=entry.job_id,
+                    message=e.message,
+                )
+                return
+            except ClassifierTrainingCriticalError, e:
+                # Really bad things have happened during training. Log it and
+                # abort.
+                send_event(
+                    "EventClassifierCriticalTrainError",
+                    job_id=entry.job_id,
+                    message=e.message,
+                )
+                return
+
             with self.sync247.switch():
                 writer, reader = self.update_self()
                 self.update_to_db(
@@ -114,6 +154,7 @@ class Classifier247(Classifier):
                     reader_id=writer.id,
                 )
 
+            # Refresh our `entry` object
             entry = ClassifierModel.objects.get(id=self.id)
             update_classifier_stats(self, entry.job)
 
@@ -130,18 +171,28 @@ class Classifier247(Classifier):
             set_id=set_id,
         )
 
-        trained = writer.get_train_status() == CLASS_TRAIN_STATUS_DONE
-        wait_time = CLASS247_TRAIN_STEP
+        trained = False
+        wait_time = 0
+        entry = ClassifierModel.objects.get(id=self.id)
+        job_id = entry.job_id
 
         while not trained:
             time.sleep(min(wait_time, CLASS247_MAX_WAIT))
 
-            status = writer.get_train_status()
+            try:
+                status = writer.get_train_status()
+            except ClassifierTrainingError, e:
+                status = CLASS_TRAIN_STATUS_ERROR
+                # Swallow retry-safe training errors.
+                send_event(
+                    "EventClassifierTrainError",
+                    job_id=job_id,
+                    message=e.message,
+                )
             trained = status == CLASS_TRAIN_STATUS_DONE
             wait_time += CLASS247_TRAIN_STEP
 
-        entry = ClassifierModel.objects.get(id=self.id)
-        job = entry.job
+        job = Job.objects.get(id=job_id)
 
         if not job.is_classifier_trained():
             job.set_classifier_trained()
@@ -424,7 +475,10 @@ class GooglePredictionClassifier(Classifier):
     def get_train_status(self):
         try:
             status = self.papi.get(id=self.model).execute()
-            return status['trainingStatus']
+            message = status['trainingStatus']
+            if 'ERROR' in message:
+                raise ClassifierTrainingCriticalError(message)
+            return message
         except:
             # Model doesn't exist (first training).
             return CLASS_TRAIN_STATUS_RUNNING
