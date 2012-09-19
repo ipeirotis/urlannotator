@@ -68,7 +68,7 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
     def testTrainingErrors(self):
         training_set = self.job.trainingset_set.all()[0]
 
-        def retryException(self):
+        def retryException(self, *args, **kwargs):
             self.test = getattr(self, 'test', 0)
             if not self.test:
                 self.test = 1
@@ -76,7 +76,7 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
             else:
                 return CLASS_TRAIN_STATUS_DONE
 
-        def criticalError(self):
+        def criticalError(self, *args, **kwargs):
             raise ClassifierTrainingCriticalError('test')
 
         # Lower training wait time.
@@ -116,7 +116,7 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
         self.classifier247.train(training_set.training_samples.all())
         patch.stop()
         job = Job.objects.get(id=self.job.id)
-        self.assertTrue(job.is_classifier_trained())
+        self.assertFalse(job.is_classifier_trained())
         self.assertEqual(LogEntry.objects.filter(
             job=job,
             log_type=LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR,
@@ -146,7 +146,7 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
         self.assertEqual(LogEntry.objects.filter(
             job=job,
             log_type=LOG_TYPE_CLASSIFIER_TRAINING_ERROR,
-        ).count(), 1)
+        ).count(), 2)
 
         patch_time.stop()
 
