@@ -192,59 +192,15 @@ LOGGING = {
     }
 }
 
-PIPELINE_CSS = {
-    'bootstrap': {
-        'source_filenames': (
-            'less/bootstrap/bootstrap.less',
-        ),
-        'output_filename': 'css/bootstrap.css',
-        'extra_context': {
-            'rel': 'stylesheet/less',
-        },
-    },
-    'bootstrap-responsive': {
-        'source_filenames': (
-            'less/bootstrap/responsive.less',
-        ),
-        'output_filename': 'css/bootstrap-responsive.css',
-        'extra_context': {
-            'rel': 'stylesheet/less',
-        },
-    },
+try:
+    from pipeline_js import PIPELINE_JS as _pipeline_js
+    from pipeline_css import PIPELINE_CSS as _pipeline_css
+    # two pylint warnings less:
+    PIPELINE_JS = _pipeline_js
+    PIPELINE_CSS = _pipeline_css
+except ImportError:
+    pass
 
-}
-
-PIPELINE_JS = {
-    'core': {
-        'source_filenames': (
-            'js/jquery-1.7.2.js',
-            'js/ejs.js',
-            'js/view.js',
-            'js/underscore.js',
-            'js/json2.js',
-            'js/backbone.js',
-            'js/bootstrap.js',
-            'js/bootstrap-tooltip.js',
-        ),
-        'output_filename': 'js/core.min.js',
-    },
-    'crud': {
-        'source_filenames': (
-            'tenclouds/django/crud/statics/js/init.js',
-            'tenclouds/django/crud/statics/js/events.js',
-            'tenclouds/django/crud/statics/js/models.js',
-            'tenclouds/django/crud/statics/js/views.js',
-            'tenclouds/django/crud/statics/js/widgets.js',
-        ),
-        'output_filename': 'crud.js',
-    },
-    'less': {
-        'source_filenames': (
-            'js/less-1.3.0.js',
-        ),
-        'output_filename': 'js/less.min.js',
-    },
-}
 
 PIPELINE = not DEBUG
 if PIPELINE:
