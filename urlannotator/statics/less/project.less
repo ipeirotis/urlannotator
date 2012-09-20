@@ -1,0 +1,62 @@
+@import 'bootstrap/variables.less';
+@import 'bootstrap/mixins.less';
+
+div.alert {
+  padding-bottom:37px;
+  form {
+    margin-bottom:0px;
+  }
+}
+
+div.status-active {
+  background-color: #DFF0D8;
+}
+div.status-completed {
+  background-color: #F7F7F9;
+}
+div.status-draft {
+  background-color: #FCF8E3;
+}
+div.status-stopped {
+  background-color: #F2DEDE;
+}
+div.span2.infobox {
+  text-align: center;
+  border: 1px solid #E1E1E8;
+  border-radius: 4px 4px 4px 4px;
+  @media (min-width: 1200px) {
+    margin-left:28px;
+  }
+  margin-left:18px;
+}
+
+span.badge {
+  &.badge-draft {
+    background-color:#DDAB50;
+  }
+  &.badge-initializing {
+    background-color:#A6CE73;
+  }
+}
+
+div.infobox-disabled {
+  background-color: #F7F7F9;
+  color: gray;
+}
+
+div.update-box {
+  margin-bottom: 5px;
+  clear: both;
+}
+.box-img {
+  width: 60px;
+  height: 60px;
+  float: left;
+}
+span.box-header {
+  display: block;
+  font-weight: bold;
+}
+span.box-content {
+  display: block;
+}

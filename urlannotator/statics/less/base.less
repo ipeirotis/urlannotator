@@ -2,6 +2,13 @@
 @import 'bootstrap/mixins.less';
 
 // use 2 space tabulation
+body {
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+.sidebar-nav {
+  padding: 9px 0;
+}
 
 div.navbar.navbar-fixed-top {
   .brand {
@@ -100,14 +107,14 @@ div.navbar.navbar-fixed-top {
                 width: 10px;
                 height: 10px;
                 display: none; // toggled li.open
-                margin-top: 22px;
+                margin-top: 25px;
               }
               .left {
                 background: transparent url('/statics/img/url_anno_toggle.png') no-repeat 1px 1px;
                 width: 10px;
                 height: 10px;
                 display: inline-block; // toggled li.open
-                margin-top: 22px;
+                margin-top: 25px;
               }
             }
           }
@@ -144,11 +151,36 @@ div.navbar.navbar-fixed-top {
                   padding:5px;
                   &:hover{
                     background-color: white;
+                    color:#333;
                   }
                 }
               }
             }
           }
+        }
+        ul.loginNav {
+          li.open {
+            a.dropdown-toggle {
+              .down {
+                display: inline-block;
+              }
+              .left {
+                display: none;
+              }
+            }
+
+            ul.dropdown-menu {
+              .border-radius(0px);
+              margin-top: 0px;
+              &:before {
+                display: none;
+              }
+              &:after {
+                display: none;
+              }
+            }
+          }
+
         }
         &.in { // this is for smarphones aka @media (max-width: 979px)
           background-color: black;
@@ -171,10 +203,16 @@ div.navbar.navbar-fixed-top {
 header.header {
   background-color: #F7F7F7;
   border-bottom:2px solid #EDEDED;
+  margin-bottom:20px;
   h1, h2, h3 {
     font-size:22px;
     line-height:40px;
     font-weight: normal;
+    display: inline;
+  }
+  p, span {
+    line-height: 40px;
+    vertical-align: top;
   }
 }
 

@@ -37,7 +37,7 @@ PIPELINE_CSS = {
     },
     'project': {
         'source_filenames': (
-            'less/bootstrap/project.less',
+            'less/project.less',
         ),
         'output_filename': 'css/project.css',
         'extra_context': {

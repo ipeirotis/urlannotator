@@ -25,15 +25,6 @@
         {% block css %}
             {% compressed_css 'bootstrap' %}
             {% compressed_css 'base' %}
-            <style>
-                body {
-                    padding-top: 66px;
-                    padding-bottom: 40px;
-                }
-                .sidebar-nav {
-                    padding: 9px 0;
-                }
-            </style>
             {% compressed_css 'bootstrap-responsive' %}
         {% endblock %}
 
@@ -76,7 +67,7 @@
                     </li>
                   </ul>
                 {% else %}
-                  <ul class="nav pull-right userNav">
+                  <ul class="nav pull-right loginNav">
                     <li>
                       <a href="{% url register %}">Register</a>
                     </li>
@@ -112,8 +103,12 @@
 
         <header class="header">
           <div class="container container-header">
-          {% block header %}
-          {% endblock %}
+            <div class="row">
+              <div class="span12">
+                {% block header %}
+                {% endblock %}
+              </div>
+            </div>
           </div>
         </header>
 
@@ -134,14 +129,10 @@
               {% endif %}
             {% endblock %}
           </div>
-          <div id="alert-box" class="row">
-          </div>
-          <div class="row">
+          <div id="alert-box" class="row"> </div>
           {% block main %}
           {% endblock %}
-          </div>
-          <div class="row">
-          </div>
+          <div class="row"> </div>
         </div>
 
         <footer class="footer">
