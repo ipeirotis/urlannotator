@@ -1,15 +1,24 @@
 @import 'bootstrap/variables.less';
 @import 'bootstrap/mixins.less';
 
+// use 2 space tabulation
+
 div.navbar.navbar-fixed-top {
   .brand {
-    padding:16px 20px 24px 0px;
+    margin: 14px 3px 11px 0px;
+    padding: 0px 5px 0px 5px;
+    background:url('/statics/img/url_anno_header_03.png') no-repeat center center;
+    width:168px;
+    height:35px;
+    border-right:1px solid #4D5564;
   }
   .dropdown .caret {
     margin-top:18px;
   }
   .navbar-inner {
     background:url('/statics/img/url_anno_header_navbar_bg.png') repeat-x 0px 0px;
+    .box-shadow(none);
+    padding:0px;
     .container {
       div.nav-collapse {
         ul.nav {
@@ -24,7 +33,184 @@ div.navbar.navbar-fixed-top {
             }
           }
         }
+        ul.nav.project {
+          li a {
+            color:#B99859;
+            font-style: italic;
+          }
+        }
+        ul.userNav {
+          li.new-project a,
+          li.documentation a {
+            color:white;
+            &:before {
+              content:'●';
+              margin-right:6px;
+            }
+          }
+          li.new-project {
+            a {
+              font-weight: bold;
+              font-size:16px;
+              &:before{
+                font-size:22px;
+                line-height: 22px;
+              }
+            }
+          }
+          li.documentation {
+            a:before{
+              font-size:16px;
+              line-height: 16px;
+            }
+          }
+          li.dropdown {
+            a {
+              line-height: 16px;
+            }
+            a.dropdown-toggle {
+              float:right;
+              padding:0px;
+              .mail-wrapper {
+                text-shadow:none;
+                color:#B99859;
+                width:180px;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space:nowrap;
+                float: left;
+                padding:25px 10px 18px 19px;
+                .login-desc {
+                  float:right;
+                  text-transform: lowercase;
+                  line-height: 14px;
+                  font-style: italic;
+                  margin-right: 10px;
+                  margin-top:-15px;
+                  color:#999DA5;
+                  text-decoration: none;
+                }
+                .mail {
+                  float:right;
+                  text-decoration: underline;
+                }
+              }
+              .down {
+                background: transparent url('/statics/img/url_anno_toggle.png') no-repeat -9px 1px;
+                width: 10px;
+                height: 10px;
+                display: none; // toggled li.open
+                margin-top: 22px;
+              }
+              .left {
+                background: transparent url('/statics/img/url_anno_toggle.png') no-repeat 1px 1px;
+                width: 10px;
+                height: 10px;
+                display: inline-block; // toggled li.open
+                margin-top: 22px;
+              }
+            }
+          }
+          li.open {
+            .login-desc {
+              display: none;
+            }
+            a.dropdown-toggle {
+              .down {
+                display: inline-block;
+              }
+              .left {
+                display: none;
+              }
+            }
+
+            ul.dropdown-menu {
+              text-align: left;
+              left:0;
+              .border-radius(0px);
+              margin-top: 0px;
+              &:before {
+                display: none;
+              }
+              &:after {
+                display: none;
+              }
+              li {
+                margin-right: 10px;
+                float: none;
+                a {
+                  text-decoration: none;
+                  text-transform:lowercase;
+                  padding:5px;
+                  &:hover{
+                    background-color: white;
+                  }
+                }
+              }
+            }
+          }
+        }
+        &.in { // this is for smarphones aka @media (max-width: 979px)
+          background-color: black;
+        }
       }
     }
   }
+
+  .bottom-bar {
+    background: #E0B25D url('/statics/img/url_anno_header_navbar2_bg.png') no-repeat 0px 0px;
+    height:6px;
+    width:100%;
+  }
+  &:after{
+    clear:both;
+    padding-bottom:6px;
+  }
+}
+
+header.header {
+  background-color: #F7F7F7;
+  border-bottom:2px solid #EDEDED;
+  h1, h2, h3 {
+    font-size:22px;
+    line-height:40px;
+    font-weight: normal;
+  }
+}
+
+
+
+
+
+footer.footer {
+  padding: 70px 0;
+  margin-top: 70px;
+  border-top: 1px solid #e5e5e5;
+  background-color: #f5f5f5;
+}
+
+
+td.progressCol {
+  width: 30px;
+}
+td.classfierCol {
+  width: 30px;
+}
+td.budgetCol {
+  width: 70px;
+}
+td.totalCostCol {
+  width: 70px;
+}
+td.hoursSpentCol {
+  width: 70px;
+}
+td.linksCol {
+  width: 90px;
+}
+td.beatMachineCol {
+  width: 40px;
+}
+td.statusCol {
+  width: 90px;
 }

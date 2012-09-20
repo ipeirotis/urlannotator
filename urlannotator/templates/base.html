@@ -13,7 +13,7 @@
            More info: h5bp.com/i/378 -->
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-        <title></title>
+        <title>{% block title %}Url Annotator{% endblock %}</title>
         <meta name="description" content="">
         <meta name="author" content="">
 
@@ -27,7 +27,7 @@
             {% compressed_css 'base' %}
             <style>
                 body {
-                    padding-top: 60px;
+                    padding-top: 66px;
                     padding-bottom: 40px;
                 }
                 .sidebar-nav {
@@ -51,23 +51,35 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </a>
-              <a class="brand" href="{% url index %}">URL annotator</a>
+              <a class="brand" href="{% url index %}"></a>
               <div class="nav-collapse">
-                <ul class="nav">
-                  <li class="active"><a href="{% url readme_view %}">Documentation</a></li>
+                <ul class="nav project">
+                  <li class="active"><a href="#">Project</a></li>
                 </ul>
-                <ul class="nav pull-right">
-                  {% if user.is_authenticated %}
-                  <li><a href="{% url project_wizard %}">Create new project</a></li>
-                  <li class="dropdown">
-                      <a class="dropdown-toggle" data-toggle="dropdown" href="#">{% if user.get_profile.full_name%}{{user.get_profile.full_name}}{%else%}{{ user.username }}{%endif%}<b class="caret"></b></a>
-                      <ul class="dropdown-menu">
-                          <li><a href="{% url settings %}">Settings</a></li>
-                          <li><a href="{% url logout %}">Logout</a></li>
-                      </ul>
-                  </li>
-                  {% else %}
-                    <li><a href="{% url register %}">Register</a></li>
+                {% if user.is_authenticated %}
+                  <ul class="nav pull-right userNav">
+                    <li class="new-project"><a href="{% url project_wizard %}">Create new project</a></li>
+                    <li class="documentation"><a href="{% url readme_view %}">Documentation</a></li>
+                    <li class="dropdown" id="userMenu">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                          <div class="mail-wrapper">
+                          <span class="login-desc">you are logged as:</span>
+                            <span class="mail">{% if user.get_profile.full_name%}{{user.get_profile.full_name}}{%else%}{{ user.username }}{%endif%}</span>
+                          </div>
+                          <span class="down"></span>
+                          <span class="left"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="{% url settings %}">Settings</a></li>
+                            <li><a href="{% url logout %}">Logout</a></li>
+                        </ul>
+                    </li>
+                  </ul>
+                {% else %}
+                  <ul class="nav pull-right userNav">
+                    <li>
+                      <a href="{% url register %}">Register</a>
+                    </li>
                     <li class="dropdown">
                       <a class="dropdown-toggle" data-toggle="dropdown" href="#">Log in<b class="caret"></b></a>
                       <ul class="dropdown-menu">
@@ -90,13 +102,20 @@
                         </li>
                       </ul>
                     </li>
-                  </li>
-                  {% endif %}
-                </ul>
+                  </ul>
+                {% endif %}
               </div><!--/.nav-collapse -->
             </div>
+            <div class="bottom-bar"></div>
           </div>
         </div>
+
+        <header class="header">
+          <div class="container container-header">
+          {% block header %}
+          {% endblock %}
+          </div>
+        </header>
 
         <div class="container" role="main">
 	        <div class="row">
@@ -122,12 +141,16 @@
           {% endblock %}
           </div>
           <div class="row">
-            <hr>
-            <footer>
-                <p><a href="#">Terms of service</a>, <a href="#">Legal</a>, <a href="#">Contact</a>, created by <a href="http://10clouds.com">10Clouds</a></p>
-            </footer>
           </div>
         </div>
+
+        <footer class="footer">
+          <div class="container container-footer">
+            <div class="row">
+                <p><a href="#">Terms of service</a>, <a href="#">Legal</a>, <a href="#">Contact</a>, created by <a href="http://10clouds.com">10Clouds</a></p>
+            </div>
+          </div>
+        </footer>
 
 
         <!-- JavaScript at the bottom for fast page loading -->
