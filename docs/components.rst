@@ -559,7 +559,6 @@ Elements plugged into the *EventBus* (described later):
 
 - ClassificatorFactory(or Manager?)
 - SamplesCollectionManager
-- SamplesValidationManager
 - BeatTheMachineStartManager
 
 and also this elements registered on all kind of events:

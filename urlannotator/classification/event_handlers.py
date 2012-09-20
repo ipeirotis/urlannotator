@@ -16,39 +16,6 @@ from urlannotator.main.models import Sample, Job
 
 
 @task(ignore_result=True)
-class ClassifierTrainingManager(Task):
-    """ Manage training of classifiers.
-    """
-
-    def __init__(self):
-        self.samples = []
-
-    def run(self, samples, *args, **kwargs):
-        # FIXME: Mock
-        # TODO: Make proper classifier management
-        if samples:
-            if isinstance(samples, int):
-                samples = [samples]
-            job = Sample.objects.get(id=samples[0]).job
-
-            # If classifier is not trained, retry later
-            if not job.is_classifier_trained():
-                current.retry(countdown=3 * 60)
-
-            # classifier = classifier_factory.create_classifier(job.id)
-            # # train_samples = [train_sample.sample for train_sample in
-            # #     TrainingSet.objects.newest_for_job(job).training_samples.all()]
-            # # if train_samples:
-            # #     classifier.train(train_samples)
-            # samples_list = Sample.objects.filter(id__in=samples)
-            # for sample in samples_list:
-            #     classifier.classify(sample)
-
-
-add_samples = registry.tasks[ClassifierTrainingManager.name]
-
-
-@task(ignore_result=True)
 class SampleVotingManager(Task):
     """ Task periodically executed for update external voting service with
         newly delivered samples.
@@ -297,11 +264,9 @@ def update_classifier_stats(job_id, *args, **kwargs):
 
 FLOW_DEFINITIONS = [
     (r'^EventNewSample$', update_classified_sample),
-    (r'^EventSamplesValidated$', add_samples),
     (r'^EventSamplesVoting$', send_for_voting),
     (r'^EventProcessVotes$', process_votes),
     (r'^EventNewClassifySample$', classify),
-    # (r'EventTrainClassifier', classify),
     (r'^EventTrainingSetCompleted$', train_on_set),
     (r'^EventClassifierTrained$', update_classifier_stats),
 ]
