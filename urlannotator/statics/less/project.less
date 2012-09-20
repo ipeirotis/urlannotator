@@ -1,6 +1,20 @@
 @import 'bootstrap/variables.less';
 @import 'bootstrap/mixins.less';
 
+// please use 2 space tabulation
+
+@draft : #E0B25D;
+
+@initializing : #A6CE73;
+
+@active : #DFF0D8;
+
+@stopped : #F2DEDE;
+
+@completed : #F7F7F9;
+
+// too short to place in separated file
+
 div.alert {
   padding-bottom:37px;
   form {
@@ -9,19 +23,24 @@ div.alert {
 }
 
 div.status-draft {
-  background-color: #FCF8E3;
+  background-color: @draft;
+  border:1px solid darken(@draft, 10%);
 }
 div.status-initializing {
-  background-color:#EEEEEE;
+  background-color:@initializing;
+  border:1px solid darken(@initializing, 10%);
 }
 div.status-active {
-  background-color: #DFF0D8;
+  background-color: @active;
+  border:1px solid darken(@active, 10%);
 }
 div.status-stopped {
-  background-color: #F2DEDE;
+  background-color: @stopped;
+  border:1px solid darken(@stopped, 10%);
 }
 div.status-completed {
-  background-color: #F7F7F9;
+  background-color: @completed;
+  border:1px solid darken(@completed, 10%);
 }
 
 div.span2.infobox {
@@ -30,6 +49,9 @@ div.span2.infobox {
   border: 1px solid #E1E1E8;
   @media (min-width: 1200px) {
     margin-left:28px;
+  }
+  @media (max-width: 979px) and (min-width: 768px) {
+    height:63px;
   }
   margin-left:18px;
 
@@ -48,19 +70,19 @@ div.infobox-disabled {
 
 span.badge {
   &.badge-draft {
-    background-color:#DDAB50;
+    background-color:@draft;
   }
   &.badge-initializing {
-    background-color:#A6CE73;
+    background-color:@initializing;
   }
   &.badge-active {
-    background-color:#000000;
+    background-color:@active;
   }
   &.badge-stopped {
-    background-color:#000000;
+    background-color:@stopped;
   }
   &.badge-completed {
-    background-color:#000000;
+    background-color:@completed;
   }
 }
 
@@ -79,4 +101,20 @@ span.box-header {
 }
 span.box-content {
   display: block;
+}
+
+table#btm-statistics td:nth-of-type(2){
+    width: 100px;
+    text-align: right;
+}
+
+.nav.nav-tabs {
+  li a {
+    text-decoration: underline;
+    color:#D0A271;
+  }
+  li.active a {
+    text-decoration: none;
+    color:#333;
+  }
 }

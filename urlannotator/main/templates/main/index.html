@@ -1,12 +1,11 @@
 {% extends 'base.html' %}
 
-    {% block header %}
-      <h2>Projects</h2>
-    {% endblock %}
+{% block header %}
+  <h2>Projects</h2>
+{% endblock %}
 
 {% block main %}
   {% if user.is_authenticated %}
-
     <div class="row">
       <div class="span12">
         <table class="table" style="width:100%">
@@ -26,7 +25,7 @@
           <tbody>
           {% for p in projects %}
             <tr>
-              <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">(i)</a></td>
+              <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}"><i class="icon-info-sign"></i></a></td>
               <td class="statusCol">{{p.get_status}}</td>
               <td class="beatMachineCol">--</td>
               <td class="linksCol">{{p.get_urls_collected}}</td>
@@ -41,9 +40,7 @@
         </table>
       </div>
       {% if not projects %}
-        <span class="span5">&nbsp;</span>
-        <span id="nothing-to-display" class="span4" style="font-size:120%; font-weight:bold">Nothing to display here.</span>
-        <span class="span3">&nbsp;</span>
+        <div id="nothing-to-display" class="offset5 span4" style="font-size:120%; font-weight:bold">Nothing to display here.</div>
       {% endif %}
     </div>
   {% else %}
@@ -67,6 +64,8 @@
 {% block javascript %}
   {{ block.super }}
   <script type="text/javascript">
-  $('a[rel=tooltip]').tooltip({placement: 'right'})
+    $(function() {
+      $('a[rel=tooltip]').tooltip({placement: 'right'});
+    });
   </script>
 {% endblock %}
