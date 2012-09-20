@@ -6,6 +6,8 @@
     {% compressed_css 'project' %}
 {% endblock %}
 
+{% block title %}Project: {{project.title}}{% endblock %}
+
 {% block header %}
   <h2>{{project.title}} </h2><span class="badge badge-{{project.get_status|lower}}">{{project.get_status|lower}}</span>
 {% endblock %}

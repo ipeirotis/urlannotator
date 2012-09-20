@@ -19,7 +19,7 @@
     <h3 data-bind="text: cost">{{cost}}</h3>
     <span>Cost (USD)</span>
   </div>
-  <div class="span2 infobox">
+  <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
     <h3 data-bind="text: budget">{{budget}}</h3>
     <span>Budget (USD)</span>
   </div>
