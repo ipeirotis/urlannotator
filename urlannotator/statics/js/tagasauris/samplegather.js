@@ -1,5 +1,19 @@
 (function(){
 
+    window.TemplateGetter = {
+        get : function(url) {
+            var data = "<h1> failed to load url : " + url + "</h1>";
+            $.get({
+                async: false,
+                url: url,
+                success: function(response) {
+                    data = response;
+                }
+            });
+            return data;
+        }
+    },
+
     window.Input = Backbone.Model.extend({
 
         toggle: function () {
@@ -29,13 +43,7 @@
 
         className: "sampleInput",
 
-        template: _.template('\
-            <label class="control-label" for="input_1">Good url</label>\
-            <div class="controls">\
-                <input id="input_1" class="input input-xlarge required"\
-                    type="text" name="1" >\
-            </div>\
-        '),
+        template: _.template(TemplateGetter.get("../../ejs/tagasauris/inputsample.ejs")),
 
         events: {
             "click .todo-check"            : "toggleDone",
@@ -104,24 +112,18 @@
 
         el: $("samplegatherapp"),
 
-        gatherFormTemplate: _.template('\
-        <form class="form-vertical" data-validate="ketchup"\
-        <fieldset>\
-            <div class="question-group">\
-            <h2>Enter url samples</h2>\
-            <div id="questions" class="control-group open-question">\
-            </div>\
-        </fieldset>\
-        <input type="submit" value="Submit">\
-        </form>\
-        '),
+        template: null,
 
         events: {
             "keypress #new-todo": "sendOnEnter"
         },
 
-        start_job: function (external_token) {
-            this.external_token = external_token;
+        start_job: function (data) {
+            data = $.parseJSON(data);
+            this.external_token = data.external_token;
+            this.core_url = data.core_url;
+            this.template = _.template(TemplateGetter.get(
+                this.core_url + "/statics/ejs/tagasauris/samplegather.ejs")),
             this.render();
         },
 
@@ -129,8 +131,8 @@
         },
 
         render: function() {
-            $("#form-template").html(this.gatherFormTemplate());
-            $("#questions")
+            $("#form-template").html(this.template());
+            // $("#questions")
         },
 
         sendOnEnter: function(e) {
