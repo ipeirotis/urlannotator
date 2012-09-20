@@ -15,6 +15,10 @@ from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.main.models import Sample, Job
 
 
+import logging
+log = logging.getLogger(__name__)
+
+
 @task(ignore_result=True)
 class SampleVotingManager(Task):
     """ Task periodically executed for update external voting service with
@@ -39,9 +43,12 @@ class SampleVotingManager(Task):
         jobs = set([s.job for s in all_samples])
 
         for job in jobs:
-            job_samples = [s for s in all_samples if s.job == job]
-            initialized = job.tagasaurisjobs.voting_key is not None
-            yield job, job_samples, initialized
+            try:
+                job_samples = [s for s in all_samples if s.job == job]
+                initialized = job.tagasaurisjobs.voting_key is not None
+                yield job, job_samples, initialized
+            except TagasaurisJobs.DoesNotExist:
+                log.warning("Spotted job without tagasauris link.")
 
     def initialize_job(self, job, new_samples):
         """ Job initialization.
