@@ -1,14 +1,26 @@
 {% extends 'base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'accounts' %}
+{% endblock %}
+
+{% block title %}Register to url annotator{% endblock %}
+
+{% block header %}
+  <h2>Registration</h2>
+{% endblock %}
+
 
 {% block main %}
-<div class="container-fluid">
-  <div class="row-fluid">
-    <div class="span2">&nbsp;</div>
-    <div class="span8">
-      <div class="well row-fluid">
-        <div class="span7" style="border-right: 1px solid black; height: 100%">
+<div class="container container-register">
+  <div class="row">
+    <div class="offset1 span10">
+      <div class="well-anno row">
+        <div class="span5 col1">
           <form method="POST" action="#" class="form-horizontal">
-            <legend>Register</legend>
+            <legend>Form register</legend>
             <fieldset>
             {% csrf_token %}
               {% include 'form.html' %}
@@ -18,7 +30,7 @@
             </fieldset>
           </form>
         </div>
-        <div class="span4" style="width: 40%;">
+        <div class="span4 col2">
           <p style="margin-top: 20px;">Register via other services</p>
           <a class="btn btn-primary btn-small" href="{% url register_service 'google-oauth2'%}">Google</a>
           <a class="btn btn-primary btn-small" href="{% url register_service 'twitter'%}">Twitter</a>

@@ -53,5 +53,14 @@ PIPELINE_CSS = {
             'rel': 'stylesheet/less',
         },
     },
+    'accounts': {
+        'source_filenames': (
+            'less/accounts.less',
+        ),
+        'output_filename': 'css/accounts.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
 
 }

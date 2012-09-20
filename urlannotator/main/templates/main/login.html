@@ -1,11 +1,46 @@
 {% extends 'base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'accounts' %}
+{% endblock %}
+
+{% block title %}Login to url annotator{% endblock %}
+
+{% block header %}
+  <h2>Login</h2>
+{% endblock %}
+
 
 {% block main %}
-<div class="container-fluid">
-  <div class="row-fluid">
-    <div class="span2">&nbsp;</div>
-    <div class="span8">
-    {% include 'main/login_form.html' %}
+<div class="container container-login">
+  <div class="row">
+    <div class="offset1 span10">
+      <div class="well-anno row">
+        <div class="span5 col1">
+          <form method="POST" action="{% url login %}" class="form-horizontal">
+            <legend>Form login</legend>
+            <fieldset>
+            {% csrf_token %}
+              {% include 'form.html' %}
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit">SIGN IN</button>
+              </div>
+            </fieldset>
+          </form>
+
+            <p>Forgot password? <a href="{% url password_reset %}">Reset it</a>!</p>
+            <p>Not member? <a href="{% url register %}">Register</a>!</p>
+        </div>
+            <div class="span4 col2">
+            <p style="margin-top: 20px;">Login via other services</p>
+            <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'google-oauth2'%}">Google</a>
+            <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'twitter'%}">Twitter</a>
+            <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'facebook'%}">Facebook</a>
+            <a class="btn btn-primary btn-small" href="{% url odesk_login %}">Odesk</a>
+        </div>
+      </div>
     </div>
   </div>
 </div>
