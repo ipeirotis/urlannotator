@@ -1,4 +1,3 @@
-from django.db.models import F
 from django.db import IntegrityError
 
 from urlannotator.crowdsourcing.models import WorkerQualityVote

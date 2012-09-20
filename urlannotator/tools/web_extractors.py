@@ -1,4 +1,3 @@
-import httplib
 import urlparse
 import subprocess
 import os
@@ -8,7 +7,7 @@ import struct
 
 from django.conf import settings
 from django.template.defaultfilters import slugify
-from itertools import ifilter, imap
+from itertools import ifilter
 
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key

@@ -98,7 +98,7 @@ class SynchronizationTests(TestCase):
         # trace_start("trace.html", interval=5, auto=True)
 
         def test_schema(test, schema=['w', 'w', 'w', 'r'],
-            writers=3, readers=1):
+                writers=3, readers=1):
             """
                 Allows semi-synchronizingly test RWLock. We can't go any deeper
                 with atomicity due to technical reasons of semaphore testing.
@@ -167,7 +167,7 @@ class POSIXCacheTest(TestCase):
 
         # Create a different lock so that an attempt to create a lock with
         # previous name results in an object of different id.
-        lock_two = POSIXLock(name='cache-test2')
+        POSIXLock(name='cache-test2')
         lock = POSIXLock(name='cache-test')
 
         # Make sure we will unlink no longer used resources.

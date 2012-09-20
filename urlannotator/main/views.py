@@ -86,7 +86,7 @@ def updates_box_view(request, job_id):
             )
 
         if (job.account != request.user.get_profile()
-            and not request.user.is_superuser):
+                and not request.user.is_superuser):
             return HttpResponse(
                 json.dumps({'error': 'Project doesn\'t exist'})
             )
@@ -152,9 +152,9 @@ def register_view(request):
             cont = Context({'key': key, 'site': settings.SITE_URL})
             send_mail(subjectTemplate.render(cont).replace('\n', ''),
                 bodyTemplate.render(cont), 'URL Annotator', [user.email])
-            request.session['success'] = 'Thanks for registering. '\
-            'An activation email has been sent '\
-            'to %s with further instructions.' % user.email
+            request.session['success'] = ('Thanks for registering. '
+                'An activation email has been sent '
+                'to %s with further instructions.') % user.email
             return redirect('index')
 
         return render(request, 'main/register.html',
@@ -546,7 +546,7 @@ def project_view(request, id):
         return redirect('index')
 
     if (proj.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -581,7 +581,7 @@ def project_workers_view(request, id):
         return redirect('index')
 
     if (job.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -615,7 +615,7 @@ def project_worker_view(request, id, worker_id):
         return redirect('index')
 
     if (job.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -647,7 +647,7 @@ def project_debug(request, id, debug):
         return redirect('index')
 
     if (proj.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -675,7 +675,7 @@ def project_btm_view(request, id):
         return redirect('index')
 
     if (proj.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -693,7 +693,7 @@ def project_data_view(request, id):
         return redirect('index')
 
     if (job.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -717,7 +717,7 @@ def project_data_detail(request, id, data_id):
         return redirect('index')
 
     if (job.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -739,7 +739,7 @@ def project_classifier_view(request, id):
         return redirect('index')
 
     if (job.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
@@ -817,7 +817,7 @@ def project_classifier_data(request, id):
         return redirect('index')
 
     if (job.account != request.user.get_profile()
-        and not request.user.is_superuser):
+            and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
