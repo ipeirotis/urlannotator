@@ -39,7 +39,7 @@ class RegistrationSeleniumTests(LiveServerTestCase):
 
         self.selenium.get('%s%s'
                           % (self.live_server_url, reverse('logout')))
-        selector = '//ul[@class="nav pull-right"]//li[@class="dropdown"]'\
+        selector = '//ul[@class="nav pull-right loginNav"]//li[@class="dropdown"]'\
         '/a[@class="dropdown-toggle"]'
         el = self.selenium.find_element_by_xpath(selector)
         self.assertTrue(el)
