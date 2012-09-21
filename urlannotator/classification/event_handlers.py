@@ -50,11 +50,9 @@ class SampleVotingManager(Task):
             except TagasaurisJobs.DoesNotExist:
                 log.warning("Spotted job without tagasauris link.")
 
-    def initialize_job(self, job, new_samples):
+    def initialize_job(self, tc, job, new_samples):
         """ Job initialization.
-            TODO: Extend in future with other than tagasauris services?
         """
-        tc = make_tagapi_client()
 
         # Creates sample to mediaobject mapping
         mediaobjects = samples_to_mediaobjects(new_samples)
@@ -84,11 +82,9 @@ class SampleVotingManager(Task):
 
         tag_jobs.save()
 
-    def update_job(self, job, new_samples):
+    def update_job(self, tc, job, new_samples):
         """ Updating existing job.
-            TODO: Extend in future with other than tagasauris services?
         """
-        tc = make_tagapi_client()
 
         # Creates sample to mediaobject mapping
         mediaobjects = samples_to_mediaobjects(new_samples)
@@ -126,12 +122,13 @@ class SampleVotingManager(Task):
         unmapped_samples = self.get_unmapped_samples()
         try:
             jobs = self.get_jobs(unmapped_samples)
+            tc = make_tagapi_client()
 
             for job, new_samples, initialized in jobs:
                 if initialized:
-                    self.update_job(job, new_samples)
+                    self.update_job(tc, job, new_samples)
                 else:
-                    self.initialize_job(job, new_samples)
+                    self.initialize_job(tc, job, new_samples)
         except Exception:
             pass
 
