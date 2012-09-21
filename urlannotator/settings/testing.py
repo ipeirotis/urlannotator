@@ -83,3 +83,18 @@ IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
+
+# Tagasauris settings
+# NOTE: This settings are used also for testing tagasauris integration. Many
+# jobs are created on Tagasauris side so devel.tagasauris.com should be used
+# ALWAYS.
+TAGASAURIS_LOGIN = 'urlannotator'
+TAGASAURIS_PASS = 'urlannotator'
+TAGASAURIS_HOST = 'http://devel.tagasauris.com'
+TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+
+TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
+TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/sample/tagasauris/%s/'
+TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/tagasauris/%s/'
