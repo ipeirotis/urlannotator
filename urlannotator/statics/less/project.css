@@ -59,11 +59,6 @@ div.span2.infobox {
   border: 1px solid #E1E1E8;
   margin-left: 18px;
 }
-@media (min-width: 1200px) {
-  div.span2.infobox {
-    margin-left: 28px;
-  }
-}
 @media (max-width: 979px) and (min-width: 768px) {
   div.span2.infobox {
     height: 63px;
