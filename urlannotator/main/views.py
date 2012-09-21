@@ -215,8 +215,8 @@ def login_view(request):
                 password=form.cleaned_data['password'])
             if user is not None:
                 if not user.get_profile().email_registered:
-                    request.session['error'] = 'Username and/or password'\
-                    ' is incorrect.'
+                    request.session['error'] = (
+                        'Username and/or password is incorrect.')
                     return redirect('index')
 
                 if user.is_active:
@@ -225,12 +225,12 @@ def login_view(request):
                         request.session.set_expiry(0)
                     return redirect('index')
                 else:
-                    request.session['error'] = 'This account is '\
-                    'still inactive.'
+                    request.session['error'] = (
+                        'This account is still inactive.')
                     return redirect('index')
             else:
-                request.session['error'] = 'Username and/or password '\
-                'is incorrect.'
+                request.session['error'] = (
+                    'Username and/or password is incorrect.')
                 return redirect('index')
         else:
             request.session['error'] = 'Username and/or password is incorrect.'
@@ -274,8 +274,8 @@ def settings_view(request):
                     if form.is_valid():
                         profile.full_name = form.cleaned_data['full_name']
                         profile.save()
-                        context['success'] = 'Full name has been '\
-                        'successfully changed.'
+                        context['success'] = (
+                            'Full name has been successfully changed.')
                     else:
                         context['general_form'] = form
                 else:
@@ -283,16 +283,16 @@ def settings_view(request):
                     if form.is_valid():
                         profile.full_name = form.cleaned_data['full_name']
                         profile.save()
-                        context['success'] = 'Full name has been '\
-                        'successfully changed.'
+                        context['success'] = (
+                            'Full name has been successfully changed.')
                     else:
                         context['general_form'] = form
             elif request.POST['submit'] == 'password':
                 form = PasswordChangeForm(request.user, request.POST)
                 if form.is_valid():
                     form.save()
-                    context['success'] = 'Password has been '\
-                    'successfully changed.'
+                    context['success'] = (
+                        'Password has been successfully changed.')
                 else:
                     context['password_form'] = form
             elif request.POST['submit'] == 'alerts':
@@ -300,8 +300,8 @@ def settings_view(request):
                 if form.is_valid():
                     profile.alerts = form.cleaned_data['alerts']
                     profile.save()
-                    context['success'] = 'Alerts setup has been '\
-                    'successfully changed.'
+                    context['success'] = (
+                        'Alerts setup has been successfully changed.')
                 else:
                     context['alerts_form'] = form
     return render(request, 'main/settings.html',
@@ -316,9 +316,9 @@ def project_wizard(request):
                    'attributes_form': WizardAttributesForm(odeskLogged),
                    'additional_form': WizardAdditionalForm()}
         if not odeskLogged:
-            context['wizard_alert'] = 'Your account is not connected to '\
-            'Odesk. If you want to have more options connect to Odesk at '\
-            '<a href="%s">settings</a> page.''' % reverse('settings')
+            context['wizard_alert'] = ('Your account is not connected to '
+                'Odesk. If you want to have more options connect to Odesk at '
+                '<a href="%s">settings</a> page.') % reverse('settings')
     else:
         topic_form = WizardTopicForm(request.POST)
         attr_form = WizardAttributesForm(odeskLogged, request.POST)
@@ -330,9 +330,9 @@ def project_wizard(request):
                    'additional_form': addt_form}
 
         if not odeskLogged:
-            context['wizard_alert'] = 'Your account is not connected to '\
-            'Odesk. If you want to have more options connect to Odesk at '\
-            '<a href="%s">settings</a> page.''' % reverse('settings')
+            context['wizard_alert'] = ('Your account is not connected to '
+                'Odesk. If you want to have more options connect to Odesk at '
+                '<a href="%s">settings</a> page.') % reverse('settings')
 
         if (addt_form.is_valid() and
             attr_form.is_valid() and
@@ -446,8 +446,8 @@ def odesk_complete(request):
             return redirect('index')
         except Account.DoesNotExist:
             if not 'registration' in request.session:
-                request.session['error'] = "Account for that social media "\
-                "doesn't exist. Please register first."
+                request.session['error'] = ("Account for that social media "
+                    "doesn't exist. Please register first.")
                 return redirect('index')
             request.session.pop('registration')
 
@@ -499,9 +499,10 @@ def debug_prediction(request):
     if credentials is None or credentials.invalid:
         request.session['flow'] = flow
         return redirect(flow.step1_get_authorize_url(
-            redirect_uri='http://%s%s' %
-                (settings.SITE_URL, reverse('debug_prediction_complete'))
-            ))
+            redirect_uri='http://%s%s' % (
+                settings.SITE_URL,
+                reverse('debug_prediction_complete')
+            )))
     request.session['success'] = 'Google Prediction is still valid.'
     return redirect('index')
 
