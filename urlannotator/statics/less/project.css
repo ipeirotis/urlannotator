@@ -1,0 +1,124 @@
+.clearfix {
+  *zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  /* Make inputs at least the height of their button counterpart */
+
+  /* Makes inputs behave like true block-level elements */
+
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+div.alert {
+  padding-bottom: 37px;
+}
+div.alert form {
+  margin-bottom: 0px;
+}
+div.status-draft {
+  background-color: #e0b25d;
+  border: 1px solid #d89e32;
+}
+div.status-initializing {
+  background-color: #a6ce73;
+  border: 1px solid #8ec14d;
+}
+div.status-active {
+  background-color: #dff0d8;
+  border: 1px solid #c1e2b3;
+}
+div.status-stopped {
+  background-color: #f2dede;
+  border: 1px solid #e4b9b9;
+}
+div.status-completed {
+  background-color: #f7f7f9;
+  border: 1px solid #dadae3;
+}
+div.span2.infobox {
+  background-color: #F7F7F9;
+  text-align: center;
+  border: 1px solid #E1E1E8;
+  margin-left: 18px;
+}
+@media (min-width: 1200px) {
+  div.span2.infobox {
+    margin-left: 28px;
+  }
+}
+@media (max-width: 979px) and (min-width: 768px) {
+  div.span2.infobox {
+    height: 63px;
+  }
+}
+div.span2.infobox h3 {
+  color: #8CC04A;
+}
+div.infobox-disabled {
+  background-color: #F7F7F9;
+  color: gray;
+}
+div.infobox-disabled h3 {
+  color: #DBA442!important;
+}
+span.badge.badge-draft {
+  background-color: #e0b25d;
+}
+span.badge.badge-initializing {
+  background-color: #a6ce73;
+}
+span.badge.badge-active {
+  background-color: #dff0d8;
+}
+span.badge.badge-stopped {
+  background-color: #f2dede;
+}
+span.badge.badge-completed {
+  background-color: #f7f7f9;
+}
+div.update-box {
+  margin-bottom: 5px;
+  clear: both;
+}
+.box-img {
+  width: 60px;
+  height: 60px;
+  float: left;
+}
+span.box-header {
+  display: block;
+  font-weight: bold;
+}
+span.box-content {
+  display: block;
+}
+table#btm-statistics td:nth-of-type(2) {
+  width: 100px;
+  text-align: right;
+}
+.nav.nav-tabs li a {
+  text-decoration: underline;
+  color: #D0A271;
+}
+.nav.nav-tabs li.active a {
+  text-decoration: none;
+  color: #333;
+}
