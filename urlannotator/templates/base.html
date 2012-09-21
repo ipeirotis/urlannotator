@@ -24,8 +24,8 @@
 
         {% block css %}
             {% compressed_css 'bootstrap' %}
-            {% compressed_css 'base' %}
             {% compressed_css 'bootstrap-responsive' %}
+            {% compressed_css 'base' %}
         {% endblock %}
 
     </head>
@@ -44,9 +44,6 @@
               </a>
               <a class="brand" href="{% url index %}"></a>
               <div class="nav-collapse">
-                <ul class="nav project">
-                  <li class="active"><a href="#">Project</a></li>
-                </ul>
                 {% if user.is_authenticated %}
                   <ul class="nav pull-right userNav">
                     <li class="new-project"><a href="{% url project_wizard %}">Create new project</a></li>
@@ -98,19 +95,18 @@
               </div><!--/.nav-collapse -->
             </div>
             <div class="bottom-bar"></div>
+            <header class="header">
+              <div class="container container-header">
+                <div class="row">
+                  <div class="span12">
+                    {% block header %}
+                    {% endblock %}
+                  </div>
+                </div>
+              </div>
+            </header>
           </div>
         </div>
-
-        <header class="header">
-          <div class="container container-header">
-            <div class="row">
-              <div class="span12">
-                {% block header %}
-                {% endblock %}
-              </div>
-            </div>
-          </div>
-        </header>
 
         <div class="container" role="main">
 	        <div class="row">
