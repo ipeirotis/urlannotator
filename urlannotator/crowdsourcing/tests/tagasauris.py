@@ -40,16 +40,7 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
         self.assertEqual(mo['mimetype'], 'image/png')
 
 
-@task()
-def mocked_task(*args, **kwargs):
-    return "http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
-
-
 class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
-
-    mocks = [
-        ('urlannotator.main.factories.web_content_extraction', mocked_task),
-    ]
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
