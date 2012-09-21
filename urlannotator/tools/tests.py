@@ -167,7 +167,11 @@ class POSIXCacheTest(TestCase):
 
         # Create a different lock so that an attempt to create a lock with
         # previous name results in an object of different id.
-        POSIXLock(name='cache-test2')
+        #
+        # This one was important here, so that a reference is kept and the
+        # following lock call is spawned with different id, yet with the same
+        # inner lock id (caching) until the equality is tested.
+        lock_two = POSIXLock(name='cache-test2')
         lock = POSIXLock(name='cache-test')
 
         # Make sure we will unlink no longer used resources.
