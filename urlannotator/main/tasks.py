@@ -80,7 +80,7 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
 
 @task()
 def create_sample(extraction_result, sample_id, job_id, url,
-    source_type, source_val='', label=None, silent=False, *args, **kwargs):
+        source_type, source_val='', label=None, silent=False, *args, **kwargs):
     """
     If error while capturing web propagate it. Finally deletes TemporarySample.
     extraction_result should be [True, True] - otherwise chaining failed.
@@ -143,7 +143,7 @@ def create_sample(extraction_result, sample_id, job_id, url,
 
 @task()
 def create_classify_sample(sample_id, source_type, create_classified=True,
-    label='', source_val='', *args, **kwargs):
+        label='', source_val='', *args, **kwargs):
     """
         Creates classified sample from existing sample, therefore we don't need
         web extraction.
@@ -190,7 +190,7 @@ def create_classify_sample(sample_id, source_type, create_classified=True,
 
 @task()
 def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
-    *args, **kwargs):
+        *args, **kwargs):
     try:
         old_sample = Sample.objects.get(id=sample_id)
         job = Job.objects.get(id=job_id)

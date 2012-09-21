@@ -115,9 +115,9 @@ class WizardAttributesForm(forms.Form):
         self._clean_value(cleaned_data, 'data_source', '0')
 
         if (Job.is_odesk_required_for_source(cleaned_data['data_source']) and
-            not self.odesk_connect):
+                not self.odesk_connect):
             raise forms.ValidationError(
-              'You have to be connected to Odesk to use this option.')
+                'You have to be connected to Odesk to use this option.')
 
         if cleaned_data['data_source'] == '1':
             cleaned_data['hourly_rate'] = 0

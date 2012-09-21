@@ -97,14 +97,15 @@ hardcoded_mocks = [
 ]
 
 
-def apply_patches(mocks=[]):
+def apply_patches(mocks=[], add_hardcoded_mocks=True):
     """
         Applies passed list of mocks and hardcoded list of always-patched
         objects.
 
         :rtype: List of patchers.
     """
-    mocks = chain(mocks, hardcoded_mocks)
+    if add_hardcoded_mocks:
+        mocks = chain(mocks, hardcoded_mocks)
     return map(lambda x: mock.patch(
         target=x[0],
         new=x[1],
@@ -112,7 +113,7 @@ def apply_patches(mocks=[]):
 
 
 @contextmanager
-def ToolsMocked(mocks=[]):
+def ToolsMocked(mocks=[], add_hardcoded_mocks=True):
     """
         Context manager to mock tools and any additional objects.
 
@@ -121,7 +122,7 @@ def ToolsMocked(mocks=[]):
                       Be careful when specifying `target` and refer to
                       mock.patch of mock module for additional information.
     """
-    patchers = apply_patches(mocks)
+    patchers = apply_patches(mocks, add_hardcoded_mocks)
     map(lambda x: x.start(), patchers)
     yield
     map(lambda x: x.stop(), patchers)

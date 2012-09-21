@@ -8,8 +8,9 @@ from urlannotator.main.models import Job, Sample
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_job, sample_to_mediaobject)
 from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
-from urlannotator.flow_control.test import ToolsMockedMixin
+from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
 from urlannotator.flow_control import send_event
+from urlannotator.classification.event_handlers import train
 
 
 class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
@@ -17,7 +18,7 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
         self.job = Job.objects.create_active(
-            title='test_tagapi_client',
+            title='urlannotator_test_tagapi_client',
             description='test_description',
             no_of_urls=2,
             account=self.u.get_profile(),
@@ -48,12 +49,47 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
         self.assertEqual(mo['mimetype'], 'image/png')
 
 
+class TagasaurisJobCreationChain(TestCase):
+
+    def setUp(self):
+        self.u = User.objects.create_user(username='testing', password='test')
+
+    def testSampleGatherOnJobCreation(self):
+
+        @task()
+        def mocked_task(*args, **kwargs):
+            return True
+
+        def eager_train(kwargs, *args, **kwds):
+            train(set_id=kwargs['set_id'])
+
+        mocks = [
+            ('urlannotator.main.factories.web_content_extraction', mocked_task),
+            ('urlannotator.main.factories.web_screenshot_extraction', mocked_task),
+            ('urlannotator.classification.event_handlers.process_execute', eager_train),
+        ]
+
+        with ToolsMocked(mocks, add_hardcoded_mocks=False):
+            self.job = Job.objects.create_active(
+                title='urlannotator_test_tagapi_client',
+                description='test_description',
+                no_of_urls=2,
+                account=self.u.get_profile(),
+                gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+
+        self.assertEqual(TagasaurisJobs.objects.count(), 1)
+        tj = TagasaurisJobs.objects.all()[0]
+        self.assertEqual(tj.urlannotator_job.id, self.job.id)
+        self.assertEqual(len(tj.sample_gathering_key), 32)
+        self.assertEqual(len(tj.sample_gathering_hit), 32)
+
+
 class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
         self.job = Job.objects.create_active(
-            title='test_tagapi_client',
+            title='urlannotator_test_tagapi_client',
             description='test_description',
             no_of_urls=2,
             account=self.u.get_profile(),
