@@ -17,6 +17,15 @@ PIPELINE_CSS = {
             'rel': 'stylesheet/less',
         },
     },
+    'urlannotator-responsive': {
+        'source_filenames': (
+            'less/responsive.less',
+        ),
+        'output_filename': 'css/urlannotator-responsive.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
     'base': {
         'source_filenames': (
             'less/base.less',
