@@ -28,7 +28,7 @@
   box-sizing: border-box;
 }
 body {
-  padding-top: 107px;
+  padding-top: 127px;
   padding-bottom: 40px;
 }
 .sidebar-nav {
@@ -254,4 +254,28 @@ td.statusCol {
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
   -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+@media (max-width: 767px) {
+  body {
+    padding-top: 0px;
+    padding-bottom: 20px;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle {
+    float: none;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .down {
+    display: inline-block;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .left {
+    display: none;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper {
+    width: auto;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper .login-desc {
+    float: none;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper .mail {
+    float: none;
+  }
 }

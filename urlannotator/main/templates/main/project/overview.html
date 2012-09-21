@@ -36,63 +36,63 @@
 </div>
 
 {% if project.is_draft %}
-<div class="row">
-  <div class="span12">
-    <p>Please review your project before starting.</p>
-    <p>In order to start the project click "Activate project" on the right project submenu.</p>
-  </div>
-</div>
-{% else %}
-<div class="row">
-  <div class="span3" id="progressGraph">
-  </div>
-  <div class="span3" id="spentGraph">
-  </div>
-  <div class="span3" id="urlGraph">
-  </div>
-  <div class="span3" id="performanceGraph">
-  </div>
-</div>
-<div class="row">
-<div style="width: 20%; float: right;">
-  <h3>Updates</h3>
-  <div id="updates-box" data-bind="foreach: alerts">
-    <div class="update-box">
-      <div class="box-img">
-        <img data-bind="visible: hasScreenshot, attr: {src: screenshot}" class="box-img">
-      </div>
-      <div class="box-inner">
-        <span class="box-header" data-bind="text: title"></span>
-        <span class="box-content" data-bind="html: content"></span>
-        <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
-      </div>
+  <div class="row">
+    <div class="span12">
+      <p>Please review your project before starting.</p>
+      <p>In order to start the project click "Activate project" on the right project submenu.</p>
     </div>
   </div>
-</div>
-<div style="width:80%">
-  <h3>Newest Correct Voted Data</h3>
-  <table class="table">
-    <thead>
-      <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
-    </thead>
-    <tbody data-bind="foreach: newest_votes">
-      <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url"></td><td data-bind="text: added_on"></td></tr>
-    </tbody>
-  </table>
-  <hr>
-</div>
-<div style="width:80%">
-  <h3>Top workers</h3>
-  <table class="table">
-    <thead>
-      <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
-    </thead>
-    <tbody data-bind="foreach: top_workers">
-      <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
-    </tbody>
-  </table>
-</div>
-</div>
+{% else %}
+  <div class="row">
+    <div class="span3" id="progressGraph">
+    </div>
+    <div class="span3" id="spentGraph">
+    </div>
+    <div class="span3" id="urlGraph">
+    </div>
+    <div class="span3" id="performanceGraph">
+    </div>
+  </div>
+  <div class="row">
+    <div class="span3 offset9">
+      <h3>Updates</h3>
+      <div id="updates-box" data-bind="foreach: alerts">
+        <div class="update-box">
+          <div class="box-img">
+            <img data-bind="visible: hasScreenshot, attr: {src: screenshot}" class="box-img">
+          </div>
+          <div class="box-inner">
+            <span class="box-header" data-bind="text: title"></span>
+            <span class="box-content" data-bind="html: content"></span>
+            <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="span9">
+      <h3>Newest Correct Voted Data</h3>
+      <table class="table">
+        <thead>
+          <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
+        </thead>
+        <tbody data-bind="foreach: newest_votes">
+          <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url"></td><td data-bind="text: added_on"></td></tr>
+        </tbody>
+      </table>
+      <hr>
+    </div>
+    <div class="span9">
+      <h3>Top workers</h3>
+      <table class="table">
+        <thead>
+          <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
+        </thead>
+        <tbody data-bind="foreach: top_workers">
+          <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 {% endif%}
 {% endblock %}
 
