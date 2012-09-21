@@ -122,3 +122,43 @@ class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
         self.assertEqual(TagasaurisJobs.objects.count(), 1)
         self.assertEqual(len(TagasaurisJobs.objects.all()[0].voting_key), 32)
         self.assertEqual(len(TagasaurisJobs.objects.all()[0].voting_hit), 32)
+
+
+class TagasaurisJobsModelTest(ToolsMockedMixin, TestCase):
+
+    def setUp(self):
+        self.u = User.objects.create_user(username='testing', password='test')
+        self.job = Job.objects.create_active(
+            title='urlannotator_test_tagapi_client',
+            description='test_description',
+            no_of_urls=2,
+            account=self.u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+
+    def testJobUrlsGeneration(self):
+
+        tj = TagasaurisJobs.objects.create(urlannotator_job=self.job)
+
+        self.assertEqual(tj.get_sample_gathering_url(), '')
+        self.assertEqual(tj.get_voting_url(), '')
+
+        tj.sample_gathering_hit = '123'
+        tj.save()
+
+        self.assertTrue(tj.sample_gathering_hit in
+            tj.get_sample_gathering_url())
+        self.assertTrue('tagasauris' in tj.get_sample_gathering_url())
+        self.assertTrue('annotation' in tj.get_sample_gathering_url())
+        self.assertEqual(tj.get_voting_url(), '')
+
+        tj.voting_hit = '456'
+        tj.save()
+
+        self.assertTrue(tj.sample_gathering_hit in
+            tj.get_sample_gathering_url())
+        self.assertTrue('tagasauris' in tj.get_sample_gathering_url())
+        self.assertTrue('annotation' in tj.get_sample_gathering_url())
+        self.assertTrue(tj.voting_hit in
+            tj.get_voting_url())
+        self.assertTrue('tagasauris' in tj.get_voting_url())
+        self.assertTrue('annotation' in tj.get_voting_url())
