@@ -2,14 +2,12 @@
 @import 'bootstrap/mixins.less';
 
 // use 2 space tabulation
-body {
-  padding-top: 127px;
-}
+
 .sidebar-nav {
   padding: 9px 0;
 }
 
-div.navbar.navbar-fixed-top {
+div.navbar {
   .brand {
     margin: 14px 3px 11px 0px;
     padding: 0px 5px 0px 5px;
@@ -24,6 +22,7 @@ div.navbar.navbar-fixed-top {
   .navbar-inner {
     background:url('/statics/img/url_anno_header_navbar_bg.png') repeat-x 0px 0px;
     .box-shadow(none);
+    .border-radius(0px);
     padding:0px;
     .container {
       div.nav-collapse {
@@ -212,8 +211,19 @@ div.navbar.navbar-fixed-top {
   }
 }
 
+html, body {
+  height: 100%;
+  min-height:100%;
+}
 
+.wrapper {
+  min-height:100%;
+  margin-bottom:-81px;
+}
 
+.container-main {
+  padding-bottom:81px;
+}
 
 
 footer.footer {
@@ -221,6 +231,11 @@ footer.footer {
   margin-top: 70px;
   border-top: 1px solid #e5e5e5;
   background-color: #f5f5f5;
+
+  margin: 20px 0 0 0;
+  color: #075b8d;
+  padding: 10px 10px 0 70px;
+  height: 50px;
 }
 
 

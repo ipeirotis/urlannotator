@@ -27,13 +27,10 @@
   -ms-box-sizing: border-box;
   box-sizing: border-box;
 }
-body {
-  padding-top: 127px;
-}
 .sidebar-nav {
   padding: 9px 0;
 }
-div.navbar.navbar-fixed-top .brand {
+div.navbar .brand {
   margin: 14px 3px 11px 0px;
   padding: 0px 5px 0px 5px;
   background: url('/statics/img/url_anno_header_03.png') no-repeat center center;
@@ -41,55 +38,58 @@ div.navbar.navbar-fixed-top .brand {
   height: 35px;
   border-right: 1px solid #4D5564;
 }
-div.navbar.navbar-fixed-top .dropdown .caret {
+div.navbar .dropdown .caret {
   margin-top: 18px;
 }
-div.navbar.navbar-fixed-top .navbar-inner {
+div.navbar .navbar-inner {
   background: url('/statics/img/url_anno_header_navbar_bg.png') repeat-x 0px 0px;
   -webkit-box-shadow: none;
   -moz-box-shadow: none;
   box-shadow: none;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
   padding: 0px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.nav li a {
+div.navbar .navbar-inner .container div.nav-collapse ul.nav li a {
   line-height: 39px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.nav li.active a {
+div.navbar .navbar-inner .container div.nav-collapse ul.nav li.active a {
   background-color: transparent;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.nav.project li a {
+div.navbar .navbar-inner .container div.nav-collapse ul.nav.project li a {
   color: #B99859;
   font-style: italic;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.new-project a,
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.documentation a {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a,
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a {
   color: white;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.new-project a:before,
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.documentation a:before {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a:before,
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a:before {
   content: '●';
   margin-right: 6px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.new-project a {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a {
   font-weight: bold;
   font-size: 16px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.new-project a:before {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a:before {
   font-size: 22px;
   line-height: 22px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.documentation a:before {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a:before {
   font-size: 16px;
   line-height: 16px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a {
   line-height: 16px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle {
   float: right;
   padding: 0px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper {
   text-shadow: none;
   color: #B99859;
   width: 180px;
@@ -99,7 +99,7 @@ div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav
   float: left;
   padding: 25px 10px 18px 19px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper .login-desc {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper .login-desc {
   float: right;
   text-transform: lowercase;
   line-height: 14px;
@@ -109,31 +109,31 @@ div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav
   color: #999DA5;
   text-decoration: none;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper .mail {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper .mail {
   float: right;
   text-decoration: underline;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .down {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .down {
   background: transparent url('/statics/img/url_anno_toggle.png') no-repeat -9px 1px;
   width: 10px;
   height: 10px;
   display: none;
   margin-top: 25px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .left {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .left {
   background: transparent url('/statics/img/url_anno_toggle.png') no-repeat 1px 1px;
   width: 10px;
   height: 10px;
   display: inline-block;
   margin-top: 25px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open a.dropdown-toggle .down {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open a.dropdown-toggle .down {
   display: inline-block;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open a.dropdown-toggle .left {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open a.dropdown-toggle .left {
   display: none;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu {
   text-align: left;
   left: 0;
   -webkit-border-radius: 0px;
@@ -141,78 +141,94 @@ div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav
   border-radius: 0px;
   margin-top: 0px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu:before {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu:before {
   display: none;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu:after {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu:after {
   display: none;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu li {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu li {
   margin-right: 10px;
   float: none;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu li a {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu li a {
   text-decoration: none;
   text-transform: lowercase;
   padding: 5px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu li a:hover {
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu li a:hover {
   background-color: white;
   color: #333;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.loginNav li.open a.dropdown-toggle .down {
+div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open a.dropdown-toggle .down {
   display: inline-block;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.loginNav li.open a.dropdown-toggle .left {
+div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open a.dropdown-toggle .left {
   display: none;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu {
+div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu {
   -webkit-border-radius: 0px;
   -moz-border-radius: 0px;
   border-radius: 0px;
   margin-top: 0px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu:before {
+div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu:before {
   display: none;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu:after {
+div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu:after {
   display: none;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse.in {
+div.navbar .navbar-inner .container div.nav-collapse.in {
   background-color: black;
 }
-div.navbar.navbar-fixed-top .bottom-bar {
+div.navbar .bottom-bar {
   background: #e0b25d url('/statics/img/url_anno_header_navbar2_bg.png') no-repeat 0px 0px;
   height: 6px;
   width: 100%;
 }
-div.navbar.navbar-fixed-top:after {
+div.navbar:after {
   clear: both;
   padding-bottom: 6px;
 }
-div.navbar.navbar-fixed-top header.header {
+div.navbar header.header {
   background-color: #F7F7F7;
   border-bottom: 2px solid #EDEDED;
   margin-bottom: 20px;
 }
-div.navbar.navbar-fixed-top header.header h1,
-div.navbar.navbar-fixed-top header.header h2,
-div.navbar.navbar-fixed-top header.header h3 {
+div.navbar header.header h1,
+div.navbar header.header h2,
+div.navbar header.header h3 {
   font-size: 22px;
   line-height: 40px;
   font-weight: normal;
   display: inline;
 }
-div.navbar.navbar-fixed-top header.header p,
-div.navbar.navbar-fixed-top header.header span {
+div.navbar header.header p,
+div.navbar header.header span {
   line-height: 40px;
   vertical-align: top;
+}
+html,
+body {
+  height: 100%;
+  min-height: 100%;
+}
+.wrapper {
+  min-height: 100%;
+  margin-bottom: -81px;
+}
+.container-main {
+  padding-bottom: 81px;
 }
 footer.footer {
   padding: 20px 0;
   margin-top: 70px;
   border-top: 1px solid #e5e5e5;
   background-color: #f5f5f5;
+  margin: 20px 0 0 0;
+  color: #075b8d;
+  padding: 10px 10px 0 70px;
+  height: 50px;
 }
 td.progressCol {
   width: 30px;
