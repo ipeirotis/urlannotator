@@ -117,3 +117,6 @@ table#btm-statistics td:nth-of-type(2) {
   text-decoration: none;
   color: #333;
 }
+.span3-updates {
+  float: right!important;
+}
