@@ -27,6 +27,12 @@
   -ms-box-sizing: border-box;
   box-sizing: border-box;
 }
+.chart-container {
+  height: 200px;
+}
+#performanceGraph {
+  height: 230px;
+}
 .body-draft div.navbar.navbar-fixed-top .bottom-bar {
   background-color: #e0b25d;
   background-image: none;
@@ -74,6 +80,8 @@ div.status-completed {
   border: 1px solid #dadae3;
 }
 div.span2.infobox {
+  -webkit-box-shadow: inset 0px 0px 2px 2px #f8f8f8;
+  -moz-box-shadow: inset 0px 0px 2px 2px #f8f8f8;
   box-shadow: inset 0px 0px 2px 2px #f8f8f8;
   background-color: #fafafa;
   text-align: center;
