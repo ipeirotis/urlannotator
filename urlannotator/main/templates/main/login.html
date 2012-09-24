@@ -16,9 +16,9 @@
 {% block main %}
 <div class="container container-login">
   <div class="row">
-    <div class="offset1 span10">
+    <div class=" span12">
       <div class="well-anno row">
-        <div class="span5 col1">
+        <div class="span12">
           <form method="POST" action="{% url login %}" class="form-horizontal">
             <legend>Form login</legend>
             <fieldset>
@@ -29,17 +29,33 @@
               </div>
             </fieldset>
           </form>
+        </div>
 
-            <p>Forgot password? <a href="{% url password_reset %}">Reset it</a>!</p>
-            <p>Not member? <a href="{% url register %}">Register</a>!</p>
+        <div class="span12">
+          <p>Login via other services:</p>
+          <a class="btn btn-primary btn-large input-small" href="{% url socialauth_begin 'google-oauth2'%}">
+            <div><i class="icon icon-google-plus"></i></div>
+            <span>Google</span>
+          </a>
+          <a class="btn btn-primary btn-large input-small" href="{% url socialauth_begin 'twitter'%}">
+            <div><i class="icon icon-twitter"></i></div>
+            <span>Twitter</span>
+          </a>
+          <a class="btn btn-primary btn-large input-small" href="{% url socialauth_begin 'facebook'%}">
+            <div><i class="icon icon-facebook"></i></div>
+            <span>Facebook</span>
+          </a>
+          <a class="btn btn-primary btn-large input-small" href="{% url odesk_login %}">
+            <div><i class="icon icon-pinterest"></i></div>
+            <span>Odesk</span>
+          </a>
         </div>
-            <div class="span4 col2">
-            <p style="margin-top: 20px;">Login via other services</p>
-            <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'google-oauth2'%}"><i class="icon icon-google-plus"></i> Google</a>
-            <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'twitter'%}"><i class="icon icon-twitter"></i> Twitter</a>
-            <a class="btn btn-primary btn-small" href="{% url socialauth_begin 'facebook'%}"><i class="icon icon-facebook"></i> Facebook</a>
-            <a class="btn btn-primary btn-small" href="{% url odesk_login %}">Odesk</a>
+
+        <div class="span12">
+          <p>Forgot password? <a href="{% url password_reset %}">Reset it</a>!</p>
+          <p>Not member? <a href="{% url register %}">Register</a>!</p>
         </div>
+
       </div>
     </div>
   </div>

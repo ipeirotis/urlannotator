@@ -1,32 +1,10 @@
-.container-register .well-anno.row .col1,
-.container-login .well-anno.row .col1 {
-  border-right: 1px solid #eee;
-  height: 100%;
-  padding-right: 20px;
+.container-register p,
+.container-login p {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
-@media (max-width: 979px) and (min-width: 768px) {
-  .container-register .well-anno.row .col1 .control-label,
-  .container-login .well-anno.row .col1 .control-label {
-    width: 110px;
-  }
-  .container-register .well-anno.row .col1 .controls,
-  .container-login .well-anno.row .col1 .controls {
-    margin-left: 120px;
-  }
-  .container-register .well-anno.row .col1 .controls input[type=text],
-  .container-login .well-anno.row .col1 .controls input[type=text],
-  .container-register .well-anno.row .col1 .controls input[type=password],
-  .container-login .well-anno.row .col1 .controls input[type=password] {
-    width: 160px;
-  }
-}
-.container-register .well-anno.row .col2,
-.container-login .well-anno.row .col2 {
-  margin-left: 18px;
-}
-@media (min-width: 1200px) {
-  .container-register .well-anno.row .col2,
-  .container-login .well-anno.row .col2 {
-    margin-left: 28px;
-  }
+.container-register .well-anno.row .form-actions,
+.container-login .well-anno.row .form-actions {
+  background: transparent;
+  border-top: 0px none;
 }
