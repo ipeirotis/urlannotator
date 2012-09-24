@@ -1,4 +1,10 @@
 {% extends 'base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'accounts' %}
+{% endblock %}
 
 {% block title %}Settings{% endblock %}
 
@@ -15,7 +21,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="offset1 span11">
+        <div class=" span11">
             <form method="POST" action="#" class="form form-horizontal">
                 <fieldset>
                 {% csrf_token %}
@@ -36,7 +42,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="offset1 span11">
+        <div class=" span11">
             <form method="POST" action="#" class="form form-horizontal">
                 <fieldset>
                 {% csrf_token %}
@@ -57,7 +63,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="offset1 span11">
+        <div class=" span11">
             <form method="POST" action="#" class="form form-horizontal">
                 <fieldset>
                 {% csrf_token %}
@@ -77,7 +83,7 @@
         </div>
     </div>
     <div class="row" style="margin-bottom:18px">
-        <div class="offset1 span11">
+        <div class=" span11">
             {% if odesk %}
             <p>Status: Connected as <b>{{ odesk.name }}</b>, <a href="https://www.odesk.com/UserSettings/linked-accounts">administrate</a>, <a href="{% url odesk_disconnect %}">disconnect</a></p>
             {% else %}
@@ -93,7 +99,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="offset1 span11">
+        <div class=" span11">
             <p>Twitter</p>
             <p>Status: {% if twitter %}<b>Connected</b>, {{twitter.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a>{%else%}<b>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a>{%endif%}</p>
             <p>Google</p>
