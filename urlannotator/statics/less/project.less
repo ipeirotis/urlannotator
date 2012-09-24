@@ -85,13 +85,17 @@ div.status-completed {
 }
 
 div.span2.infobox {
-  background-color: #F7F7F9;
+  box-shadow: inset 0px 0px 2px 2px #f8f8f8;
+  background-color: #fafafa;
   text-align: center;
-  border: 1px solid #E1E1E8;
+  border: 1px solid transparent;
   @media (max-width: 979px) and (min-width: 768px) {
     height:63px;
   }
   margin-left:18px;
+  @media (min-width: 1200px) {
+    margin-left:28px;
+  }
 
   h3 {
     color:#8CC04A;
