@@ -88,3 +88,12 @@ div#docs blockquote p {
   color: #777777;
   font-size: 95% !important;
 }
+div#table-of-contents {
+  width: 300px;
+  float: left;
+}
+div#url-annotator {
+  width: 620px;
+  float: left;
+  margin-left: 20px;
+}

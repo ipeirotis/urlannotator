@@ -1,3 +1,4 @@
+@import 'bootstrap/variables.less';
 @import 'bootstrap/mixins.less';
 
 div#docs{
@@ -52,4 +53,15 @@ div#docs .shadow{
 div#docs blockquote, div#docs blockquote p {
     color: #777777;
     font-size: 95% !important;
+}
+
+div#table-of-contents {
+    width: (@gridColumnWidth * 4) + (@gridGutterWidth * (4 - 1));
+    float: left;
+}
+
+div#url-annotator {
+    width: (@gridColumnWidth * 8) + (@gridGutterWidth * (8 - 1));
+    float: left;
+      margin-left: @gridGutterWidth;
 }
