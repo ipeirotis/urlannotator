@@ -100,11 +100,11 @@
     </div>
     <div class="row">
         <div class=" span11">
-            <p>Twitter</p>
+            <p><i class="icon icon-twitter"></i> Twitter</p>
             <p>Status: {% if twitter %}<b>Connected</b>, {{twitter.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a>{%else%}<b>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a>{%endif%}</p>
-            <p>Google</p>
+            <p><i class="icon icon-google-plus"></i> Google</p>
             <p>Status: {% if google %}<b>Connected</b>, {{google.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a>{%else%}<b>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a>{%endif%}</p>
-            <p>Facebook</p>
+            <p><i class="icon icon-facebook"></i> Facebook</p>
             <p>Status: {% if facebook %}<b>Connected</b>, {{facebook.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a>{%else%}<B>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a>{%endif%}</p>
         </div>
     </div>
