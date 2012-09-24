@@ -12,24 +12,22 @@
 
 {% block header %}
   <h2>{{project.title}} </h2><span class="badge badge-{{project.get_status|lower}}">{{project.get_status|lower}}</span>
+  {% if project.is_draft %}
+    <form method="POST" action="{% url project_view id=project.id %}" class="pull-right">
+      {% csrf_token %}
+      <input type="submit" name="submit" value="Activate project" class="btn btn-success">
+      <input type="submit" name="submit" value="Settings" class="btn btn-primary">
+    </form>
+  {% else %}
+      <div class="pull-right">
+        <a class="btn btn-success" href="#">Export data</a>
+        <a class="btn btn-danger" data-toggle="modal" href="#closeProjectModal">Close project</a>
+        <a class="btn btn-primary" href="#">Settings</a>
+      </div>
+  {% endif %}
 {% endblock %}
 
 {% block main %}
-  <div class="alert status-{{project.get_status|lower}}">
-      {% if project.is_draft %}
-      <form method="POST" action="{% url project_view id=project.id %}" class="pull-right">
-        {% csrf_token %}
-        <input type="submit" name="submit" value="Activate project" class="btn btn-success">
-        <input type="submit" name="submit" value="Settings" class="btn btn-primary">
-      </form>
-      {% else %}
-        <div class="pull-right">
-          <a class="btn btn-success" href="#">Export data</a>
-          <a class="btn btn-danger" data-toggle="modal" href="#closeProjectModal">Close project</a>
-          <a class="btn btn-primary" href="#">Settings</a>
-        </div>
-      {% endif %}
-  </div>
   <div class="row">
     <div class="span12">
       <ul class="nav nav-tabs">

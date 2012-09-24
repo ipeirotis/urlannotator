@@ -36,7 +36,7 @@
   background-image: none;
 }
 .body-active div.navbar.navbar-fixed-top .bottom-bar {
-  background-color: #dff0d8;
+  background-color: #8cc04a;
   background-image: none;
 }
 .body-stopped div.navbar.navbar-fixed-top .bottom-bar {
@@ -62,8 +62,8 @@ div.status-initializing {
   border: 1px solid #8ec14d;
 }
 div.status-active {
-  background-color: #dff0d8;
-  border: 1px solid #c1e2b3;
+  background-color: #8cc04a;
+  border: 1px solid #729f38;
 }
 div.status-stopped {
   background-color: #f2dede;
@@ -101,7 +101,7 @@ span.badge.badge-initializing {
   background-color: #a6ce73;
 }
 span.badge.badge-active {
-  background-color: #dff0d8;
+  background-color: #8cc04a;
 }
 span.badge.badge-stopped {
   background-color: #f2dede;
