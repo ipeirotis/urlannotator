@@ -27,6 +27,26 @@
   -ms-box-sizing: border-box;
   box-sizing: border-box;
 }
+.body-draft div.navbar.navbar-fixed-top .bottom-bar {
+  background-color: #e0b25d;
+  background-image: none;
+}
+.body-initializing div.navbar.navbar-fixed-top .bottom-bar {
+  background-color: #a6ce73;
+  background-image: none;
+}
+.body-active div.navbar.navbar-fixed-top .bottom-bar {
+  background-color: #dff0d8;
+  background-image: none;
+}
+.body-stopped div.navbar.navbar-fixed-top .bottom-bar {
+  background-color: #f2dede;
+  background-image: none;
+}
+.body-completed div.navbar.navbar-fixed-top .bottom-bar {
+  background-color: #f7f7f9;
+  background-image: none;
+}
 div.alert {
   padding-bottom: 37px;
 }
