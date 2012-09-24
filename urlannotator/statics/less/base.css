@@ -128,9 +128,6 @@ div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav
   display: inline-block;
   margin-top: 25px;
 }
-div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open .login-desc {
-  display: none;
-}
 div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.open a.dropdown-toggle .down {
   display: inline-block;
 }
