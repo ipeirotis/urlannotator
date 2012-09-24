@@ -71,5 +71,14 @@ PIPELINE_CSS = {
             'rel': 'stylesheet/less',
         },
     },
+    'landing': {
+        'source_filenames': (
+            'less/landing.less',
+        ),
+        'output_filename': 'css/landing.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    }
 
 }
