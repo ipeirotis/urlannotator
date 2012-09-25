@@ -21,7 +21,8 @@ def extract_stat(cls, stats):
         Returns a string representing a list of statistics samples formatted
         for use in Highcharts. The closest, earliest value is always used.
     """
-    stats_count = stats.count()
+    stats = list(stats)
+    stats_count = len(stats)
     now_time = now()
     idx = 1
     interval = datetime.timedelta(hours=1)
@@ -95,7 +96,8 @@ def extract_stat_by_val(cls, job, val_fun):
         Extracts stat using a val_fun to take value from entry.
     '''
     stats = cls.objects.filter(job=job).order_by('date')
-    stats_count = stats.count()
+    stats = list(stats)
+    stats_count = len(stats)
     now_time = now()
     actual_time = datetime.datetime(
         year=stats[0].date.year,
