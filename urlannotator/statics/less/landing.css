@@ -27,3 +27,51 @@
   -ms-box-sizing: border-box;
   box-sizing: border-box;
 }
+header.content .content-columns .col-left {
+  height: 185px;
+  background-color: #3a4354;
+  float: left;
+  width: 50%;
+}
+header.content .content-columns .col-left:after {
+  clear: both;
+}
+header.content .content-columns .col-right {
+  float: right;
+  height: 185px;
+  background-color: #e0b25d;
+  width: 50%;
+}
+header.content .content-columns .col-right:after {
+  clear: both;
+}
+header.content .content-colors {
+  position: relative;
+  top: 0px;
+}
+header.content .content-colors .container-colors {
+  background: transparent url('/statics/img/url_anno_landing_bg.png') repeat-y 0px 0px;
+  height: 185px;
+}
+header.content .content-stripped {
+  position: relative;
+  top: -185px;
+  background: transparent url('/statics/img/url_anno_landing_strips.png') repeat 0px 0px;
+  height: 185px;
+  width: 100%;
+}
+header.content .content-login {
+  position: relative;
+  top: -370px;
+  height: 185px;
+  width: 100%;
+}
+header.content .content-login .container-login .brand {
+  margin: 12px 0px;
+  background: url('/statics/img/url_anno_landing_logo.png') no-repeat center center;
+  width: 223px;
+  height: 47px;
+}
+header.content .content-login .container-login .btn-login {
+  margin-top: 20px;
+}

@@ -876,3 +876,7 @@ def index(request):
     else:
         context['form'] = UserLoginForm()
     return render(request, 'main/index.html', RequestContext(request, context))
+
+def landing(request):
+    context = {}
+    return render(request, 'main/landing.html', RequestContext(request, context))
