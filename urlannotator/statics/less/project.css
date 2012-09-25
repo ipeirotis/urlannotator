@@ -33,23 +33,23 @@
 #performanceGraph {
   height: 230px;
 }
-.body-draft div.navbar.navbar-fixed-top .bottom-bar {
+.body-draft div.navbar .bottom-bar {
   background-color: #e0b25d;
   background-image: none;
 }
-.body-initializing div.navbar.navbar-fixed-top .bottom-bar {
+.body-initializing div.navbar .bottom-bar {
   background-color: #a6ce73;
   background-image: none;
 }
-.body-active div.navbar.navbar-fixed-top .bottom-bar {
+.body-active div.navbar .bottom-bar {
   background-color: #8cc04a;
   background-image: none;
 }
-.body-stopped div.navbar.navbar-fixed-top .bottom-bar {
+.body-stopped div.navbar .bottom-bar {
   background-color: #f2dede;
   background-image: none;
 }
-.body-completed div.navbar.navbar-fixed-top .bottom-bar {
+.body-completed div.navbar .bottom-bar {
   background-color: #f7f7f9;
   background-image: none;
 }
