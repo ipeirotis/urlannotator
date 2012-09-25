@@ -29,6 +29,7 @@ def sample_to_mediaobject(sample):
 
     return {
         'id': ext_id,
+        'title': ext_id,
         'mimetype': "image/png",
         'url': sample.screenshot,
     }
