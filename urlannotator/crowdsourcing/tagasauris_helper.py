@@ -5,7 +5,6 @@ from django.conf import settings
 
 from tagapi.api import TagasaurisClient
 
-
 EXTERNAL_SAMPLE_GATHER_APP = {
     "external_js": [
         "http://127.0.0.1:8000/statics/js/tagasauris/samplegather.js"],
@@ -89,9 +88,10 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
         })
 
     # Choosing mediaobjects
+    url = settings.DUMMY_URLANNOTATOR_URL
     if mediaobjects is None:
         kwargs.update({"dummy_media":
-            ["dummy-" + str(no) for no in xrange(job.no_of_urls)]})
+            [("dummy-" + str(no), url) for no in xrange(job.no_of_urls)]})
     else:
         kwargs.update({"mediaobjects": mediaobjects})
 
