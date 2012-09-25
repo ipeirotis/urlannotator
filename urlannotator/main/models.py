@@ -17,6 +17,7 @@ from tenclouds.django.jsonfield.fields import JSONField
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 from urlannotator.settings import imagescale2
+from urlannotator.crowdsourcing.tagasauris_helper import stop_job
 
 LABEL_BROKEN = 'Broken'
 LABEL_YES = 'Yes'
@@ -165,16 +166,11 @@ class Job(models.Model):
         """
             Stops underlying sample gathering job.
         """
-        # TODO: Insert Tagasauris API call here.
-        #       Refer to OANNOTATOR-203
-        try:
-            tag_job = self.tagasaurisjobs
-            tag_job.sample_gathering_hit = ''
-            tag_job.save()
-        except:
-            pass
-        finally:
-            return True
+        tag_job = self.tagasaurisjobs
+        tag_job.sample_gathering_hit = ''
+        tag_job.save()
+        stop_job(tag_job.sample_gathering_hit)
+        return True
 
     def get_voting_url(self):
         """
@@ -190,16 +186,11 @@ class Job(models.Model):
         """
             Stops underlying voting job.
         """
-        # TODO: Insert Tagasauris API call here.
-        #       Refer to OANNOTATOR-203
-        try:
-            tag_job = self.tagasaurisjobs
-            tag_job.voting_hit = ''
-            tag_job.save()
-        except:
-            pass
-        finally:
-            return True
+        tag_job = self.tagasaurisjobs
+        tag_job.voting_hit = ''
+        tag_job.save()
+        stop_job(tag_job.voting_key)
+        return True
 
     def get_classifier_performance(self):
         """

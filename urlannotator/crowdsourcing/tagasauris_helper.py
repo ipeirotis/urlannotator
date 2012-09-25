@@ -43,6 +43,12 @@ def samples_to_mediaobjects(samples):
     return mediaobjects
 
 
+def stop_job(external_id):
+    tc = make_tagapi_client()
+    res = tc.stop_job(external_id=external_id)
+    tc.wait_for_complete(res['task_id'])
+
+
 def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
