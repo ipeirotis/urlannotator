@@ -301,8 +301,12 @@ TAGASAURIS_SURVEY = {
     TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Survey_0',
 }
 
-TAGASAURIS_CALLBACKS = 'http://127.0.0.1'
+TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
 TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/sample/tagasauris/%s/'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/tagasauris/%s/'
+
+# Tagasauris needs sacrifice!
+DUMMY_URLANNOTATOR_URL =\
+    'http://urlannotator.10clouds.com/statics/img/favicon.png'
