@@ -335,8 +335,8 @@ def project_wizard(request):
                 '<a href="%s">settings</a> page.') % reverse('settings')
 
         if (addt_form.is_valid() and
-            attr_form.is_valid() and
-            topic_form.is_valid()):
+                attr_form.is_valid() and
+                topic_form.is_valid()):
             params = {
                 'account': request.user.get_profile(),
                 'title': topic_form.cleaned_data['topic'],
@@ -876,6 +876,7 @@ def index(request):
     else:
         context['form'] = UserLoginForm()
     return render(request, 'main/index.html', RequestContext(request, context))
+
 
 def landing(request):
     context = {}
