@@ -27,6 +27,9 @@
   -ms-box-sizing: border-box;
   box-sizing: border-box;
 }
+header.content {
+  height: 185px;
+}
 header.content .content-columns .col-left {
   height: 185px;
   background-color: #3a4354;
@@ -74,4 +77,61 @@ header.content .content-login .container-login .brand {
 }
 header.content .content-login .container-login .btn-login {
   margin-top: 20px;
+}
+section.content {
+  margin-top: -100px;
+  position: relative;
+}
+section.content > .container .col-wrapper {
+  width: 24.9%;
+  float: left;
+}
+section.content > .container .col-wrapper * {
+  width: 224px;
+  margin: auto;
+}
+section.content > .container .col-wrapper .col-container {
+  height: 224px;
+  background: transparent url('/statics/img/url_anno_landing_circles.png') no-repeat 0px -17px;
+}
+section.content > .container .col-wrapper h1 {
+  font-weight: normal;
+  font-style: italic;
+  text-align: center;
+  font-size: 28px;
+  margin: 12px auto;
+}
+section.content > .container .col-wrapper p {
+  text-align: left;
+  font-style: italic;
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: bold;
+  color: #d4d4d4;
+  width: 200px;
+  margin-left: 20px;
+}
+section.content > .container .col1 .col-container {
+  background-position: -22px -17px;
+}
+section.content > .container .col1 h1 {
+  color: #3B4455;
+}
+section.content > .container .col2 .col-container {
+  background-position: -262px -17px;
+}
+section.content > .container .col2 h1 {
+  color: #855759;
+}
+section.content > .container .col3 .col-container {
+  background-position: -502px -17px;
+}
+section.content > .container .col3 h1 {
+  color: #C59054;
+}
+section.content > .container .col4 .col-container {
+  background-position: -742px -17px;
+}
+section.content > .container .col4 h1 {
+  color: #E0B25D;
 }

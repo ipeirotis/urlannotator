@@ -2,6 +2,7 @@
 @import 'bootstrap/mixins.less';
 
 header.content {
+  height:185px;
   .content-columns {
     .col-left {
       height:185px;
@@ -60,8 +61,70 @@ header.content {
 }
 
 section.content {
+  margin-top:-100px;
+  position: relative;
   > .container {
-
+    .col-wrapper {
+      width:24.9%;
+      float:left;
+      * {
+        width:224px;
+        margin:auto;
+      }
+      .col-container {
+        height:224px;
+        background: transparent url('/statics/img/url_anno_landing_circles.png') no-repeat 0px -17px;
+      }
+      h1 {
+        font-weight:normal;
+        font-style: italic;
+        text-align: center;
+        font-size:28px;
+        margin:12px auto;
+      }
+      p {
+        text-align: left;
+        font-style:italic;
+        font-size:11px;
+        line-height:14px;
+        font-weight:bold;
+        color:#d4d4d4;
+        width:200px;
+        margin-left:20px;
+      }
+    }
+    .col1 {
+      .col-container {
+        background-position: -22px -17px;
+      }
+      h1 {
+        color:#3B4455;
+      }
+    }
+    .col2 {
+      .col-container {
+        background-position: -262px -17px;
+      }
+      h1 {
+        color:#855759;
+      }
+    }
+    .col3 {
+      .col-container {
+        background-position: -502px -17px;
+      }
+      h1 {
+        color:#C59054;
+      }
+    }
+    .col4 {
+      .col-container {
+        background-position: -742px -17px;
+      }
+      h1 {
+        color:#E0B25D;
+      }
+    }
   }
 }
 
