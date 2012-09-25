@@ -6,6 +6,20 @@ from django.conf import settings
 from tagapi.api import TagasaurisClient
 
 
+EXTERNAL_SAMPLE_GATHER_APP = {
+    "external_js": [
+        "http://127.0.0.1:8000/statics/js/tagasauris/samplegather.js"],
+    "external_css": [],
+    "external_data": {
+        "token": "3456",
+        "core_url": "http://127.0.0.1:8000"
+    },
+    "external_templates": {
+        "samplegather": "http://127.0.0.1:8000/statics/js/templates/tagasauris/samplegather.ejs"
+    }
+}
+
+
 def make_tagapi_client():
     return TagasaurisClient(settings.TAGASAURIS_LOGIN,
         settings.TAGASAURIS_PASS, settings.TAGASAURIS_HOST)

@@ -1,19 +1,5 @@
 (function(){
 
-    window.TemplateGetter = {
-        get : function(url) {
-            var data = "<h1> failed to load url : " + url + "</h1>";
-            $.get({
-                async: false,
-                url: url,
-                success: function(response) {
-                    data = response;
-                }
-            });
-            return data;
-        }
-    },
-
     window.Input = Backbone.Model.extend({
 
         toggle: function () {
@@ -43,7 +29,7 @@
 
         className: "sampleInput",
 
-        template: _.template(TemplateGetter.get("../../ejs/tagasauris/inputsample.ejs")),
+        // template: _.template(TemplateGetter.get("../../ejs/tagasauris/inputsample.ejs")),
 
         events: {
             "click .todo-check"            : "toggleDone",
@@ -120,10 +106,10 @@
 
         start_job: function (data) {
             data = $.parseJSON(data);
-            this.external_token = data.external_token;
+            this.token = data.token;
             this.core_url = data.core_url;
-            this.template = _.template(TemplateGetter.get(
-                this.core_url + "/statics/ejs/tagasauris/samplegather.ejs")),
+
+            this.template = _.template($("#samplegather").html()),
             this.render();
         },
 
@@ -139,7 +125,7 @@
             if (e.code != 13) return;
             Inputs.create({
                 content: this.input.getProperty("value"),
-                done:        false
+                done: false
             });
             this.input.setProperty("value", "");
         }

@@ -27,5 +27,5 @@ PIPELINE_JS = {
             'js/less-1.3.0.js',
         ),
         'output_filename': 'js/less.min.js',
-    },
+    }
 }
