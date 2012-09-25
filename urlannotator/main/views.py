@@ -870,14 +870,10 @@ def index(request):
     if 'success' in request.session:
         context['success'] = request.session['success']
         request.session.pop('success')
+
     if request.user.is_authenticated():
         context['projects'] = Job.objects.filter(
             account=request.user.get_profile()).order_by('-id')
+        return render(request, 'main/index.html', RequestContext(request, context))
     else:
-        context['form'] = UserLoginForm()
-    return render(request, 'main/index.html', RequestContext(request, context))
-
-
-def landing(request):
-    context = {}
-    return render(request, 'main/landing.html', RequestContext(request, context))
+        return render(request, 'main/landing.html', RequestContext(request, context))

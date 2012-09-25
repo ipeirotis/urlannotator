@@ -22,7 +22,6 @@ def bad(request):
 urlpatterns = patterns('urlannotator',
 
     url(r'^$', 'main.views.index', name='index'),
-    url(r'^landing/$', 'main.views.landing', name='landing'),
 
     url(r'^register/$', 'main.views.register_view', name='register'),
     url(r'^register/(?P<service>[^/]+)$',
