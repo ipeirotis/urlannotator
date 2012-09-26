@@ -965,7 +965,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         self.assertEqual(resp.status_code, 200)
         array = json.loads(resp.content)
-        self.assertEqual(array['result'], 'success')
+        self.assertEqual(array['result'], 'SUCCESS')
 
 
 class TestAdmin(ToolsMockedMixin, TestCase):
