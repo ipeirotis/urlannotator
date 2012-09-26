@@ -15,14 +15,14 @@
   {% if project.is_draft %}
     <form method="POST" action="{% url project_view id=project.id %}" class="pull-right">
       {% csrf_token %}
-      <input type="submit" name="submit" value="Activate project" class="btn btn-success">
-      <input type="submit" name="submit" value="Settings" class="btn btn-primary">
+      <input type="submit" name="submit" value="Activate project" class="btn ">
+      <input type="submit" name="submit" value="Settings" class="btn ">
     </form>
   {% else %}
       <div class="pull-right">
-        <a class="btn btn-success" href="#">Export data</a>
-        <a class="btn btn-danger" data-toggle="modal" href="#closeProjectModal">Close project</a>
-        <a class="btn btn-primary" href="#">Settings</a>
+        <a class="btn " href="#">Export data</a>
+        <a class="btn " data-toggle="modal" href="#closeProjectModal">Close project</a>
+        <a class="btn " href="#">Settings</a>
       </div>
   {% endif %}
 {% endblock %}
