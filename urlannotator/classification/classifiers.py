@@ -28,6 +28,9 @@ CLASS_TRAIN_STATUS_DONE = 'DONE'
 CLASS_TRAIN_STATUS_RUNNING = 'RUNNING'
 CLASS_TRAIN_STATUS_ERROR = 'ERROR'
 
+YES_LABEL = 'Yes'
+NO_LABEL = 'No'
+
 
 class ClassifierTrainingError(Exception):
     """
@@ -311,13 +314,13 @@ class SimpleClassifier(Classifier):
         res = {
             'modelDescription': {
                 'confusionMatrix': {
-                    'Yes': {
-                        'Yes': 1,
-                        'No': 0,
+                    YES_LABEL: {
+                        YES_LABEL: 1,
+                        NO_LABEL: 0,
                     },
-                    'No': {
-                        'Yes': 0,
-                        'No': 1,
+                    NO_LABEL: {
+                        YES_LABEL: 0,
+                        NO_LABEL: 1,
                     }
                 }
             }
@@ -384,7 +387,7 @@ class SimpleClassifier(Classifier):
 
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {'Yes': 0.0, 'No': 0.0}
+        label_probability = {YES_LABEL: 0.0, NO_LABEL: 0.0}
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
 
@@ -408,7 +411,7 @@ class SimpleClassifier(Classifier):
 
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {'Yes': 0.0, 'No': 0.0}
+        label_probability = {YES_LABEL: 0.0, NO_LABEL: 0.0}
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
 
@@ -454,13 +457,13 @@ class GooglePredictionClassifier(Classifier):
             return {
                 'modelDescription': {
                     'confusionMatrix': {
-                        'Yes': {
-                            'Yes': 1,
-                            'No': 0,
+                        YES_LABEL: {
+                            YES_LABEL: 1,
+                            NO_LABEL: 0,
                         },
-                        'No': {
-                            'Yes': 0,
-                            'No': 1,
+                        NO_LABEL: {
+                            YES_LABEL: 0,
+                            NO_LABEL: 1,
                         }
                     }
                 }
@@ -572,7 +575,7 @@ class GooglePredictionClassifier(Classifier):
         sample.label = label['outputLabel']
         label_probability = {}
         for score in label['outputMulti']:
-            label_probability[score['label']] = score['score']
+            label_probability[score['label'].capitalize()] = score['score']
         sample.label_probability = json.dumps(label_probability)
         sample.save()
 
@@ -597,7 +600,7 @@ class GooglePredictionClassifier(Classifier):
         sample.label = label['outputLabel']
         label_probability = {}
         for score in label['outputMulti']:
-            label_probability[score['label']] = score['score']
+            label_probability[score['label'].capitalize()] = score['score']
         sample.label_probability = json.dumps(label_probability)
         sample.save()
 
