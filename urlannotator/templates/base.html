@@ -69,27 +69,8 @@
                     <li>
                       <a href="{% url register %}">Register</a>
                     </li>
-                    <li class="dropdown">
-                      <a class="dropdown-toggle" data-toggle="dropdown" href="#">Log in<b class="caret"></b></a>
-                      <ul class="dropdown-menu">
-                        <li>
-                          <div id="loginDiv" style="padding: 5px">
-                            <form style="margin-bottom: 0px" method="POST" action="{% url login %}">
-                              <fieldset>
-                                {% csrf_token %}
-                                <input type="text" name="email" placeholder="email">
-                                <input type="password" name="password" placeholder="password">
-                                <button style="display: block" type="submit" class="btn">Log In</button>
-                                <label class="checkbox">
-                                  <input type="checkbox" name="remember">Remember me
-                                </label>
-                                <span style="font-size: 80%">Forgot your password? <a style="display: inline; padding: 0px" href="{% url password_reset %}">Recover</a></span>
-                                <span style="font-size: 80%"><a href="{% url login %}" style="padding: 0px">More options</a></span>
-                              </fieldset>
-                            </form>
-                          </div>
-                        </li>
-                      </ul>
+                    <li>
+                      <a href="{% url login %}">Log in</a>
                     </li>
                   </ul>
                 {% endif %}
