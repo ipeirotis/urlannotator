@@ -102,140 +102,138 @@
 <script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
 <script src="{{STATIC_URL}}js/models/job.js" type="text/javascript"></script>
 <script type="text/javascript">
-var progressGraph; // globally available
+var progressGraph;
+var spentGraph;
+var urlGraph;
+var performanceGraph;
+var progressColor = '#3a4354';
+var spentColor = '#855759';
+var urlColor = '#c79155';
+var performanceColor = '#e0b25d';
 $(document).ready(function() {
-      progressGraph = new Highcharts.Chart({
-         chart: {
-            renderTo: 'progressGraph',
-            zoomType: 'x',
-            type: 'line'
-         },
-         title: {
-            text: 'Progress per hour'
-         },
-         xAxis: {
-            type: 'datetime',
-            maxZoom: 1 * 3600 * 1000, // an hour
-         },
-         yAxis: {
-            title: {
-              showEmpty:false,
-              text: ''
-            },
-            min: 0,
-            showFirstLabel: false
-         },
-         series: [{
-            showInLegend: false,
-            name: 'Progress',
-            color: '#FFAAAA',
-            data: [{{progress_stats|safe}}]
-         }]
-      });
-   });
-var spentGraph; // globally available
-$(document).ready(function() {
-      spentGraph = new Highcharts.Chart({
-         chart: {
-            renderTo: 'spentGraph',
-            zoomType: 'x',
-            type: 'line'
-         },
-         title: {
-            text: 'Spent per hour'
-         },
-         xAxis: {
-            type: 'datetime',
-            maxZoom: 1 * 3600 * 1000, // an hour
-         },
-         yAxis: {
-            title: {
-              text: ''
-            },
-            min: 0,
-            showEmpty: false,
-            showFirstLabel: false
-         },
-         series: [{
-            showInLegend: false,
-            name: 'Spent',
-            color: '#AAFFAA',
-            data: [{{spent_stats|safe}}]
-         }]
-      });
-   });
-var urlGraph; // globally available
-$(document).ready(function() {
-      urlGraph = new Highcharts.Chart({
-         chart: {
-            renderTo: 'urlGraph',
-            zoomType: 'x',
-            type: 'line'
-         },
-         title: {
-            text: 'URLs per hour'
-         },
-         xAxis: {
-            type: 'datetime',
-            maxZoom: 1 * 3600 * 1000, // an hour
-         },
-         yAxis: {
-            title: {
-              text: ''
-            },
-            min: 0,
-            showFirstLabel: false
-         },
-         series: [{
-            showInLegend: false,
-            name: 'URLs',
-            color: '#AAAAFF',
-            data: [{{url_stats|safe}}]
-         }]
-      });
-   });
-var performanceGraph; // globally available
-$(document).ready(function() {
-      performanceGraph = new Highcharts.Chart({
-         chart: {
-            renderTo: 'performanceGraph',
-            zoomType: 'x',
-            type: 'line'
-         },
-         title: {
-            text: 'Performance per hour'
-         },
-         xAxis: {
-            type: 'datetime',
-            maxZoom: 1 * 3600 * 1000, // an hour
-         },
-         yAxis: {
-            title: {
-              text: ''
-            },
-            min: 0,
-            showFirstLabel: false
-         },
-         series: [{
-            showInLegend: true,
-            name: 'TPR',
-            color: '#FFAAFF',
-            data: [{{performance_TPR|safe}}]
-         },
-         {
-            showInLegend: true,
-            name: 'TNR',
-            color: '#AAAAFF',
-            data: [{{performance_TNR|safe}}]
-         },
-         {
-            showInLegend: true,
-            name: 'AUC',
-            color: '#AAFFAA',
-            data: [{{performance_AUC|safe}}]
-         }]
-      });
-   });
+  progressGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'progressGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'Progress per hour'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 1 * 3600 * 1000, // an hour
+     },
+     yAxis: {
+        title: {
+          showEmpty:false,
+          text: ''
+        },
+        min: 0,
+        showFirstLabel: false
+     },
+     series: [{
+        showInLegend: false,
+        name: 'Progress',
+        color: progressColor,
+        data: [{{progress_stats|safe}}]
+     }]
+  });
+  spentGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'spentGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'Spent per hour'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 1 * 3600 * 1000, // an hour
+     },
+     yAxis: {
+        title: {
+          text: ''
+        },
+        min: 0,
+        showEmpty: false,
+        showFirstLabel: false
+     },
+     series: [{
+        showInLegend: false,
+        name: 'Spent',
+        color: spentColor,
+        data: [{{spent_stats|safe}}]
+     }]
+  });
+  urlGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'urlGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'URLs per hour'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 1 * 3600 * 1000, // an hour
+     },
+     yAxis: {
+        title: {
+          text: ''
+        },
+        min: 0,
+        showFirstLabel: false
+     },
+     series: [{
+        showInLegend: false,
+        name: 'URLs',
+        color: urlColor,
+        data: [{{url_stats|safe}}]
+     }]
+  });
+  performanceGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'performanceGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'Performance per hour'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 1 * 3600 * 1000, // an hour
+     },
+     yAxis: {
+        title: {
+          text: ''
+        },
+        min: 0,
+        showFirstLabel: false
+     },
+     series: [{
+        showInLegend: true,
+        name: 'TPR',
+        color: '#FFAAFF',
+        data: [{{performance_TPR|safe}}]
+     },
+     {
+        showInLegend: true,
+        name: 'TNR',
+        color: '#AAAAFF',
+        data: [{{performance_TNR|safe}}]
+     },
+     {
+        showInLegend: true,
+        name: 'AUC',
+        color: performanceColor,
+        data: [{{performance_AUC|safe}}]
+     }]
+  });
+});
 
 var job = new job();
 var image_cache = {};
