@@ -2,93 +2,117 @@
 
 {% block overview_active %}active{% endblock %}
 {% block project_content %}
-<div class="row">
-  <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-    <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
-    <span>URLs collected</span>
-  </div>
-  <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-    <h3 data-bind="text: hours_spent">{{hours_spent}}</h3>
-    <span>Hours spend</span>
-  </div>
-  <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-    <h3 data-bind="text: no_of_workers">{{no_of_workers}}</h3>
-    <span>Number of workers</span>
-  </div>
-  <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-    <h3 data-bind="text: cost">{{cost}}</h3>
-    <span>Cost (USD)</span>
-  </div>
-  <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-    <h3 data-bind="text: budget">{{budget}}</h3>
-    <span>Budget (USD)</span>
-  </div>
-  <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-    <h3><span data-bind="text: progress">{{progress}}</span>%</h3>
-    <span>Progress</span>
-  </div>
-  <hr>
-</div>
+</div> <!-- end of container main -->
+<div class="content content-accordion">
 
-{% if project.is_draft %}
-  <div class="row">
-    <div class="span12">
-      <p>Please review your project before starting.</p>
-      <p>In order to start the project click "Activate project" on the right project submenu.</p>
-    </div>
-  </div>
-{% else %}
-  <div class="row">
-    <div class="span3 chart-container" id="progressGraph">
-    </div>
-    <div class="span3 chart-container" id="spentGraph">
-    </div>
-    <div class="span3 chart-container" id="urlGraph">
-    </div>
-    <div class="span3 chart-container" id="performanceGraph">
-    </div>
-  </div>
-  <div class="row">
-    <div class="span3 pull-right span3-updates">
-      <h3>Updates</h3>
-      <div id="updates-box" data-bind="foreach: alerts">
-        <div class="update-box">
-          <div class="box-img">
-            <img data-bind="visible: hasScreenshot, attr: {src: screenshot}" class="box-img">
+    <div class="accordion" id="accordion2">
+      <div class="accordion-group">
+        <div class="accordion-heading">
+          <div class="container">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+              Update stream &rsaquo;&rsaquo;
+            </a>
           </div>
-          <div class="box-inner">
-            <span class="box-header" data-bind="text: title"></span>
-            <span class="box-content" data-bind="html: content"></span>
-            <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
+        </div>
+        <div id="collapseOne" class="accordion-body collapse">
+          <div class="accordion-inner">
+            <div class="container">
+              <div class="row">
+                <div class="span12">
+                  <div id="updates-box" class="row" data-bind="foreach: alerts">
+                    <div class="update-box span3">
+                      <div class="box-img">
+                        <img data-bind="visible: hasScreenshot, attr: {src: screenshot}" class="box-img">
+                      </div>
+                      <div class="box-inner">
+                        <span class="box-header" data-bind="text: title"></span>
+                        <span class="box-content" data-bind="html: content"></span>
+                        <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="span9">
-      <h3>Newest Correct Voted Data</h3>
-      <table class="table">
-        <thead>
-          <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
-        </thead>
-        <tbody data-bind="foreach: newest_votes">
-          <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url"></td><td data-bind="text: added_on"></td></tr>
-        </tbody>
-      </table>
-      <hr>
+
+</div>
+<div class="container container-main" role="main">
+  <div class="row">
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
+      <span>URLs collected</span>
     </div>
-    <div class="span9">
-      <h3>Top workers</h3>
-      <table class="table">
-        <thead>
-          <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
-        </thead>
-        <tbody data-bind="foreach: top_workers">
-          <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
-        </tbody>
-      </table>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: hours_spent">{{hours_spent}}</h3>
+      <span>Hours spend</span>
     </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: no_of_workers">{{no_of_workers}}</h3>
+      <span>Number of workers</span>
+    </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: cost">{{cost}}</h3>
+      <span>Cost (USD)</span>
+    </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: budget">{{budget}}</h3>
+      <span>Budget (USD)</span>
+    </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3><span data-bind="text: progress">{{progress}}</span>%</h3>
+      <span>Progress</span>
+    </div>
+    <hr>
   </div>
-{% endif%}
+
+  {% if project.is_draft %}
+    <div class="row">
+      <div class="span12">
+        <p>Please review your project before starting.</p>
+        <p>In order to start the project click "Activate project" on the right project submenu.</p>
+      </div>
+    </div>
+  {% else %}
+    <div class="row">
+      <div class="span3 chart-container" id="progressGraph">
+      </div>
+      <div class="span3 chart-container" id="spentGraph">
+      </div>
+      <div class="span3 chart-container" id="urlGraph">
+      </div>
+      <div class="span3 chart-container" id="performanceGraph">
+      </div>
+    </div>
+    <div class="row">
+      <div class="span12">
+        <h3>Newest Correct Voted Data</h3>
+        <table class="table">
+          <thead>
+            <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
+          </thead>
+          <tbody data-bind="foreach: newest_votes">
+            <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url"></td><td data-bind="text: added_on"></td></tr>
+          </tbody>
+        </table>
+        <hr>
+      </div>
+      <div class="span12">
+        <h3>Top workers</h3>
+        <table class="table">
+          <thead>
+            <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
+          </thead>
+          <tbody data-bind="foreach: top_workers">
+            <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif%}
 {% endblock %}
 
 

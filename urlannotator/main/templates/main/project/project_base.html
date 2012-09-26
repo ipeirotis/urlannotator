@@ -11,7 +11,6 @@
 {% block body-class %}body-{{project.get_status|lower}}{% endblock %}
 
 {% block header %}
-  <h2>{{project.title}} </h2><span class="badge badge-{{project.get_status|lower}}">{{project.get_status|lower}}</span>
   {% if project.is_draft %}
     <form method="POST" action="{% url project_view id=project.id %}" class="pull-right">
       {% csrf_token %}
@@ -26,6 +25,7 @@
         <a class="btn " data-toggle="modal" href="#workface">Own workforce</a>
       </div>
   {% endif %}
+  <h2>{{project.title}} </h2><span class="badge badge-{{project.get_status|lower}}">{{project.get_status|lower}}</span>
 {% endblock %}
 
 {% block main %}

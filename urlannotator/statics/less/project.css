@@ -128,7 +128,6 @@ span.badge.badge-completed {
 }
 div.update-box {
   margin-bottom: 5px;
-  clear: both;
 }
 .box-img {
   width: 60px;
@@ -148,7 +147,7 @@ table#btm-statistics td:nth-of-type(2) {
 }
 .nav.nav-tabs li a {
   text-decoration: underline;
-  color: #D0A271;
+  color: #d0a271;
 }
 .nav.nav-tabs li.active a {
   text-decoration: none;
@@ -156,4 +155,40 @@ table#btm-statistics td:nth-of-type(2) {
 }
 .span3-updates {
   float: right!important;
+}
+.accordion-group {
+  background: #fafafa;
+  padding-bottom: 10px;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+}
+.accordion-group .accordion-heading {
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+.accordion-group .accordion-heading .accordion-toggle {
+  padding: 0px;
+  color: #d0a271;
+}
+.accordion-group .accordion-inner {
+  border: 0px none;
+  padding: 0px;
+}
+.accordion-group .accordion-inner .update-box {
+  background-color: white;
+  border-bottom: 1px solid #eee;
+  border-right: 1px solid #eee;
+  margin-right: -1px;
+  -webkit-box-shadow: 1px 1px 2px #eeeeee;
+  -moz-box-shadow: 1px 1px 2px #eeeeee;
+  box-shadow: 1px 1px 2px #eeeeee;
+  color: #d0a271;
+}
+.accordion-group .accordion-inner .update-box a {
+  color: #d0a271;
+  text-decoration: underline;
+}
+.container-main {
+  padding-bottom: 0px;
 }

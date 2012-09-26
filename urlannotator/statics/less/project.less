@@ -13,6 +13,8 @@
 
 @completed : #F7F7F9;
 
+@text-color: #D0A271;
+
 // too short to place in separated file
 
 .chart-container {
@@ -139,7 +141,6 @@ span.badge {
 
 div.update-box {
   margin-bottom: 5px;
-  clear: both;
 }
 .box-img {
   width: 60px;
@@ -162,7 +163,7 @@ table#btm-statistics td:nth-of-type(2){
 .nav.nav-tabs {
   li a {
     text-decoration: underline;
-    color:#D0A271;
+    color:@text-color;
   }
   li.active a {
     text-decoration: none;
@@ -172,4 +173,39 @@ table#btm-statistics td:nth-of-type(2){
 
 .span3-updates {
   float:right!important;
+}
+
+.accordion-group {
+  background:#fafafa;
+  padding-bottom:10px;
+  .border-radius(0px);
+  .accordion-heading {
+    padding-bottom:10px;
+    padding-top: 10px;
+    .accordion-toggle {
+      padding:0px;
+      color: @text-color;
+    }
+  }
+  .accordion-inner {
+    border:0px none;
+    padding:0px;
+    .update-box {
+      background-color: white;
+      border-bottom:1px solid #eee;
+      border-right:1px solid #eee;
+      margin-right:-1px;
+      .box-shadow(1px 1px 2px #eee);
+      color:@text-color;
+      a {
+        color:@text-color;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+
+.container-main {
+  padding-bottom:0px;
 }
