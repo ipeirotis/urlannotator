@@ -23,6 +23,7 @@
         <a class="btn " href="#">Export data</a>
         <a class="btn " data-toggle="modal" href="#closeProjectModal">Close project</a>
         <a class="btn " href="#">Settings</a>
+        <a class="btn " data-toggle="modal" href="#workface">Own workforce</a>
       </div>
   {% endif %}
 {% endblock %}
@@ -44,6 +45,19 @@
 <div id="closeProjectModal" class="modal hide">
     <div class="modal-body">
         Are you sure you would like to stop this project? After you stop a project it can not be relaunched anymore.
+    </div>
+    <div class="modal-footer">
+        <form method="POST" action="">
+            {% csrf_token %}
+            <input type="hidden" name="id" value="{{project.id}}">
+            <input type="submit" name="submit" value="Close project" class="btn btn-primary">
+            <button class="btn" data-dismiss="modal" href="#">Close</button>
+        </form>
+    </div>
+</div>
+<div id="workface" class="modal hide">
+    <div class="modal-body">
+        ling for own workflorce managment
     </div>
     <div class="modal-footer">
         <form method="POST" action="">
