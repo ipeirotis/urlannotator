@@ -204,44 +204,37 @@ def activation_view(request, key):
 
 @csrf_protect
 def login_view(request):
-    context = {'login_view':True}
     if request.method == "GET":
         context = {'form': UserLoginForm()}
-        error = request.session.pop('error', None)
-        if error:
-            context['error'] = error
         return render(request, 'main/login.html',
             RequestContext(request, context))
     else:
         form = UserLoginForm(request.POST)
-        context['form'] = form
         if form.is_valid():
             user = authenticate(username=form.cleaned_data['email'],
                 password=form.cleaned_data['password'])
             if user is not None:
                 if not user.get_profile().email_registered:
-                    context['error'] = ('Username and/or password is incorrect.')
-                    return render(request, 'main/login.html',
-                        RequestContext(request, context))
+                    request.session['error'] = (
+                        'Username and/or password is incorrect.')
+                    return redirect('index')
 
                 if user.is_active:
                     login(request, user)
                     if 'remember' in request.POST:
                         request.session.set_expiry(0)
-                    return render(request, 'main/login.html',
-                        RequestContext(request, context))
+                    return redirect('index')
                 else:
-                    context['error'] = ('This account is still inactive.')
-                    return render(request, 'main/login.html',
-                        RequestContext(request, context))
+                    request.session['error'] = (
+                        'This account is still inactive.')
+                    return redirect('index')
             else:
-                context['error'] = ('Username and/or password is incorrect.')
-                return render(request, 'main/login.html',
-                    RequestContext(request, context))
+                request.session['error'] = (
+                    'Username and/or password is incorrect.')
+                return redirect('index')
         else:
-            context['error'] = ('Username and/or password is incorrect.')
-            return render(request, 'main/login.html',
-                RequestContext(request, context))
+            request.session['error'] = 'Username and/or password is incorrect.'
+            return redirect('index')
     return redirect('index')
 
 
@@ -871,6 +864,12 @@ def admin_index(request):
 
 def index(request):
     context = {}
+    if 'error' in request.session:
+        context['error'] = request.session['error']
+        request.session.pop('error')
+    if 'success' in request.session:
+        context['success'] = request.session['success']
+        request.session.pop('success')
 
     if request.user.is_authenticated():
         context['projects'] = Job.objects.filter(
