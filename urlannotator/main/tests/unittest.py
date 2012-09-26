@@ -189,8 +189,9 @@ class BaseNotLoggedInTests(ToolsMockedMixin, TestCase):
 
         resp = self.c.post(reverse('login'), {'email': 'test@test.test',
                                          'password': 'test2'})
-        # Redirection
-        self.assertEqual(resp.status_code, 302)
+
+        # return to login page and display error
+        self.assertEqual(resp.status_code, 200)
 
 
 class LoggedInTests(ToolsMockedMixin, TestCase):
@@ -231,7 +232,7 @@ class LoggedInTests(ToolsMockedMixin, TestCase):
 
         resp = self.c.post(reverse('login'),
             {'email': 'testtest.org', 'password': 'test'}, follow=True)
-        self.assertTemplateUsed(resp, 'main/index.html')
+        self.assertTemplateUsed(resp, 'main/login.html')
         self.assertIn('error', resp.context)
 
 
