@@ -104,7 +104,7 @@ class BaseNotLoggedInTests(ToolsMockedMixin, TestCase):
         self.c = Client()
 
     def testLoginNotRestrictedPages(self):
-        url_list = [('', 'main/index.html'),
+        url_list = [('', 'main/landing.html'),
                     (reverse('login'), 'main/login.html'),
                     (reverse('register'), 'main/register.html')]
 
