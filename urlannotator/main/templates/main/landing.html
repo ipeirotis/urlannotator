@@ -24,7 +24,6 @@
 
         {% block css %}
             {% compressed_css 'bootstrap' %}
-            {% compressed_css 'bootstrap-responsive' %}
             {% compressed_css 'landing' %}
         {% endblock %}
 
@@ -53,7 +52,8 @@
             <!-- container for brand and login -->
             <div class="content content-login">
                 <div class="container container-login">
-                    <a href="{% url login %}" class="btn pull-right btn-login">Login</a>
+                    <a href="{% url login %}" class="span btn pull-right btn-login">Login</a>
+                    <a href="{% url register %}" class="span btn pull-right btn-login">Sign in</a>
                     <a class="brand pull-left" href="{% url index %}"></a>
                 </div>
             </div>
@@ -82,8 +82,15 @@
                 </div>
             </div>
         </section>
-        <footer class="content">
-            <div class="container"></div>
+
+        <footer class="footer">
+          <div class="container container-footer">
+            <div class="row">
+              <div class="span12">
+                <p><a href="#">Terms of service</a>, <a href="#">Legal</a>, <a href="#">Contact</a>, created by <a href="http://10clouds.com">10Clouds</a></p>
+              </div>
+            </div>
+          </div>
         </footer>
 
 
@@ -102,6 +109,7 @@
             g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
             s.parentNode.insertBefore(g,s)}(document,'script'));
             </script>
+
         {% endif %}
     </body>
 </html>

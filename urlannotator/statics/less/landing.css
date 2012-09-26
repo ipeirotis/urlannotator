@@ -27,6 +27,29 @@
   -ms-box-sizing: border-box;
   box-sizing: border-box;
 }
+body {
+  min-width: 950px;
+  /* suppose you want minimun width of 1000px */
+
+  width: auto !important;
+  /* Firefox will set width as auto */
+
+  width: 950px;
+  /* As IE ignores !important it will set width as 1000px; */
+
+}
+@media (max-width: 979px) {
+  header,
+  footer.footer {
+    margin-right: -60px !important;
+  }
+}
+@media (min-width: 979px) and (max-width: 1000px) {
+  header,
+  footer.footer {
+    margin-right: -20px !important;
+  }
+}
 header.content {
   height: 185px;
 }
@@ -108,8 +131,7 @@ section.content > .container .col-wrapper p {
   line-height: 14px;
   font-weight: bold;
   color: #d4d4d4;
-  width: 200px;
-  margin-left: 20px;
+  width: 224px;
 }
 section.content > .container .col1 .col-container {
   background-position: -22px -17px;
@@ -134,4 +156,14 @@ section.content > .container .col4 .col-container {
 }
 section.content > .container .col4 h1 {
   color: #E0B25D;
+}
+footer.footer {
+  padding: 20px 0;
+  margin-top: 70px;
+  border-top: 1px solid #e5e5e5;
+  background-color: #f5f5f5;
+  margin: 20px 0 0 0;
+  color: #075b8d;
+  padding: 10px 10px 0 70px;
+  height: 50px;
 }
