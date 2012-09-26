@@ -227,7 +227,7 @@ class LoggedInTests(ToolsMockedMixin, TestCase):
     def testLogIn(self):
         resp = self.c.post(reverse('login'),
             {'email': 'test@test.org', 'password': 'test'}, follow=True)
-        self.assertTemplateUsed(resp, 'main/index.html')
+        self.assertTemplateUsed(resp, 'main/login.html')
         self.assertIn('error', resp.context)
 
         resp = self.c.post(reverse('login'),
