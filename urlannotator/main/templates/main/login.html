@@ -9,7 +9,6 @@
 {% block title %}Login to url annotator{% endblock %}
 
 {% block header %}
-  <h2>Login</h2>
 {% endblock %}
 
 
@@ -24,7 +23,7 @@
           {% include 'form.html' %}
           <div class="form-actions">
             <button class="btn btn-primary" type="submit">Sign in</button>
-            <p>Forgot password? <a href="{% url password_reset %}">Reset it</a>!</p>
+            Forgot password? <a href="{% url password_reset %}">Reset it</a>!
           </div>
         </fieldset>
       </form>
@@ -53,7 +52,7 @@
         <span>Odesk</span>
       </a>
     </div>
-    <legend></legend>
+    <div class="control-group"></div>
 
     <div class="">
       <form class="form-horizontal">
