@@ -15,45 +15,46 @@
 
 {% block main %}
 <div class="container container-register">
-  <div class="row">
-    <div class=" span12">
-      <div class="well-anno row">
-        <div class="span12 col1">
-          <form method="POST" action="#" class="form-horizontal">
-            <legend>Form register</legend>
-            <fieldset>
-            {% csrf_token %}
-              {% include 'form.html' %}
-              <div class="form-actions">
-                <button class="btn btn-primary" type="submit">SIGN UP</button>
-              </div>
-            </fieldset>
-          </form>
-        </div>
-        <div class="span12 col2">
-          <p style="margin-top: 20px;">Register via other services:</p>
-          <a class="btn btn-primary btn-large input-small" href="{% url register_service 'google-oauth2'%}">
-            <div><i class="icon icon-google-plus"></i></div>
-            <span>Google</span>
-          </a>
-          <a class="btn btn-primary btn-large input-small" href="{% url register_service 'twitter'%}">
-            <div><i class="icon icon-twitter"></i></div>
-            <span>Twitter</span>
-          </a>
-          <a class="btn btn-primary btn-large input-small" href="{% url register_service 'facebook'%}">
-            <div><i class="icon icon-facebook"></i></div>
-            <span>Facebook</span>
-          </a>
-          <a class="btn btn-primary btn-large input-small" href="{% url odesk_register %}">
-            <div><i class="icon icon-pinterest"></i></div>
-            <span>Odesk*</span>
-          </a>
-          <p style="font-size:70%">
-            * Signing up by/connecting to Odesk will present you with full experience of URL annotator.
-          </p>
-        </div>
-      </div>
+  <div class="well">
+    <div class="">
+      <form method="POST" action="#" class="form-horizontal">
+        <legend>Form register</legend>
+        <fieldset>
+        {% csrf_token %}
+          {% include 'form.html' %}
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Sign up</button>
+          </div>
+        </fieldset>
+      </form>
     </div>
+
+    <div class="">
+      <form class="form-horizontal">
+        <legend>Register via other services</legend>
+      </form>
+    </div>
+    <div class="row">
+      <a class="btn btn-primary btn-large input-small span" href="{% url register_service 'google-oauth2'%}">
+        <div><i class="icon icon-google-plus"></i></div>
+        <span>Google</span>
+      </a>
+      <a class="btn btn-primary btn-large input-small span" href="{% url register_service 'twitter'%}">
+        <div><i class="icon icon-twitter"></i></div>
+        <span>Twitter</span>
+      </a>
+      <a class="btn btn-primary btn-large input-small span" href="{% url register_service 'facebook'%}">
+        <div><i class="icon icon-facebook"></i></div>
+        <span>Facebook</span>
+      </a>
+      <a class="btn btn-primary btn-large input-small span" href="{% url odesk_register %}">
+        <div><i class="icon icon-pinterest"></i></div>
+        <span>Odesk*</span>
+      </a>
+    </div>
+    <p style="font-size:70%">
+      * Signing up by/connecting to Odesk will present you with full experience of URL annotator.
+    </p>
   </div>
 </div>
 {% endblock %}

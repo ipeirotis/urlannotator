@@ -15,56 +15,51 @@
 
 {% block main %}
 <div class="container container-login">
-  <div class="row">
-    <div class=" span12">
-      <div class="well-anno row">
-        <div class="span12">
-          <form method="POST" action="{% url login %}" class="form-horizontal">
-            <legend>Log in via email</legend>
-            <fieldset>
-            {% csrf_token %}
-              {% include 'form.html' %}
-              <div class="form-actions">
-                <button class="btn btn-primary" type="submit">Sign in</button>
-                <p>Forgot password? <a href="{% url password_reset %}">Reset it</a>!</p>
-              </div>
-            </fieldset>
-          </form>
-        </div>
+  <div class="well">
+    <div class="">
+      <form method="POST" action="{% url login %}" class="form-horizontal">
+        <legend>Log in via email</legend>
+        <fieldset>
+        {% csrf_token %}
+          {% include 'form.html' %}
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Sign in</button>
+            <p>Forgot password? <a href="{% url password_reset %}">Reset it</a>!</p>
+          </div>
+        </fieldset>
+      </form>
+    </div>
 
-        <div class="span12">
-          <form class="form-horizontal">
-            <legend>Login via other services</legend>
-          </form>
-        </div>
-        <div class="">
-          <a class="btn btn-primary btn-large input-small span" href="{% url socialauth_begin 'google-oauth2'%}">
-            <div><i class="icon icon-google-plus"></i></div>
-            <span>Google</span>
-          </a>
-          <a class="btn btn-primary btn-large input-small span" href="{% url socialauth_begin 'twitter'%}">
-            <div><i class="icon icon-twitter"></i></div>
-            <span>Twitter</span>
-          </a>
-          <a class="btn btn-primary btn-large input-small span" href="{% url socialauth_begin 'facebook'%}">
-            <div><i class="icon icon-facebook"></i></div>
-            <span>Facebook</span>
-          </a>
-          <a class="btn btn-primary btn-large input-small span" href="{% url odesk_login %}">
-            <div><i class="icon icon-pinterest"></i></div>
-            <span>Odesk</span>
-          </a>
-        </div>
-              <div class="form-actions"></div>
+    <div class="">
+      <form class="form-horizontal">
+        <legend>Login via other services</legend>
+      </form>
+    </div>
+    <div class="row">
+      <a class="btn btn-primary btn-large input-small span" href="{% url socialauth_begin 'google-oauth2'%}">
+        <div><i class="icon icon-google-plus"></i></div>
+        <span>Google</span>
+      </a>
+      <a class="btn btn-primary btn-large input-small span" href="{% url socialauth_begin 'twitter'%}">
+        <div><i class="icon icon-twitter"></i></div>
+        <span>Twitter</span>
+      </a>
+      <a class="btn btn-primary btn-large input-small span" href="{% url socialauth_begin 'facebook'%}">
+        <div><i class="icon icon-facebook"></i></div>
+        <span>Facebook</span>
+      </a>
+      <a class="btn btn-primary btn-large input-small span" href="{% url odesk_login %}">
+        <div><i class="icon icon-pinterest"></i></div>
+        <span>Odesk</span>
+      </a>
+    </div>
+    <legend></legend>
 
-        <div class="span12">
-          <form class="form-horizontal">
-            <legend>Not member? </legend>
-          </form>
-          <p><a href="{% url register %}">Need an account?</a></p>
-        </div>
-
-      </div>
+    <div class="">
+      <form class="form-horizontal">
+        <legend>Not member? </legend>
+      </form>
+      <p><a href="{% url register %}">Need an account?</a></p>
     </div>
   </div>
 </div>
