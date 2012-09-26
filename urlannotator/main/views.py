@@ -204,37 +204,44 @@ def activation_view(request, key):
 
 @csrf_protect
 def login_view(request):
+    context = {'login_view':True}
     if request.method == "GET":
-        context = {'form': UserLoginForm()}
+        context['form'] = UserLoginForm()
+        error = request.session.pop('error', None)
+        if error:
+            context['error'] = error
         return render(request, 'main/login.html',
             RequestContext(request, context))
     else:
         form = UserLoginForm(request.POST)
+        context['form'] = form
         if form.is_valid():
             user = authenticate(username=form.cleaned_data['email'],
                 password=form.cleaned_data['password'])
             if user is not None:
                 if not user.get_profile().email_registered:
-                    request.session['error'] = (
-                        'Username and/or password is incorrect.')
-                    return redirect('index')
+                    context['error'] = ('Username and/or password is incorrect.')
+                    return render(request, 'main/login.html',
+                        RequestContext(request, context))
 
                 if user.is_active:
                     login(request, user)
                     if 'remember' in request.POST:
                         request.session.set_expiry(0)
-                    return redirect('index')
+                    request.session['success'] = ('You are logged in')
+                    redirect('index')
                 else:
-                    request.session['error'] = (
-                        'This account is still inactive.')
-                    return redirect('index')
+                    context['error'] = ('This account is still inactive.')
+                    return render(request, 'main/login.html',
+                        RequestContext(request, context))
             else:
-                request.session['error'] = (
-                    'Username and/or password is incorrect.')
-                return redirect('index')
+                context['error'] = ('Username and/or password is incorrect.')
+                return render(request, 'main/login.html',
+                    RequestContext(request, context))
         else:
-            request.session['error'] = 'Username and/or password is incorrect.'
-            return redirect('index')
+            context['error'] = ('Username and/or password is incorrect.')
+            return render(request, 'main/login.html',
+                RequestContext(request, context))
     return redirect('index')
 
 
