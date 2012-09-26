@@ -29,11 +29,6 @@
   </div>
   <hr>
 </div>
-<div class="row">
-  <div class="span12">
-    {% include 'main/project/own_workforce_links.html' %}
-  </div>
-</div>
 
 {% if project.is_draft %}
   <div class="row">
@@ -94,6 +89,15 @@
     </div>
   </div>
 {% endif%}
+{% endblock %}
+
+
+{% block workface_block%}
+<div class="row">
+  <div class="span12">
+    {% include 'main/project/own_workforce_links.html' %}
+  </div>
+</div>
 {% endblock %}
 
 {% block javascript %}
