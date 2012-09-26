@@ -1,4 +1,7 @@
+import json
+
 from django.test import TestCase
+from django.test.client import Client
 from django.conf import settings
 from django.contrib.auth.models import User
 
@@ -57,6 +60,74 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
 
         stop_job(voting_key)
 
+        result = self.tc.get_job(external_id=voting_key)
+        self.assertEqual(result['state'], 'stopped')
+
+
+class TagasaurisInApi(ToolsMockedMixin, TestCase):
+
+    def setUp(self):
+        self.api_url = '/api/v1/'
+        self.user = User.objects.create_user(username='test', password='test')
+        self.user.is_superuser = True
+        self.user.save()
+
+        self.c = Client()
+        self.tc = make_tagapi_client()
+
+        self.job = Job.objects.create_active(
+            title='urlannotator_test_tagapi_client',
+            description='test_description',
+            no_of_urls=2,
+            account=self.user.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+
+    def testCreateAndStop(self):
+        # From closing tagasauris job view there is no difference between those
+        # jobs - sample gather & voting
+        voting_key, voting_hit = create_job(
+            self.tc,
+            self.job,
+            settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW)
+        sample_gathering_key, sample_gathering_hit = create_job(
+            self.tc,
+            self.job,
+            settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW)
+
+        TagasaurisJobs.objects.create(
+            urlannotator_job=self.job,
+            sample_gathering_key=sample_gathering_key,
+            sample_gathering_hit=sample_gathering_hit,
+            voting_key=voting_key,
+            voting_hit=voting_hit
+        )
+
+        result = self.tc.get_job(external_id=voting_key)
+        self.assertNotEqual(result['state'], 'stopped')
+        result = self.tc.get_job(external_id=sample_gathering_key)
+        self.assertNotEqual(result['state'], 'stopped')
+
+        self.c.login(username='test', password='test')
+
+        resp = self.c.get('%sadmin/job/%d/stop_sample_gathering/?format=json'
+            % (self.api_url, self.job.id))
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertEqual(array['result'], 'SUCCESS')
+        result = self.tc.get_job(external_id=sample_gathering_key)
+        self.assertEqual(result['state'], 'stopped')
+        result = self.tc.get_job(external_id=voting_key)
+        self.assertNotEqual(result['state'], 'stopped')
+
+        resp = self.c.get('%sadmin/job/%d/stop_voting/?format=json'
+            % (self.api_url, self.job.id))
+
+        self.assertEqual(resp.status_code, 200)
+        array = json.loads(resp.content)
+        self.assertEqual(array['result'], 'SUCCESS')
+        result = self.tc.get_job(external_id=sample_gathering_key)
+        self.assertEqual(result['state'], 'stopped')
         result = self.tc.get_job(external_id=voting_key)
         self.assertEqual(result['state'], 'stopped')
 

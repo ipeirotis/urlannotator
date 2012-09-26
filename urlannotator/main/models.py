@@ -169,7 +169,7 @@ class Job(models.Model):
         tag_job = self.tagasaurisjobs
         tag_job.sample_gathering_hit = ''
         tag_job.save()
-        stop_job(tag_job.sample_gathering_hit)
+        stop_job(tag_job.sample_gathering_key)
         return True
 
     def get_voting_url(self):

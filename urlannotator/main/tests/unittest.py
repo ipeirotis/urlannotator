@@ -909,7 +909,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         w = Worker.objects.get_tagasauris(worker_id='1')
         res = self.c.get('%sjob/%s/worker/%s/?format=json'
-            % (self.api_url,job.id, w.id))
+            % (self.api_url, job.id, w.id))
 
         res = json.loads(res.content)
         self.assertEqual(res['earned'], 0)
@@ -954,18 +954,19 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.assertTrue(array['total_count'] > 0)
         self.assertEqual(len(array['entries']), array['count'])
 
-
         resp = self.c.get('%sadmin/job/%d/stop_sample_gathering/?format=json' % (self.api_url, job.id))
 
         self.assertEqual(resp.status_code, 200)
         array = json.loads(resp.content)
-        self.assertEqual(array['result'], 'SUCCESS')
+        # Because there is no TagasaurisJobs attached.
+        self.assertTrue('error' in array.keys())
 
         resp = self.c.get('%sadmin/job/%d/stop_voting/?format=json' % (self.api_url, job.id))
 
         self.assertEqual(resp.status_code, 200)
         array = json.loads(resp.content)
-        self.assertEqual(array['result'], 'SUCCESS')
+        # Because there is no TagasaurisJobs attached.
+        self.assertTrue('error' in array.keys())
 
 
 class TestAdmin(ToolsMockedMixin, TestCase):
