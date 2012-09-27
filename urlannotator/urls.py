@@ -23,6 +23,8 @@ urlpatterns = patterns('urlannotator',
 
     url(r'^$', 'main.views.index', name='index'),
 
+    url(r'^hit/$', 'main.views.hit', name='hit'),
+
     url(r'^register/$', 'main.views.register_view', name='register'),
     url(r'^register/(?P<service>[^/]+)$',
         'main.views.register_service', name='register_service'),

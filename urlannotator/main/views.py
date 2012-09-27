@@ -884,3 +884,8 @@ def index(request):
         return render(request, 'main/index.html', RequestContext(request, context))
     else:
         return render(request, 'main/landing.html', RequestContext(request, context))
+
+def hit(request):
+    context = {}
+
+    return render(request, 'main/hit/hit.html', RequestContext(request, context))

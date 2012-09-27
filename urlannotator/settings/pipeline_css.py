@@ -79,6 +79,16 @@ PIPELINE_CSS = {
         'extra_context': {
             'rel': 'stylesheet/less',
         },
-    }
+    },
+    'hit': {
+        'source_filenames': (
+            'less/hit.less',
+        ),
+        'output_filename': 'css/hit.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
+
 
 }

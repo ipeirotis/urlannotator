@@ -1,0 +1,202 @@
+{% load compressed %}
+<!doctype html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ -->
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!-- Consider adding a manifest.appcache: h5bp.com/d/Offline -->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+
+        <!-- Use the .htaccess and remove these lines to avoid edge case issues.
+           More info: h5bp.com/i/378 -->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+        <title>{% block title %}Url Annotator{% endblock %}</title>
+        <meta name="description" content="">
+        <meta name="author" content="">
+
+        <link rel="shortcut icon" href="{{STATIC_URL}}img/favicon.png">
+
+        <!-- Mobile viewport optimized: h5bp.com/viewport -->
+        <meta name="viewport" content="width=device-width">
+
+        {% block css %}
+            {% compressed_css 'bootstrap' %}
+            {% compressed_css 'bootstrap-responsive' %}
+            {% compressed_css 'base' %}
+            {% compressed_css 'hit' %}
+        {% endblock %}
+
+    </head>
+    <body class="{% block body-class %}{% endblock %}">
+        <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6.
+           chromium.org/developers/how-tos/chrome-frame-getting-started -->
+        <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
+      <div class="content wrapper">
+        <div class="navbar">
+          <div class="navbar-inner">
+            <div class="container">
+              <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </a>
+              <a class="brand" href="{% url index %}"></a>
+              <div class="nav-collapse">
+                  <ul class="nav pull-right userNav">
+                    <li class="new-project">
+                      <a href="http://www.tagasauris.com">
+                        Powered by tagasauris
+                        <img class="img-tag" src="http://productozauris.tagasauris.com/statics//img/logo.png" alt="http://productozauris.tagasauris.com/statics//img/logo.png" />
+                      </a>
+                    </li>
+                  </ul>
+              </div><!--/.nav-collapse -->
+            </div>
+            <div class="bottom-bar"></div>
+            <header class="header">
+              <div class="container container-header">
+                <div class="row">
+                  <div class="span12">
+                    {% block header %}
+                    {% endblock %}
+                  </div>
+                </div>
+              </div>
+            </header>
+          </div>
+        </div>
+
+        <div class="container container-main" role="main">
+          {% block msg %}
+            {% if error %}
+              <div class="alert alert-error {% if login_view %}row{% endif %}">
+                <button class="close" data-dismiss="alert">×</button>
+                {{ error }}
+              </div>
+            {% endif %}
+
+            {% if success %}
+              <div class="alert alert-success">
+                <button class="close" data-dismiss="alert">×</button>
+                {{ success }}
+              </div>
+            {% endif %}
+          {% endblock %}
+          <div id="alert-box" class=""> </div>
+          {% block main %}
+          {% endblock %}
+        </div>
+      </div>
+
+        <footer class="footer">
+          <div class="container container-footer">
+            <div class="row">
+              <div class="span12">
+                <p><a href="#">Terms of service</a>, <a href="#">Legal</a>, <a href="#">Contact</a>, created by <a href="http://10clouds.com">10Clouds</a></p>
+              </div>
+            </div>
+          </div>
+        </footer>
+
+
+        <!-- JavaScript at the bottom for fast page loading -->
+        {% block javascript %}
+            {% compressed_js 'core' %}
+            <script type="text/javascript">
+              $('#loginDiv').bind('click', function (e) { e.stopPropagation() })
+            </script>
+            {% if user.is_authenticated %}
+            <script type="text/javascript">
+              function csrfSafeMethod(method) {
+                  // these HTTP methods do not require CSRF protection
+                  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+              }
+              function sameOrigin(url) {
+                  // test that a given url is a same-origin URL
+                  // url could be relative or scheme relative or absolute
+                  var host = document.location.host; // host + port
+                  var protocol = document.location.protocol;
+                  var sr_origin = '//' + host;
+                  var origin = protocol + sr_origin;
+                  // Allow absolute or scheme relative URLs to same origin
+                  return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+                      (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+                      // or any other URL that isn't scheme relative or absolute i.e relative.
+                      !(/^(\/\/|http:|https:).*/.test(url));
+              }
+              $.ajaxSetup({
+                  beforeSend: function(xhr, settings) {
+                      if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
+                          // Send the token to same-origin, relative URLs only.
+                          // Send the token only if the method warrants CSRF protection
+                          // Using the CSRFToken value acquired earlier
+                          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                      }
+                  }
+              });
+              function insertAlert(text, id){
+                text = '<div id="alert-'+id+'" class="alert alert-info fade in our-alert"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
+                $('#alert-box').prepend(text);
+              };
+
+              function insertAction(action, id){
+                text = '<div id="action-'+id+'" class="alert action fade in"><button data-dismiss="alert" class="close" type="button">×</button>'+action+'</div>';
+                $('#alert-box').prepend(text);
+              };
+
+              function removeActions(){
+                $('.action').remove()
+              };
+
+              function removeAlerts(){
+                $('.our-alert').remove()
+              }
+
+              function toggleAction(type){
+                display = $('#action-more-' + type).css('display');
+                if (display != 'none'){
+                  $('#action-more-' + type).css('display', 'none');
+                } else {
+                  $('#action-more-' + type).css('display', 'block');
+                }
+              }
+
+              function checkAlerts(){
+                $.get("{% url alerts_view %}", function(data) {
+                  var res = JSON.parse(data);
+                  var alerts = res['alerts'];
+                  removeAlerts()
+                  for (alert in alerts){
+                    insertAlert(alerts[alert], alert)
+                  };
+
+                  var actions = res['actions'];
+                  removeActions()
+                  for (action in actions){
+                    insertAction(actions[action], action)
+                  };
+                });
+              }
+
+              checkAlerts();
+              setInterval(checkAlerts, 10 * 1000);
+            </script>
+            {% endif %}
+        {% endblock %}
+        <!-- end scripts -->
+
+        {% if GA_ID %}
+            <!-- Asynchronous Google Analytics snippet. Change UA-XXXXX-X to be your site's ID.
+               mathiasbynens.be/notes/async-analytics-snippet -->
+            <script>
+            var _gaq=[['_setAccount','{{GA_ID}}'],['_trackPageview']];
+            (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+            g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+            s.parentNode.insertBefore(g,s)}(document,'script'));
+            </script>
+        {% endif %}
+    </body>
+</html>
