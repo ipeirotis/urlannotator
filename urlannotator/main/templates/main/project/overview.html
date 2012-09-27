@@ -104,17 +104,6 @@
         </table>
         <hr>
       </div>
-      <div class="span12">
-        <h3>Top workers</h3>
-        <table class="table">
-          <thead>
-            <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
-          </thead>
-          <tbody data-bind="foreach: top_workers">
-            <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   {% endif%}
 {% endblock %}
@@ -122,8 +111,20 @@
 
 {% block workface_block%}
 <div class="row">
-  <div class="span12">
+  <div class="span9">
     {% include 'main/project/own_workforce_links.html' %}
+  </div>
+
+  <div class="span9">
+    <h3>Top workers</h3>
+    <table class="table">
+      <thead>
+        <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
+      </thead>
+      <tbody data-bind="foreach: top_workers">
+        <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}
