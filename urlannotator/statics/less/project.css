@@ -143,14 +143,16 @@ table#btm-statistics td:nth-of-type(2) {
 }
 .accordion-group {
   background: #fafafa;
-  padding-bottom: 10px;
   -webkit-border-radius: 0px;
   -moz-border-radius: 0px;
   border-radius: 0px;
 }
+.accordion-group #collapseOne {
+  margin-bottom: 10px;
+}
 .accordion-group .accordion-heading {
   padding-bottom: 10px;
-  padding-top: 10px;
+  padding-top: 15px;
 }
 .accordion-group .accordion-heading .accordion-toggle {
   padding: 0px;
@@ -191,7 +193,7 @@ table#btm-statistics td:nth-of-type(2) {
   padding: 0px;
 }
 .accordion-group .accordion-inner .update-box {
-  margin-bottom: 5px;
+  margin-bottom: 10px;
   background-color: white;
   border-bottom: 1px solid #eee;
   border-right: 1px solid #eee;
