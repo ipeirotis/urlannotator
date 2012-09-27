@@ -17,6 +17,13 @@
 
 // too short to place in separated file
 
+
+.overflow(@width: 100px) {
+    overflow: hidden;
+    width: @width;
+    text-overflow: ellipsis;
+}
+
 .chart-container {
   height:200px;
 }
@@ -140,19 +147,6 @@ span.badge {
 }
 
 div.update-box {
-  margin-bottom: 5px;
-}
-.box-img {
-  width: 60px;
-  height: 60px;
-  float: left;
-}
-span.box-header {
-  display: block;
-  font-weight: bold;
-}
-span.box-content {
-  display: block;
 }
 
 table#btm-statistics td:nth-of-type(2){
@@ -185,12 +179,50 @@ table#btm-statistics td:nth-of-type(2){
     .accordion-toggle {
       padding:0px;
       color: @text-color;
+      .accordion-notify {
+        .show,
+        .hide{
+          margin-right:6px;
+          text-decoration: underline;
+          i {
+            width:9px;
+            height:9px;
+            background:url('/statics/img/url_anno_proj_arrows.png') 0px 0px;
+            display: block;
+            float:right;
+            margin-top:6px;
+            text-decoration: none;
+          }
+        }
+        .show {
+          display: none;
+        }
+        .hide {
+          display: inline;
+          i {
+            background-position: 0px -9px;
+          }
+        }
+      }
+      &.collapsed {
+        .accordion-notify {
+          .show {
+            display: inline;
+          }
+          .hide {
+            display: none;
+          }
+        }
+      }
     }
   }
   .accordion-inner {
     border:0px none;
     padding:0px;
+    .accordion-notify {
+    }
     .update-box {
+      margin-bottom: 5px;
       background-color: white;
       border-bottom:1px solid #eee;
       border-right:1px solid #eee;
@@ -200,6 +232,31 @@ table#btm-statistics td:nth-of-type(2){
       a {
         color:@text-color;
         text-decoration: underline;
+      }
+      .box-img {
+        float: left;
+        width:55px;
+        height:55px;
+        padding:5px;
+        img {
+          width:55px;
+          height:55px;
+        }
+      }
+      .box-inner {
+        .overflow(150px);
+        float:left;
+      }
+      @media(min-width: 1200px) {
+        .box-inner { .overflow( 200px );}
+      }
+      span.box-header {
+        display: block;
+        font-weight: bold;
+        border-bottom:1px solid #eee;
+      }
+      span.box-content {
+        display: block;
       }
     }
   }

@@ -9,8 +9,12 @@
       <div class="accordion-group">
         <div class="accordion-heading">
           <div class="container">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-              Update stream &rsaquo;&rsaquo;
+            <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+              <span>Update stream &rsaquo;&rsaquo;</span>
+              <div class="pull-right accordion-notify">
+                <span class="show ">show<i class=""></i></span>
+                <span class="hide ">hide<i class=""></i></span>
+              </div>
             </a>
           </div>
         </div>
@@ -22,7 +26,7 @@
                   <div id="updates-box" class="row" data-bind="foreach: alerts">
                     <div class="update-box span3">
                       <div class="box-img">
-                        <img data-bind="visible: hasScreenshot, attr: {src: screenshot}" class="box-img">
+                        <img data-bind="visible: hasScreenshot, attr: {src: screenshot}" class="">
                       </div>
                       <div class="box-inner">
                         <span class="box-header" data-bind="text: title"></span>
@@ -40,7 +44,7 @@
     </div>
 
 </div>
-<div class="container container-main" role="main">
+<div class="container container-main2" role="main">
   <div class="row">
     <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
       <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
@@ -130,6 +134,7 @@
 <script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
 <script src="{{STATIC_URL}}js/models/job.js" type="text/javascript"></script>
 <script type="text/javascript">
+
 var progressGraph;
 var spentGraph;
 var urlGraph;
@@ -348,6 +353,13 @@ $(document).ready(function(){
   ko.applyBindings(job);
   updateJob();
   setInterval(updateJob, 10 * 1000);
+  $('.accordion-toggle').click(function(){
+    if( $('#collapseOne').hasClass('in') ) {
+      $(this).addClass('collapsed');
+    } else {
+      $(this).removeClass('collapsed');
+    }
+  })
 });
 </script>
 {% endblock %}

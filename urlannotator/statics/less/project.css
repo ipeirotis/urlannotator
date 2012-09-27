@@ -126,21 +126,6 @@ span.badge.badge-stopped {
 span.badge.badge-completed {
   background-color: #f7f7f9;
 }
-div.update-box {
-  margin-bottom: 5px;
-}
-.box-img {
-  width: 60px;
-  height: 60px;
-  float: left;
-}
-span.box-header {
-  display: block;
-  font-weight: bold;
-}
-span.box-content {
-  display: block;
-}
 table#btm-statistics td:nth-of-type(2) {
   width: 100px;
   text-align: right;
@@ -171,11 +156,42 @@ table#btm-statistics td:nth-of-type(2) {
   padding: 0px;
   color: #d0a271;
 }
+.accordion-group .accordion-heading .accordion-toggle .accordion-notify .show,
+.accordion-group .accordion-heading .accordion-toggle .accordion-notify .hide {
+  margin-right: 6px;
+  text-decoration: underline;
+}
+.accordion-group .accordion-heading .accordion-toggle .accordion-notify .show i,
+.accordion-group .accordion-heading .accordion-toggle .accordion-notify .hide i {
+  width: 9px;
+  height: 9px;
+  background: url('/statics/img/url_anno_proj_arrows.png') 0px 0px;
+  display: block;
+  float: right;
+  margin-top: 6px;
+  text-decoration: none;
+}
+.accordion-group .accordion-heading .accordion-toggle .accordion-notify .show {
+  display: none;
+}
+.accordion-group .accordion-heading .accordion-toggle .accordion-notify .hide {
+  display: inline;
+}
+.accordion-group .accordion-heading .accordion-toggle .accordion-notify .hide i {
+  background-position: 0px -9px;
+}
+.accordion-group .accordion-heading .accordion-toggle.collapsed .accordion-notify .show {
+  display: inline;
+}
+.accordion-group .accordion-heading .accordion-toggle.collapsed .accordion-notify .hide {
+  display: none;
+}
 .accordion-group .accordion-inner {
   border: 0px none;
   padding: 0px;
 }
 .accordion-group .accordion-inner .update-box {
+  margin-bottom: 5px;
   background-color: white;
   border-bottom: 1px solid #eee;
   border-right: 1px solid #eee;
@@ -188,6 +204,37 @@ table#btm-statistics td:nth-of-type(2) {
 .accordion-group .accordion-inner .update-box a {
   color: #d0a271;
   text-decoration: underline;
+}
+.accordion-group .accordion-inner .update-box .box-img {
+  float: left;
+  width: 55px;
+  height: 55px;
+  padding: 5px;
+}
+.accordion-group .accordion-inner .update-box .box-img img {
+  width: 55px;
+  height: 55px;
+}
+.accordion-group .accordion-inner .update-box .box-inner {
+  overflow: hidden;
+  width: 150px;
+  text-overflow: ellipsis;
+  float: left;
+}
+@media (min-width: 1200px) {
+  .accordion-group .accordion-inner .update-box .box-inner {
+    overflow: hidden;
+    width: 200px;
+    text-overflow: ellipsis;
+  }
+}
+.accordion-group .accordion-inner .update-box span.box-header {
+  display: block;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+}
+.accordion-group .accordion-inner .update-box span.box-content {
+  display: block;
 }
 .container-main {
   padding-bottom: 0px;
