@@ -935,7 +935,9 @@ class SampleResource(TagasaurisNotifyResource):
 
         duplicates = []
         for url in urls:
-            if Sample.objects.filter(url=url, job=job).count() > 0:
+            if Sample.objects.filter(
+                    url=Sample.sanitize_url(url),
+                    job=job).count() > 0:
                 duplicates.append(url)
 
         return self.create_response(
