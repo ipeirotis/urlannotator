@@ -880,6 +880,10 @@ class SampleResource(TagasaurisNotifyResource):
                 '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('add_from_tagasauris'),
                 name='sample_add_from_tagasauris'),
+            url(r'^(?P<resource_name>%s)/verify/'
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('verify_from_tagasauris'),
+                name='verify_from_tagasauris'),
         ]
 
     def add_from_tagasauris(self, request, **kwargs):
@@ -910,6 +914,31 @@ class SampleResource(TagasaurisNotifyResource):
         return self.create_response(
             request,
             {'request_id': sample_ids}
+        )
+
+    def verify_from_tagasauris(self, request, **kwargs):
+        try:
+            job = Job.objects.get(id=kwargs['job_id'])
+        except Job.DoesNotExist:
+            return self.create_response(request, {'error': 'Wrong job.'})
+
+        data = json.loads(request.raw_post_data)
+        urls = data.get('urls', None)
+        if urls is None:
+            return self.create_response(request,
+                {'error': 'Urls parameter not found.'})
+
+        duplicates = []
+        for url in urls:
+            if Sample.objects.filter(url=url, job=job).count() > 0:
+                duplicates.append(url)
+
+        return self.create_response(
+            request,
+            {
+                'duplicate_urls': duplicates,
+                'result': 'ok' if not duplicates else 'duplicates'
+            }
         )
 
 

@@ -1,91 +1,43 @@
 (function(){
 
-    window.Input = Backbone.Model.extend({
+    window.Sample = Backbone.Model.extend({
 
-        toggle: function () {
-            this.save({done: !this.get("done")});
-        },
-
-        // Remove this Input from *localStorage*, deleting its view.
         clear: function () {
-            this.destroy();
-            $(this.view.el).dispose();
+            Samples.remove(this);
+            $(this.view.el).remove();
         }
 
     });
 
-    // Input List
-    window.InputList = Backbone.Collection.extend({
+    window.SampleList = Backbone.Collection.extend({
 
-        model: Input
+        model: Sample
 
     });
 
-    window.Inputs = new InputList();
+    window.Samples = new SampleList();
 
-    window.InputView = Backbone.View.extend({
+    window.SampleView = Backbone.View.extend({
 
-        tagName: "div",
+        tagName: "li",
 
-        className: "sampleInput",
+        className: "sample",
 
-        // template: _.template(TemplateGetter.get("../../ejs/tagasauris/inputsample.ejs")),
+        template: _.template(
+            '<span><%= url %></span>'+
+            ' <a href="#" class="sample-remove">remove</a>'),
 
         events: {
-            "click .todo-check"            : "toggleDone",
-            "dblclick .todo-content" : "edit",
-            "click .todo-destroy"        : "clear",
-            "keypress .todo-input"     : "updateOnEnter"
+            "click .sample-remove": "clear"
         },
 
         initialize: function() {
-            _.bindAll(this, 'render', 'close');
-            this.model.bind('change', this.render);
             this.model.view = this;
         },
 
         render: function() {
-            $(this.el).set('html', this.template(this.model.toJSON()));
-            $(this.el).setProperty("id", "todo-"+this.model.id);
-            this.setContent();
-            sortableTodos.addItems(this.el);
+            $(this.el).html(this.template(this.model.toJSON()));
             return this;
-        },
-
-        setContent: function() {
-            var content = this.model.get('content');
-            this.$('.todo-content').set("html", content);
-            this.$('.todo-input').setProperty("value", content);
-
-            if (this.model.get('done')) {
-                this.$(".todo-check").setProperty("checked", "checked");
-                $(this.el).addClass("done");
-            } else {
-                this.$(".todo-check").removeProperty("checked");
-                $(this.el).removeClass("done");
-            }
-
-            this.input = this.$(".todo-input");
-            this.input.addEvent('blur', this.close);
-        },
-
-        toggleDone: function() {
-            this.model.toggle();
-        },
-
-        edit: function() {
-            $(this.el).addClass("editing");
-            //this.input.fireEvent("focus");
-            this.input.focus();
-        },
-
-        close: function() {
-            this.model.save({content: this.input.getProperty("value")});
-            $(this.el).removeClass("editing");
-        },
-
-        updateOnEnter: function(e) {
-            if (e.code == 13) this.close();
         },
 
         clear: function() {
@@ -96,38 +48,49 @@
 
     window.SampleGather = Backbone.View.extend({
 
-        el: $("samplegatherapp"),
+        el: $("#form-template"),
 
-        template: null,
+        template: _.template($("#samplegather").html()),
 
         events: {
-            "keypress #new-todo": "sendOnEnter"
+            "click .add-new-sample": "addNewSample",
+            "click .submit-samples": "sendSamples"
         },
 
-        start_job: function (data) {
+        initialize: function (data) {
             data = $.parseJSON(data);
             this.token = data.token;
+            this.job_id = data.job_id;
             this.core_url = data.core_url;
 
-            this.template = _.template($("#samplegather").html()),
             this.render();
         },
 
-        initialize: function() {
+        render: function () {
+            this.el.html(this.template());
         },
 
-        render: function() {
-            $("#form-template").html(this.template());
-            // $("#questions")
+        addNewSample: function () {
+            var url = this.$(".new-sample").val();
+
+            sample = new Sample({id:url, url: url});
+
+            var view = new SampleView({model: sample}).render().el;
+            this.$(".samples").append(view);
+            Samples.add(sample);
         },
 
-        sendOnEnter: function(e) {
-            if (e.code != 13) return;
-            Inputs.create({
-                content: this.input.getProperty("value"),
-                done: false
+        sendSamples: function () {
+            var urls = $.map(Samples.toArray(), function(sample) {
+                return sample.get('url');
             });
-            this.input.setProperty("value", "");
+            $.post(
+                this.core_url + '/api/v1/sample/verify/' + this.job_id + '/',
+                {urls: urls},
+                function (data) {
+                    console.log(data);
+                }
+            );
         }
 
     });
