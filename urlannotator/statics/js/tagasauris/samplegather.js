@@ -43,7 +43,8 @@
 
         template: _.template(
             '<span><%= attributes.url %></span>'+
-            ' <% if (duplicate) { %><span class="duplicate">DUPLICATE</span><% } %>'+
+            ' <% if (duplicate) { %>'+
+            ' <span class="duplicate">DUPLICATE</span><% } %>'+
             ' <a href="#" class="sample-remove">remove</a>'),
 
         events: {
@@ -67,6 +68,10 @@
 
     window.SampleGather = Backbone.View.extend({
 
+        minSamples: 1,
+
+        maxSamples: 5,
+
         el: $("#form-template"),
 
         template: _.template($("#samplegather").html()),
@@ -77,6 +82,10 @@
         },
 
         initialize: function (data) {
+            _.bindAll(this);
+            Samples.bind("add", this.renderPartial, this);
+            Samples.bind("remove", this.renderPartial, this);
+
             data = $.parseJSON(data);
             this.token = data.token;
             this.job_id = data.job_id;
@@ -87,34 +96,54 @@
 
         render: function () {
             this.el.html(this.template());
+            this.renderPartial();
+        },
+
+        renderPartial: function () {
+            if (Samples.length >= this.maxSamples) {
+                this.$('.add-new-sample').attr('disabled', 'disabled');
+            } else {
+                this.$('.add-new-sample').removeAttr("disabled");
+            }
+
+            if (Samples.length < this.minSamples) {
+                this.$('.submit-samples').attr('disabled', 'disabled');
+            } else {
+                this.$('.submit-samples').removeAttr("disabled");
+            }
         },
 
         addNewSample: function () {
-            var url = this.$(".new-sample").val();
+            if (Samples.length < this.maxSamples) {
+                var url = this.$(".new-sample").val();
 
-            sample = new Sample({id:url, url: url});
+                sample = new Sample({id:url, url: url});
 
-            var view = new SampleView({model: sample}).render().el;
-            this.$(".samples").append(view);
-            Samples.add(sample);
+                var view = new SampleView({model: sample}).render().el;
+                this.$(".samples").append(view);
+                Samples.add(sample);
+            }
         },
 
         sendSamples: function () {
-            var urls = $.map(Samples.toArray(), function(sample) {
-                return sample.get('url');
-            });
-            $.post(
-                this.core_url + '/api/v1/sample/verify/' + this.job_id + '/',
-                JSON.stringify({urls: urls}),
-                function (data) {
-                    if (data.duplicate_urls.length === 0) {
+            if (Samples.length >= this.minSamples) {
+                var urls = $.map(Samples.toArray(), function(sample) {
+                    return sample.get('url');
+                });
+                $.post(
+                    this.core_url + '/api/v1/sample/verify/' + this.job_id +
+                        '/',
+                    JSON.stringify({urls: urls}),
+                    function (data) {
+                        if (data.duplicate_urls.length === 0) {
 
-                    } else {
-                        Samples.setDuplicates(data.duplicate_urls);
-                    }
-                },
-                "json"
-            );
+                        } else {
+                            Samples.setDuplicates(data.duplicate_urls);
+                        }
+                    },
+                    "json"
+                );
+            }
         }
 
     });
