@@ -88,6 +88,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'urlannotator.main.middlewares.crossdomainxhr.XsSharing',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -313,3 +314,8 @@ TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
 # Tagasauris needs sacrifice!
 DUMMY_URLANNOTATOR_URL =\
     'http://urlannotator.10clouds.com/statics/img/favicon.png'
+
+# Tagasauris will ask for some infro via xhr ($.post() etc). It is different
+# domain so we need to allow it explicit.
+XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
+XS_SHARING_ALLOWED_METHODS = ['POST', 'GET']

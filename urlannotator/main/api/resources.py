@@ -922,7 +922,12 @@ class SampleResource(TagasaurisNotifyResource):
         except Job.DoesNotExist:
             return self.create_response(request, {'error': 'Wrong job.'})
 
-        data = json.loads(request.raw_post_data)
+        try:
+            data = json.loads(request.raw_post_data)
+        except ValueError:
+            return self.create_response(request,
+                {'error': 'Malformed request json.'})
+
         urls = data.get('urls', None)
         if urls is None:
             return self.create_response(request,

@@ -86,10 +86,11 @@
             });
             $.post(
                 this.core_url + '/api/v1/sample/verify/' + this.job_id + '/',
-                {urls: urls},
+                JSON.stringify({urls: urls}),
                 function (data) {
                     console.log(data);
-                }
+                },
+                "json"
             );
         }
 
