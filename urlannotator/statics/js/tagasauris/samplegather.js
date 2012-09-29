@@ -2,16 +2,34 @@
 
     window.Sample = Backbone.Model.extend({
 
+        duplicate: false,
+
         clear: function () {
             Samples.remove(this);
             $(this.view.el).remove();
+        },
+
+        update: function () {
+            this.view.render();
         }
 
     });
 
     window.SampleList = Backbone.Collection.extend({
 
-        model: Sample
+        model: Sample,
+
+        setDuplicates: function (duplicates) {
+            this.map(function (sample) {
+                sample.duplicate = false;
+            });
+            for (var i = duplicates.length - 1; i >= 0; i--) {
+                var sample = Samples.get(duplicates[i]);
+                sample.duplicate = true;
+                sample.update();
+            }
+        }
+
 
     });
 
@@ -24,7 +42,8 @@
         className: "sample",
 
         template: _.template(
-            '<span><%= url %></span>'+
+            '<span><%= attributes.url %></span>'+
+            ' <% if (duplicate) { %><span class="duplicate">DUPLICATE</span><% } %>'+
             ' <a href="#" class="sample-remove">remove</a>'),
 
         events: {
@@ -36,7 +55,7 @@
         },
 
         render: function() {
-            $(this.el).html(this.template(this.model.toJSON()));
+            $(this.el).html(this.template(this.model));
             return this;
         },
 
@@ -88,7 +107,11 @@
                 this.core_url + '/api/v1/sample/verify/' + this.job_id + '/',
                 JSON.stringify({urls: urls}),
                 function (data) {
-                    console.log(data);
+                    if (data.duplicate_urls.length === 0) {
+
+                    } else {
+                        Samples.setDuplicates(data.duplicate_urls);
+                    }
                 },
                 "json"
             );
