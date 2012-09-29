@@ -30,7 +30,6 @@
             }
         }
 
-
     });
 
     window.Samples = new SampleList();
@@ -76,9 +75,14 @@
 
         template: _.template($("#samplegather").html()),
 
+        templateValidatedSample: _.template(
+            '<input class="open-question" type="text" name="new-sample"'+
+            ' value="<%= url %>">'),
+
         events: {
             "click .add-new-sample": "addNewSample",
-            "click .submit-samples": "sendSamples"
+            "click .submit-samples": "sendSamples",
+            "keypress .new-sample": "checkAddNewSample"
         },
 
         initialize: function (data) {
@@ -113,6 +117,13 @@
             }
         },
 
+        checkAddNewSample: function (e) {
+            if (e.keyCode == 13) {
+                e.preventDefault();
+                this.addNewSample();
+            }
+        },
+
         addNewSample: function () {
             if (Samples.length < this.maxSamples) {
                 var url = this.$(".new-sample").val();
@@ -125,18 +136,39 @@
             }
         },
 
+        clearValidatedSamples: function () {
+            this.$(".validated-urls").html("");
+        },
+
+        prepareValidatedSamples: function (urls) {
+            for (var i = urls.length - 1; i >= 0; i--) {
+                this.$(".validated-urls").append(
+                    this.templateValidatedSample({url: urls[i]})
+                );
+            }
+        },
+
+        sendValidatedSamples: function () {
+            this.$(".form-vertical").submit();
+        },
+
         sendSamples: function () {
             if (Samples.length >= this.minSamples) {
                 var urls = $.map(Samples.toArray(), function(sample) {
                     return sample.get('url');
                 });
+
+                var that = this;
+
                 $.post(
                     this.core_url + '/api/v1/sample/verify/' + this.job_id +
                         '/',
                     JSON.stringify({urls: urls}),
                     function (data) {
                         if (data.duplicate_urls.length === 0) {
-
+                            that.clearValidatedSamples();
+                            that.prepareValidatedSamples(urls);
+                            that.sendValidatedSamples();
                         } else {
                             Samples.setDuplicates(data.duplicate_urls);
                         }
