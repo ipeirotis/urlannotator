@@ -3,7 +3,7 @@
 =============
 URL Annotator
 =============
-Last modified: September 18, 2012
+Last modified: October 1, 2012
 
 
 Source/How to get it
@@ -36,7 +36,7 @@ Required libraries:
 - docutils
 - validictory
 - 10clouds/common
-- django-celery
+- django-celery==3.0.10
 - boto
 - numpy
 - nltk
