@@ -300,11 +300,11 @@ class SettingsTests(ToolsMockedMixin, TestCase):
         self.assertNotIn('twitter', resp.context)
         self.assertNotIn('odesk', resp.context)
 
-        self.u.get_profile().odesk_uid = 1
+        self.u.get_profile().odesk_uid = '~~97784d8733806815'
         self.u.get_profile().full_name = "Testing Test"
         self.u.get_profile().save()
 
-        Worker.objects.create_odesk(external_id=1).save()
+        Worker.objects.create_odesk(external_id='~~97784d8733806815').save()
         # Odesk assoc
         resp = self.c.get(reverse('settings'))
         self.assertIn('odesk', resp.context)
@@ -562,8 +562,8 @@ class ProjectTests(ToolsMockedMixin, TestCase):
         self.assertIn('workers', resp.context)
         self.assertFalse(resp.context['workers'])
 
-        Worker.objects.create_odesk(external_id='1')
-        w = Worker.objects.get_odesk(external_id='1')
+        Worker.objects.create_odesk(external_id='~~97784d8733806815')
+        w = Worker.objects.get_odesk(external_id='~~97784d8733806815')
         WorkerJobAssociation.objects.associate(
             job=job,
             worker=w,

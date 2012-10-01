@@ -82,13 +82,28 @@ IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 # Mock selenium tests, so that they are not run locally
 from django.test import LiveServerTestCase
 from urlannotator.main.tests.selenium_tests import *
+from urlannotator.crowdsourcing.tests.tagasauris import *
 class DummyLiveServerTestCase(LiveServerTestCase):
     pass
 
-mod = sys.modules['urlannotator.main.tests.selenium_tests']
-for el in dir(mod):
-    if 'SeleniumTests' in el:
-        mock.patch('urlannotator.main.tests.%s' % el, new=DummyLiveServerTestCase).start()
+
+def mock_tests(module, prefix, tests):
+    mod = sys.modules[module]
+    for el in dir(mod):
+        if prefix in el:
+            mock.patch('%s.%s' % (tests, el), new=DummyLiveServerTestCase).start()
+
+mock_tests(
+    module='urlannotator.main.tests.selenium_tests',
+    prefix='SeleniumTests',
+    tests='urlannotator.main.tests',
+)
+
+mock_tests(
+    module='urlannotator.crowdsourcing.tests.tagasauris',
+    prefix='Tagasauris',
+    tests='urlannotator.crowdsourcing.tests',
+)
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):

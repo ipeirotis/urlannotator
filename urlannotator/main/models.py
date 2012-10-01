@@ -2,7 +2,7 @@ import datetime
 import requests
 import hashlib
 import urlparse
-# import odesk
+import odesk
 
 from django.db import models
 from django.db.models import F, Sum
@@ -688,18 +688,22 @@ class Worker(models.Model):
         """
         # FIXME: Uncomment when proper odesk external id handling is done
         #        Refer to OANNOTATOR-222
-        # if self.worker_type == WORKER_TYPE_ODESK:
-        #     client = odesk.Client(settings.ODESK_CLIENT_ID,
-        #         settings.ODESK_CLIENT_SECRET,
-        #         requesting_user.get_profile().odesk_key)
-        #     r = client.provider.get_provider(self.external_id)
-        #     return r['dev_full_name']
+        if self.worker_type == WORKER_TYPE_ODESK:
+            client = odesk.Client(
+                settings.ODESK_SERVER_KEY,
+                settings.ODESK_SERVER_SECRET,
+                oauth_access_token=settings.ODESK_SERVER_TOKEN_KEY,
+                oauth_access_token_secret=settings.ODESK_SERVER_TOKEN_SECRET,
+                auth='oauth',
+            )
+            r = client.provider.get_provider(self.external_id)
+            return r['dev_full_name']
         return 'Temp Name %d' % self.id
 
     def get_urls_collected_count_for_job(self, job):
         """
             Returns count of urls collected by worker for given job.
-        """
+         """
         return len(self.get_urls_collected_for_job(job))
 
     def get_urls_collected_for_job(self, job):

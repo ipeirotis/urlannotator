@@ -422,6 +422,24 @@ GOOGLE_STORAGE_PREFIX = 'gs'
 GOOGLE_BUCKET_NAME = 'urlannotator'
 
 
+def gs_upload_file(file_name):
+    with open(file_name, 'r') as training_file:
+        con = GSConnection(settings.GS_ACCESS_KEY, settings.GS_SECRET)
+        try:
+            bucket = con.create_bucket(GOOGLE_BUCKET_NAME)
+        except:
+            # Bucket exists
+            bucket = Bucket(connection=con, name=GOOGLE_BUCKET_NAME)
+
+        key = Key(bucket)
+        key.key = file_name
+        key.set_contents_from_file(training_file)
+        key.make_public()
+
+    # Remove file from disc
+    os.system('rm %s' % file_name)
+
+
 class GooglePredictionClassifier(Classifier):
     """
         Classifier using Google Prediction API.
@@ -491,31 +509,13 @@ class GooglePredictionClassifier(Classifier):
         os.system("mkdir -p %s" % training_dir)
 
         # Write data to csv file
-        data = open(file_out, 'wb')
-        writer = csv.writer(data)
-        for sample in samples:
-            writer.writerow(['%s' % sample.label, '"%s"' % sample.text])
-        data.close()
+        with open(file_out, 'wb') as data:
+            writer = csv.writer(data)
+            for sample in samples:
+                writer.writerow(['%s' % sample.label, '"%s"' % sample.text])
 
         # Upload file to gs
-        training_file = open(file_out, 'r')
-
-        con = GSConnection(settings.GS_ACCESS_KEY, settings.GS_SECRET)
-        try:
-            bucket = con.create_bucket(GOOGLE_BUCKET_NAME)
-        except:
-            # Bucket exists
-            bucket = Bucket(connection=con, name=GOOGLE_BUCKET_NAME)
-
-        key = Key(bucket)
-        key.key = file_name
-        key.set_contents_from_file(training_file)
-        training_file.close()
-
-        key.make_public()
-        # Remove file from disc
-        os.system('rm %s' % file_out)
-
+        gs_upload_file(file_out)
         return file_name
 
     def train(self, samples=[], turn_off=True, set_id=0):
@@ -557,55 +557,39 @@ class GooglePredictionClassifier(Classifier):
         entry.parameters = json.dumps(params)
         entry.save()
 
-    def classify(self, sample):
+    def _papi_classify(self, sample):
         """
-            Classifies given sample and saves result to the model.
+            Executes Google Prediction API call to classify given sample.
         """
         if self.model is None:
             return None
 
-        body = {'input': {'csvInstance': [sample.sample.text]}}
-        label = self.papi.predict(body=body, id=self.model).execute()
+        body = {'input': {'csvInstance': [sample.text]}}
+        result = self.papi.predict(body=body, id=self.model).execute()
 
-        entry = ClassifierModel.objects.get(id=self.id)
-        train_set_id = entry.parameters['training_set']
-        training_set = TrainingSet.objects.get(id=train_set_id)
-        sample.training_set = training_set
-
-        sample.label = label['outputLabel']
         label_probability = {}
-        for score in label['outputMulti']:
+        for score in result['outputMulti']:
             label_probability[score['label'].capitalize()] = score['score']
         sample.label_probability = json.dumps(label_probability)
+        sample.label = result['outputLabel']
         sample.save()
 
-        return label['outputLabel']
+        return result
+
+    def classify(self, sample):
+        """
+            Classifies given sample and saves result to the model.
+        """
+        result = self._papi_classify(sample.sample)
+        if result:
+            return result.get('outputLabel', None)
+        else:
+            return None
 
     def classify_with_info(self, sample):
         """
             Classifies given sample and returns more detailed data.
             Currently only label.
         """
-        if self.model is None:
-            return None
-
-        body = {'input': {'csvInstance': [sample.sample.text]}}
-        label = self.papi.predict(body=body, id=self.model).execute()
-
-        entry = ClassifierModel.objects.get(id=self.id)
-        train_set_id = entry.parameters['training_set']
-        training_set = TrainingSet.objects.get(id=train_set_id)
-        sample.training_set = training_set
-
-        sample.label = label['outputLabel']
-        label_probability = {}
-        for score in label['outputMulti']:
-            label_probability[score['label'].capitalize()] = score['score']
-        sample.label_probability = json.dumps(label_probability)
-        sample.save()
-
-        result = {
-            'outputLabel': label['outputLabel'],
-            'outputMulti': label['outputMulti'],
-        }
+        result = self._papi_classify(sample.sample)
         return result
