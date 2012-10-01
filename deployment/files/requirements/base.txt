@@ -11,7 +11,7 @@ docutils
 validictory
 #python-mysql
 -e git+git@github.com:10clouds/common.git#egg=10clouds-common.egg
-django-celery
+django-celery==3.0.10
 boto # amazon sqs support for celery
 numpy
 nltk

@@ -122,18 +122,6 @@ def create_sample(extraction_result, sample_id, job_id, url,
                     job_id=job.id,
                     sample_id=sample_id,
                 )
-
-        # Celery Chain workaround until celery works fine with groups
-        # and chains
-        create_classify_sample.delay(
-            sample_id=sample_id,
-            label=label,
-            source_type=source_type,
-            source_val=source_val,
-            job_id=job_id,
-            url=url,
-            *args, **kwargs
-        )
     else:
         # Extraction failed, cleanup.
         Sample.objects.filter(id=sample_id).delete()
@@ -142,16 +130,20 @@ def create_sample(extraction_result, sample_id, job_id, url,
 
 
 @task()
-def create_classify_sample(sample_id, source_type, create_classified=True,
+def create_classify_sample(result, source_type, create_classified=True,
         label='', source_val='', *args, **kwargs):
     """
         Creates classified sample from existing sample, therefore we don't need
         web extraction.
     """
 
-    # We are given a tuple with create_sample results
-    if isinstance(sample_id, tuple):
-        sample_id = sample_id[1]
+    # We are given a tuple (extraction result, sample id)
+    extraction_result = result[0]
+
+    # If extraction failed - return
+    if not extraction_result:
+        return
+    sample_id = result[1]
 
     # Don't classify already classified samples
     if label:
@@ -242,4 +234,4 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
         copy_sample_to_job.retry(exc=e,
             countdown=min(60 * 2 ** current.request.retries, 60 * 60 * 24))
 
-    return new_sample.id
+    return (True, new_sample.id)

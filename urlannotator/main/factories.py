@@ -35,7 +35,9 @@ class SampleFactory(object):
             job_samples = samples.filter(job=job)
             if job_samples:
                 return create_classify_sample.delay(
-                    job_samples[0].id, label=label, *args, **kwargs
+                    result=(True, job_samples[0].id),
+                    label=label,
+                    *args, **kwargs
                 )
             return (
                 copy_sample_to_job.s(samples[0].id, job.id, label=label,
@@ -60,12 +62,6 @@ class SampleFactory(object):
                 label=label,
                 *args, **kwargs
             ),
-            # Workarounded in create_sample task. Should be reverted when
-            # celery supports putting groups inside chains.
-            # create_classify_sample.s(
-            #     label=label,
-            #     *args, **kwargs
-            # )
         ).apply_async(
             expires=datetime.datetime.now() + datetime.timedelta(days=1)
         )
@@ -112,7 +108,7 @@ class JobFactory(object):
         """
             Creates first training set that will consist of gold samples
         """
-        TrainingSet(job=job).save()
+        TrainingSet.objects.create(job=job)
         job.set_training_set_created()
 
     def create_classifier(self, job):

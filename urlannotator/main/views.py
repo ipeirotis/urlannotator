@@ -204,7 +204,7 @@ def activation_view(request, key):
 
 @csrf_protect
 def login_view(request):
-    context = {'login_view':True}
+    context = {'login_view': True}
     if request.method == "GET":
         context['form'] = UserLoginForm()
         error = request.session.pop('error', None)
@@ -848,10 +848,10 @@ def doc_parts(input_string):
 @cache_page(10 * 60)
 def readme_view(request):
     file_path = os.path.join(settings.ROOT_DIR, '..', 'readme.rst')
-    file = open(file_path, 'r')
-    parts = doc_parts(file.read())
-    context = {'content': parts['html_body']}
-    return render(request, 'main/docs.html', RequestContext(request, context))
+    with open(file_path, 'r') as file:
+        parts = doc_parts(file.read())
+        context = {'content': parts['html_body']}
+        return render(request, 'main/docs.html', RequestContext(request, context))
 
 
 @login_required
@@ -884,6 +884,7 @@ def index(request):
         return render(request, 'main/index.html', RequestContext(request, context))
     else:
         return render(request, 'main/landing.html', RequestContext(request, context))
+
 
 def hit(request):
     context = {}
