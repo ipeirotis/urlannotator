@@ -928,25 +928,25 @@ class SampleResource(TagasaurisNotifyResource):
             return self.create_response(request,
                 {'error': 'Malformed request json.'})
 
-        urls = data.get('urls', None)
-        if urls is None:
+        url = data.get('url', None)
+        worker_id = data.get('worker_id', None)
+        if url is None or worker_id is None:
             return self.create_response(request,
-                {'error': 'Urls parameter not found.'})
+                {'error': 'Wrong parameters.'})
 
-        duplicates = []
-        for url in urls:
-            if Sample.objects.filter(
-                    url=Sample.sanitize_url(url),
-                    job=job).count() > 0:
-                duplicates.append(url)
+        if Sample.objects.filter(
+                url=Sample.sanitize_url(url),
+                job=job).count() == 0:
 
-        return self.create_response(
-            request,
-            {
-                'duplicate_urls': duplicates,
-                'result': 'ok' if not duplicates else 'duplicates'
-            }
-        )
+            #TODO: count domains
+            Sample.objects.create_by_worker(
+                job_id=job.id,
+                url=url,
+                source_val=worker_id
+            )
+            return self.create_response(request, {'result': 'added'})
+
+        return self.create_response(request, {'result': 'duplicates'})
 
 
 class VoteResource(TagasaurisNotifyResource):

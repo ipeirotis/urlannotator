@@ -84,6 +84,7 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
 
     if task_type == settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW:
         baseurl = settings.TAGASAURIS_CALLBACKS
+        templates = baseurl + "/statics/js/templates/tagasauris/"
         kwargs["workflow"].update({
             settings.TAGASAURIS_FORM[task_type]: {
                 "config": {
@@ -98,8 +99,8 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
                             "core_url": baseurl
                         },
                         "external_templates": {
-                            "samplegather": baseurl +\
-                                "/statics/js/templates/tagasauris/samplegather.ejs"
+                            "samplegather": templates + "samplegather.ejs",
+                            "sample": templates + "sample.ejs"
                         }
                     })
                 }

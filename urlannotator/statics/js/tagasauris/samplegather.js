@@ -1,8 +1,16 @@
 (function(){
 
+    window.getTemplate = function(name){
+        var rawTemplate = $("#" + name).html();
+        rawTemplate = rawTemplate.replace(/&lt;/g, '<');
+        rawTemplate = rawTemplate.replace(/&gt;/g, '>');
+        return _.template(rawTemplate);
+        // return _.template($("<span />", { html: rawTemplate }).text());
+    };
+
     window.Sample = Backbone.Model.extend({
 
-        duplicate: false,
+        added: null,
 
         clear: function () {
             Samples.remove(this);
@@ -19,15 +27,12 @@
 
         model: Sample,
 
-        setDuplicates: function (duplicates) {
-            this.map(function (sample) {
-                sample.duplicate = false;
+        getAdded: function () {
+            return this.map(function (sample) {
+                if (sample.added) {
+                    return sample.attributes.url;
+                }
             });
-            for (var i = duplicates.length - 1; i >= 0; i--) {
-                var sample = Samples.get(duplicates[i]);
-                sample.duplicate = true;
-                sample.update();
-            }
         }
 
     });
@@ -40,11 +45,7 @@
 
         className: "sample",
 
-        template: _.template(
-            '<span><%= attributes.url %></span>'+
-            ' <% if (duplicate) { %>'+
-            ' <span class="duplicate">DUPLICATE</span><% } %>'+
-            ' <a href="#" class="sample-remove">remove</a>'),
+        template: getTemplate("sample"),
 
         events: {
             "click .sample-remove": "clear"
@@ -69,19 +70,21 @@
 
         minSamples: 1,
 
-        maxSamples: 5,
+        // It is set on Tagasauris side
+        workerId: null,
+
+        gathered: 0,
 
         el: $("#form-template"),
 
-        template: _.template($("#samplegather").html()),
+        template: getTemplate("samplegather"),
 
         templateValidatedSample: _.template(
-            '<input class="open-question" type="text" name="new-sample"'+
-            ' value="<%= url %>">'),
+            '<div class="open-question"><input type="text" name="new-sample"'+
+            ' value="<%= url %>"></div>'),
 
         events: {
             "click .add-new-sample": "addNewSample",
-            "click .submit-samples": "sendSamples",
             "keypress .new-sample": "checkAddNewSample"
         },
 
@@ -92,8 +95,11 @@
 
             data = $.parseJSON(data);
             this.token = data.token;
-            this.job_id = data.job_id;
-            this.core_url = data.core_url;
+            this.jobId = data.job_id;
+            this.coreUrl = data.core_url;
+            if (data.minSamples !== undefined) {
+                this.minSamples = data.min_samples;
+            }
 
             this.render();
         },
@@ -104,16 +110,10 @@
         },
 
         renderPartial: function () {
-            if (Samples.length >= this.maxSamples) {
+            if (this.gathered >= this.minSamples) {
                 this.$('.add-new-sample').attr('disabled', 'disabled');
             } else {
                 this.$('.add-new-sample').removeAttr("disabled");
-            }
-
-            if (Samples.length < this.minSamples) {
-                this.$('.submit-samples').attr('disabled', 'disabled');
-            } else {
-                this.$('.submit-samples').removeAttr("disabled");
             }
         },
 
@@ -125,7 +125,7 @@
         },
 
         addNewSample: function () {
-            if (Samples.length < this.maxSamples) {
+            if (this.gathered < this.minSamples) {
                 var url = this.$(".new-sample").val();
 
                 sample = new Sample({id:url, url: url});
@@ -133,6 +133,30 @@
                 var view = new SampleView({model: sample}).render().el;
                 this.$(".samples").append(view);
                 Samples.add(sample);
+
+                var that = this;
+                $.post(
+                    this.coreUrl + '/api/v1/sample/verify/' + this.jobId +
+                        '/',
+                    JSON.stringify({url: url, worker_id: this.workerId}),
+                    function (data) {
+                        if (data.result === 'added') {
+                            sample.added = true;
+                            that.gathered++;
+                        } else {
+                            sample.added = false;
+                            sample.reason = data.result;
+                        }
+                        sample.update();
+
+                        if (that.gathered >= that.minSamples) {
+                            that.clearValidatedSamples();
+                            that.prepareValidatedSamples();
+                            that.sendValidatedSamples();
+                        }
+                    },
+                    "json"
+                );
             }
         },
 
@@ -140,7 +164,8 @@
             this.$(".validated-urls").html("");
         },
 
-        prepareValidatedSamples: function (urls) {
+        prepareValidatedSamples: function () {
+            var urls = Samples.getAdded();
             for (var i = urls.length - 1; i >= 0; i--) {
                 this.$(".validated-urls").append(
                     this.templateValidatedSample({url: urls[i]})
@@ -150,32 +175,6 @@
 
         sendValidatedSamples: function () {
             this.$(".form-vertical").submit();
-        },
-
-        sendSamples: function () {
-            if (Samples.length >= this.minSamples) {
-                var urls = $.map(Samples.toArray(), function(sample) {
-                    return sample.get('url');
-                });
-
-                var that = this;
-
-                $.post(
-                    this.core_url + '/api/v1/sample/verify/' + this.job_id +
-                        '/',
-                    JSON.stringify({urls: urls}),
-                    function (data) {
-                        if (data.duplicate_urls.length === 0) {
-                            that.clearValidatedSamples();
-                            that.prepareValidatedSamples(urls);
-                            that.sendValidatedSamples();
-                        } else {
-                            Samples.setDuplicates(data.duplicate_urls);
-                        }
-                    },
-                    "json"
-                );
-            }
         }
 
     });
