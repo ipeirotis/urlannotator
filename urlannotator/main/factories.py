@@ -62,6 +62,10 @@ class SampleFactory(object):
                 label=label,
                 *args, **kwargs
             ),
+            create_classify_sample.s(
+                label=label,
+                *args, **kwargs
+            )
         ).apply_async(
             expires=datetime.datetime.now() + datetime.timedelta(days=1)
         )
