@@ -1,0 +1,12 @@
+<span><%= attributes.url %></span>
+<% if (added === null) { %>
+    <span class="duplicate">PENDING</span>
+<% } else if (added) { %>
+    <span class="duplicate">ADDED</span>
+<% } else { %>
+    <span class="duplicate"><%= reason %></span>
+<% } %>
+
+<% if (!added) { %>
+    <a href="#" class="sample-remove">remove</a>
+<% } %>

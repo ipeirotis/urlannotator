@@ -880,6 +880,10 @@ class SampleResource(TagasaurisNotifyResource):
                 '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('add_from_tagasauris'),
                 name='sample_add_from_tagasauris'),
+            url(r'^(?P<resource_name>%s)/verify/'
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('verify_from_tagasauris'),
+                name='verify_from_tagasauris'),
         ]
 
     def add_from_tagasauris(self, request, **kwargs):
@@ -911,6 +915,38 @@ class SampleResource(TagasaurisNotifyResource):
             request,
             {'request_id': sample_ids}
         )
+
+    def verify_from_tagasauris(self, request, **kwargs):
+        try:
+            job = Job.objects.get(id=kwargs['job_id'])
+        except Job.DoesNotExist:
+            return self.create_response(request, {'error': 'Wrong job.'})
+
+        try:
+            data = json.loads(request.raw_post_data)
+        except ValueError:
+            return self.create_response(request,
+                {'error': 'Malformed request json.'})
+
+        url = data.get('url', None)
+        worker_id = data.get('worker_id', None)
+        if url is None or worker_id is None:
+            return self.create_response(request,
+                {'error': 'Wrong parameters.'})
+
+        if Sample.objects.filter(
+                url=Sample.sanitize_url(url),
+                job=job).count() == 0:
+
+            #TODO: count domains
+            Sample.objects.create_by_worker(
+                job_id=job.id,
+                url=url,
+                source_val=worker_id
+            )
+            return self.create_response(request, {'result': 'added'})
+
+        return self.create_response(request, {'result': 'duplicates'})
 
 
 class VoteResource(TagasaurisNotifyResource):

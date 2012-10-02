@@ -1,22 +1,10 @@
 import hashlib
 import uuid
+import json
 
 from django.conf import settings
 
 from tagapi.api import TagasaurisClient
-
-EXTERNAL_SAMPLE_GATHER_APP = {
-    "external_js": [
-        "http://127.0.0.1:8000/statics/js/tagasauris/samplegather.js"],
-    "external_css": [],
-    "external_data": {
-        "token": "3456",
-        "core_url": "http://127.0.0.1:8000"
-    },
-    "external_templates": {
-        "samplegather": "http://127.0.0.1:8000/statics/js/templates/tagasauris/samplegather.ejs"
-    }
-}
 
 
 def make_tagapi_client():
@@ -90,6 +78,31 @@ def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
             settings.TAGASAURIS_NOTIFY[task_type]: {
                 "config": {
                     "notify_url": callback
+                }
+            },
+        })
+
+    if task_type == settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW:
+        baseurl = settings.TAGASAURIS_CALLBACKS
+        templates = baseurl + "/statics/js/templates/tagasauris/"
+        kwargs["workflow"].update({
+            settings.TAGASAURIS_FORM[task_type]: {
+                "config": {
+                    "external_app": json.dumps({
+                        "external_js": [
+                            baseurl + "/statics/js/tagasauris/samplegather.js"
+                        ],
+                        "external_css": [],
+                        "external_data": {
+                            "job_id": job.id,
+                            "token": job.id,
+                            "core_url": baseurl
+                        },
+                        "external_templates": {
+                            "samplegather": templates + "samplegather.ejs",
+                            "sample": templates + "sample.ejs"
+                        }
+                    })
                 }
             },
         })

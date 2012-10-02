@@ -384,6 +384,7 @@ SAMPLE_TAGASAURIS_WORKER = 'tagasauris_worker'
 
 
 class SampleManager(models.Manager):
+
     def _sanitize(self, args, kwargs):
         """
             Sample data sanitization.
@@ -604,6 +605,13 @@ class Sample(models.Model):
             return self.goldsample is not None
         except:
             return False
+
+    @classmethod
+    def sanitize_url(cls, url):
+        kwargs = {'url': url}
+        cls.objects._sanitize(None, kwargs)
+        return kwargs['url']
+
 
 # Worker types breakdown:
 # odesk - worker from odesk. External id points to user's odesk id.
