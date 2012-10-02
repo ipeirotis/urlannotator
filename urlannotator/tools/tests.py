@@ -177,6 +177,9 @@ class POSIXCacheTest(TestCase):
         # Make sure we will unlink no longer used resources.
         self.assertFalse(id(lock.lock) == lock_id)
 
+        # Remove lock reference making sure the variable is used.
+        del lock_two
+
 
 class URLCheckTest(TestCase):
     def testURLCheck(self):

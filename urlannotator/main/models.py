@@ -694,8 +694,6 @@ class Worker(models.Model):
         """
             Returns worker's name.
         """
-        # FIXME: Uncomment when proper odesk external id handling is done
-        #        Refer to OANNOTATOR-222
         if self.worker_type == WORKER_TYPE_ODESK:
             client = odesk.Client(
                 settings.ODESK_SERVER_KEY,
@@ -711,7 +709,7 @@ class Worker(models.Model):
     def get_urls_collected_count_for_job(self, job):
         """
             Returns count of urls collected by worker for given job.
-         """
+        """
         return len(self.get_urls_collected_for_job(job))
 
     def get_urls_collected_for_job(self, job):
