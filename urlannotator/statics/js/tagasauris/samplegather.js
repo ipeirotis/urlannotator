@@ -167,9 +167,11 @@
         prepareValidatedSamples: function () {
             var urls = Samples.getAdded();
             for (var i = urls.length - 1; i >= 0; i--) {
-                this.$(".validated-urls").append(
-                    this.templateValidatedSample({url: urls[i]})
-                );
+                if (urls[i] !== undefined) {
+                    this.$(".validated-urls").append(
+                        this.templateValidatedSample({url: urls[i]})
+                    );
+                }
             }
         },
 

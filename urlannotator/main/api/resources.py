@@ -949,11 +949,12 @@ class SampleResource(TagasaurisNotifyResource):
                     ).count() >= job.same_domain_allowed:
                 result = 'domain duplicate'
             else:
-                Sample.objects.create_by_worker(
+                res = Sample.objects.create_by_worker(
                     job_id=job.id,
                     url=url,
                     source_val=worker_id
                 )
+                res.get()
                 collected += 1
                 result = 'added'
         else:
