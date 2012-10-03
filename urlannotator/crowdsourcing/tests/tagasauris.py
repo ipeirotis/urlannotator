@@ -30,34 +30,13 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
         self.tc = make_tagapi_client()
 
     def testCreateJob(self):
-<<<<<<< HEAD
-        voting_key, voting_hit = create_job(
-            api_client=self.tc,
-            job=self.job,
-            task_type=settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
-        )
-=======
         voting_key, voting_hit = create_sample_gather(self.tc, self.job)
->>>>>>> master
         self.assertEqual(len(voting_hit), 32)
         self.assertEqual(len(voting_key), 32)
 
     def testJobDistinctHID(self):
-<<<<<<< HEAD
-        voting_key_1, voting_hit_1 = create_job(
-            api_client=self.tc,
-            job=self.job,
-            task_type=settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
-        )
-        voting_key_2, voting_hit_2 = create_job(
-            api_client=self.tc,
-            job=self.job,
-            task_type=settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
-        )
-=======
         voting_key_1, voting_hit_1 = create_sample_gather(self.tc, self.job)
         voting_key_2, voting_hit_2 = create_sample_gather(self.tc, self.job)
->>>>>>> master
         self.assertNotEqual(voting_key_1, voting_key_2)
         self.assertNotEqual(voting_hit_1, voting_hit_2)
 
@@ -69,15 +48,7 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
         self.assertEqual(mo['mimetype'], 'image/png')
 
     def testCreateAndStop(self):
-<<<<<<< HEAD
-        voting_key, voting_hit = create_job(
-            api_client=self.tc,
-            job=self.job,
-            task_type=settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
-        )
-=======
         voting_key, voting_hit = create_sample_gather(self.tc, self.job)
->>>>>>> master
 
         result = self.tc.get_job(external_id=voting_key)
         self.assertNotEqual(result['state'], 'stopped')
@@ -109,22 +80,9 @@ class TagasaurisInApi(ToolsMockedMixin, TestCase):
     def testCreateAndStop(self):
         # From closing tagasauris job view there is no difference between those
         # jobs - sample gather & voting
-<<<<<<< HEAD
-        voting_key, voting_hit = create_job(
-            api_client=self.tc,
-            job=self.job,
-            task_type=settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
-        )
-        sample_gathering_key, sample_gathering_hit = create_job(
-            api_client=self.tc,
-            job=self.job,
-            task_type=settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
-        )
-=======
         voting_key, voting_hit = create_sample_gather(self.tc, self.job)
         sample_gathering_key, sample_gathering_hit = create_sample_gather(
             self.tc, self.job)
->>>>>>> master
 
         TagasaurisJobs.objects.create(
             urlannotator_job=self.job,
