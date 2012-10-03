@@ -77,6 +77,25 @@ class SampleFactoryTest(TestCase):
         self.assertEqual(query.count(), 0)
 
 
+class DomainCreationTests(ToolsMockedMixin, TestCase):
+
+    def testWorkerDomainCreation(self):
+        self.user = User.objects.create_user(username='testing', password='test')
+
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+        )
+
+        url = 'http://google.com/123'
+        Sample.objects.create_by_worker(
+            url=url,
+            job_id=job.id,
+            source_val='1',
+        )
+        self.assertEqual(Sample.objects.get(url=url).domain, 'google.com')
+
+
 class JobFactoryTest(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')

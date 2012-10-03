@@ -68,7 +68,7 @@
 
     window.SampleGather = Backbone.View.extend({
 
-        minSamples: 1,
+        minSamples: 5,
 
         // It is set on Tagasauris side
         workerId: null,
@@ -149,7 +149,7 @@
                         }
                         sample.update();
 
-                        if (that.gathered >= that.minSamples) {
+                        if (that.gathered >= that.minSamples || data.all === true) {
                             that.clearValidatedSamples();
                             that.prepareValidatedSamples();
                             that.sendValidatedSamples();

@@ -1,8 +1,6 @@
-from django.conf import settings
-
 from urlannotator.crowdsourcing.models import TagasaurisJobs
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_job)
+    create_sample_gather)
 from urlannotator.crowdsourcing.quality.algorithms import (MajorityVoting,
     DBVotesStorage)
 from urlannotator.main.models import Job
@@ -21,9 +19,8 @@ class ExternalJobsFactory(object):
         # TODO: Need to add backoff on Tagasauris job creation fail.
         # TODO: we can run it in tasks with proper polling/callback with info
         # of job creation status.
-        sample_gathering_key, sample_gathering_hit = create_job(c, job,
-            settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW,
-            callback=settings.TAGASAURIS_SAMPLE_GATHERER_CALLBACK % job.id)
+        sample_gathering_key, sample_gathering_hit = create_sample_gather(c,
+            job)
 
         # Our link to tagasauris jobs.
         TagasaurisJobs.objects.create(
