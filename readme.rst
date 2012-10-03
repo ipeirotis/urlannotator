@@ -1,7 +1,9 @@
+.. contents:: Table of Contents
+
 =============
 URL Annotator
 =============
-Last modified: August 20, 2012
+Last modified: October 1, 2012
 
 
 Source/How to get it
@@ -34,7 +36,7 @@ Required libraries:
 - docutils
 - validictory
 - 10clouds/common
-- django-celery
+- django-celery==3.0.10
 - boto
 - numpy
 - nltk
@@ -42,6 +44,8 @@ Required libraries:
 - google-api-python-client
 - posix-ipc
 - 10clouds/tagasauris-api
+- Pillow==1.7.7
+- futures
 
 (See deployment/files/requirements/base.txt)
 
@@ -51,7 +55,7 @@ On local machine:
 
 - Install easy_install
 
-	sudo apt-get install python-setuptools python-dev build-essential
+	sudo apt-get install python-setuptools python-dev build-essential rabbitmq-server
 
 - Install pip
 
@@ -76,6 +80,34 @@ On local machine:
 - Install basic requirements
 
 	sudo pip install -r urlannotator/deployment/files/requirements/base.txt
+
+- Install PyQt4:
+
+    sudo apt-get install python-qt4
+
+- Check your python-qt4 version:
+
+    sudo apt-cache show python-qt4
+
+- If your python-qt4 version is below 4.9.0:
+
+    sudo apt-get install python-qt4-dev
+
+    sudo apt-get install libqt4-dev
+
+    Download and install SIP from http://www.riverbankcomputing.com/software/sip/download via command:
+
+    cd /tmp && curl http://www.riverbankcomputing.com/static/Downloads/sip4/sip-4.13.3.tar.gz | tar -zxv && cd /tmp/sip-4.13.3 && python configure.py && sudo make && sudo make install
+
+    Download and install python-qt4 from http://www.riverbankcomputing.com/software/pyqt/download via command:
+
+    cd /tmp && curl http://www.riverbankcomputing.com/static/Downloads/PyQt4/PyQt-x11-gpl-4.9.4.tar.gz | tar -zxv && cd /tmp/PyQt-x11-gpl-4.9.4 && python configure.py && sudo make && sudo make install
+
+- Link PyQt4 and sip.so into your virtual env
+
+    ln -s /usr/lib/python2.7/dist-packages/PyQt4 .env/lib/python2.7/site-packages/PyQt4
+
+    ln -s /usr/lib/python2.7/dist-packages/sip.so .env/lib/python2.7/site-packages/sip.so
 
 - Create database
 
@@ -117,7 +149,7 @@ On remote machine:
 - Follow steps from local machine setup up to the point ``Create Google Prediction credentials``
 - Install development requirements
 
-	sudo pip install -r urlannotator/deployment/files/requirements/devel.txt
+	pip install -r urlannotator/deployment/files/requirements/devel.txt
 
 - Configure settings template at deployment/files/django/settings_template.py
 - Create local settings file at deployment/files/django/local.py

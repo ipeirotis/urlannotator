@@ -1,31 +1,38 @@
 import urllib2
 import threading
+import subprocess
 from Queue import Queue
 
 from django.test import TestCase
-from django.test.utils import override_settings
 
-from urlannotator.tools.web_extractors import get_web_screenshot, get_web_text
+from urlannotator.tools.web_extractors import (get_web_screenshot, get_web_text,
+    is_proper_url)
 from urlannotator.tools.synchronization import RWSynchronize247, POSIXLock
+from urlannotator.tools.webkit2png import BaseWebkitException
 
 
 class WebExtractorsTests(TestCase):
 
-    @override_settings(TOOLS_TESTING=False)
     def testWebTextExtractor(self):
-        text = get_web_text('google.com')
+        text = get_web_text('http://google.com')
         self.assertTrue('google' in text)
 
+        # Bad url should raise an exception
+        with self.assertRaises(subprocess.CalledProcessError):
+            get_web_text('weeeeeeeeeeeeeeeeeeeeeee')
         # text = get_web_text('10clouds.com')
         # self.assertTrue('10Clouds' in text)
         # self.assertTrue('We make great apps' in text)
 
-    @override_settings(TOOLS_TESTING=False)
     def testWebScreenshotExtractor(self):
-        screenshot = get_web_screenshot('google.com')
+        screenshot = get_web_screenshot('http://google.com')
 
         s = urllib2.urlopen(screenshot)
         self.assertEqual(s.headers.type, 'image/jpeg')
+
+        # Bad url should raise an exception
+        with self.assertRaises(BaseWebkitException):
+            get_web_screenshot('weeeeeeeeeeeeeeeeeeeeeee')
 
 
 class SynchronizationTests(TestCase):
@@ -91,7 +98,7 @@ class SynchronizationTests(TestCase):
         # trace_start("trace.html", interval=5, auto=True)
 
         def test_schema(test, schema=['w', 'w', 'w', 'r'],
-            writers=3, readers=1):
+                writers=3, readers=1):
             """
                 Allows semi-synchronizingly test RWLock. We can't go any deeper
                 with atomicity due to technical reasons of semaphore testing.
@@ -160,8 +167,33 @@ class POSIXCacheTest(TestCase):
 
         # Create a different lock so that an attempt to create a lock with
         # previous name results in an object of different id.
+        #
+        # This one was important here, so that a reference is kept and the
+        # following lock call is spawned with different id, yet with the same
+        # inner lock id (caching) until the equality is tested.
         lock_two = POSIXLock(name='cache-test2')
         lock = POSIXLock(name='cache-test')
 
         # Make sure we will unlink no longer used resources.
         self.assertFalse(id(lock.lock) == lock_id)
+
+        # Remove lock reference making sure the variable is used.
+        del lock_two
+
+
+class URLCheckTest(TestCase):
+    def testURLCheck(self):
+        tests = [
+            ('127.0.0.1', False),
+            (':10', False),
+            (':', False),
+            ('10.0.0.1:2414', False),
+            ('172.16.0.1:21021', False),
+            ('192.168.0.100', False),
+            ('213.241.87.50', True),
+            ('213.241.87.50:80', True),
+            ('213.241.87.50:232232', True),
+        ]
+
+        for test in tests:
+            self.assertEqual(is_proper_url(test[0]), test[1])

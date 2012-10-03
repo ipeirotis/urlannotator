@@ -1,0 +1,25 @@
+.container-register p,
+.container-login p {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.controls input[type=checkbox] {
+  float: left;
+}
+.controls label {
+  float: left;
+  margin-left: 10px;
+  margin-top: 1px;
+}
+.form-actions {
+  background: transparent;
+  border-top: 0px none;
+  margin-top: 0px;
+  padding-top: 0px;
+}
+.form-horizontal .controls {
+  margin-left: 158px;
+}
+header.header {
+  display: none;
+}

@@ -5,9 +5,10 @@ from urlannotator.main.models import Job
 from urlannotator.logging.models import LogEntry
 from urlannotator.logging.settings import (LOG_TYPE_NEW_SAMPLE_DONE,
     LOG_TYPE_JOB_INIT_START)
+from urlannotator.flow_control.test import ToolsMockedMixin
 
 
-class LoggingTest(TestCase):
+class LoggingTest(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
 
@@ -16,13 +17,17 @@ class LoggingTest(TestCase):
             gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
 
     def test_visibility(self):
-        # No user-visible logs shouldve been added.
+        # Read user-visible logs.
+        logs = LogEntry.objects.unread_for_user(self.u)
         logs = LogEntry.objects.unread_for_user(self.u)
         self.assertFalse(logs)
 
         # What about recent alerts?
         logs = LogEntry.objects.recent_for_job(self.job)
-        self.assertFalse(logs)
+        self.assertTrue(logs)
+
+        logs = LogEntry.objects.recent_for_job()
+        self.assertTrue(logs)
 
         # Lets add a user-visible alert - new sample done.
         params = {
@@ -48,11 +53,15 @@ class LoggingTest(TestCase):
         logs = LogEntry.objects.recent_for_job(self.job)
         self.assertTrue(logs)
 
+        logs = LogEntry.objects.recent_for_job(num=0)
+        self.assertTrue(logs)
+
     def test_config(self):
         params = {
             'sample_id': 0,
             'sample_url': 'test',
             'sample_screenshot': 'test',
+            'sample_image': '',
         }
         log = LogEntry.objects.log(
             log_type=LOG_TYPE_NEW_SAMPLE_DONE,

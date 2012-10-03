@@ -1,92 +1,163 @@
-import hashlib
-import uuid
-
 from multiprocessing.pool import Process
 
 from celery import task, Task, registry
 from celery.task import current
 from django.conf import settings
 
-from tagapi.api import TagasaurisClient
-
 from urlannotator.flow_control import send_event
-from urlannotator.classification.models import TrainingSet, ClassifiedSample
+from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
+    TrainingSample)
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.crowdsourcing.models import SampleMapping
-from urlannotator.main.models import Sample
+from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
+from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
+    create_job, samples_to_mediaobjects)
+from urlannotator.crowdsourcing.factories import quality_factory
+from urlannotator.main.models import Sample, Job
 
 
-@task()
-class ClassifierTrainingManager(Task):
-    """ Manage training of classifiers.
-    """
-
-    def __init__(self):
-        self.samples = []
-
-    def run(self, samples, *args, **kwargs):
-        # FIXME: Mock
-        # TODO: Make proper classifier management
-        if samples:
-            if isinstance(samples, int):
-                samples = [samples]
-            job = Sample.objects.get(id=samples[0]).job
-
-            # If classifier is not trained, retry later
-            if not job.is_classifier_trained():
-                registry.tasks[ClassifierTrainingManager.name].retry(
-                    countdown=3 * 60)
-
-            # classifier = classifier_factory.create_classifier(job.id)
-            # # train_samples = [train_sample.sample for train_sample in
-            # #     TrainingSet.objects.newest_for_job(job).training_samples.all()]
-            # # if train_samples:
-            # #     classifier.train(train_samples)
-            # samples_list = Sample.objects.filter(id__in=samples)
-            # for sample in samples_list:
-            #     classifier.classify(sample)
-
-
-add_samples = registry.tasks[ClassifierTrainingManager.name]
+import logging
+log = logging.getLogger(__name__)
 
 
 @task(ignore_result=True)
-def send_for_voting(samples, *args, **kwargs):
-    if isinstance(samples, int):
-        samples = [samples]
+class SampleVotingManager(Task):
+    """ Task periodically executed for update external voting service with
+        newly delivered samples.
+    """
 
-    job = Sample.objects.get(id=samples[0]).job
-    tc = TagasaurisClient(settings.TAGASAURIS_LOGIN,
-        settings.TAGASAURIS_PASS, settings.TAGASAURIS_HOST)
+    def get_unmapped_samples(self):
+        """ New Samples since last update. We should send those to external
+            voting service.
+        """
+        mapped_samples = SampleMapping.objects.select_related('sample').all()
+        mapped_samples_ids = set([s.sample.id for s in mapped_samples])
+        return Sample.objects.select_related('job').exclude(
+            id__in=mapped_samples_ids)
 
-    mediaobjects = []
+    def get_jobs(self, all_samples):
+        """ Auxiliary function for divide samples in job related groups and
+            annotate those groups with info if external job should be
+            initialized or not. We assume that jobs having already mapped
+            samples are initialized, otherwise - not.
+        """
+        jobs = set([s.job for s in all_samples])
 
-    for sample_id in samples:
-        sample = Sample.objects.get(id=sample_id)
+        for job in jobs:
+            try:
+                job_samples = [s for s in all_samples if s.job == job]
+                initialized = job.tagasaurisjobs.voting_key is not None
+                yield job, job_samples, initialized
+            except TagasaurisJobs.DoesNotExist:
+                log.warning("Spotted job without tagasauris link.")
 
-        ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+    def initialize_job(self, tc, job, new_samples):
+        """ Job initialization.
+        """
 
-        SampleMapping(
-            sample=sample,
-            external_id=ext_id,
-            crowscourcing_type=SampleMapping.TAGASAURIS,
-        ).save()
+        # Creates sample to mediaobject mapping
+        mediaobjects = samples_to_mediaobjects(new_samples)
 
-        mediaobjects.append({
-            'id': ext_id,
-            'mimetype': "image/png",
-            'url': sample.screenshot,
-        })
+        # Objects to send.
+        mo_values = mediaobjects.values()
 
-    res = tc.mediaobject_send(mediaobjects)
-    tc.wait_for_complete(res)
+        # Creating new job with mediaobjects
+        voting_key, voting_hit = create_job(tc, job,
+            settings.TAGASAURIS_VOTING_WORKFLOW,
+            callback=settings.TAGASAURIS_VOTING_CALLBACK % job.id,
+            mediaobjects=mo_values)
 
-    tc.job_add_media(
-        external_ids=[mo['id'] for mo in mediaobjects],
-        external_id=job.tagasaurisjobs.voting_key)
+        tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
+        tag_jobs.voting_key = voting_key
+
+        if voting_hit is not None:
+            # Update mapping if HIT was generaed. TODO: Not sure if we should
+            # check is tagasauris get all our screenshots.
+            for sample, mediaobject in mediaobjects.items():
+                SampleMapping(
+                    sample=sample,
+                    external_id=mediaobject['id'],
+                    crowscourcing_type=SampleMapping.TAGASAURIS,
+                ).save()
+            tag_jobs.voting_hit = voting_hit
+
+        tag_jobs.save()
+
+    def update_job(self, tc, job, new_samples):
+        """ Updating existing job.
+        """
+
+        # Creates sample to mediaobject mapping
+        mediaobjects = samples_to_mediaobjects(new_samples)
+
+        for sample, mediaobject in mediaobjects.items():
+            SampleMapping(
+                sample=sample,
+                external_id=mediaobject['id'],
+                crowscourcing_type=SampleMapping.TAGASAURIS,
+            ).save()
+
+        # New objects
+        mediaobjects = mediaobjects.values()
+
+        res = tc.mediaobject_send(mediaobjects)
+        tc.wait_for_complete(res)
+
+        # We must wait for media objects beeing uploaded before we can attach
+        # them to job.
+        tc.job_add_media(
+            external_ids=[mo['id'] for mo in mediaobjects],
+            external_id=job.tagasaurisjobs.voting_key)
+
+        # In case if tagasauris job was created without screenshots earlier.
+        if job.tagasaurisjobs.voting_hit is None:
+            result = tc.get_job(external_id=job.tagasaurisjobs.voting_key)
+            voting_hit = result['hits'][0] if result['hits'] else None
+            if voting_hit is not None:
+                job.tagasaurisjobs.voting_hit = voting_hit
+                job.tagasaurisjobs.save()
+
+    def run(self, *args, **kwargs):
+        """ Main task function.
+        """
+        unmapped_samples = self.get_unmapped_samples()
+        try:
+            jobs = self.get_jobs(unmapped_samples)
+            tc = make_tagapi_client()
+
+            for job, new_samples, initialized in jobs:
+                if initialized:
+                    self.update_job(tc, job, new_samples)
+                else:
+                    self.initialize_job(tc, job, new_samples)
+        except Exception:
+            pass
 
 
-@task
+send_for_voting = registry.tasks[SampleVotingManager.name]
+
+
+@task(ignore_result=True)
+class ProcessVotesManager(Task):
+    def run(*args, **kwargs):
+        active_jobs = Job.objects.get_active()
+
+        for job in active_jobs:
+            ts = TrainingSet.objects.create(job=job)
+
+            quality_algorithm = quality_factory.create_algorithm(job)
+
+            for sample_id, label in quality_algorithm.extract_decisions():
+                sample = Sample.objects.get(id=sample_id)
+                TrainingSample.objects.create(
+                    set=ts,
+                    sample=sample,
+                    label=label,
+                )
+
+process_votes = registry.tasks[ProcessVotesManager.name]
+
+
+@task(ignore_result=True)
 def update_classified_sample(sample_id, *args, **kwargs):
     """
         Monitors sample creation and updates classify requests with this sample
@@ -102,8 +173,9 @@ def update_classified_sample(sample_id, *args, **kwargs):
         label=''
     )
     for class_sample in classified:
-        send_event("EventNewClassifySample", class_sample.id, 'update_classified')
-    return None
+        send_event("EventNewClassifySample",
+            sample_id=class_sample.id,
+            from_name='update_classified')
 
 
 def process_execute(*args, **kwargs):
@@ -111,8 +183,24 @@ def process_execute(*args, **kwargs):
         Executes func from keyword arguments with values from them.
         Args and kwargs are directly passed to multiprocessing.Process.
     """
+    from django.db import transaction
+    # Commit current transaction so that new process will have up-to-date DB.
+    if transaction.is_dirty():
+        transaction.commit()
+
     proc = Process(*args, **kwargs)
     proc.start()
+
+
+def prepare_func(func, *args, **kwargs):
+    """
+        Closes django connection before executing the function.
+        Used in subprocessing to enforce fresh connection.
+    """
+    from django.db import connection
+    connection.close()
+
+    return func(*args, **kwargs)
 
 
 def train(set_id):
@@ -130,8 +218,8 @@ def train(set_id):
     )
 
 
-@task
-def train_on_set(set_id):
+@task(ignore_result=True)
+def train_on_set(set_id, *args, **kwargs):
     """
         Trains classifier on newly created training set
     """
@@ -142,19 +230,11 @@ def train_on_set(set_id):
     if not job.is_classifier_created():
         train_on_set.retry(countdown=30)
 
-    # If we are testing tools, continue with synchronized flow.
-    if settings.TOOLS_TESTING:
-        train(set_id=set_id)
-    else:
-        process_execute(train, kwds={'set_id': set_id})
-
-    # Gold samples created (since we are here), classifier created (checked).
-    # Job has been fully initialized
-    # TODO: Move to job.activate()?
-    # send_event('EventNewJobInitializationCompleted')
+    process_execute(target=prepare_func,
+        kwargs={'func': train, 'set_id': set_id})
 
 
-@task
+@task(ignore_result=True)
 def classify(sample_id, from_name='', *args, **kwargs):
     """
         Classifies given samples
@@ -172,11 +252,7 @@ def classify(sample_id, from_name='', *args, **kwargs):
 
     classifier = classifier_factory.create_classifier(job.id)
     label = classifier.classify(class_sample)
-    if not label:
-        label = 'No'
-    class_sample = ClassifiedSample.objects.get(id=sample_id)
-    class_sample.label = label
-    class_sample.save()
+    ClassifiedSample.objects.filter(id=sample_id).update(label=label)
     send_event(
         'EventSampleClassified',
         job_id=job.id,
@@ -192,10 +268,9 @@ def update_classifier_stats(job_id, *args, **kwargs):
 
 FLOW_DEFINITIONS = [
     (r'^EventNewSample$', update_classified_sample),
-    (r'^EventSamplesValidated$', add_samples),
-    (r'^EventSamplesValidated$', send_for_voting),
+    (r'^EventSamplesVoting$', send_for_voting),
+    (r'^EventProcessVotes$', process_votes),
     (r'^EventNewClassifySample$', classify),
-    # (r'EventTrainClassifier', classify),
     (r'^EventTrainingSetCompleted$', train_on_set),
     (r'^EventClassifierTrained$', update_classifier_stats),
 ]

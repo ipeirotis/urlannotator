@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block main %}
+{% if user.is_authenticated %}
+
+<ul class="nav nav-tabs" id="admin-menu">
+  <li><a href="#projects" data-toggle="tab">Projects</a></li>
+  <li class="active"><a href="#updates" data-toggle="tab">Updates</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active" id="updates">
+    <div class="row-fluid">
+      <h2>Updates</h2>
+      <div id="updates-box" data-bind="foreach: alerts">
+        <div class="update-box">
+          <img data-bind="attr: {src: screenshot}" class="box-img">
+          <div class="box-inner">
+            <span class="box-header"><span data-bind="text: title"></span> in <a data-bind="attr: {href: jobURL}">job</a></span>
+            <span class="box-content" data-bind="html: content"></span>
+            <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="projects" class="row-fluid">
+    <div>
+      <h2>Projects</h2>
+    </div>
+    <div class="row-fluid">
+      <table class="table" style="width:100%">
+        <thead>
+          <tr>
+            <th>Project name</th>
+            <th>Status</th>
+            <th>Beat the machine</th>
+            <th>Links collected</th>
+            <th>Hours spent</th>
+            <th>Total cost (USD)</th>
+            <th>Budget (USD)</th>
+            <th>Classifier performance</th>
+            <th>Progress</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for p in projects %}
+          <tr>
+            <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">(i)</a> <a href="#" onclick="stopVoting({{p.id}});">stop voting</a> <a href="#" onclick="stopGathering({{p.id}})">stop sample gathering</a></td>
+            <td class="statusCol">{{p.get_status}}</td>
+            <td class="beatMachineCol">--</td>
+            <td class="linksCol">{{p.get_urls_collected}}</td>
+            <td class="hoursSpentCol">{{p.get_hours_spent}}</td>
+            <td class="totalCostCol">{{p.get_cost}}</td>
+            <td class="budgetCol">{{p.budget}}</td>
+            <td class="classfierCol">0</td>
+            <td class="progressCol">{{p.get_progress}}%</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% if not projects %}
+        <span class="span5">&nbsp;</span>
+        <span id="nothing-to-display" class="span4" style="font-size:120%; font-weight:bold">Nothing to display here.</span>
+        <span class="span3">&nbsp;</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<style type="text/css">
+td.progressCol {
+  width: 30px;
+}
+td.classfierCol {
+  width: 30px;
+}
+td.budgetCol {
+  width: 70px;
+}
+td.totalCostCol {
+  width: 70px;
+}
+td.hoursSpentCol {
+  width: 70px;
+}
+td.linksCol {
+  width: 90px;
+}
+td.beatMachineCol {
+  width: 40px;
+}
+td.statusCol {
+  width: 90px;
+}
+div.update-box {
+  margin-bottom: 5px;
+  clear: both;
+}
+img.box-img {
+  width: 60px;
+  height: 60px;
+  float: left;
+  margin-right: 5px;
+}
+span.box-header {
+  display: block;
+  font-weight: bold;
+}
+span.box-content {
+  display: block;
+}
+</style>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script type='text/javascript' src='{{STATIC_URL}}js/knockout-2.1.0.js'></script>
+<script type="text/javascript">
+$('a[rel=tooltip]').tooltip({placement: 'right'})
+$('#admin-menu a').click(function (e) {
+  e.preventDefault();
+  $(this).tab('show');
+})
+
+function alert_view(screenshot, worker_id, worker_name, title, content, job_id){
+  this.screenshot = screenshot;
+  this.worker_id = worker_id;
+  this.workerName = worker_name;
+  this.title = title;
+  this.content = content;
+  this.job_id = job_id;
+
+  this.hasWorker = ko.computed(function(){
+    return this.worker_id;
+  }, this);
+  this.workerURL = ko.computed(function(){
+    if (this.hasWorker())
+      return '/project/'+this.job_id+'/workers/'+this.worker_id+'/';
+    return '';
+  }, this);
+  this.jobURL = ko.computed(function(){
+    return '/project/'+this.job_id;
+  }, this);
+}
+
+function alerts_view(){
+  this.alerts = ko.observableArray();
+}
+
+var alerts_view = new alerts_view();
+var image_cache = {};
+
+function updateAlerts(){
+  $.get('/api/v1/admin/updates/?limit=40&format=json', function(data){
+    new_alerts = [];
+    // Expire cache
+    $.each(image_cache, function(idx, val){
+      val['active'] = false;
+    })
+
+    $.each(data['entries'], function(idx, val){
+      box = val['box'];
+      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], val['job_id']));
+      if (!(box['Image_url'] in image_cache)){
+        img = new Image();
+        img.src = box['Image_url'];
+        image_cache[box['Image_url']] = {
+          'img': img,
+          'active': true,
+        }
+      } else
+        image_cache[box['Image_url']]['active'] = true;
+    });
+
+    var new_cache = {};
+    $.each(image_cache, function(idx, val){
+      if (val['active'])
+        new_cache[idx] = val;
+    });
+    image_cache = new_cache
+
+    alerts_view.alerts(new_alerts);
+    setTimeout('updateAlerts();', 10 * 1000);
+  })
+}
+
+function stopVoting(job_id){
+  $.get('/api/v1/admin/job/' + job_id + '/stop_voting/');
+}
+
+function stopGathering(job_id){
+  $.get('/api/v1/admin/job/' + job_id + '/stop_sample_gathering/');
+}
+
+$(document).ready(function(){
+  ko.applyBindings(alerts_view);
+  updateAlerts();
+});
+</script>
+{% endblock %}

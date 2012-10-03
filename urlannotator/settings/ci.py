@@ -2,6 +2,11 @@
 
 import os
 from defaults import *
+# Import everything from imagescale2, but rename DEF_PORT
+# to IMAGESCALE_DEF_PORT
+from imagescale2 import *
+from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
+
 
 DATABASES = {
     'default': {
@@ -10,7 +15,11 @@ DATABASES = {
     }
 }
 
+JOB_DEFAULT_CLASSIFIER = 'Classifier247'
+TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
+
 SITE_URL = 'urlannotator.10clouds.com'
+IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 
 EMAIL_BACKEND = 'urlannotator.main.backends.email.EmailBackend'
 
@@ -65,9 +74,27 @@ except ImportError:
 
 
 # Broker for celery
-BROKER_URL = 'amqp://'
+BROKER_URL = 'amqp://guest@localhost:5673/'
 
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
+
+# Tagasauris settings
+TAGASAURIS_LOGIN = 'urlannotator'
+TAGASAURIS_PASS = 'urlannotator'
+TAGASAURIS_HOST = 'http://devel.tagasauris.com'
+TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+
+# TODO: This is ugly... any ideas how to change this?
+TAGASAURIS_NOTIFY = {
+    TAGASAURIS_VOTING_WORKFLOW: 'NotifyTask_1',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_2',
+}
+
+TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
+TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/sample/tagasauris/%s/'
+TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/tagasauris/%s/'

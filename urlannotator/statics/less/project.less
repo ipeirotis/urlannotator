@@ -1,0 +1,270 @@
+@import 'bootstrap/variables.less';
+@import 'bootstrap/mixins.less';
+
+// please use 2 space tabulation
+
+@draft : #E0B25D;
+
+@initializing : #A6CE73;
+
+@active : #8CC04A;
+
+@stopped : #F2DEDE;
+
+@completed : #F7F7F9;
+
+@text-color: #D0A271;
+
+// too short to place in separated file
+
+
+.overflow(@width: 100px) {
+    overflow: hidden;
+    width: @width;
+    text-overflow: ellipsis;
+}
+
+.chart-container {
+  height:200px;
+}
+#performanceGraph {
+  height:230px;// 30px - chart legend
+}
+
+.body-draft {
+  div.navbar .bottom-bar {
+    background-color: @draft;
+    background-image: none;
+  }
+
+}
+
+.body-initializing {
+  div.navbar .bottom-bar {
+    background-color: @initializing;
+    background-image: none;
+  }
+
+}
+
+.body-active {
+  div.navbar .bottom-bar {
+    background-color: @active;
+    background-image: none;
+  }
+
+}
+
+.body-stopped {
+  div.navbar .bottom-bar {
+    background-color: @stopped;
+    background-image: none;
+  }
+
+}
+
+.body-completed {
+  div.navbar .bottom-bar {
+    background-color: @completed;
+    background-image: none;
+  }
+
+}
+
+div.alert {
+  padding-bottom:37px;
+  form {
+    margin-bottom:0px;
+  }
+}
+
+div.status-draft {
+  background-color: @draft;
+  border:1px solid darken(@draft, 10%);
+}
+div.status-initializing {
+  background-color:@initializing;
+  border:1px solid darken(@initializing, 10%);
+}
+div.status-active {
+  background-color: @active;
+  border:1px solid darken(@active, 10%);
+}
+div.status-stopped {
+  background-color: @stopped;
+  border:1px solid darken(@stopped, 10%);
+}
+div.status-completed {
+  background-color: @completed;
+  border:1px solid darken(@completed, 10%);
+}
+
+div.span2.infobox {
+  .box-shadow(inset 0px 0px 2px 2px #f8f8f8);
+  padding:15px 0px;
+  background-color: #fafafa;
+  text-align: center;
+  border: 1px solid transparent;
+  @media (max-width: 979px) and (min-width: 768px) {
+    height:63px;
+  }
+  margin-left:18px;
+  @media (min-width: 1200px) {
+    margin-left:28px;
+  }
+
+  h3 {
+    color:#8CC04A;
+    font-size:30px;
+    line-height:34px;
+  }
+}
+
+div.infobox-disabled {
+  background-color: #F7F7F9;
+  color: gray;
+  h3 {
+    color:#DBA442!important;
+  }
+}
+
+span.badge {
+  &.badge-draft {
+    background-color:@draft;
+  }
+  &.badge-initializing {
+    background-color:@initializing;
+  }
+  &.badge-active {
+    background-color:@active;
+  }
+  &.badge-stopped {
+    background-color:@stopped;
+  }
+  &.badge-completed {
+    background-color:@completed;
+  }
+}
+
+div.update-box {
+}
+
+table#btm-statistics td:nth-of-type(2){
+    width: 100px;
+    text-align: right;
+}
+
+.nav.nav-tabs {
+  li a {
+    text-decoration: underline;
+    color:@text-color;
+  }
+  li.active a {
+    text-decoration: none;
+    color:#333;
+  }
+}
+
+.span3-updates {
+  float:right!important;
+}
+
+.accordion-group {
+  background:url('/statics/img/url_anno_stream_bg.png') repeat 0px 0px;
+  .border-radius(0px);
+  #collapseOne {
+    margin-bottom: 10px;
+  }
+  .accordion-heading {
+    padding-bottom:10px;
+    padding-top: 15px;
+    .accordion-toggle {
+      padding:0px;
+      color: @text-color;
+      .accordion-notify {
+        .show,
+        .hide{
+          margin-right:6px;
+          text-decoration: underline;
+          i {
+            width:9px;
+            height:9px;
+            background:url('/statics/img/url_anno_proj_arrows.png') 0px 0px;
+            display: block;
+            float:right;
+            margin-top:6px;
+            text-decoration: none;
+          }
+        }
+        .show {
+          display: none;
+        }
+        .hide {
+          display: inline;
+          i {
+            background-position: 0px -9px;
+          }
+        }
+      }
+      &.collapsed {
+        .accordion-notify {
+          .show {
+            display: inline;
+          }
+          .hide {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+  .accordion-inner {
+    border:0px none;
+    padding:0px;
+    .accordion-notify {
+    }
+    .update-box {
+      margin-bottom: 10px;
+      background-color: white;
+      border-bottom:1px solid #eee;
+      border-right:1px solid #eee;
+      margin-right:-1px;
+      .box-shadow(1px 1px 2px #eee);
+      color:@text-color;
+      a {
+        color:@text-color;
+        text-decoration: underline;
+      }
+      .box-img {
+        float: left;
+        width:55px;
+        height:55px;
+        padding:5px;
+        img {
+          width:55px;
+          height:55px;
+        }
+      }
+      .box-inner {
+        .overflow(150px);
+        float:left;
+      }
+      @media(min-width: 1200px) {
+        .box-inner { .overflow( 200px );}
+      }
+      span.box-header {
+        display: block;
+        font-weight: bold;
+        border-bottom:1px solid #eee;
+      }
+      span.box-content {
+        display: block;
+      }
+    }
+  }
+}
+
+
+.container-main {
+  padding-bottom:0px;
+}

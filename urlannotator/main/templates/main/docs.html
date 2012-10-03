@@ -1,74 +1,21 @@
 {% extends 'base.html' %}
+{% load compressed %}
+
+{% block title %}Documentation{% endblock %}
 
 {% block css %}
-{{ block.super }}
-<style type="text/css">
-div#docs{
-    font-family: helvetica, arial, freesans, clean, sans-serif;
-    color: #333;
-    background-color: #fff;
-    border: none;
-    line-height: 1.5;
-    margin: 2em 3em;
-    text-align:left;
-}
-div#docs pre{
-    background-color: #eee;
-    padding: 10px;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-    overflow: auto;
-}
-div#docs code{
-    background-color: #eee;
-    padding: 1px 3px;
-    -webkit-border-radius: 2px;
-    -moz-border-radius: 2px;
-    border-radius: 2px; 
-}
-div#docs li p{
-    margin: 0.3em;
-}
-div#docs li{
-    list-style-type: disc;
-}
-div#docs a:link, div#docs a:visited{
-    color: #33e;
-    text-decoration: none;
-}
-div#docs a:hover{
-    color: #00f;
-    text-shadow:1px 1px 2px #ccf;
-    text-decoration:underline;
-}
-div#docs h1{
-    color: #999;
-    font-weight: bold;
-}
-div#docs h2{
-    border-bottom: 1px dotted #aaa;
-    margin-bottom: 1em;
-    color: #333;
-}
-div#docs h3{
-    color: #666;
-}
-div#docs .shadow{
-    -webkit-box-shadow:0 5px 15px #000;
-    -moz-box-shadow:0 5px 15px #000;
-    box-shadow:0 5px 15px #000; 
-}
-div#docs blockquote, div#docs blockquote p{
-
-    color: #777777;
-    font-size: 95% !important;
-}
-</style>
+    {{ block.super }}
+    {% compressed_css 'docs' %}
 {% endblock %}
 
+
+{% block header %}
+  <h2>Documentation</h2>
+{% endblock %}
+
+
 {% block main %}
-<div id="docs">
-{{ content|safe }}
-</div>
+    <div id="docs">
+        {{ content|safe }}
+    </div>
 {% endblock %}

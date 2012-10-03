@@ -1,13 +1,19 @@
-# Settings file for ci deployment target
-
 import os
+import mock
+import sys
+
 from defaults import *
+# Import everything from imagescale2, but rename DEF_PORT
+# to IMAGESCALE_DEF_PORT
+from imagescale2 import *
+from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
+
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-        'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
+        # 'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
     }
 }
 
@@ -71,10 +77,33 @@ try:
 except ImportError:
     pass
 
+IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 
-# Broker for celery
-BROKER_URL = 'amqp://'
+# Mock selenium tests, so that they are not run locally
+from django.test import LiveServerTestCase
+from urlannotator.main.tests.selenium_tests import *
+from urlannotator.crowdsourcing.tests.tagasauris import *
+class DummyLiveServerTestCase(LiveServerTestCase):
+    pass
 
+
+def mock_tests(module, prefix, tests):
+    mod = sys.modules[module]
+    for el in dir(mod):
+        if prefix in el:
+            mock.patch('%s.%s' % (tests, el), new=DummyLiveServerTestCase).start()
+
+mock_tests(
+    module='urlannotator.main.tests.selenium_tests',
+    prefix='SeleniumTests',
+    tests='urlannotator.main.tests',
+)
+
+mock_tests(
+    module='urlannotator.crowdsourcing.tests.tagasauris',
+    prefix='Tagasauris',
+    tests='urlannotator.crowdsourcing.tests',
+)
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):

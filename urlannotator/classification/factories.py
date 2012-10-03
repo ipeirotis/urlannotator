@@ -2,7 +2,7 @@ import json
 
 from django.conf import settings
 
-from urlannotator.classification.models import Classifier, TrainingSet
+from urlannotator.classification.models import Classifier
 from urlannotator.main.models import Job
 from urlannotator.classification.classifiers import (SimpleClassifier,
     GooglePredictionClassifier, Classifier247)

@@ -1,82 +1,44 @@
-import hashlib
-import uuid
-import time
-
 from django.conf import settings
 
-from tagapi.api import TagasaurisClient
-
 from urlannotator.crowdsourcing.models import TagasaurisJobs
+from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
+    create_job)
+from urlannotator.crowdsourcing.quality.algorithms import (MajorityVoting,
+    DBVotesStorage)
 from urlannotator.main.models import Job
 
 import logging
 log = logging.getLogger(__name__)
 
 
-TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
-TAGASAURIS_VOTING_WORKFLOW = 'voting'
-
-
 class ExternalJobsFactory(object):
 
     def initialize_job(self, job_id, *args, **kwargs):
-        if settings.TOOLS_TESTING:
-            return
-
         job = Job.objects.get(id=job_id)
 
-        c = TagasaurisClient(settings.TAGASAURIS_LOGIN,
-            settings.TAGASAURIS_PASS, settings.TAGASAURIS_HOST)
+        c = make_tagapi_client()
 
-        def create_job(c, job, task_type):
-            # Unique id for tagasauris job within our tagasauris account.
-            ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
-
-            # Tagasauris Job is created with dummy media object (soo ugly...).
-            # Before job creation we must configure Tagasauris account and
-            # workflows. Account must have disabled billings & workflows need
-            # to have "external" flag set.
-            result = c.create_job(
-                id=ext_id,
-                title=job.title,
-                task={
-                    "id": task_type,
-                    "instruction": job.description,
-                    "paid": "0.0",
-                    "keywords": ""
-                },
-                dummy_media='dummy'
-            )
-
-            # media_import_key = result[0]
-            job_creation_key = result[1]
-
-            job_created = False
-            while not job_created:
-                time.sleep(5)
-                res = c.status_progress(status_key=job_creation_key)
-                job_created = res['completed'] == 100 and res['status'] == 'ok'
-
-            result = c.get_job(external_id=ext_id)
-            hit = result['hits'][0]
-
-            # Using hit later - example:
-            # ext_url = settings.TAGASAURIS_HIT_URL % hit
-
-            return ext_id, hit
-
+        # TODO: Need to add backoff on Tagasauris job creation fail.
         # TODO: we can run it in tasks with proper polling/callback with info
         # of job creation status.
         sample_gathering_key, sample_gathering_hit = create_job(c, job,
-            TAGASAURIS_SAMPLE_GATHERER_WORKFLOW)
-        voting_key, voting_hit = create_job(c, job, TAGASAURIS_VOTING_WORKFLOW)
+            settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW,
+            callback=settings.TAGASAURIS_SAMPLE_GATHERER_CALLBACK % job.id)
 
         # Our link to tagasauris jobs.
-        TagasaurisJobs(
+        TagasaurisJobs.objects.create(
             urlannotator_job=job,
             sample_gathering_key=sample_gathering_key,
-            voting_key=voting_key,
-            beatthemachine_key=None,
-            sample_gatering_hit=sample_gathering_hit,
-            voting_hit=voting_hit,
-        ).save()
+            sample_gathering_hit=sample_gathering_hit,
+        )
+
+
+class QualityAlgorithmFactory(object):
+
+    def create_algorithm(self, job, *args, **kwargs):
+        return MajorityVoting(
+            job_id=job.id,
+            votes_storage=DBVotesStorage(storage_id=job.id)
+        )
+
+quality_factory = QualityAlgorithmFactory()

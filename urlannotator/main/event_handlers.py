@@ -7,7 +7,7 @@ from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 
 
-@task()
+@task(ignore_result=True)
 class EventRawSampleManager(Task):
     """
         Manage factories to handle creation of new samples.
@@ -22,7 +22,7 @@ class EventRawSampleManager(Task):
 new_raw_sample_task = registry.tasks[EventRawSampleManager.name]
 
 
-@task()
+@task(ignore_result=True)
 class JobFactoryManager(Task):
     """
         Manages factories handling Job initialization (from db entry).
@@ -37,20 +37,13 @@ class JobFactoryManager(Task):
 new_job_task = registry.tasks[JobFactoryManager.name]
 
 
-@task()
+@task(ignore_result=True)
 class GoldSamplesMonitor(Task):
     """
         Monitors gold samples creation, and issues classificator training
         if a complete set of gold samples has been prepared.
     """
-
-    def __init__(self):
-        self.samples = []
-
     def run(self, gold_id, *args, **kwargs):
-        # FIXME: Mock
-        self.samples.append(gold_id)
-
         gold_sample = GoldSample.objects.get(id=gold_id)
         job = gold_sample.sample.job
 
@@ -59,14 +52,13 @@ class GoldSamplesMonitor(Task):
             registry.tasks[GoldSamplesMonitor.name].retry(countdown=30)
 
         training_set = TrainingSet.objects.newest_for_job(job)
-        TrainingSample(
+        TrainingSample.objects.create(
             set=training_set,
             sample=gold_sample.sample,
             label=gold_sample.label
-        ).save()
+        )
 
         lock_key = 'TrainingSampleLock-%d' % job.id
-        # FIXME: Correct event name?
         # Send training set completed event. Used here as we are certain no
         # new samples will come in the mean time. In general, you can't
         # assume that!
@@ -78,7 +70,8 @@ class GoldSamplesMonitor(Task):
                     job.set_gold_samples_done()
                     send_event(
                         "EventTrainingSetCompleted",
-                        training_set.id
+                        set_id=training_set.id,
+                        job_id=job.id
                     )
 
 new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]

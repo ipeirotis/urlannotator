@@ -2,292 +2,366 @@
 
 {% block overview_active %}active{% endblock %}
 {% block project_content %}
-<div class="row-fluid">
-<div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{urls_collected}}</h3>
-  <span>URLs collected</span>
-</div>
-<div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{hours_spent}}</h3>
-  <span>Hours spend</span>
-</div>
-<div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{no_of_workers}}</h3>
-  <span>Number of workers</span>
-</div>
-<div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{cost}}</h3>
-  <span>Cost (USD)</span>
-</div>
-<div class="span2 infobox">
-  <h3>{{budget}}</h3>
-  <span>Budget (USD)</span>
-</div>
-<div class="span1 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-  <h3>{{progress}}%</h3>
-  <span>Progress</span>
-</div>
-</div>
-<div class="row-fluid">
-<hr>
-</div>
-<div class="row-fluid">
-{% include 'main/project/own_workforce_links.html' %}
-</div>
-{% if project.is_draft %}
-<div class="row-fluid">
-    <p>Please review your project before starting.</p>
-    <p>In order to start the project click "Activate project" on the right project submenu.</p>
-</div>
-{% else %}
-<div class="row-fluid">
-<div class="span3" id="progressGraph">
-</div>
-<div class="span3" id="spentGraph">
-</div>
-<div class="span3" id="urlGraph">
-</div>
-<div class="span3" id="performanceGraph">
-</div>
-</div>
-<div class="row-fluid">
-<div style="width: 20%; float: right;">
-  <h3>Updates</h3>
-  <div id="updates-box">
+</div> <!-- end of container main -->
+<div class="content content-accordion">
 
+    <div class="accordion" id="accordion2">
+      <div class="accordion-group">
+        <div class="accordion-heading">
+          <div class="container">
+            <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+              <span>Update stream &rsaquo;&rsaquo;</span>
+              <div class="pull-right accordion-notify">
+                <span class="show ">show<i class=""></i></span>
+                <span class="hide ">hide<i class=""></i></span>
+              </div>
+            </a>
+          </div>
+        </div>
+        <div id="collapseOne" class="accordion-body collapse">
+          <div class="accordion-inner">
+            <div class="container">
+              <div class="row">
+                <div class="span12">
+                  <div id="updates-box" class="row" data-bind="foreach: alerts">
+                    <div class="update-box span3">
+                      <div class="box-img">
+                        <img data-bind="visible: hasScreenshot, attr: {src: screenshot}" class="">
+                      </div>
+                      <div class="box-inner">
+                        <span class="box-header" data-bind="text: title"></span>
+                        <span class="box-content" data-bind="html: content"></span>
+                        <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+</div>
+<div class="container container-main2" role="main">
+  <div class="row">
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
+      <span>URLs collected</span>
+    </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: hours_spent">{{hours_spent}}</h3>
+      <span>Hours spend</span>
+    </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: no_of_workers">{{no_of_workers}}</h3>
+      <span>Number of workers</span>
+    </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: cost">{{cost}}</h3>
+      <span>Cost (USD)</span>
+    </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3 data-bind="text: budget">{{budget}}</h3>
+      <span>Budget (USD)</span>
+    </div>
+    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+      <h3><span data-bind="text: progress">{{progress}}</span>%</h3>
+      <span>Progress</span>
+    </div>
+    <hr>
+  </div>
+
+  {% if project.is_draft %}
+    <div class="row">
+      <div class="span12">
+        <p>Please review your project before starting.</p>
+        <p>In order to start the project click "Activate project" on the right project submenu.</p>
+      </div>
+    </div>
+  {% else %}
+    <div class="row">
+      <div class="span3 chart-container" id="progressGraph">
+      </div>
+      <div class="span3 chart-container" id="spentGraph">
+      </div>
+      <div class="span3 chart-container" id="urlGraph">
+      </div>
+      <div class="span3 chart-container" id="performanceGraph">
+      </div>
+    </div>
+    <div class="row">
+      <div class="span12">
+        <h3>Newest Correct Voted Data</h3>
+        <table class="table">
+          <thead>
+            <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
+          </thead>
+          <tbody data-bind="foreach: newest_votes">
+            <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url"></td><td data-bind="text: added_on"></td></tr>
+          </tbody>
+        </table>
+        <hr>
+      </div>
+    </div>
+    <div class="row">
+      <div class="span12">
+        <h3>Top workers</h3>
+        <table class="table">
+          <thead>
+            <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
+          </thead>
+          <tbody data-bind="foreach: top_workers">
+            <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif%}
+{% endblock %}
+
+
+{% block workface_block%}
+<div class="row">
+  <div class="span-full">
+    {% include 'main/project/own_workforce_links.html' %}
   </div>
 </div>
-<div style="width:80%">
-  <h3>Newest Correct Voted Data</h3>
-  <table class="table">
-    <thead>
-      <tr><td>Preview</td><td>URL</td><td>Added on</td></tr>
-    </thead>
-    <tbody>
-      <tr><td>P</td><td>URL</td><td>Datetime</td></tr>
-    </tbody>
-  </table>
-  <hr>
-</div>
-<div style="width:80%">
-  <h3>Top workers</h3>
-  <table class="table">
-    <thead>
-      <tr><td>Worker name</td><td>Links collected</td><td>Hours Spent</td></tr>
-    </thead>
-    <tbody>
-      <tr><td>Luke Vader</td><td>542</td><td>3</td></tr>
-    </tbody>
-  </table>
-</div>
-</div>
-{% endif%}
 {% endblock %}
 
 {% block javascript %}
 {{ block.super }}
+<script type='text/javascript' src='{{STATIC_URL}}js/knockout-2.1.0.js'></script>
 <script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
+<script src="{{STATIC_URL}}js/models/job.js" type="text/javascript"></script>
 <script type="text/javascript">
-var progressGraph; // globally available
-$(document).ready(function() {
-      progressGraph = new Highcharts.Chart({
-         chart: {
-            renderTo: 'progressGraph',
-            zoomType: 'x',
-            type: 'line'
-         },
-         title: {
-            text: 'Progress per hour'
-         },
-         xAxis: {
-            type: 'datetime',
-            maxZoom: 1 * 3600 * 1000, // an hour
-         },
-         yAxis: {
-            title: {
-              text: 'Progress'
-            },
-            showFirstLabel: false
-         },
-         series: [{
-            showInLegend: false,
-            name: 'Progress',
-            color: '#FFAAAA',
-            data: [{{progress_stats|safe}}]
-         }]
-      });
-   });
-var spentGraph; // globally available
-$(document).ready(function() {
-      spentGraph = new Highcharts.Chart({
-         chart: {
-            renderTo: 'spentGraph',
-            zoomType: 'x',
-            type: 'line'
-         },
-         title: {
-            text: 'Spent per hour'
-         },
-         xAxis: {
-            type: 'datetime',
-            maxZoom: 1 * 3600 * 1000, // an hour
-         },
-         yAxis: {
-            title: {
-              text: 'Spent'
-            },
-            showFirstLabel: false
-         },
-         series: [{
-            showInLegend: false,
-            name: 'Spent',
-            color: '#AAFFAA',
-            data: [{{spent_stats|safe}}]
-         }]
-      });
-   });
-var urlGraph; // globally available
-$(document).ready(function() {
-      urlGraph = new Highcharts.Chart({
-         chart: {
-            renderTo: 'urlGraph',
-            zoomType: 'x',
-            type: 'line'
-         },
-         title: {
-            text: 'URLs per hour'
-         },
-         xAxis: {
-            type: 'datetime',
-         },
-         yAxis: {
-            title: {
-              text: 'URLs'
-            },
-            showFirstLabel: false
-         },
-         series: [{
-            showInLegend: false,
-            name: 'URLs',
-            color: '#AAAAFF',
-            data: [{{url_stats|safe}}]
-         }]
-      });
-   });
-var performanceGraph; // globally available
-$(document).ready(function() {
-      performanceGraph = new Highcharts.Chart({
-         chart: {
-            renderTo: 'performanceGraph',
-            zoomType: 'x',
-            type: 'line'
-         },
-         title: {
-            text: 'Performance per hour'
-         },
-         xAxis: {
-            type: 'datetime',
-            maxZoom: 1 * 3600 * 1000, // an hour
-         },
-         yAxis: {
-            title: {
-              text: 'Performance'
-            },
-            showFirstLabel: false
-         },
-         series: [{
-            showInLegend: true,
-            name: 'TPM',
-            color: '#FFAAFF',
-            data: [{{performance_TPM|safe}}]
-         },
-         {
-            showInLegend: true,
-            name: 'TNM',
-            color: '#AAAAFF',
-            data: [{{performance_TNM|safe}}]
-         },
-         {
-            showInLegend: true,
-            name: 'AUC',
-            color: '#AAFFAA',
-            data: [{{performance_AUC|safe}}]
-         }]
-      });
-   });
 
-function addBox(updates_box, box){
-  text = [
-    '<div class="update-box">',
-    '<img src="'+box['Image_url']+'" class="box-img"><div class="box-inner">',
-    '<span class="box-header">'+box['Title']+'</span>',
-    '<span class="box-content">'+box['Text']+'</span>',
-  ];
-  if (box['by'] != undefined){
-    text.push('<span>by <a href="{% url project_workers_view project.id %}/'+box['By-id']+'">'+box['By']+'</a></span>');
-  }
-  text.push('</div></div>')
-  updates_box.append(text.join(''))
-};
+var progressGraph;
+var spentGraph;
+var urlGraph;
+var performanceGraph;
+var progressColor = '#3a4354';
+var spentColor = '#855759';
+var urlColor = '#c79155';
+var performanceColor = '#e0b25d';
+$(document).ready(function() {
+  progressGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'progressGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'Progress per hour'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 1 * 3600 * 1000, // an hour
+     },
+     yAxis: {
+        title: {
+          showEmpty:false,
+          text: ''
+        },
+        min: 0,
+        showFirstLabel: false
+     },
+     series: [{
+        showInLegend: false,
+        name: 'Progress',
+        color: progressColor,
+        data: [{{progress_stats|safe}}]
+     }]
+  });
+  spentGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'spentGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'Spent per hour'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 1 * 3600 * 1000, // an hour
+     },
+     yAxis: {
+        title: {
+          text: ''
+        },
+        min: 0,
+        showEmpty: false,
+        showFirstLabel: false
+     },
+     series: [{
+        showInLegend: false,
+        name: 'Spent',
+        color: spentColor,
+        data: [{{spent_stats|safe}}]
+     }]
+  });
+  urlGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'urlGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'URLs per hour'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 1 * 3600 * 1000, // an hour
+     },
+     yAxis: {
+        title: {
+          text: ''
+        },
+        min: 0,
+        showFirstLabel: false
+     },
+     series: [{
+        showInLegend: false,
+        name: 'URLs',
+        color: urlColor,
+        data: [{{url_stats|safe}}]
+     }]
+  });
+  performanceGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'performanceGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'Performance per hour'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 1 * 3600 * 1000, // an hour
+     },
+     yAxis: {
+        title: {
+          text: ''
+        },
+        min: 0,
+        showFirstLabel: false
+     },
+     series: [{
+        showInLegend: true,
+        name: 'TPR',
+        color: '#FFAAFF',
+        data: [{{performance_TPR|safe}}]
+     },
+     {
+        showInLegend: true,
+        name: 'TNR',
+        color: '#AAAAFF',
+        data: [{{performance_TNR|safe}}]
+     },
+     {
+        showInLegend: true,
+        name: 'AUC',
+        color: performanceColor,
+        data: [{{performance_AUC|safe}}]
+     }]
+  });
+});
 
-function getUpdatesBox(){
-  $.get('{% url updates_box_view project.id %}', function(data){
-    data = JSON.parse(data);
-    $('.update-box').remove();
-    box = $('#updates-box');
-    for (alert in data){
-      addBox(box, data[alert]);
+var job = new job();
+var image_cache = {};
+
+function updateAlerts(url){
+  $.get(url+'?limit=4&format=json', function(data){
+    new_alerts = [];
+    // Expire cache
+    $.each(image_cache, function(idx, val){
+      val['active'] = false;
+    })
+
+    $.each(data['entries'], function(idx, val){
+      box = val['box'];
+      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}));
+      if (!(box['Image_url'] in image_cache)){
+        img = new Image();
+        img.src = box['Image_url'];
+        image_cache[box['Image_url']] = {
+          'img': img,
+          'active': true,
+        }
+      } else
+        image_cache[box['Image_url']]['active'] = true;
+    });
+
+    var new_cache = {};
+    $.each(image_cache, function(idx, val){
+      if (val['active'])
+        new_cache[idx] = val;
+    });
+    image_cache = new_cache
+
+    job.alerts(new_alerts);
+  });
+}
+
+function updateTopWorkers(workers){
+  new_workers = [];
+  $.each(workers, function(key, val){
+    new_worker = new worker();
+    new_worker.id(val['id']);
+    new_worker.urls_collected(val['urls_collected']);
+    new_worker.name(val['name']);
+    new_worker.hours_spent(val['hours_spent']);
+    new_worker.votes_added(val['votes_added']);
+    new_worker.earned(val['earned']);
+    new_worker.start_time(val['start_time']);
+    new_workers.push(new_worker);
+  });
+  job.top_workers(new_workers);
+}
+
+function updateNewestVotes(votes){
+  new_votes = [];
+  $.each(votes, function(key, val){
+    new_vote = new vote();
+    new_vote.screenshot(val['screenshot']);
+    new_vote.url(val['url']);
+    new_vote.added_on(val['added_on']);
+    new_vote.label(val['label'])
+    new_votes.push(new_vote);
+  });
+  job.newest_votes(new_votes);
+}
+
+function updateJob(){
+  $.get("/api/v1/job/{{project.id}}/?format=json", function(data){
+    job.urls_collected(data['urls_collected']);
+    job.progress(data['progress']);
+    job.hours_spent(data['hours_spent']);
+    job.budget(data['budget']);
+    job.cost(data['cost']);
+    job.no_of_workers(data['no_of_workers']);
+    job.gather_url(data['sample_gathering_url']);
+    job.voting_url(data['sample_voting_url']);
+    updateAlerts(data['feed']);
+    updateTopWorkers(data['top_workers']);
+    updateNewestVotes(data['newest_votes']);
+  });
+}
+
+$(document).ready(function(){
+  ko.applyBindings(job);
+  updateJob();
+  setInterval(updateJob, 10 * 1000);
+  $('.accordion-toggle').click(function(){
+    if( $('#collapseOne').hasClass('in') ) {
+      $(this).addClass('collapsed');
+    } else {
+      $(this).removeClass('collapsed');
     }
-    setTimeout('getUpdatesBox()', 5 * 1000);
   })
-
-};
-
-getUpdatesBox();
+});
 </script>
-{% endblock %}
-
-{% block css %}
-{{ block.super }}
-<style type="text/css">
-div.status-active {
-  background-color: #DFF0D8;
-}
-div.status-completed {
-  background-color: #F7F7F9;
-}
-div.status-draft {
-  background-color: #FCF8E3;
-}
-div.status-stopped {
-  background-color: #F2DEDE;
-}
-div.infobox {
-  text-align: center;
-  border: 1px solid #E1E1E8;
-  border-radius: 4px 4px 4px 4px;
-}
-div.infobox-disabled {
-  background-color: #F7F7F9;
-  color: gray;
-}
-div.update-box {
-  margin-bottom: 5px;
-  clear: both;
-}
-img.box-img {
-  width: 60px;
-  height: 60px;
-  float: left;
-}
-span.box-header {
-  display: block;
-  font-weight: bold;
-}
-span.box-content {
-  display: block;
-}
-div.box-inner {
-}
-</style>
 {% endblock %}

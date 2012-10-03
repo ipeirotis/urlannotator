@@ -5,17 +5,17 @@ from django.contrib.auth.models import User
 
 from urlannotator.main.models import (Job, SpentStatistics, URLStatistics,
     ProgressStatistics)
-from urlannotator.statistics.spent_monitor import spent_monitor
-from urlannotator.statistics.url_monitor import url_monitor
-from urlannotator.statistics.progress_monitor import progress_monitor
+from urlannotator.statistics.monitor_tasks import (spent_monitor, url_monitor,
+    progress_monitor)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats,
     update_classifier_stats)
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.classification.models import ClassifierPerformance
+from urlannotator.flow_control.test import ToolsMockedMixin
 
 
-class testJobMonitors(TestCase):
+class testJobMonitors(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -43,7 +43,7 @@ class testJobMonitors(TestCase):
             self.assertEqual(cls.objects.filter(job=self.job).count(), 2)
 
 
-class testStatExtraction(TestCase):
+class testStatExtraction(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -64,8 +64,8 @@ class testStatExtraction(TestCase):
     def testExtraction(self):
         context = {}
         extractors = [
-            (extract_performance_stats, 'performance_TPM'),
-            (extract_performance_stats, 'performance_TNM'),
+            (extract_performance_stats, 'performance_TPR'),
+            (extract_performance_stats, 'performance_TNR'),
             (extract_performance_stats, 'performance_AUC'),
             (extract_spent_stats, 'spent_stats'),
             (extract_url_stats, 'url_stats'),
@@ -103,8 +103,8 @@ class testStatExtraction(TestCase):
         cp = cp[0]
 
         metrics_to_check = (
-            'TPM',
-            'TNM',
+            'TPR',
+            'TNR',
             'AUC',
         )
 

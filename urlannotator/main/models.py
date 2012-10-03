@@ -1,33 +1,46 @@
 import datetime
-# import odesk
-
-from tastypie.models import create_api_key
+import requests
+import hashlib
+import urlparse
+import odesk
 
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Sum
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.utils.timezone import now
+from django.conf import settings
+from django.core.urlresolvers import reverse
+from itertools import ifilter
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
+from urlannotator.settings import imagescale2
+from urlannotator.crowdsourcing.tagasauris_helper import stop_job
 
-LABEL_CHOICES = (('Yes', 'Yes'), ('No', 'No'), ('Broken', 'Broken'))
+LABEL_BROKEN = 'Broken'
+LABEL_YES = 'Yes'
+LABEL_NO = 'No'
+LABEL_CHOICES = (
+    (LABEL_NO, 'No'),
+    (LABEL_YES, 'Yes'),
+    (LABEL_BROKEN, 'Broken')
+)
 
 
 class Account(models.Model):
     """
         Model representing additional user data. Used as user profile.
     """
-    user = models.ForeignKey(User)
+    user = models.OneToOneField(User)
     activation_key = models.CharField(default='', max_length=100)
     email_registered = models.BooleanField(default=False)
     odesk_key = models.CharField(default='', max_length=100)
     odesk_uid = models.CharField(default='', max_length=100)
     full_name = models.CharField(default='', max_length=100)
     alerts = models.BooleanField(default=False)
-    worker_entry = models.ForeignKey('Worker', null=True, blank=True)
+    worker_entry = models.OneToOneField('Worker', null=True, blank=True)
 
 
 def create_user_profile(sender, instance, created, **kwargs):
@@ -35,7 +48,6 @@ def create_user_profile(sender, instance, created, **kwargs):
         Account.objects.create(user=instance)
 
 post_save.connect(create_user_profile, sender=User)
-post_save.connect(create_api_key, sender=User)
 
 # Job source types
 JOB_SOURCE_ODESK_FREE = 0
@@ -90,7 +102,8 @@ class JobManager(models.Manager):
         kwargs['status'] = 4
         kwargs['remaining_urls'] = kwargs.get('no_of_urls', 0)
         job = self.create(**kwargs)
-        send_event('EventNewJobInitialization', job.id)
+        send_event('EventNewJobInitialization',
+            job_id=job.id)
         return job
 
     def create_draft(self, **kwargs):
@@ -120,8 +133,8 @@ class Job(models.Model):
     same_domain_allowed = models.PositiveIntegerField(default=0)
     hourly_rate = models.DecimalField(default=0, decimal_places=2,
         max_digits=10)
-    gold_samples = JSONField()
-    classify_urls = JSONField()
+    gold_samples = JSONField(default='[]')
+    classify_urls = JSONField(default='[]')
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
     remaining_urls = models.PositiveIntegerField(default=0)
     collected_urls = models.PositiveIntegerField(default=0)
@@ -136,25 +149,76 @@ class Job(models.Model):
             'id': self.id,
         })
 
+    def get_link_with_title(self):
+        return '<a href="%s">%s</a>' % (self.get_absolute_url(), self.title)
+
     def get_sample_gathering_url(self):
         """
             Returns the URL under which Own Workforce can submit new samples.
         """
+        try:
+            tag_job = self.tagasaurisjobs
+            return tag_job.get_sample_gathering_url()
+        except:
+            return ''
+
+    def stop_sample_gathering(self):
+        """
+            Stops underlying sample gathering job.
+        """
         tag_job = self.tagasaurisjobs
-        return tag_job.get_sample_gathering_url()
+        tag_job.sample_gathering_hit = ''
+        tag_job.save()
+        stop_job(tag_job.sample_gathering_key)
+        return True
 
     def get_voting_url(self):
         """
             Returns the URL under which Own Workforce can vote on labels.
         """
+        try:
+            tag_job = self.tagasaurisjobs
+            return tag_job.get_voting_url()
+        except:
+            return ''
+
+    def stop_voting(self):
+        """
+            Stops underlying voting job.
+        """
         tag_job = self.tagasaurisjobs
-        return tag_job.get_voting_url()
+        tag_job.voting_hit = ''
+        tag_job.save()
+        stop_job(tag_job.voting_key)
+        return True
+
+    def get_classifier_performance(self):
+        """
+            Returns classifier performance as a dict with keys 'TPR', 'TNR',
+            'AUC'.
+        """
+        performances = self.classifierperformance_set.all()
+        ret = max(performances, key=(lambda x: x.date))
+        return ret.value.get('AUC', 0)
+
+    def get_newest_votes(self, num=3):
+        """
+            Returns newest correct votes in the job.
+        """
+        from urlannotator.classification.models import (TrainingSet,
+            TrainingSample)
+        training_set = TrainingSet.objects.newest_for_job(job=self)
+        samples = TrainingSample.objects.filter(
+            set=training_set,
+            label=LABEL_YES,
+        ).order_by('-id')[:num]
+        return samples
 
     def is_own_workforce(self):
         return self.data_source == JOB_SOURCE_OWN_WORKFORCE
 
     def get_status(self):
-        return JOB_STATUS_CHOICES[self.status][1]
+        return self.get_status_display()
 
     def is_draft(self):
         return self.status == JOB_STATUS_DRAFT
@@ -181,31 +245,52 @@ class Job(models.Model):
         self.status = JOB_STATUS_INIT
         self.remaining_urls = self.no_of_urls
         self.save()
-        send_event('EventNewJobInitialization', self.id)
+        send_event('EventNewJobInitialization',
+            job_id=self.id)
 
     def get_hours_spent(self):
         """
             Returns number of hours workers have worked on this project
             altogether.
         """
-        # FIXME: Returns number of hours since project activation
-        delta = now() - self.activated
-        return int(delta.total_seconds() / 3600)
+        sum_res = WorkerJobAssociation.objects.filter(job=self).\
+            aggregate(Sum('worked_hours'))
+        sum_res = sum_res['worked_hours__sum']
+        return sum_res if sum_res else 0
 
     def get_urls_collected(self):
         """
-            Returns number of urls collected.
+            Returns number of urls collected (samples without gold samples).
         """
-        # FIXME: Returns number of urls gathered. Should be number of urls
-        #        that has gone through validation and are accepted.
-        return self.no_of_urls - self.remaining_urls
+        samples = self.sample_set.all().select_related('goldsample').iterator()
+        gold_samples = [gold['url'] for gold in self.gold_samples]
+
+        collected = filter(lambda x: not x.is_gold_sample() and not x.url in gold_samples, samples)
+        return sum(1 for _ in collected)
+
+    def get_workers(self):
+        """
+            Returns workers associated with the job.
+        """
+        workers = [assoc.worker
+            for assoc in WorkerJobAssociation.objects.filter(job=self)]
+        return workers
 
     def get_no_of_workers(self):
         """
             Returns number of workers that have worked on this project.
         """
-        # FIXME: Returns number of all workers.
-        return Worker.objects.all().count()
+        return WorkerJobAssociation.objects.filter(job=self).count()
+
+    def get_top_workers(self, num=3):
+        """
+            Returns `num` top of workers.
+        """
+        workers = self.get_workers()
+        workers.sort(
+            key=lambda w: w.get_urls_collected_count_for_job(self)
+        )
+        return workers[:num]
 
     def get_cost(self):
         """
@@ -218,9 +303,10 @@ class Job(models.Model):
         """
             Returns actual progress (in percents) in the job.
         """
-        # FIXME: Is it proper way of getting progress?
-        div = self.no_of_urls or 1
-        return self.get_urls_collected() / div * 100
+        if not self.no_of_urls:
+            return 100
+        div = self.no_of_urls
+        return min((100 * self.get_urls_collected()) / div, 100)
 
     def is_completed(self):
         return self.status == JOB_STATUS_COMPLETED
@@ -298,32 +384,60 @@ SAMPLE_TAGASAURIS_WORKER = 'tagasauris_worker'
 
 
 class SampleManager(models.Manager):
+
+    def _sanitize(self, args, kwargs):
+        """
+            Sample data sanitization.
+        """
+        url = kwargs.get('url', '')
+
+        # Add missing schema. Defaults to http://
+        if url:
+            result = urlparse.urlsplit(url)
+            if not result.scheme:
+                kwargs['url'] = 'http://%s' % url
+
+    def _create_sample(self, *args, **kwargs):
+        return send_event(
+            'EventNewRawSample',
+            *args, **kwargs
+        )
+
     def create_by_owner(self, *args, **kwargs):
         '''
             Asynchronously creates a new sample with owner as a source.
         '''
-        if 'source_type' in kwargs:
-            kwargs.pop('source_type')
+        self._sanitize(args, kwargs)
+        kwargs['source_type'] = SAMPLE_SOURCE_OWNER
 
-        return send_event(
-            'EventNewRawSample',
-            source_type=SAMPLE_SOURCE_OWNER,
-            *args, **kwargs
-        )
+        return self._create_sample(*args, **kwargs)
 
     def create_by_worker(self, *args, **kwargs):
         '''
             Asynchronously creates a new sample with tagasauris worker as a
             source.
         '''
-        if 'source_type' in kwargs:
-            kwargs.pop('source_type')
+        self._sanitize(args, kwargs)
+        kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
 
-        return send_event(
-            'EventNewRawSample',
-            source_type=SAMPLE_TAGASAURIS_WORKER,
-            *args, **kwargs
+        # Add worker-job association.
+        worker, created = Worker.objects.get_or_create_tagasauris(
+            worker_id=kwargs['source_val']
         )
+        job = Job.objects.get(id=kwargs['job_id'])
+
+        WorkerJobAssociation.objects.associate(
+            job=job,
+            worker=worker,
+        )
+
+        return self._create_sample(*args, **kwargs)
+
+    def by_worker(self, source_type, source_val, **kwargs):
+        """
+            Returns samples done by the worker.
+        """
+        return self.filter(source_type=source_type, source_val=source_val)
 
 
 class Sample(models.Model):
@@ -336,108 +450,228 @@ class Sample(models.Model):
     screenshot = models.URLField()
     source_type = models.CharField(max_length=100, blank=False)
     source_val = models.CharField(max_length=100, blank=True, null=True)
-    added_on = models.DateField(auto_now_add=True)
+    added_on = models.DateTimeField(auto_now_add=True)
 
     objects = SampleManager()
 
     class Meta:
         unique_together = ('job', 'url')
 
-    def get_source_worker(self):
-        '''
-            Returns a worker that has sent this sample.
-        '''
-        # FIXME: Add support for more sources.
-        if self.source_type == SAMPLE_SOURCE_OWNER:
+    @staticmethod
+    def get_worker(source_type, source_val):
+        """
+            Returns a worker that corresponds to given (`source_type`,
+            `source_val`) pair.
+        """
+        if source_type == SAMPLE_SOURCE_OWNER:
             # If the sample's creator is owner, ignore source worker.
             return None
-        elif self.source_type == SAMPLE_TAGASAURIS_WORKER:
-            # FIXME: Proper worker type handling
-            return None
+        elif source_type == SAMPLE_TAGASAURIS_WORKER:
+            return Worker.objects.get_tagasauris(worker_id=source_val)
+
+    def get_source_worker(self):
+        """
+            Returns a worker that has sent this sample.
+        """
+        return self.get_worker(
+            source_type=self.source_type,
+            source_val=self.source_val,
+        )
+
+    def get_screenshot_key(self):
+        """
+            Returns sample's key used to authenticate thumbnail request in
+            imagescale.
+        """
+        algorithm = hashlib.new(imagescale2.HASHING_ALGORITHM)
+        algorithm.update(imagescale2.SALT)
+        algorithm.update(self.screenshot)
+        return algorithm.hexdigest()
+
+    def get_thumbnail(self, width=60, height=60):
+        """
+            Returns a thumbnail from sample's screenshot fit to given size.
+        """
+        params = {
+            'width': width,
+            'height': height,
+            'url': self.screenshot,
+            'key': self.get_screenshot_key(),
+        }
+        r = requests.get('http://' + settings.IMAGESCALE_URL, params=params)
+        return r.content
+
+    def get_small_thumbnail_url(self):
+        """
+            Returns url which serves sample's small thumbnail.
+        """
+        return self.get_thumbnail_url('small')
+
+    def get_small_thumbnail(self):
+        """
+            Returns a small (60x60) thumbnail to use in samples list, etc.
+        """
+        return self.get_thumbnail(width=60, height=60)
+
+    def get_thumbnail_url(self, size):
+        """
+            Returns url which serves sample's thumbnail in given size.
+
+            :param size: one of `size`, `large`
+        """
+        return reverse('sample_thumbnail', args=[self.id, size])
+
+    def get_large_thumbnail_url(self):
+        """
+            Returns url which serves sample's small thumbnail.
+        """
+        return self.get_thumbnail_url('large')
+
+    def get_large_thumbnail(self):
+        """
+            Returns a large (300x300) thumbnail to use as screenshot's preview.
+        """
+        return self.get_thumbnail(width=300, height=300)
+
+    def is_finished(self):
+        """
+            Whether the sample's creation has been finished.
+        """
+        return self.text and self.screenshot
 
     def get_workers(self):
         """
             Returns workers that have sent this sample (url).
         """
-        #  FIXME: Support for multiple workers sending the same url.
-        return [self.source_type]
+        workers = set()
+        for cs in self.classifiedsample_set.all().iterator():
+            worker = cs.get_source_worker()
+            if worker and worker.can_show_to_user():
+                workers.add(worker)
+        return workers
 
     def get_yes_votes(self):
         """
             Returns amount of YES votes received by this sample.
         """
-        # FIXME: Actual votes.
-        return 0
+        votes = self.workerqualityvote_set.all()
+        num = sum(1 for _ in ifilter(lambda x: x.label == LABEL_YES, votes))
+        return num
 
     def get_no_votes(self):
         """
             Returns amount of NO votes received by this sample.
         """
-        # FIXME: Actual votes.
-        return 0
+        votes = self.workerqualityvote_set.all()
+        num = sum(1 for _ in ifilter(lambda x: x.label == LABEL_NO, votes))
+        return num
 
     def get_broken_votes(self):
         """
             Returns amount of BROKEN votes received by this sample.
         """
-        # FIXME: Actual votes.
-        return 0
+        votes = self.workerqualityvote_set.all()
+        num = sum(1 for _ in ifilter(lambda x: x.label == LABEL_BROKEN, votes))
+        return num
 
     def get_yes_probability(self):
         """
-            Returns probability of YES label on this sample.
+            Returns probability of YES label on this sample, that is the
+            percentage from the most recent classification.
         """
-        # TODO: More meaningful probability query? Currently most recent one.
         cs_set = self.classifiedsample_set.all()
-        max_id = -1
-        cs = None
-        yes_prob = 0
-        for cs_it in cs_set:
-            if cs_it.id > max_id:
-                max_id = cs_it.id
-                cs = cs_it
-        if cs:
-            yes_prob = cs.label_probability['Yes']
+        if not cs_set:
+            return 0
+
+        cs = max(cs_set, key=(lambda x: x.id))
+        yes_prob = cs.label_probability['Yes']
         return yes_prob * 100
 
     def get_no_probability(self):
         """
-            Returns probability of NO label on this sample.
+            Returns probability of NO label on this sample, that is the
+            percentage from the most recent classification.
         """
-        # TODO: More meaningful probability query? Currently most recent one.
         cs_set = self.classifiedsample_set.all()
-        max_id = -1
-        cs = None
-        no_prob = 0
-        for cs_it in cs_set:
-            if cs_it.id > max_id:
-                max_id = cs_it.id
-                cs = cs_it
-        if cs:
-            no_prob = cs.label_probability['No']
+        if not cs_set:
+            return 0
+
+        cs = max(cs_set, key=(lambda x: x.id))
+        no_prob = cs.label_probability['No']
         return no_prob * 100
+
+    def is_gold_sample(self):
+        try:
+            return self.goldsample is not None
+        except:
+            return False
+
+    @classmethod
+    def sanitize_url(cls, url):
+        kwargs = {'url': url}
+        cls.objects._sanitize(None, kwargs)
+        return kwargs['url']
+
 
 # Worker types breakdown:
 # odesk - worker from odesk. External id points to user's odesk id.
 # internal - worker registered in our system. External id is the user's id.
+# tagasauris - worker provided by tagasauris.
 WORKER_TYPE_ODESK = 0
 WORKER_TYPE_INTERNAL = 1
+WORKER_TYPE_TAGASAURIS = 2
 
 WORKER_TYPES = (
     (WORKER_TYPE_ODESK, 'oDesk'),
-    (WORKER_TYPE_INTERNAL, 'internal')
-
+    (WORKER_TYPE_INTERNAL, 'internal'),
+    (WORKER_TYPE_TAGASAURIS, 'tagasauris'),
 )
+
+worker_type_to_sample_source = {
+    WORKER_TYPE_TAGASAURIS: SAMPLE_TAGASAURIS_WORKER,
+    WORKER_TYPE_INTERNAL: SAMPLE_SOURCE_OWNER,
+    WORKER_TYPE_ODESK: SAMPLE_SOURCE_OWNER,
+}
 
 
 class WorkerManager(models.Manager):
     def create_odesk(self, *args, **kwargs):
-        if 'worker_type' in kwargs:
-            kwargs.pop('worker_type')
+        kwargs['worker_type'] = WORKER_TYPE_ODESK
 
-        return self.create(
+        return self.create(**kwargs)
+
+    def create_tagasauris(self, *args, **kwargs):
+        kwargs['worker_type'] = WORKER_TYPE_TAGASAURIS
+
+        return self.create(**kwargs)
+
+    def create_internal(self, *args, **kwargs):
+        kwargs['worker_type'] = WORKER_TYPE_INTERNAL
+
+        return self.create(**kwargs)
+
+    def get_tagasauris(self, worker_id):
+        return self.get(
+            worker_type=WORKER_TYPE_TAGASAURIS,
+            external_id=worker_id,
+        )
+
+    def get_or_create_tagasauris(self, worker_id):
+        """
+            Gets or creates Tagasauris worker with given id.
+            Returns a 2-tuple (object, created):
+            `worker` - the Worker object
+            `created` - whether the object has been created or not.
+        """
+        return self.get_or_create(
+            worker_type=WORKER_TYPE_TAGASAURIS,
+            external_id=worker_id,
+        )
+
+    def get_odesk(self, external_id):
+        return self.get(
+            external_id=external_id,
             worker_type=WORKER_TYPE_ODESK,
-            **kwargs
         )
 
 
@@ -447,47 +681,92 @@ class Worker(models.Model):
     """
     external_id = models.CharField(max_length=100)
     worker_type = models.IntegerField(max_length=100, choices=WORKER_TYPES)
-    estimated_quality = models.DecimalField(default=0, decimal_places=5,
-        max_digits=7)
 
     objects = WorkerManager()
 
-    def get_name_as(self, requesting_user):
-        """
-            Returns worker's name. Uses requesting_user's ceredentials if
-            necessary.
-        """
-        # FIXME: Uncomment when proper odesk external id handling is done
+    def __unicode__(self):
+        return self.get_name()
 
-        # if self.worker_type == WORKER_TYPE_ODESK:
-        #     client = odesk.Client(settings.ODESK_CLIENT_ID,
-        #         settings.ODESK_CLIENT_SECRET,
-        #         requesting_user.get_profile().odesk_key)
-        #     r = client.provider.get_provider(self.external_id)
-        #     return r['dev_full_name']
+    def can_show_to_user(self):
+        return self.worker_type != WORKER_TYPE_INTERNAL
+
+    def get_name(self):
+        """
+            Returns worker's name.
+        """
+        if self.worker_type == WORKER_TYPE_ODESK:
+            client = odesk.Client(
+                settings.ODESK_SERVER_KEY,
+                settings.ODESK_SERVER_SECRET,
+                oauth_access_token=settings.ODESK_SERVER_TOKEN_KEY,
+                oauth_access_token_secret=settings.ODESK_SERVER_TOKEN_SECRET,
+                auth='oauth',
+            )
+            r = client.provider.get_provider(self.external_id)
+            return r['dev_full_name']
         return 'Temp Name %d' % self.id
 
-    def get_links_collected_for_job(self, job):
+    def get_urls_collected_count_for_job(self, job):
         """
-            Returns links collected by given worker for given job.
+            Returns count of urls collected by worker for given job.
         """
-        # FIXME: Actual links collected query
-        s = Sample.objects.filter(job=job)
-        return s
+        return len(self.get_urls_collected_for_job(job))
+
+    def get_urls_collected_for_job(self, job):
+        """
+            Returns urls collected by given worker for given job.
+        """
+        # Importing here due to loop imports higher in the scope.
+        from urlannotator.classification.models import ClassifiedSample
+        return ClassifiedSample.objects.filter(
+            job=job,
+            source_type=worker_type_to_sample_source[self.worker_type],
+            source_val=self.external_id)
+
+    def get_links_collected(self):
+        """ Returns number of links collected.
+        """
+        # Importing here due to loop imports higher in the scope.
+        from urlannotator.classification.models import ClassifiedSample
+        return ClassifiedSample.objects.filter(
+            source_val=self.external_id,
+            source_type=worker_type_to_sample_source[self.worker_type]
+        ).count()
+
+    def log_time_for_job(self, job, time):
+        """
+            Logs time worker has worker for given job for.
+
+            :param time: a Decimal instance, or any other type that a Decimal
+                         can be constructed from.
+        """
+        assoc = WorkerJobAssociation.objects.filter(job=job, worker=self)
+        assoc.update(worked_hours=F('worked_hours') + time)
 
     def get_hours_spent_for_job(self, job):
         """
             Returns hours spent by given worker for given job.
         """
-        # FIXME: Proper time tracking. Now returns 0.
-        return 0
+        try:
+            assoc = WorkerJobAssociation.objects.get(job=job, worker=self)
+            return assoc.worked_hours
+        except WorkerJobAssociation.DoesNotExist:
+            return 0
+
+    def get_votes_added_count_for_job(self, job):
+        """
+            Returns count of votes added by given worker for given job.
+        """
+        return sum(1 for vote in self.get_votes_added_for_job(job))
 
     def get_votes_added_for_job(self, job):
         """
             Returns votes added by given worker for given job.
         """
-        # FIXME: Proper votes query. Now returns empty set.
-        return []
+        return ifilter(
+            lambda x: x.sample.job == job and x.worker == self,
+            self.workerqualityvote_set.all()
+        )
 
     def get_earned_for_job(self, job):
         """
@@ -501,18 +780,42 @@ class Worker(models.Model):
         '''
             Returns the time the worker started to work on the job at.
         '''
-        # FIXME: Proper job start query.
-        return datetime.datetime.now()
+        try:
+            assoc = WorkerJobAssociation.objects.get(job=job, worker=self)
+        except WorkerJobAssociation.DoesNotExist:
+            return datetime.datetime.now()
+
+        return assoc.started_on
+
+    def get_estimated_quality_for_job(self, job):
+        """
+            Retuns worker's estimated quality for given job.
+        """
+        return self.workerjobassociation_set.get(job=job).get_estimated_quality()
 
 
-class TemporarySample(models.Model):
+class WorkerJobManager(models.Manager):
+    def associate(self, job, worker):
+        exists = self.filter(job=job, worker=worker).count()
+        if not exists:
+            self.create(job=job, worker=worker)
+
+
+class WorkerJobAssociation(models.Model):
     """
-        Temporary sample used inbetween creating the real sample by processes
-        responsible for each part.
+        Holds worker associations with jobs they have participated in.
     """
-    text = models.TextField()
-    screenshot = models.URLField()
-    url = models.URLField()
+    job = models.ForeignKey(Job)
+    worker = models.ForeignKey(Worker)
+    started_on = models.DateTimeField(auto_now_add=True)
+    worked_hours = models.DecimalField(default=0, decimal_places=2,
+        max_digits=10)
+    data = JSONField(default={})
+
+    objects = WorkerJobManager()
+
+    def get_estimated_quality(self):
+        return self.data.get('estimated_quality', 0)
 
 
 class GoldSample(models.Model):
@@ -520,7 +823,7 @@ class GoldSample(models.Model):
         Sample uploaded by project owner. It is already classified and is used
         to train classifier.
     """
-    sample = models.ForeignKey(Sample)
+    sample = models.OneToOneField(Sample)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
 
 
@@ -597,6 +900,29 @@ class URLStatistics(models.Model):
     delta = models.IntegerField(default=0)
 
     objects = URLStatManager()
+
+
+class LinksStatManager(models.Manager):
+    def latest_for_worker(self, worker):
+        """ Returns url collected statistic for given worker.
+        """
+        els = super(LinksStatManager, self).get_query_set().filter(
+            worker=worker).order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class LinksStatistics(models.Model):
+    """ Keeps track of urls collected for worker per day.
+    """
+    worker = models.ForeignKey(Worker)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = LinksStatManager()
 
 
 def create_stats(sender, instance, created, **kwargs):

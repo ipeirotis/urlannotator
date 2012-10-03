@@ -1,10 +1,10 @@
 import datetime
 import os
 import tempfile
-import json
+import sys
 from django.core.urlresolvers import reverse_lazy
 
-DEBUG = True
+DEBUG = not 'celery' in sys.argv
 TEMPLATE_DEBUG = DEBUG
 JS_DEBUG = DEBUG
 
@@ -38,9 +38,6 @@ STATIC_URL = '/statics/'
 # urlannotator.classification.classifiers module
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
-
-# Interval between a job monitor check. Defaults to 15 minutes.
-JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
 
 SOCIAL_AUTH_CREATE_USERS = False
 
@@ -91,6 +88,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'urlannotator.main.middlewares.crossdomainxhr.XsSharing',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -153,7 +151,6 @@ PROJECT_APPS = (
     'urlannotator.classification',
     'urlannotator.crowdsourcing',
     'urlannotator.flow_control',
-    'urlannotator.sample_gathering',
     'urlannotator.main',
     'urlannotator.tools',
     'urlannotator.statistics',
@@ -196,59 +193,15 @@ LOGGING = {
     }
 }
 
-PIPELINE_CSS = {
-    'bootstrap': {
-        'source_filenames': (
-            'less/bootstrap/bootstrap.less',
-        ),
-        'output_filename': 'css/bootstrap.css',
-        'extra_context': {
-            'rel': 'stylesheet/less',
-        },
-    },
-    'bootstrap-responsive': {
-        'source_filenames': (
-            'less/bootstrap/responsive.less',
-        ),
-        'output_filename': 'css/bootstrap-responsive.css',
-        'extra_context': {
-            'rel': 'stylesheet/less',
-        },
-    },
+try:
+    from pipeline_js import PIPELINE_JS as _pipeline_js
+    from pipeline_css import PIPELINE_CSS as _pipeline_css
+    # two pylint warnings less:
+    PIPELINE_JS = _pipeline_js
+    PIPELINE_CSS = _pipeline_css
+except ImportError:
+    pass
 
-}
-
-PIPELINE_JS = {
-    'core': {
-        'source_filenames': (
-            'js/jquery-1.7.2.js',
-            'js/ejs.js',
-            'js/view.js',
-            'js/underscore.js',
-            'js/json2.js',
-            'js/backbone.js',
-            'js/bootstrap.js',
-            'js/bootstrap-tooltip.js',
-        ),
-        'output_filename': 'js/core.min.js',
-    },
-    'crud': {
-        'source_filenames': (
-            'tenclouds/django/crud/statics/js/init.js',
-            'tenclouds/django/crud/statics/js/events.js',
-            'tenclouds/django/crud/statics/js/models.js',
-            'tenclouds/django/crud/statics/js/views.js',
-            'tenclouds/django/crud/statics/js/widgets.js',
-        ),
-        'output_filename': 'crud.js',
-    },
-    'less': {
-        'source_filenames': (
-            'js/less-1.3.0.js',
-        ),
-        'output_filename': 'js/less.min.js',
-    },
-}
 
 PIPELINE = not DEBUG
 if PIPELINE:
@@ -277,43 +230,92 @@ CELERY_IMPORTS = (
     'urlannotator.flow_control.event_system',
     'urlannotator.flow_control.event_handlers',
     'urlannotator.main.event_handlers',
-    'urlannotator.statistics.spent_monitor',
-    'urlannotator.statistics.url_monitor',
-    'urlannotator.statistics.progress_monitor',
-    'urlannotator.sample_gathering.simple_gatherer',
+    'urlannotator.statistics.monitor_tasks',
 )
+
+# Respawn a worker after 10 tasks done. Memory leaks shall not prevail!
+CELERYD_MAX_TASKS_PER_CHILD = 10
+CELERY_MAX_CACHED_RESULTS = 5
+
+# Interval between a job monitor check. Defaults to 15 minutes.
+JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
+WORKER_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
+
+# Interval between statistics entries, to store a new one.
+JOB_MONITOR_ENTRY_INTERVAL = datetime.timedelta(hours=1)
 
 CELERYBEAT_SCHEDULE = {
     'spent_monitor': {
-        'task': 'urlannotator.statistics.spent_monitor.SpentMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.SpentMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'args': []
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'url_monitor': {
-        'task': 'urlannotator.statistics.url_monitor.URLMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.URLMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'args': []
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
     'progress_monitor': {
-        'task': 'urlannotator.statistics.progress_monitor.ProgressMonitor',
+        'task': 'urlannotator.statistics.monitor_tasks.ProgressMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
+    },
+    'links_monitor': {
+        'task': 'urlannotator.statistics.monitor_tasks.LinksMonitor',
+        'schedule': WORKER_MONITOR_INTERVAL,
+        'kwargs': {'interval': datetime.timedelta(days=1)}
+    },
+    'send_validated_samples': {
+        'task': 'urlannotator.classification.event_handlers.SampleVotingManager',
+        'schedule': datetime.timedelta(seconds=3 * 60),
         'args': []
     },
-    'sample_gatherer': {
-        'task': 'urlannotator.sample_gathering.simple_gatherer.SimpleGatherer',
-        'schedule': datetime.timedelta(seconds=10 * 60),
+    'process_votes': {
+        'task': 'urlannotator.classification.event_handlers.ProcessVotesManager',
+        'schedule': datetime.timedelta(seconds=3 * 60),
         'args': []
     },
+
 }
 
 # Test runner
 # CELERY_ALWAYS_EAGER = True
 TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
+# Tagasauris integretion settings
 TAGASAURIS_LOGIN = 'urlannotator'
 TAGASAURIS_PASS = 'urlannotator'
-TAGASAURIS_HOST = 'https://devel.tagasauris.com'
+TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 
-# Tools testing flag. If set to True, certain tools will be mocked.
-TOOLS_TESTING = False
+TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
+TAGASAURIS_VOTING_WORKFLOW = 'voting'
+
+# TODO: XXX: This is ugly... any ideas how to change this?
+# NOTE: Please when editing workflows in tagasauris admin update this settings.
+TAGASAURIS_NOTIFY = {
+    TAGASAURIS_VOTING_WORKFLOW: 'NotifyTask_1',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_2',
+}
+TAGASAURIS_SURVEY = {
+    TAGASAURIS_VOTING_WORKFLOW: 'Survey_0',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Survey_0',
+}
+TAGASAURIS_FORM = {
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Form_1',
+}
+
+TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
+TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/sample/tagasauris/%s/'
+TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/tagasauris/%s/'
+
+# Tagasauris needs sacrifice!
+DUMMY_URLANNOTATOR_URL =\
+    'http://urlannotator.10clouds.com/statics/img/favicon.png'
+
+# Tagasauris will ask for some infro via xhr ($.post() etc). It is different
+# domain so we need to allow it explicit.
+XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
+XS_SHARING_ALLOWED_METHODS = ['POST', 'GET']

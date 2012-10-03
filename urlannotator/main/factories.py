@@ -1,10 +1,11 @@
 import datetime
+
 from django.conf import settings
 from celery import group, chain
 
 from urlannotator.classification.models import TrainingSet
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.main.models import TemporarySample, Job, Sample
+from urlannotator.main.models import Job, Sample
 from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample,
     copy_sample_to_job)
@@ -24,7 +25,6 @@ class SampleFactory(object):
         Produce new sample and starts tasks for screen and text extraction.
         Label argument is passed only when we create GoldSample.
         """
-
         # Check if sample with given url exists across the system
         samples = Sample.objects.filter(url=url)
         job = Job.objects.get(id=job_id)
@@ -35,7 +35,9 @@ class SampleFactory(object):
             job_samples = samples.filter(job=job)
             if job_samples:
                 return create_classify_sample.delay(
-                    job_samples[0].id, label=label, *args, **kwargs
+                    result=(True, job_samples[0].id),
+                    label=label,
+                    *args, **kwargs
                 )
             return (
                 copy_sample_to_job.s(samples[0].id, job.id, label=label,
@@ -44,16 +46,17 @@ class SampleFactory(object):
                 create_classify_sample.s(label=label, *args, **kwargs)
             ).apply_async()
 
-        temp_sample = TemporarySample(url=url)
-        temp_sample.save()
+        sample = Sample.objects.create(url=url, job=job)
 
-        # Groups screensot and content extraction. On both success proceeds
+        # Groups screenshot and content extraction. On both success proceeds
         # to sample creation. Used Celery Chords.
-        return chain(group([
-            web_screenshot_extraction.s(temp_sample.id, url=url),
-            web_content_extraction.s(temp_sample.id, url=url)]),
+        return chain(
+            group(
+                web_screenshot_extraction.s(sample_id=sample.id, url=url),
+                web_content_extraction.s(sample_id=sample.id, url=url)
+            ),
             create_sample.s(
-                temp_sample_id=temp_sample.id,
+                sample_id=sample.id,
                 job_id=job_id,
                 url=url,
                 label=label,
@@ -109,7 +112,7 @@ class JobFactory(object):
         """
             Creates first training set that will consist of gold samples
         """
-        TrainingSet(job=job).save()
+        TrainingSet.objects.create(job=job)
         job.set_training_set_created()
 
     def create_classifier(self, job):
@@ -126,7 +129,6 @@ class JobFactory(object):
             Initializes new job's elements from given job entry's id.
         """
 
-        # TODO: Add remaining elements of a job
         job = Job.objects.get(id=job_id)
 
         self.create_training_set(job)

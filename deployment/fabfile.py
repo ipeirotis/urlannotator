@@ -5,6 +5,7 @@ from fabric.colors import red, yellow, green, blue, magenta
 from fabric.api import abort, task, env, hide, settings, sudo, cd
 
 from modules import nginx, supervisor
+from modules.supervisor import start_supervisor
 from modules.virtualenv import update_virtualenv, create_virtualenv,\
     setup_virtualenv
 from modules.utils import show, put_file_with_perms,\
@@ -213,10 +214,14 @@ def configure_services():
     nginx.configure()
 
 
-def __reload_services():
+def __reload_services(setup=False):
     """Reloads previously configured services"""
     nginx.reload()
     supervisor.reload()
+    if setup:
+        services_conf = pjoin(cget('service_dir'), 'supervisor', 'config',
+            'supervisor-services.conf')
+        supervisor.reload(conf=services_conf)
 
 
 def set_instance_conf():
@@ -413,7 +418,7 @@ def deploy(conf_file=None, instance=None, branch=None, commit=None,
     # Uploads settings and scripts for services.
     configure_services()
     # Reload services to load new config.
-    __reload_services()
+    __reload_services(setup=setup_environment)
 
     # Configure and build documentation
     #doc.configure()

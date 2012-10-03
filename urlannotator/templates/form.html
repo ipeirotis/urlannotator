@@ -5,10 +5,15 @@
 {% endif %}
 {% for field in form %}
 <div class="control-group {%if field.errors%}error{%endif%}">
+    {% if 'checkbox' not in field.as_widget %}
     <label class="control-label" for="id_{{ field.html_name }}">{{ field.label }} </label>
+    {% endif %}
     <div class="controls">
     {{ field }}
-  
+    {% if 'checkbox' in field.as_widget %}
+        <label class="" for="id_{{ field.html_name }}">{{ field.label }} </label>
+    {% endif %}
+
     {% if field.errors or field.help_text %}
         <span class="help-inline">
         {% for err in field.errors %}

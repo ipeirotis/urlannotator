@@ -17,19 +17,41 @@ from urlannotator.classification.models import (Classifier as ClassifierModel,
     TrainingSet)
 from urlannotator.tools.synchronization import RWSynchronize247
 from urlannotator.statistics.stat_extraction import update_classifier_stats
+from urlannotator.flow_control import send_event
+from urlannotator.main.models import Job
 
 # Classifier training statuses breakdown:
 # CLASS_TRAIN_STATUS_DONE - training has been completed.
 # CLASS_TRAIN_STATUS_RUNNING - training is still in progress.
+# CLASS_TRAIN_STATUS_ERROR - error occured while training.
 CLASS_TRAIN_STATUS_DONE = 'DONE'
 CLASS_TRAIN_STATUS_RUNNING = 'RUNNING'
+CLASS_TRAIN_STATUS_ERROR = 'ERROR'
+
+YES_LABEL = 'Yes'
+NO_LABEL = 'No'
+
+
+class ClassifierTrainingError(Exception):
+    """
+        Exception indicating an error has occured during classifier training.
+        It is safe to retry the task.
+    """
+    pass
+
+
+class ClassifierTrainingCriticalError(Exception):
+    """
+        Error that should stop training, without attempting to retry.
+    """
+    pass
 
 
 class Classifier(object):
     def train(self, samples=[], turn_off=True, set_id=0):
         raise NotImplementedError
 
-    def update(self, samples):
+    def update(self, samples=[], turn_off=True, set_id=0):
         raise NotImplementedError
 
     def classify(self, sample):
@@ -45,8 +67,12 @@ class Classifier(object):
         raise NotImplementedError
 
 
-# Number of seconds between Classifier247 subclassifier's train status check.
-CLASS247_TRAIN_STATUS_CHECK = 10 * 60
+# Number of seconds between steps Classifier247 subclassifier's train status
+# check.
+CLASS247_TRAIN_STEP = 15
+
+# Maxmimum number of seconds to wait between train status check.
+CLASS247_MAX_WAIT = 10 * 60
 
 
 class Classifier247(Classifier):
@@ -102,13 +128,39 @@ class Classifier247(Classifier):
 
         try:
 
-            func(*args, **kwargs)
+            entry = ClassifierModel.objects.get(id=self.id)
+            try:
+                func(*args, **kwargs)
+            except ClassifierTrainingError, e:
+                # Retry-safe error has been propagated up to here whilst
+                # it should've been handled in the `func`. Log it and abort.
+                send_event(
+                    "EventClassifierTrainError",
+                    job_id=entry.job_id,
+                    message=e.message,
+                )
+                return
+            except ClassifierTrainingCriticalError, e:
+                # Really bad things have happened during training. Log it and
+                # abort.
+                send_event(
+                    "EventClassifierCriticalTrainError",
+                    job_id=entry.job_id,
+                    message=e.message,
+                )
+                return
+
             with self.sync247.switch():
                 writer, reader = self.update_self()
                 self.update_to_db(
                     writer_id=reader.id,
                     reader_id=writer.id,
                 )
+
+            # Refresh our `entry` object
+            entry = ClassifierModel.objects.get(id=self.id)
+            update_classifier_stats(self, entry.job)
+
         finally:
             self.sync247.modified_release()
 
@@ -122,17 +174,28 @@ class Classifier247(Classifier):
             set_id=set_id,
         )
 
-        trained = writer.get_train_status() == CLASS_TRAIN_STATUS_DONE
+        trained = False
+        wait_time = 0
+        entry = ClassifierModel.objects.get(id=self.id)
+        job_id = entry.job_id
 
         while not trained:
-            time.sleep(CLASS247_TRAIN_STATUS_CHECK)
+            time.sleep(min(wait_time, CLASS247_MAX_WAIT))
 
-            status = writer.get_train_status()
+            try:
+                status = writer.get_train_status()
+            except ClassifierTrainingError, e:
+                status = CLASS_TRAIN_STATUS_ERROR
+                # Swallow retry-safe training errors.
+                send_event(
+                    "EventClassifierTrainError",
+                    job_id=job_id,
+                    message=e.message,
+                )
             trained = status == CLASS_TRAIN_STATUS_DONE
+            wait_time += CLASS247_TRAIN_STEP
 
-        entry = ClassifierModel.objects.get(id=self.id)
-        job = entry.job
-        update_classifier_stats(self, entry.job)
+        job = Job.objects.get(id=job_id)
 
         if not job.is_classifier_trained():
             job.set_classifier_trained()
@@ -220,9 +283,6 @@ class SimpleClassifier(Classifier):
         """
             Creates a set of words the sample's text consists of.
         """
-        if not hasattr(sample, 'text') and hasattr(sample, 'sample'):
-            sample = sample.sample
-
         words = nltk.word_tokenize(sample.text)
         words = set(words)
         feature_set = {}
@@ -234,15 +294,15 @@ class SimpleClassifier(Classifier):
         """
             Returns file name under which the classifier is stored.
         """
-        path = os.path.join('/tmp/10c/classifiers', self.model)
+        path = os.path.join('simple-classifiers/', self.model)
         return path
 
     def dump_classifier(self):
         """
             Dumps classifier to a file.
         """
-        if not os.path.exists('/tmp/10c/classifiers'):
-            os.makedirs('/tmp/10c/classifiers')
+        if not os.path.exists('simple-classifiers/'):
+            os.makedirs('simple-classifiers/')
 
         with open(self.get_file_name(), 'wb') as f:
             pickle.dump(self.classifier, f)
@@ -254,18 +314,21 @@ class SimpleClassifier(Classifier):
         res = {
             'modelDescription': {
                 'confusionMatrix': {
-                    'Yes': {
-                        'Yes': 1,
-                        'No': 0,
+                    YES_LABEL: {
+                        YES_LABEL: 1,
+                        NO_LABEL: 0,
                     },
-                    'No': {
-                        'Yes': 0,
-                        'No': 1,
+                    NO_LABEL: {
+                        YES_LABEL: 0,
+                        NO_LABEL: 1,
                     }
                 }
             }
         }
         return res
+
+    def update(self, *args, **kwargs):
+        return self.train(*args, **kwargs)
 
     def train(self, samples=[], turn_off=True, set_id=0):
         """
@@ -316,19 +379,18 @@ class SimpleClassifier(Classifier):
         if self.classifier is None:
             return None
 
-        sample = class_sample
-        if not hasattr(class_sample, 'text'):
-            sample = class_sample.sample
-        label = self.classifier.classify(self.get_features(sample))
+        label = self.classifier.classify(self.get_features(class_sample.sample))
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
         training_set = TrainingSet.objects.get(id=train_set_id)
+
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {'Yes': 0, 'No': 0}
+        label_probability = {YES_LABEL: 0.0, NO_LABEL: 0.0}
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
+
         return label
 
     def classify_with_info(self, class_sample):
@@ -341,24 +403,41 @@ class SimpleClassifier(Classifier):
         if self.classifier is None:
             return None
 
-        sample = class_sample
-        if not hasattr(class_sample, 'text'):
-            sample = class_sample.sample
-        label = self.classifier.classify(self.get_features(sample))
+        label = self.classifier.classify(self.get_features(class_sample.sample))
 
         entry = ClassifierModel.objects.get(id=self.id)
         train_set_id = entry.parameters['training_set']
         training_set = TrainingSet.objects.get(id=train_set_id)
+
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {'Yes': 0, 'No': 0}
+        label_probability = {YES_LABEL: 0.0, NO_LABEL: 0.0}
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
+
         return label
 
 # Google Storage parameters used in GooglePrediction classifier
 GOOGLE_STORAGE_PREFIX = 'gs'
 GOOGLE_BUCKET_NAME = 'urlannotator'
+
+
+def gs_upload_file(file_name):
+    with open(file_name, 'r') as training_file:
+        con = GSConnection(settings.GS_ACCESS_KEY, settings.GS_SECRET)
+        try:
+            bucket = con.create_bucket(GOOGLE_BUCKET_NAME)
+        except:
+            # Bucket exists
+            bucket = Bucket(connection=con, name=GOOGLE_BUCKET_NAME)
+
+        key = Key(bucket)
+        key.key = file_name
+        key.set_contents_from_file(training_file)
+        key.make_public()
+
+    # Remove file from disc
+    os.system('rm %s' % file_name)
 
 
 class GooglePredictionClassifier(Classifier):
@@ -391,13 +470,32 @@ class GooglePredictionClassifier(Classifier):
         try:
             status = self.papi.analyze(id=self.model).execute()
             return status
-        except:
-            return {}
+        except Exception, e:
+            print 'Exception caught', e
+            return {
+                'modelDescription': {
+                    'confusionMatrix': {
+                        YES_LABEL: {
+                            YES_LABEL: 1,
+                            NO_LABEL: 0,
+                        },
+                        NO_LABEL: {
+                            YES_LABEL: 0,
+                            NO_LABEL: 1,
+                        }
+                    }
+                }
+            }
 
     def get_train_status(self):
         try:
             status = self.papi.get(id=self.model).execute()
-            return status['trainingStatus']
+            message = status['trainingStatus']
+            if 'ERROR' in message:
+                raise ClassifierTrainingCriticalError(message)
+            return message
+        except ClassifierTrainingCriticalError:
+            raise
         except:
             # Model doesn't exist (first training).
             return CLASS_TRAIN_STATUS_RUNNING
@@ -411,31 +509,13 @@ class GooglePredictionClassifier(Classifier):
         os.system("mkdir -p %s" % training_dir)
 
         # Write data to csv file
-        data = open(file_out, 'wb')
-        writer = csv.writer(data)
-        for sample in samples:
-            writer.writerow(['%s' % sample.label, '"%s"' % sample.text])
-        data.close()
+        with open(file_out, 'wb') as data:
+            writer = csv.writer(data)
+            for sample in samples:
+                writer.writerow(['%s' % sample.label, '"%s"' % sample.text])
 
         # Upload file to gs
-        training_file = open(file_out, 'r')
-
-        con = GSConnection(settings.GS_ACCESS_KEY, settings.GS_SECRET)
-        try:
-            bucket = con.create_bucket(GOOGLE_BUCKET_NAME)
-        except:
-            # Bucket exists
-            bucket = Bucket(connection=con, name=GOOGLE_BUCKET_NAME)
-
-        key = Key(bucket)
-        key.key = file_name
-        key.set_contents_from_file(training_file)
-        training_file.close()
-
-        key.make_public()
-        # Remove file from disc
-        os.system('rm %s' % file_out)
-
+        gs_upload_file(file_out)
         return file_name
 
     def train(self, samples=[], turn_off=True, set_id=0):
@@ -467,16 +547,9 @@ class GooglePredictionClassifier(Classifier):
             'storageDataLocation': 'urlannotator/%s' % name
         }
 
-        # We have to always check for training status due to different
-        # instances of the classifier in different threads. YET only one is
-        # used at a time.
-        try:
-            status = self.papi.get(id=self.model).execute()
-            if status['trainingStatus'] == 'DONE':
-                self.papi.update(body=body).execute()
-        except:
-            # Model doesn't exist (first training).
-            self.papi.insert(body=body).execute()
+        # Always overwrite current classifier due to possible changes in old
+        # samples' classification.
+        self.papi.insert(body=body).execute()
 
         # Update classifier entry.
         params = entry.parameters
@@ -484,55 +557,39 @@ class GooglePredictionClassifier(Classifier):
         entry.parameters = json.dumps(params)
         entry.save()
 
-    def classify(self, sample):
+    def _papi_classify(self, sample):
         """
-            Classifies given sample and saves result to the model.
+            Executes Google Prediction API call to classify given sample.
         """
         if self.model is None:
             return None
 
-        body = {'input': {'csvInstance': [sample.sample.text]}}
-        label = self.papi.predict(body=body, id=self.model).execute()
+        body = {'input': {'csvInstance': [sample.text]}}
+        result = self.papi.predict(body=body, id=self.model).execute()
 
-        entry = ClassifierModel.objects.get(id=self.id)
-        train_set_id = entry.parameters['training_set']
-        training_set = TrainingSet.objects.get(train_set_id)
-        sample.training_set = training_set
-
-        sample.label = label['outputLabel']
         label_probability = {}
-        for label, prob in label['outputMulti']:
-            label_probability[label] = prob
+        for score in result['outputMulti']:
+            label_probability[score['label'].capitalize()] = score['score']
         sample.label_probability = json.dumps(label_probability)
+        sample.label = result['outputLabel']
         sample.save()
 
-        return label['outputLabel']
+        return result
+
+    def classify(self, sample):
+        """
+            Classifies given sample and saves result to the model.
+        """
+        result = self._papi_classify(sample.sample)
+        if result:
+            return result.get('outputLabel', None)
+        else:
+            return None
 
     def classify_with_info(self, sample):
         """
             Classifies given sample and returns more detailed data.
             Currently only label.
         """
-        if self.model is None:
-            return None
-
-        body = {'input': {'csvInstance': [sample.sample.text]}}
-        label = self.papi.predict(body=body, id=self.model).execute()
-
-        entry = ClassifierModel.objects.get(id=self.id)
-        train_set_id = entry.parameters['training_set']
-        training_set = TrainingSet.objects.get(train_set_id)
-        sample.training_set = training_set
-
-        sample.label = label['outputLabel']
-        label_probability = {}
-        for label, prob in label['outputMulti']:
-            label_probability[label] = prob
-        sample.label_probability = json.dumps(label_probability)
-        sample.save()
-
-        result = {
-            'outputLabel': label['outputLabel'],
-            'outputMulti': label['outputMulti'],
-        }
+        result = self._papi_classify(sample.sample)
         return result

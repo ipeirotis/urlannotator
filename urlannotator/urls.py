@@ -3,13 +3,16 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 from tastypie.api import Api
 
-from urlannotator.main.api.resources import JobResource, SampleResource
+from urlannotator.main.api.resources import (JobResource, SampleResource,
+    VoteResource, AdminResource)
 
 admin.autodiscover()
 
 v1_api = Api(api_name='v1')
 v1_api.register(JobResource())
 v1_api.register(SampleResource())
+v1_api.register(VoteResource())
+v1_api.register(AdminResource())
 
 
 def bad(request):
@@ -19,6 +22,8 @@ def bad(request):
 urlpatterns = patterns('urlannotator',
 
     url(r'^$', 'main.views.index', name='index'),
+
+    url(r'^hit/$', 'main.views.hit', name='hit'),
 
     url(r'^register/$', 'main.views.register_view', name='register'),
     url(r'^register/(?P<service>[^/]+)$',
@@ -51,9 +56,14 @@ urlpatterns = patterns('urlannotator',
         'main.views.project_btm_view', name='project_btm_view'),
     url(r'^project/(?P<id>\d+)/classifier$',
         'main.views.project_classifier_view', name='project_classifier_view'),
+    url(r'^sample/(?P<id>\d+)/(?P<thumb_type>(small|large))$',
+        'main.views.sample_thumbnail', name='sample_thumbnail'),
+    url(r'^project/(?P<id>\d+)/classifier/data$',
+        'main.views.project_classifier_data', name='project_classifier_data'),
 
     url(r'^_admin/', include(admin.site.urls)),
     url(r'^auth/', include('social_auth.urls')),
+    url(r'^admin/', 'main.views.admin_index', name='admin_index'),
 
     url(r'^alerts$', 'main.views.alerts_view', name='alerts_view'),
     url(r'^updates/(?P<job_id>\d+)$', 'main.views.updates_box_view',
@@ -98,5 +108,7 @@ if settings.DEBUG:
          {'document_root': settings.MEDIA_ROOT}),
         url(r'^project/(?P<id>\d+)/debug/(?P<debug>[^/]+)$',
             'urlannotator.main.views.project_debug', name='project_debug'),
+        url(r'^debug/superuser$',
+            'urlannotator.main.views.debug_superuser', name='debug_su'),
 
     )

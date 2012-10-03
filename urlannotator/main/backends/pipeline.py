@@ -25,7 +25,7 @@ def create_user(request, user, details, *args, **kwargs):
     elif user is None:
         request.session['error'] = "Account for that social media doesn't "\
             "exist. Please register first."
-        return redirect('index')
+        return redirect('register')
 
     return {
         'user': user,

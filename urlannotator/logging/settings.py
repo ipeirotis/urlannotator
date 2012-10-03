@@ -8,6 +8,12 @@ LOG_TYPE_NEW_SAMPLE_DONE = 4  # New sample creation has been finished
 LOG_TYPE_CLASS_TRAIN_START = 5  # Classifier training has been started
 LOG_TYPE_CLASS_TRAIN_DONE = 6  # Classifier training has been finished
 LOG_TYPE_SAMPLE_CLASSIFIED = 7  # A new sample has been classified
+LOG_TYPE_SAMPLE_SCREENSHOT_DONE = 8  # Sample's screenshot has been taken
+LOG_TYPE_SAMPLE_TEXT_DONE = 9  # Sample's text has been extracted
+LOG_TYPE_SAMPLE_SCREENSHOT_FAIL = 10  # Error while taking screenshot
+LOG_TYPE_SAMPLE_TEXT_FAIL = 11  # Error while getting content
+LOG_TYPE_CLASSIFIER_TRAINING_ERROR = 12  # Error while training. Can retry.
+LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR = 13  # Fatal error while training. Aborted.
 
 # Long action type breakdown:
 LONG_ACTION_TRAINING = 1  # Classifier training
@@ -56,7 +62,15 @@ log_config = {
         'Console_out': 'New sample is being created (%(log_val)s).',
     },
     LOG_TYPE_NEW_GOLD_SAMPLE: {
-        'Console_out': 'New gold sample is being created (%(log_val)s).',
+        'Show_users': True,
+        'Single_text': 'New gold sample (%(gold_url)s) has been created.',
+        'Plural_text': 'New gold samples have been created.',
+        'Box_entry': {
+            'Title': 'New Gold Sample',
+            'Text': '<a href="%(gold_url)s">%(gold_url)s</a>',
+            'Image_url': '%(sample_image)s',
+        },
+        'Console_out': 'New gold sample has been created (%(log_val)s).',
     },
     LOG_TYPE_NEW_SAMPLE_DONE: {
         'Console_out': 'New sample has been created (%(log_val)s).',
@@ -66,22 +80,99 @@ log_config = {
         'Box_entry': {
             'Title': 'New Sample',
             'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+            'Image_url': '%(sample_image)s',
         },
     },
     LOG_TYPE_CLASS_TRAIN_START: {
+        'Show_users': True,
+        'Single_text': 'Classifier is being trained.',
+        'Plural_text': 'Classifiers are being trained.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Classifier Training',
+            'Text': 'Started',
+        },
         'Console_out': 'Classifier is being trained (%(log_val)s).',
     },
     LOG_TYPE_CLASS_TRAIN_DONE: {
+        'Show_users': True,
+        'Single_text': 'Classifier training has been finished.',
+        'Plural_text': 'Classifiers\' training has been finished.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Classifier Training',
+            'Text': 'Done',
+        },
         'Console_out': 'Classifier training has finished (%(log_val)s).',
     },
     LOG_TYPE_SAMPLE_CLASSIFIED: {
         'Console_out': 'Sample has been classified (%(log_val)s).',
-        'Single_text': 'New sample (%(class_url)s) has been created.',
-        'Plural_text': 'New samples have been created.',
+        'Single_text': 'New sample (%(class_url)s) has been classified.',
+        'Plural_text': 'New samples have been classified.',
         'Show_users': True,
         'Box_entry': {
-            'Title': 'New Sample',
+            'Title': 'Sample Classified',
             'Text': '<a href="%(class_url)s">%(class_url)s</a>',
+            'Image_url': '%(sample_image)s',
+        },
+    },
+    LOG_TYPE_SAMPLE_SCREENSHOT_DONE: {
+        'Console_out': 'Sample\'s screenshot has been created (%(log_val)s).',
+        'Single_text': 'New sample screenshot (%(sample_url)s).',
+        'Plural_text': 'New sample screenshots.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'New Screenshot',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+            'Image_url': '%(sample_image)s',
+        },
+    },
+    LOG_TYPE_SAMPLE_TEXT_DONE: {
+        'Console_out': 'Sample\'s text has been extracted (%(log_val)s).',
+        'Single_text': 'New sample content (%(sample_url)s).',
+        'Plural_text': 'New sample contents.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'New Content',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+            'Image_url': '%(sample_image)s',
+        },
+    },
+    LOG_TYPE_SAMPLE_SCREENSHOT_FAIL: {
+        'Console_out': 'Error while taking screenshot (%(sample_url)s)'
+                       ' - code %(error_code)d.',
+        'Single_text': 'Sample screenshot failed (%(sample_url)s).',
+        'Plural_text': 'Sample screenshots failed.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Screenshot failed',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+        },
+    },
+    LOG_TYPE_SAMPLE_TEXT_FAIL: {
+        'Console_out': 'Error while getting content (%(sample_url)s)'
+                       ' - code %(error_code)d.',
+        'Single_text': 'Sample content failed (%(sample_url)s).',
+        'Plural_text': 'Sample contents failed.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Content failed',
+            'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
+        },
+    },
+    LOG_TYPE_CLASSIFIER_TRAINING_ERROR: {
+        'Console_out': 'Error while training classifier for job (%(job_id)d)'
+                       ' - %(error_message)s.',
+    },
+    LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR: {
+        'Console_out': 'Fatal error while training classifier for job '
+                       '(%(job_id)d) - %(error_message)s.',
+        'Single_text': 'Fatal error while training classifier.',
+        'Plural_text': 'Fatal error while training classifiers.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Fatal error',
+            'Text': 'Classifier training failed.',
         },
     },
 }

@@ -1,0 +1,29 @@
+@media (max-width: 979px) {
+  body {
+    padding-top: 0px;
+    padding-bottom: 20px;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle {
+    float: none;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .down {
+    display: inline-block;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .left {
+    display: none;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper {
+    width: auto;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper .login-desc {
+    float: none;
+  }
+  div.navbar.navbar-fixed-top .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper .mail {
+    float: none;
+  }
+}
+@media (max-width: 979px) and (min-width: 768px) {
+  div.span2.infobox {
+    height: 63px;
+  }
+}
