@@ -72,3 +72,8 @@ class SampleMapping(models.Model):
     external_id = models.CharField(max_length=25)
     crowscourcing_type = models.CharField(max_length=20,
         choices=CROWDSOURCING_CHOICES)
+
+
+class OdeskJob(models.Model):
+    job = models.ForeignKey(Job)
+    reference = models.CharField(max_length=25)

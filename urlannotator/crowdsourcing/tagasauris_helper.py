@@ -5,6 +5,7 @@ import json
 from django.conf import settings
 
 from tagapi.api import TagasaurisClient
+from urlannotator.crowdsourcing.models import TagasaurisJobs
 
 
 def make_tagapi_client():
@@ -37,7 +38,30 @@ def stop_job(external_id):
     tc.wait_for_complete(res['task_id'])
 
 
-def create_job(api_client, job, task_type, callback=None, mediaobjects=None):
+def create_tagasauris_job(job):
+    """
+        Initializes Tagasauris job for given our job.
+    """
+    # TODO: Need to add backoff on Tagasauris job creation fail.
+    # TODO: we can run it in tasks with proper polling/callback with info
+    # of job creation status.
+    sample_gathering_key, sample_gathering_hit = create_job(
+        job=job,
+        task_type=settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW,
+        callback=settings.TAGASAURIS_SAMPLE_GATHERER_CALLBACK % job.id,
+        api_client=make_tagapi_client(),
+    )
+
+    # Our link to tagasauris jobs.
+    TagasaurisJobs.objects.create(
+        urlannotator_job=job,
+        sample_gathering_key=sample_gathering_key,
+        sample_gathering_hit=sample_gathering_hit,
+    )
+
+
+def create_job(job, task_type, api_client=None, callback=None,
+    mediaobjects=None):
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
 

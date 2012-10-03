@@ -95,7 +95,7 @@ def create_sample(extraction_result, sample_id, job_id, url,
         # Proper sample entry
         Sample.objects.filter(id=sample_id).update(
             source_type=source_type,
-            source_val=source_val
+            source_val=source_val,
         )
         sample = Sample.objects.get(id=sample_id)
 

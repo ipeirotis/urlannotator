@@ -2,7 +2,6 @@ import datetime
 import requests
 import hashlib
 import urlparse
-import odesk
 
 from django.db import models
 from django.db.models import F, Sum
@@ -17,7 +16,6 @@ from tenclouds.django.jsonfield.fields import JSONField
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 from urlannotator.settings import imagescale2
-from urlannotator.crowdsourcing.tagasauris_helper import stop_job
 
 LABEL_BROKEN = 'Broken'
 LABEL_YES = 'Yes'
@@ -166,6 +164,8 @@ class Job(models.Model):
         """
             Stops underlying sample gathering job.
         """
+        # Importing here due to possible loop imports
+        from urlannotator.crowdsourcing.tagasauris_helper import stop_job
         tag_job = self.tagasaurisjobs
         tag_job.sample_gathering_hit = ''
         tag_job.save()
@@ -186,6 +186,8 @@ class Job(models.Model):
         """
             Stops underlying voting job.
         """
+        # Importing here due to possible loop imports
+        from urlannotator.crowdsourcing.tagasauris_helper import stop_job
         tag_job = self.tagasaurisjobs
         tag_job.voting_hit = ''
         tag_job.save()
@@ -385,6 +387,9 @@ SAMPLE_TAGASAURIS_WORKER = 'tagasauris_worker'
 
 class SampleManager(models.Manager):
 
+    def _domain(self, url):
+        return urlparse.urlparse(url).hostname
+
     def _sanitize(self, args, kwargs):
         """
             Sample data sanitization.
@@ -396,6 +401,9 @@ class SampleManager(models.Manager):
             result = urlparse.urlsplit(url)
             if not result.scheme:
                 kwargs['url'] = 'http://%s' % url
+
+            domain = self._domain(kwargs['url'])
+            kwargs['domain'] = domain
 
     def _create_sample(self, *args, **kwargs):
         return send_event(
@@ -694,16 +702,10 @@ class Worker(models.Model):
         """
             Returns worker's name.
         """
+        # Importing here due to possible loop imports
+        from urlannotator.crowdsourcing.odesk_helper import get_worker_name
         if self.worker_type == WORKER_TYPE_ODESK:
-            client = odesk.Client(
-                settings.ODESK_SERVER_KEY,
-                settings.ODESK_SERVER_SECRET,
-                oauth_access_token=settings.ODESK_SERVER_TOKEN_KEY,
-                oauth_access_token_secret=settings.ODESK_SERVER_TOKEN_SECRET,
-                auth='oauth',
-            )
-            r = client.provider.get_provider(self.external_id)
-            return r['dev_full_name']
+            return get_worker_name(ciphertext=self.external_id)
         return 'Temp Name %d' % self.id
 
     def get_urls_collected_count_for_job(self, job):

@@ -1,0 +1,4 @@
+You have to collect {{ samples_count }} urls that match the following description:
+{{ job.description }}
+
+Found urls should be submitted at the following url: {{ job.get_sample_gathering_url }}
