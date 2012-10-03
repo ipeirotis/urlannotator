@@ -61,8 +61,10 @@ class SampleVotingManager(Task):
         mo_values = mediaobjects.values()
 
         # Creating new job with mediaobjects
-        voting_key, voting_hit = create_job(tc, job,
-            settings.TAGASAURIS_VOTING_WORKFLOW,
+        voting_key, voting_hit = create_job(
+            api_client=tc,
+            job=job,
+            task_type=settings.TAGASAURIS_VOTING_WORKFLOW,
             callback=settings.TAGASAURIS_VOTING_CALLBACK % job.id,
             mediaobjects=mo_values)
 
