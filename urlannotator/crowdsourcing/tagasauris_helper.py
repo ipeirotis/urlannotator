@@ -1,6 +1,7 @@
 import hashlib
 import uuid
 import json
+import math
 
 from django.conf import settings
 
@@ -45,10 +46,8 @@ def create_tagasauris_job(job):
     # TODO: Need to add backoff on Tagasauris job creation fail.
     # TODO: we can run it in tasks with proper polling/callback with info
     # of job creation status.
-    sample_gathering_key, sample_gathering_hit = create_job(
+    sample_gathering_key, sample_gathering_hit = create_sample_gather(
         job=job,
-        task_type=settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW,
-        callback=settings.TAGASAURIS_SAMPLE_GATHERER_CALLBACK % job.id,
         api_client=make_tagapi_client(),
     )
 
@@ -60,17 +59,8 @@ def create_tagasauris_job(job):
     )
 
 
-def create_job(job, task_type, api_client=None, callback=None,
-    mediaobjects=None):
-    # Unique id for tagasauris job within our tagasauris account.
-    ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
-
-    # Tagasauris Job is created with dummy media object (soo ugly...).
-    # Before job creation we must configure Tagasauris account and
-    # workflows. Account must have disabled billings & workflows need
-    # to have "external" flag set.
-
-    kwargs = {
+def workflow_definition(ext_id, job, task_type, survey_id):
+    return {
         "id": ext_id,
         "title": job.title,
         "task": {
@@ -80,7 +70,7 @@ def create_job(job, task_type, api_client=None, callback=None,
             "keywords": ""
         },
         "workflow": {
-            settings.TAGASAURIS_SURVEY[task_type]: {
+            survey_id: {
                 "config": {
                     "hit_instructions": job.description
                 }
@@ -88,57 +78,92 @@ def create_job(job, task_type, api_client=None, callback=None,
         }
     }
 
-    # Setting callback for notify mechanical task.
-    if callback is not None:
-        kwargs["workflow"].update({
-            # NOTE: Here we can modify number of workers/media per hit but
-            # i dont see use of it now.
-            # settings.TAGASAURIS_SURVEY[task_type]: {
-            #     "config": {
-            #         "workers_per_hit": 1,
-            #         "media_per_hit": 1,
-            #     }
-            # },
-            settings.TAGASAURIS_NOTIFY[task_type]: {
-                "config": {
-                    "notify_url": callback
-                }
-            },
-        })
 
-    if task_type == settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW:
-        baseurl = settings.TAGASAURIS_CALLBACKS
-        templates = baseurl + "/statics/js/templates/tagasauris/"
-        kwargs["workflow"].update({
-            settings.TAGASAURIS_FORM[task_type]: {
-                "config": {
-                    "external_app": json.dumps({
-                        "external_js": [
-                            baseurl + "/statics/js/tagasauris/samplegather.js"
-                        ],
-                        "external_css": [],
-                        "external_data": {
-                            "job_id": job.id,
-                            "token": job.id,
-                            "core_url": baseurl
-                        },
-                        "external_templates": {
-                            "samplegather": templates + "samplegather.ejs",
-                            "sample": templates + "sample.ejs"
-                        }
-                    })
-                }
-            },
-        })
+def create_sample_gather(api_client, job):
+    task_type = settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
+    # Unique id for tagasauris job within our tagasauris account.
+    ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+
+    # Tagasauris Job is created with dummy media object (soo ugly...).
+    # Before job creation we must configure Tagasauris account and
+    # workflows. Account must have disabled billings & workflows need
+    # to have "external" flag set.
+
+    kwargs = workflow_definition(ext_id, job, task_type,
+        settings.TAGASAURIS_SURVEY[task_type])
+
+    samples_per_job = 5
+    baseurl = settings.TAGASAURIS_CALLBACKS
+    templates = baseurl + "/statics/js/templates/tagasauris/"
+    kwargs["workflow"].update({
+        settings.TAGASAURIS_FORM[task_type]: {
+            "config": {
+                "external_app": json.dumps({
+                    "external_js": [
+                        baseurl + "/statics/js/tagasauris/samplegather.js"
+                    ],
+                    "external_css": [],
+                    "external_data": {
+                        "job_id": job.id,
+                        "token": job.id,
+                        "core_url": baseurl,
+                        "min_samples": samples_per_job,
+                    },
+                    "external_templates": {
+                        "samplegather": templates + "samplegather.ejs",
+                        "sample": templates + "sample.ejs"
+                    }
+                })
+            }
+        },
+    })
+
+    total_mediaobjects = math.ceil(float(job.no_of_urls) / samples_per_job)
+    url = settings.DUMMY_URLANNOTATOR_URL
+    kwargs.update({"dummy_media":
+        [("dummy", url) for no in xrange(int(total_mediaobjects))]})
+
+    return _create_job(api_client, ext_id, kwargs)
+
+
+def create_voting(api_client, job, mediaobjects):
+    task_type = settings.TAGASAURIS_VOTING_WORKFLOW
+
+    # Unique id for tagasauris job within our tagasauris account.
+    ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+
+    # Tagasauris Job is created with dummy media object (soo ugly...).
+    # Before job creation we must configure Tagasauris account and
+    # workflows. Account must have disabled billings & workflows need
+    # to have "external" flag set.
+
+    kwargs = workflow_definition(ext_id, job, task_type,
+        settings.TAGASAURIS_SURVEY[task_type])
+
+    # Setting callback for notify mechanical task.
+    kwargs["workflow"].update({
+        # NOTE: Here we can modify number of workers/media per hit but
+        # i dont see use of it now.
+        # settings.TAGASAURIS_SURVEY[task_type]: {
+        #     "config": {
+        #         "workers_per_hit": 1,
+        #         "media_per_hit": 1,
+        #     }
+        # },
+        settings.TAGASAURIS_NOTIFY[task_type]: {
+            "config": {
+                "notify_url": settings.TAGASAURIS_VOTING_CALLBACK % job.id
+            }
+        },
+    })
 
     # Choosing mediaobjects
-    url = settings.DUMMY_URLANNOTATOR_URL
-    if mediaobjects is None:
-        kwargs.update({"dummy_media":
-            [("dummy-" + str(no), url) for no in xrange(job.no_of_urls)]})
-    else:
-        kwargs.update({"mediaobjects": mediaobjects})
+    kwargs.update({"mediaobjects": mediaobjects})
 
+    return _create_job(api_client, ext_id, kwargs)
+
+
+def _create_job(api_client, ext_id, kwargs):
     result = api_client.create_job(**kwargs)
 
     # media_import_key = result[0]

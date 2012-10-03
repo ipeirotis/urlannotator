@@ -2,7 +2,6 @@ from multiprocessing.pool import Process
 
 from celery import task, Task, registry
 from celery.task import current
-from django.conf import settings
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
@@ -10,7 +9,7 @@ from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_job, samples_to_mediaobjects)
+    create_voting, samples_to_mediaobjects)
 from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.main.models import Sample, Job
 
@@ -61,12 +60,7 @@ class SampleVotingManager(Task):
         mo_values = mediaobjects.values()
 
         # Creating new job with mediaobjects
-        voting_key, voting_hit = create_job(
-            api_client=tc,
-            job=job,
-            task_type=settings.TAGASAURIS_VOTING_WORKFLOW,
-            callback=settings.TAGASAURIS_VOTING_CALLBACK % job.id,
-            mediaobjects=mo_values)
+        voting_key, voting_hit = create_voting(tc, job, mo_values)
 
         tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
         tag_jobs.voting_key = voting_key

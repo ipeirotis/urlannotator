@@ -934,19 +934,36 @@ class SampleResource(TagasaurisNotifyResource):
             return self.create_response(request,
                 {'error': 'Wrong parameters.'})
 
-        if Sample.objects.filter(
-                url=Sample.sanitize_url(url),
+        collected = job.get_urls_collected()
+        all_urls = job.no_of_urls <= collected
+        if all_urls:
+            return self.create_response(request, {
+                'all': all_urls,
+                'result': ''
+            })
+
+        if Sample.objects.filter(url=Sample.sanitize_url(url),
                 job=job).count() == 0:
+            domain = Sample.objects._domain(Sample.sanitize_url(url))
+            if Sample.objects.filter(domain=domain, job=job
+                    ).count() >= job.same_domain_allowed:
+                result = 'domain duplicate'
+            else:
+                Sample.objects.create_by_worker(
+                    job_id=job.id,
+                    url=url,
+                    source_val=worker_id
+                )
+                collected += 1
+                result = 'added'
+        else:
+            result = 'duplicate'
 
-            #TODO: count domains
-            Sample.objects.create_by_worker(
-                job_id=job.id,
-                url=url,
-                source_val=worker_id
-            )
-            return self.create_response(request, {'result': 'added'})
-
-        return self.create_response(request, {'result': 'duplicates'})
+        all_urls = job.no_of_urls <= collected
+        return self.create_response(request, {
+            'result': result,
+            'all': all_urls
+        })
 
 
 class VoteResource(TagasaurisNotifyResource):

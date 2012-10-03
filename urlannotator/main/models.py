@@ -406,6 +406,7 @@ class SampleManager(models.Manager):
             kwargs['domain'] = domain
 
     def _create_sample(self, *args, **kwargs):
+
         return send_event(
             'EventNewRawSample',
             *args, **kwargs
@@ -454,6 +455,7 @@ class Sample(models.Model):
     """
     job = models.ForeignKey(Job)
     url = models.URLField()
+    domain = models.CharField(max_length=100, blank=False)
     text = models.TextField()
     screenshot = models.URLField()
     source_type = models.CharField(max_length=100, blank=False)

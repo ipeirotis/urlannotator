@@ -10,6 +10,9 @@ from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample,
     copy_sample_to_job)
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class SampleFactory(object):
     """
