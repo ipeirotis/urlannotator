@@ -38,7 +38,7 @@
   background-image: none;
 }
 .body-initializing div.navbar .bottom-bar {
-  background-color: #a6ce73;
+  background-color: #ffe2ac;
   background-image: none;
 }
 .body-active div.navbar .bottom-bar {
@@ -46,11 +46,11 @@
   background-image: none;
 }
 .body-stopped div.navbar .bottom-bar {
-  background-color: #f2dede;
+  background-color: #855759;
   background-image: none;
 }
 .body-completed div.navbar .bottom-bar {
-  background-color: #f7f7f9;
+  background-color: #3a4354;
   background-image: none;
 }
 div.alert {
@@ -64,20 +64,20 @@ div.status-draft {
   border: 1px solid #d89e32;
 }
 div.status-initializing {
-  background-color: #a6ce73;
-  border: 1px solid #8ec14d;
+  background-color: #ffe2ac;
+  border: 1px solid #ffd079;
 }
 div.status-active {
   background-color: #8cc04a;
   border: 1px solid #729f38;
 }
 div.status-stopped {
-  background-color: #f2dede;
-  border: 1px solid #e4b9b9;
+  background-color: #855759;
+  border: 1px solid #664344;
 }
 div.status-completed {
-  background-color: #f7f7f9;
-  border: 1px solid #dadae3;
+  background-color: #3a4354;
+  border: 1px solid #252b36;
 }
 div.span2.infobox {
   -webkit-box-shadow: inset 0px 0px 2px 2px #f8f8f8;
@@ -115,16 +115,16 @@ span.badge.badge-draft {
   background-color: #e0b25d;
 }
 span.badge.badge-initializing {
-  background-color: #a6ce73;
+  background-color: #ffe2ac;
 }
 span.badge.badge-active {
   background-color: #8cc04a;
 }
 span.badge.badge-stopped {
-  background-color: #f2dede;
+  background-color: #855759;
 }
 span.badge.badge-completed {
-  background-color: #f7f7f9;
+  background-color: #3a4354;
 }
 table#btm-statistics td:nth-of-type(2) {
   width: 100px;
