@@ -100,6 +100,40 @@ header.content .content-login .container-login .brand {
 }
 header.content .content-login .container-login .btn-login {
   margin-top: 20px;
+  background-color: #735158;
+  background-image: -moz-linear-gradient(top, #825659, #5c4957);
+  background-image: -ms-linear-gradient(top, #825659, #5c4957);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#825659), to(#5c4957));
+  background-image: -webkit-linear-gradient(top, #825659, #5c4957);
+  background-image: -o-linear-gradient(top, #825659, #5c4957);
+  background-image: linear-gradient(top, #825659, #5c4957);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#825659', endColorstr='#5c4957', GradientType=0);
+  border-color: #5c4957 #5c4957 #31272f;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+  color: white;
+  text-shadow: none;
+}
+header.content .content-login .container-login .btn-login:hover,
+header.content .content-login .container-login .btn-login:active,
+header.content .content-login .container-login .btn-login.active,
+header.content .content-login .container-login .btn-login.disabled,
+header.content .content-login .container-login .btn-login[disabled] {
+  background-color: #5c4957;
+}
+header.content .content-login .container-login .btn-login:active,
+header.content .content-login .container-login .btn-login.active {
+  background-color: #40323c \9;
+}
+header.content .content-login .container-login span,
+header.content .content-login .container-login .btn-register {
+  margin-top: 26px;
+  margin-left: 10px;
+}
+header.content .content-login .container-login .btn-register {
+  color: #694E58;
+  text-decoration: underline;
 }
 section.content {
   position: relative;
