@@ -102,8 +102,8 @@ header.content .content-login .container-login .btn-login {
   margin-top: 20px;
 }
 section.content {
-  margin-top: -100px;
   position: relative;
+  top: -100px;
 }
 section.content > .container .col-wrapper {
   width: 24.9%;
@@ -131,7 +131,6 @@ section.content > .container .col-wrapper p {
   line-height: 14px;
   font-weight: bold;
   color: #d4d4d4;
-  width: 224px;
 }
 section.content > .container .col1 .col-container {
   background-position: -22px -17px;
@@ -156,6 +155,11 @@ section.content > .container .col4 .col-container {
 }
 section.content > .container .col4 h1 {
   color: #E0B25D;
+}
+@-moz-document url-prefix() {
+  section.content {
+    top: -360px;
+  }
 }
 footer.footer {
   padding: 20px 0;
