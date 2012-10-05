@@ -136,8 +136,8 @@
 
                 var that = this;
                 $.post(
-                    this.coreUrl + '/api/v1/sample/verify/' + this.jobId +
-                        '/',
+                    this.coreUrl + '/api/v1/sample/add/tagasauris/' +
+                        this.jobId + '/',
                     JSON.stringify({url: url, worker_id: this.workerId}),
                     function (data) {
                         if (data.result === 'added') {
