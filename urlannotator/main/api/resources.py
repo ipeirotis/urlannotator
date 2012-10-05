@@ -841,32 +841,7 @@ class JobResource(ModelResource):
         return self.classifier_resource.get_detail(request, **kwargs)
 
 
-class TagasaurisNotifyResource(ModelResource):
-    """ Entry point for externally gathered samples.
-    """
-
-    notification_required = ['results']
-
-    def parse_notification(self, request):
-        """
-            Initiates classification on passed url using classifier
-            associated with job. Returns task id on success.
-        """
-
-        data = json.loads(request.raw_post_data)
-
-        self.method_check(request, allowed=['post'])
-        for req in self.notification_required:
-            if req not in data:
-                return self.create_response(request,
-                    {'error': 'Missing "%s" parameter.' % req})
-
-        results = data['results']
-
-        return results
-
-
-class SampleResource(TagasaurisNotifyResource):
+class SampleResource(ModelResource):
     """ Entry point for externally gathered samples.
     """
 
@@ -876,47 +851,13 @@ class SampleResource(TagasaurisNotifyResource):
 
     def override_urls(self):
         return [
-            url(r'^(?P<resource_name>%s)/tagasauris/'
+            url(r'^(?P<resource_name>%s)/add/tagasauris/'
                 '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('add_from_tagasauris'),
-                name='sample_add_from_tagasauris'),
-            url(r'^(?P<resource_name>%s)/verify/'
-                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
-                self.wrap_view('verify_from_tagasauris'),
-                name='verify_from_tagasauris'),
+                name='add_from_tagasauris'),
         ]
 
     def add_from_tagasauris(self, request, **kwargs):
-        """
-            Initiates classification on passed url using classifier
-            associated with job. Returns task id on success.
-        """
-
-        try:
-            job = Job.objects.get(id=kwargs['job_id'])
-        except Job.DoesNotExist:
-            return self.create_response(request, {'error': 'Wrong job.'})
-
-        results = self.parse_notification(request)
-
-        sample_ids = []
-        for worker_id, mediaobjects in results.iteritems():
-            for _, answers in mediaobjects.iteritems():
-                for answer in answers:
-                    for res in answer['results']:
-                        sample = Sample.objects.create_by_worker(
-                            job_id=job.id,
-                            url=res['answers'][0],
-                            source_val=worker_id
-                        )
-                        sample_ids.append(sample.id)
-
-        return self.create_response(
-            request,
-            {'request_id': sample_ids}
-        )
-
-    def verify_from_tagasauris(self, request, **kwargs):
         try:
             job = Job.objects.get(id=kwargs['job_id'])
         except Job.DoesNotExist:
@@ -949,11 +890,12 @@ class SampleResource(TagasaurisNotifyResource):
                     ).count() >= job.same_domain_allowed:
                 result = 'domain duplicate'
             else:
-                Sample.objects.create_by_worker(
+                res = Sample.objects.create_by_worker(
                     job_id=job.id,
                     url=url,
                     source_val=worker_id
                 )
+                res.get()
                 collected += 1
                 result = 'added'
         else:
@@ -966,9 +908,11 @@ class SampleResource(TagasaurisNotifyResource):
         })
 
 
-class VoteResource(TagasaurisNotifyResource):
+class VoteResource(ModelResource):
     """ Entry point for externally gathered samples.
     """
+
+    notification_required = ['results']
 
     class Meta:
         resource_name = 'vote'
@@ -976,7 +920,7 @@ class VoteResource(TagasaurisNotifyResource):
 
     def override_urls(self):
         return [
-            url(r'^(?P<resource_name>%s)/tagasauris/'
+            url(r'^(?P<resource_name>%s)/add/tagasauris/'
                 '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('add_from_tagasauris'),
                 name='sample_add_from_tagasauris'),
@@ -988,8 +932,15 @@ class VoteResource(TagasaurisNotifyResource):
             associated with job. Returns task id on success.
         """
 
-        results = self.parse_notification(request)
-        quality_vote_ids = []
+        data = json.loads(request.raw_post_data)
+
+        self.method_check(request, allowed=['post'])
+        for req in self.notification_required:
+            if req not in data:
+                return self.create_response(request,
+                    {'error': 'Missing "%s" parameter.' % req})
+
+        results = data['results']
 
         for worker_id, mediaobjects in results.iteritems():
             worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
@@ -1002,6 +953,7 @@ class VoteResource(TagasaurisNotifyResource):
 
                 for answer in answers:
                     if answer['tag'] in ['yes', 'no', 'broken']:
+                        label = None
                         if answer['tag'] == 'broken':
                             label = LABEL_BROKEN
                         elif answer['tag'] == 'yes':
@@ -1009,13 +961,11 @@ class VoteResource(TagasaurisNotifyResource):
                         elif answer['tag'] == 'no':
                             label = LABEL_NO
 
-                        WorkerQualityVote.objects.new_vote(
-                            worker=worker,
-                            sample=sample,
-                            label=label
-                        )
+                        if label is not None:
+                            WorkerQualityVote.objects.new_vote(
+                                worker=worker,
+                                sample=sample,
+                                label=label
+                            )
 
-        return self.create_response(
-            request,
-            {'quality_vote_ids': quality_vote_ids}
-        )
+        return self.create_response(request, {})

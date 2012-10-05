@@ -76,4 +76,4 @@ class SampleMapping(models.Model):
 
 class OdeskJob(models.Model):
     job = models.ForeignKey(Job)
-    reference = models.CharField(max_length=25)
+    reference = models.CharField(max_length=25, primary_key=True)

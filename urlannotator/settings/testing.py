@@ -94,10 +94,8 @@ TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 
 TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
-TAGASAURIS_SAMPLE_GATHERER_CALLBACK = TAGASAURIS_CALLBACKS +\
-    '/api/v1/sample/tagasauris/%s/'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
-    '/api/v1/vote/tagasauris/%s/'
+    '/api/v1/vote/add/tagasauris/%s/'
 
 XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
 XS_SHARING_ALLOWED_METHODS = ['POST', 'GET']

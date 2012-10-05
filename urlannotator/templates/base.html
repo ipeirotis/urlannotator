@@ -47,7 +47,7 @@
               <div class="nav-collapse">
                 {% if user.is_authenticated %}
                   <ul class="nav pull-right userNav">
-                    <li class="new-project"><a href="{% url project_wizard %}">Create new project</a></li>
+                    <li class="new-project"><a class="btn btn-create" href="{% url project_wizard %}"><span class="create-icon"></span>Create new project</a></li>
                     <li class="documentation"><a href="{% url readme_view %}">Documentation</a></li>
                     <li class="dropdown" id="userMenu">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">

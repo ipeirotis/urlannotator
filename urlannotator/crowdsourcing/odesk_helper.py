@@ -9,13 +9,14 @@
 # Getting oDesk API Client should be done when multiple API queries are needed
 # or non-standard ones.
 import odesk
+import datetime
 
 from django.conf import settings
 from django.template.loader import get_template
 from django.template import Context
 
 from urlannotator.main.models import Job
-
+from urlannotator.crowdsourcing.models import OdeskJob
 
 def make_odesk_client():
     """
@@ -49,6 +50,7 @@ NEW_JOB_VISIBILITY = 'invite-only'
 NEW_JOB_MINIMUM_BUDGET = 5.0
 
 NEW_JOB_BUYER_TEAM_REFERENCE = '712189'
+NEW_JOB_DURATION = datetime.timedelta(days=7)
 
 
 def calculate_single_budget(job):
@@ -62,6 +64,15 @@ def calculate_single_budget(job):
             "Minimum %0.2f required." % NEW_JOB_MINIMUM_BUDGET
         )
     return NEW_JOB_MINIMUM_BUDGET
+
+
+def calculate_job_end_date():
+    """
+        Calculates job's expiry date.
+    """
+    date = datetime.datetime.now() + NEW_JOB_DURATION
+    # Date in format mm-dd-yyyy, e.g. 06-30-2012
+    return date.strftime('%m-%d-%Y')
 
 
 def create_odesk_job(job):
@@ -83,16 +94,16 @@ def create_odesk_job(job):
 
     data = {
         'buyer_team__reference': NEW_JOB_BUYER_TEAM_REFERENCE,
-        'title': 'test',
-        # 'title': titleTemplate.render(Context(context)),
+        'title': titleTemplate.render(Context(context)),
         'job_type': NEW_JOB_TYPE,
-        'description': 'test',
-        # 'description': descriptionTemplate.render(Context(context)),
+        'description': descriptionTemplate.render(Context(context)),
         'budget': calculate_single_budget(job=job),
         'visibility': NEW_JOB_VISIBILITY,
         'category': NEW_JOB_CATEGORY,
+        'end_date': calculate_job_end_date(),
         'subcategory': NEW_JOB_SUBCATEGORY,
     }
     response = client.hr.post_job(job_data=data)
 
-    print response
+    reference = response['job']['reference']
+    OdeskJob.objects.create(job=job, reference=reference)

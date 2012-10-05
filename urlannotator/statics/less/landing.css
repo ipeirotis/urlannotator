@@ -100,10 +100,44 @@ header.content .content-login .container-login .brand {
 }
 header.content .content-login .container-login .btn-login {
   margin-top: 20px;
+  background-color: #735158;
+  background-image: -moz-linear-gradient(top, #825659, #5c4957);
+  background-image: -ms-linear-gradient(top, #825659, #5c4957);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#825659), to(#5c4957));
+  background-image: -webkit-linear-gradient(top, #825659, #5c4957);
+  background-image: -o-linear-gradient(top, #825659, #5c4957);
+  background-image: linear-gradient(top, #825659, #5c4957);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#825659', endColorstr='#5c4957', GradientType=0);
+  border-color: #5c4957 #5c4957 #31272f;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+  color: white;
+  text-shadow: none;
+}
+header.content .content-login .container-login .btn-login:hover,
+header.content .content-login .container-login .btn-login:active,
+header.content .content-login .container-login .btn-login.active,
+header.content .content-login .container-login .btn-login.disabled,
+header.content .content-login .container-login .btn-login[disabled] {
+  background-color: #5c4957;
+}
+header.content .content-login .container-login .btn-login:active,
+header.content .content-login .container-login .btn-login.active {
+  background-color: #40323c \9;
+}
+header.content .content-login .container-login span,
+header.content .content-login .container-login .btn-register {
+  margin-top: 26px;
+  margin-left: 10px;
+}
+header.content .content-login .container-login .btn-register {
+  color: #694E58;
+  text-decoration: underline;
 }
 section.content {
-  margin-top: -100px;
   position: relative;
+  top: -100px;
 }
 section.content > .container .col-wrapper {
   width: 24.9%;
@@ -131,7 +165,6 @@ section.content > .container .col-wrapper p {
   line-height: 14px;
   font-weight: bold;
   color: #d4d4d4;
-  width: 224px;
 }
 section.content > .container .col1 .col-container {
   background-position: -22px -17px;
@@ -156,6 +189,11 @@ section.content > .container .col4 .col-container {
 }
 section.content > .container .col4 h1 {
   color: #E0B25D;
+}
+@-moz-document url-prefix() {
+  section.content {
+    top: -360px;
+  }
 }
 footer.footer {
   padding: 20px 0;

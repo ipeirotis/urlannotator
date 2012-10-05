@@ -136,8 +136,8 @@
 
                 var that = this;
                 $.post(
-                    this.coreUrl + '/api/v1/sample/verify/' + this.jobId +
-                        '/',
+                    this.coreUrl + '/api/v1/sample/add/tagasauris/' +
+                        this.jobId + '/',
                     JSON.stringify({url: url, worker_id: this.workerId}),
                     function (data) {
                         if (data.result === 'added') {
@@ -167,9 +167,11 @@
         prepareValidatedSamples: function () {
             var urls = Samples.getAdded();
             for (var i = urls.length - 1; i >= 0; i--) {
-                this.$(".validated-urls").append(
-                    this.templateValidatedSample({url: urls[i]})
-                );
+                if (urls[i] !== undefined) {
+                    this.$(".validated-urls").append(
+                        this.templateValidatedSample({url: urls[i]})
+                    );
+                }
             }
         },
 
