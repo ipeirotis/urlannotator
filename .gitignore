@@ -13,4 +13,4 @@ urlannotator_web_screenshot/
 celerybeat-schedule
 reports/
 simple-classifiers/
-test*
+test*.csv
