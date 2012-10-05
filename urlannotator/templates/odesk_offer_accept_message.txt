@@ -1,0 +1,6 @@
+Hello,
+
+You have been accepted to complete our job to find {{ samples_to_gather }} urls that match the following description:
+{{ job.description }}
+
+You are then asked to submit those urls here: {{ job.sample_gathering_url}} .

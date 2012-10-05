@@ -18,6 +18,7 @@ from django.template import Context
 from urlannotator.main.models import Job
 from urlannotator.crowdsourcing.models import OdeskJob
 
+
 def make_odesk_client():
     """
         Returns server-authenticated oDesk client.
