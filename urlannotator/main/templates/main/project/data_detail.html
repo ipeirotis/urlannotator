@@ -18,35 +18,43 @@
       <img style="width: 100%" src="{{sample.screenshot}}">
     </div>
     <div class="span3">
-      <h3>URL detail</h3>
-      <table id="more-information">
-        <thead></thead>
-        <tbody>
-          <tr><td>Added on</td><td>{{sample.added_on|date:"Y-m-d H:i"}}</td></tr>
-          {% if sample.get_source_worker %}
-          <tr><td>Uploaded by</td><td>{{sample.get_source_worker}}</td></tr>
-          {% endif %}
-        </tbody>
-      </table>
-      <hr>
-      <h4>Voting stats</h4>
-      <table id="more-information">
-        <thead></thead>
-        <tbody>
-          <tr><td>Yes</td><td>{{sample.get_yes_votes}}</td></tr>
-          <tr><td>No</td><td>{{sample.get_no_votes}}</td></tr>
-          <tr><td>Broken</td><td>{{sample.get_broken_votes}}</td></tr>
-        </tbody>
-      </table>
-      <h4>Class probability</h4>
-      <table id="more-information">
-        <thead></thead>
-        <tbody>
-          <tr><td>Yes</td><td>{{sample.get_yes_probability}}%</td></tr>
-          <tr><td>No</td><td>{{sample.get_no_probability}}%</td></tr>
-        </tbody>
-      </table>
+      <div>
+        <h3>URL detail</h3>
+        <table id="more-information">
+          <thead></thead>
+          <tbody>
+            <tr><td>Added on</td><td>{{sample.added_on|date:"Y-m-d H:i"}}</td></tr>
+            {% if sample.get_source_worker %}
+            <tr><td>Uploaded by</td><td>{{sample.get_source_worker}}</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+        <hr/>
+      </div>
 
+      <div>
+        <h4>Voting stats</h4>
+        <table id="more-information">
+          <thead></thead>
+          <tbody>
+            <tr><td>Yes</td><td>{{sample.get_yes_votes}}</td></tr>
+            <tr><td>No</td><td>{{sample.get_no_votes}}</td></tr>
+            <tr><td>Broken</td><td>{{sample.get_broken_votes}}</td></tr>
+          </tbody>
+        </table>
+        <hr/>
+      </div>
+
+      <div>
+        <h4>Class probability</h4>
+        <table id="more-information">
+          <thead></thead>
+          <tbody>
+            <tr><td>Yes</td><td>{{sample.get_yes_probability}}%</td></tr>
+            <tr><td>No</td><td>{{sample.get_no_probability}}%</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 {% endblock %}

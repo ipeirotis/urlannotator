@@ -8,12 +8,148 @@
 
 {% block title %}Settings{% endblock %}
 
+{% block body-class %}body-settings{% endblock %}
+
 {% block header %}
   <h2>Settings</h2>
 {% endblock %}
 
 {% block main %}
-<div class="container">
+<div class="accordion container" id="accordion1">
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseOne">
+                <h4>General</h4>
+            </a>
+        </div>
+        <div id="collapseOne" class="accordion-body collapse in">
+            <div class="accordion-inner">
+                <form method="POST" action="#" class="form form-horizontal">
+                    <fieldset>
+                    {% csrf_token %}
+                    {% include 'form.html' with form=general_form %}
+                    <div class="form-actions">
+                        <button class="btn btn-primary" type="submit" name="submit" value="general">Save Changes</button>
+                        <a href="/" class="cancel">Cancel</a>
+                    </div>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+{% if password_form %}
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseTwo">
+                <h4>Password</h4>
+            </a>
+        </div>
+        <div id="collapseTwo" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <form method="POST" action="#" class="form form-horizontal">
+                    <fieldset>
+                    {% csrf_token %}
+                    {% include 'form.html' with form=password_form %}
+                    <div class="form-actions">
+                      <button class="btn btn-primary" type="submit" name="submit" value="password">Save Changes</button>
+                      <a href="/" class="cancel">Cancel</a>
+                    </div>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseThree">
+                <h4>Alerts setup</h4>
+            </a>
+        </div>
+        <div id="collapseThree" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <form method="POST" action="#" class="form form-horizontal">
+                    <fieldset>
+                    {% csrf_token %}
+                    {% include 'form.html' with form=alerts_form %}
+                    <div class="form-actions">
+                        <button class="btn btn-primary" type="submit" name="submit" value="alerts">Save Changes</button>
+                        <a href="/" class="cancel">Cancel</a>
+                    </div>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseFour">
+                <h4>Odesk integration</h4>
+            </a>
+        </div>
+        <div id="collapseFour" class="accordion-body collapse">
+            <div class="accordion-inner">
+                {% if odesk %}
+                    <p>Status: Connected as <b>{{ odesk.name }}</b>, <a href="https://www.odesk.com/UserSettings/linked-accounts">administrate</a>, <a href="{% url odesk_disconnect %}">disconnect</a></p>
+                {% else %}
+                <form method="" action="" class="form form-horizontal">
+                    <fieldset>
+                        <div class="control-group">
+                            <label class="control-label">&nbsp;</label>
+                            <div class="controls">
+                                <a class="btn btn-primary" href="{% url odesk_login %}">Connect to Odesk</a>
+                                <a style="padding:0px" onclick="$('#oDeskModal').modal('show')">(?) What will I gain by connecting to Odesk service.</a></br>
+                            </div>
+                        </div>
+                    </fieldset>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="accordion-group">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseFive">
+                <h4>Other applications</h4>
+            </a>
+        </div>
+        <div id="collapseFive" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <td>Application</td>
+                            <td>Status</td>
+                            <td>Action</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><i class="icon icon-twitter"></i> Twitter</td>
+                            <td>{% if twitter %}<b>Connected</b>, {{twitter.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a></td>{%endif%}
+                        </tr>
+                        <tr>
+                            <td><i class="icon icon-google-plus"></i> Google</td>
+                            <td>{% if google %}<b>Connected</b>, {{google.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a></td>{%endif%}
+                        </tr>
+                        <tr>
+                            <td><i class="icon icon-facebook"></i> Facebook</td>
+                            <td>{% if facebook %}<b>Connected</b>, {{facebook.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a></td>{%else%}<B>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a></td></td>{%endif%}
+                        </tr>
+                    </tbody>
+                </table>
+                <p><i class="icon icon-twitter"></i> Twitter</p>
+                <p>Status: {% if twitter %}<b>Connected</b>, {{twitter.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a>{%else%}<b>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a>{%endif%}</p>
+                <p><i class="icon icon-google-plus"></i> Google</p>
+                <p>Status: {% if google %}<b>Connected</b>, {{google.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a>{%else%}<b>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a>{%endif%}</p>
+                <p><i class="icon icon-facebook"></i> Facebook</p>
+                <p>Status: {% if facebook %}<b>Connected</b>, {{facebook.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a>{%else%}<B>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a>{%endif%}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container hide">
     <div class="row">
         <div class="span12">
             <h4>General</h4>
@@ -85,10 +221,18 @@
     <div class="row" style="margin-bottom:18px">
         <div class=" span11">
             {% if odesk %}
-            <p>Status: Connected as <b>{{ odesk.name }}</b>, <a href="https://www.odesk.com/UserSettings/linked-accounts">administrate</a>, <a href="{% url odesk_disconnect %}">disconnect</a></p>
+                <p>Status: Connected as <b>{{ odesk.name }}</b>, <a href="https://www.odesk.com/UserSettings/linked-accounts">administrate</a>, <a href="{% url odesk_disconnect %}">disconnect</a></p>
             {% else %}
-            <a class="btn btn-primary" href="{% url odesk_login %}">Connect to Odesk</a></br>
-            <a style="padding:0px" onclick="$('#oDeskModal').modal('show')">(?) What will I gain by connecting to Odesk service.</a></br>
+            <form method="" action="" class="form form-horizontal">
+                <fieldset>
+                    <div class="control-group">
+                        <label class="control-label">&nbsp;</label>
+                        <div class="controls">
+                            <a class="btn btn-primary" href="{% url odesk_login %}">Connect to Odesk</a>
+                            <a style="padding:0px" onclick="$('#oDeskModal').modal('show')">(?) What will I gain by connecting to Odesk service.</a></br>
+                        </div>
+                    </div>
+                </fieldset>
             {% endif %}
         </div>
     </div>
@@ -100,6 +244,29 @@
     </div>
     <div class="row">
         <div class=" span11">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <td>Application</td>
+                        <td>Status</td>
+                        <td>Action</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><i class="icon icon-twitter"></i> Twitter</td>
+                        <td>{% if twitter %}<b>Connected</b>, {{twitter.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a></td>{%endif%}
+                    </tr>
+                    <tr>
+                        <td><i class="icon icon-google-plus"></i> Google</td>
+                        <td>{% if google %}<b>Connected</b>, {{google.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a></td>{%endif%}
+                    </tr>
+                    <tr>
+                        <td><i class="icon icon-facebook"></i> Facebook</td>
+                        <td>{% if facebook %}<b>Connected</b>, {{facebook.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a></td>{%else%}<B>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a></td></td>{%endif%}
+                    </tr>
+                </tbody>
+            </table>
             <p><i class="icon icon-twitter"></i> Twitter</p>
             <p>Status: {% if twitter %}<b>Connected</b>, {{twitter.uid}}, <a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a>{%else%}<b>Not connected</b>, <a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a>{%endif%}</p>
             <p><i class="icon icon-google-plus"></i> Google</p>
