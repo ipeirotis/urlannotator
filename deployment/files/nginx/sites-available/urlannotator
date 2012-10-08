@@ -1,6 +1,6 @@
 server {
         listen   0.0.0.0;
-        server_name localhost urlannotator.10clouds.com;
+        server_name localhost %(domain_name)s;
 
         access_log  %(log_dir)s/nginx/urlannotator.access.log;
         error_log   %(log_dir)s/nginx/urlannotator.error.log;

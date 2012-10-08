@@ -570,11 +570,12 @@ class GooglePredictionClassifier(Classifier):
         label_probability = {}
         for score in result['outputMulti']:
             label_probability[score['label'].capitalize()] = score['score']
-        sample.label_probability = json.dumps(label_probability)
-        sample.label = result['outputLabel']
-        sample.save()
 
-        return result
+        return {
+            'label': result['outputLabel'],
+            'labels_probability': label_probability,
+            'result': result,
+        }
 
     def classify(self, sample):
         """
@@ -582,14 +583,22 @@ class GooglePredictionClassifier(Classifier):
         """
         result = self._papi_classify(sample.sample)
         if result:
-            return result.get('outputLabel', None)
+            sample.label_probability = json.dumps(result['labels_probability'])
+            sample.label = result['label']
+            sample.save()
+            return result['label']
         else:
             return None
 
     def classify_with_info(self, sample):
         """
             Classifies given sample and returns more detailed data.
-            Currently only label.
         """
         result = self._papi_classify(sample.sample)
-        return result
+        if result:
+            sample.label_probability = json.dumps(result['labels_probability'])
+            sample.label = result['label']
+            sample.save()
+            return result['result']
+        else:
+            return None

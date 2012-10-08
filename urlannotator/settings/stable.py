@@ -5,17 +5,13 @@ TEMPLATE_DEBUG = DEBUG
 JS_DEBUG = DEBUG
 PIPELINE = True
 
-DATABASES.update({
+
+DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.',
-        'NAME': 'urlannotator_stable',
-        'PORT': '',
-        'USER': 'urlannotator_stable',
-        'PASSWORD': '10clouds',
-        'HOST': '',
-        'OPTIONS': {}
-    },
-})
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
+    }
+}
 
 KEY_PREFIX = 'stable_urlannotator'
 
@@ -37,24 +33,43 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'raven.contrib.django',
 )
 
-# Broker for celery
-# WARN: Do not use the amqp backend with SQS.
-BROKER_URL = 'sqs://%s:%s@' % (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-
-# Do we need this config?
-BROKER_TRANSPORT_OPTIONS = {
-    'region': 'eu-west-1',
-    # 'visibility_timeout': 3600,
-    # 'polling_interval': 0.3,
-    'queue_name_prefix': 'urlannotator-',
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
+    }
 }
 
-# Celery database backend
-# By default celery stores state in django db.
-# CELERY_RESULT_BACKEND = "database"
-# CELERY_RESULT_DBURI = "sqlite:///celerydb.sqlite"
-# CELERY_RESULT_DBURI = "mysql://scott:tiger@localhost/foo"
+JOB_DEFAULT_CLASSIFIER = 'Classifier247'
+TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
-# We can ignore results from celery tasks (no need for db backend)
-# We can also do this by: @celery.task(ignore_result=True)
-# CELERY_IGNORE_RESULT = True
+SITE_URL = 'urlannotator.10clouds.com'
+IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
+
+EMAIL_BACKEND = 'urlannotator.main.backends.email.EmailBackend'
+
+# Broker for celery
+BROKER_URL = 'amqp://guest@localhost:5674/'
+
+
+local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
+if os.path.isfile(local_settings):
+    from local import *
+
+# Tagasauris settings
+TAGASAURIS_LOGIN = 'urlannotator'
+TAGASAURIS_PASS = 'urlannotator'
+TAGASAURIS_HOST = 'http://devel.tagasauris.com'
+TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+
+TAGASAURIS_HIT_TYPE = 'mturk'
+
+# TODO: This is ugly... any ideas how to change this?
+TAGASAURIS_NOTIFY = {
+    TAGASAURIS_VOTING_WORKFLOW: 'NotifyTask_1',
+    TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_2',
+}
+
+TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
+TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/add/tagasauris/%s/'
