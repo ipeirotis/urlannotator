@@ -803,11 +803,11 @@ def project_classifier_view(request, id):
     for perf in ClassifierPerformance.objects.filter(job=job).order_by('date'):
         date = perf.date.strftime('%Y,%m-1,%d,%H,%M,%S')
         context['performance_TPR'].append(
-            '[Date.UTC(%s),%d]' % (date, perf.value.get('TPR', 0)))
+            '[Date.UTC(%s),%f]' % (date, perf.value.get('TPR', 0)))
         context['performance_TNR'].append(
-            '[Date.UTC(%s),%d]' % (date, perf.value.get('TNR', 0)))
+            '[Date.UTC(%s),%f]' % (date, perf.value.get('TNR', 0)))
         context['performance_AUC'].append(
-            '[Date.UTC(%s),%d]' % (date, perf.value.get('AUC', 0)))
+            '[Date.UTC(%s),%f]' % (date, perf.value.get('AUC', 0)))
 
     context['performance_TPR'] = ','.join(context['performance_TPR'])
     context['performance_TNR'] = ','.join(context['performance_TNR'])

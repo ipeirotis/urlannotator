@@ -13,7 +13,7 @@ def format_date_val(val):
         Formats a date statistics value into a Date.UTC(y,m,j,H,i,s) format.
     """
     arg_string = val['date'].strftime('%Y,%m-1,%d,%H,%M,%S')
-    return '[Date.UTC(%s),%d]' % (arg_string, val['delta'])
+    return '[Date.UTC(%s),%f]' % (arg_string, val['delta'])
 
 
 def extract_stat(cls, stats):
@@ -123,6 +123,7 @@ def extract_stat_by_val(cls, job, val_fun):
             idx += 1
 
         stat = stats[idx - 1]
+        print val_fun(stat), actual_value, val_fun(stat) - actual_value
         list_stats.append({
             'date': actual_time,
             'delta': val_fun(stat) - actual_value
