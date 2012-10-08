@@ -210,11 +210,11 @@ div.navbar .navbar-inner .container div.nav-collapse.in {
   background-color: black;
 }
 div.navbar span.create-icon {
-  background: url('/statics/img/url_anno_header_create_icon.png') no-repeat 0px 0px;
+  background: url('/statics/img/url_anno_header_create_icon.png') no-repeat -2px -1px;
   display: block;
   float: left;
   height: 20px;
-  width: 20px;
+  width: 24px;
 }
 div.navbar .bottom-bar {
   background: #e0b25d url('/statics/img/url_anno_header_navbar2_bg.png') no-repeat 0px 0px;
