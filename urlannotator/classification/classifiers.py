@@ -518,7 +518,7 @@ class GooglePredictionClassifier(Classifier):
         gs_upload_file(file_out)
         return file_name
 
-    def train(self, samples=[], turn_off=True, set_id=0):
+    def train(self, samples=[], turn_off=True, set_id=0 ):
         """
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample. Required model
@@ -569,7 +569,8 @@ class GooglePredictionClassifier(Classifier):
 
         label_probability = {}
         for score in result['outputMulti']:
-            label_probability[score['label'].capitalize()] = score['score']
+            probability = round(score['score'], 3)
+            label_probability[score['label'].capitalize()] = probability
 
         return {
             'label': result['outputLabel'],
