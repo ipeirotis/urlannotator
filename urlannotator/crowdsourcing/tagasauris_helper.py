@@ -13,8 +13,12 @@ def make_tagapi_client():
         settings.TAGASAURIS_PASS, settings.TAGASAURIS_HOST)
 
 
+def make_external_id():
+    return hashlib.md5(str(uuid.uuid4())).hexdigest()
+
+
 def sample_to_mediaobject(sample):
-    ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+    ext_id = make_external_id()
 
     return {
         'id': ext_id,
@@ -61,7 +65,7 @@ def workflow_definition(ext_id, job, task_type, survey_id):
 def create_sample_gather(api_client, job):
     task_type = settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
     # Unique id for tagasauris job within our tagasauris account.
-    ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+    ext_id = make_external_id()
 
     # Tagasauris Job is created with dummy media object (soo ugly...).
     # Before job creation we must configure Tagasauris account and
@@ -105,11 +109,59 @@ def create_sample_gather(api_client, job):
     return _create_job(api_client, ext_id, kwargs)
 
 
+def create_btm(api_client, job):
+    task_type = settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
+    # Unique id for tagasauris job within our tagasauris account.
+    ext_id = make_external_id()
+
+    # Tagasauris Job is created with dummy media object (soo ugly...).
+    # Before job creation we must configure Tagasauris account and
+    # workflows. Account must have disabled billings & workflows need
+    # to have "external" flag set.
+
+    kwargs = workflow_definition(ext_id, job, task_type,
+        settings.TAGASAURIS_SURVEY[task_type])
+
+    samples_per_job = 5
+    baseurl = settings.TAGASAURIS_CALLBACKS
+    templates = baseurl + "/statics/js/templates/tagasauris/"
+    kwargs["workflow"].update({
+        settings.TAGASAURIS_FORM[task_type]: {
+            "config": {
+                "external_app": json.dumps({
+                    "external_js": [
+                        baseurl + "/statics/js/tagasauris/btm.js"
+                    ],
+                    "external_css": [],
+                    "external_data": {
+                        "job_id": job.id,
+                        "token": job.id,
+                        "core_url": baseurl,
+                        "min_samples": samples_per_job,
+                    },
+                    "external_templates": {
+                        "samplegather": templates + "btm.ejs",
+                        "sample": templates + "btm_sample.ejs"
+                    }
+                })
+            }
+        },
+    })
+
+    # TODO: check how may btm should be running?
+    total_mediaobjects = 5
+    url = settings.DUMMY_URLANNOTATOR_URL
+    kwargs.update({"dummy_media":
+        [("dummy", url) for no in xrange(int(total_mediaobjects))]})
+
+    return _create_job(api_client, ext_id, kwargs)
+
+
 def create_voting(api_client, job, mediaobjects):
     task_type = settings.TAGASAURIS_VOTING_WORKFLOW
 
     # Unique id for tagasauris job within our tagasauris account.
-    ext_id = hashlib.md5(str(uuid.uuid4())).hexdigest()
+    ext_id = make_external_id()
 
     # Tagasauris Job is created with dummy media object (soo ugly...).
     # Before job creation we must configure Tagasauris account and

@@ -5,7 +5,6 @@
         rawTemplate = rawTemplate.replace(/&lt;/g, '<');
         rawTemplate = rawTemplate.replace(/&gt;/g, '>');
         return _.template(rawTemplate);
-        // return _.template($("<span />", { html: rawTemplate }).text());
     };
 
     window.Sample = Backbone.Model.extend({

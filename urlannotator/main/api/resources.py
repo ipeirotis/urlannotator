@@ -15,7 +15,8 @@ from django.utils.http import same_origin
 from urlannotator.main.models import (Job, Sample, Worker, LABEL_BROKEN,
     LABEL_YES, LABEL_NO)
 from urlannotator.classification.models import ClassifiedSample, TrainingSet
-from urlannotator.crowdsourcing.models import SampleMapping, WorkerQualityVote
+from urlannotator.crowdsourcing.models import (SampleMapping,
+    WorkerQualityVote, BeatTheMachineSample)
 from urlannotator.logging.models import LogEntry
 
 import logging
@@ -68,6 +69,20 @@ def sanitize_positive_int(value, err='Wrong parameters.'):
             HttpBadRequest(json.dumps({'error': err}))
         )
     return value
+
+
+def sanitize_label(label, err='Wrong label.'):
+    label = label.lower()
+    if label in ['yes', 'good', 'ok']:
+        return LABEL_YES
+    elif label in ['no', 'bad', 'wrong']:
+        return LABEL_NO
+    elif label in ['broken']:
+        return LABEL_BROKEN
+    else:
+        raise ImmediateHttpResponse(
+            HttpBadRequest(json.dumps({'error': err}))
+        )
 
 
 def paginate_list(entry_list, limit, offset, page):
@@ -861,19 +876,23 @@ class SampleResource(ModelResource):
         try:
             job = Job.objects.get(id=kwargs['job_id'])
         except Job.DoesNotExist:
-            return self.create_response(request, {'error': 'Wrong job.'})
+            return self.create_response(request,
+                {'error': 'Wrong job.'},
+                response_class=HttpNotFound)
 
         try:
             data = json.loads(request.raw_post_data)
         except ValueError:
             return self.create_response(request,
-                {'error': 'Malformed request json.'})
+                {'error': 'Malformed request json.'},
+                response_class=HttpBadRequest)
 
         url = data.get('url', None)
         worker_id = data.get('worker_id', None)
         if url is None or worker_id is None:
             return self.create_response(request,
-                {'error': 'Wrong parameters.'})
+                {'error': 'Wrong parameters.'},
+                response_class=HttpBadRequest)
 
         collected = job.get_urls_collected()
         all_urls = job.no_of_urls <= collected
@@ -908,6 +927,131 @@ class SampleResource(ModelResource):
         })
 
 
+class BeatTheMachineResource(ModelResource):
+    """ Entry point for beat the machine.
+    """
+
+    class Meta:
+        resource_name = 'btm'
+        list_allowed_methods = ['post', 'get']
+
+    def override_urls(self):
+        return [
+            url(r'^(?P<resource_name>%s)/add/tagasauris/'
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('btm_tagasauris'),
+                name='btm_tagasauris'),
+            url(r'^(?P<resource_name>%s)/status/tagasauris/'
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('btm_status'),
+                name='btm_status'),
+        ]
+
+    def btm_tagasauris(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        try:
+            job = Job.objects.get(id=kwargs['job_id'])
+        except Job.DoesNotExist:
+            return self.create_response(request,
+                {'error': 'Wrong job.'},
+                response_class=HttpNotFound)
+
+        try:
+            data = json.loads(request.raw_post_data)
+        except ValueError:
+            return self.create_response(request,
+                {'error': 'Malformed request json.'},
+                response_class=HttpBadRequest)
+
+        required = ['url', 'label', 'worker_id']
+        for req in required:
+            if req not in data:
+                return self.create_response(request,
+                    {'error': 'Missing "%s" parameter.' % req},
+                    response_class=HttpBadRequest)
+
+        url = data.get('url')
+        label = sanitize_label(data.get('label'))
+        worker_id = data.get('worker_id')
+        worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
+
+        classified_sample = BeatTheMachineSample.objects.create_by_worker(
+            job=job,
+            url=url,
+            label='',
+            expected_output=label,
+            worker=worker
+        )
+
+        return self.create_response(
+            request,
+            {
+                'request_id': classified_sample.id,
+                'status_url': reverse(
+                    'btm_status',
+                    kwargs={
+                        'resource_name': 'btm',
+                        'api_name': 'v1',
+                        'job_id': job.id,
+                    }
+                ),
+            }
+        )
+
+    def btm_status(self, request, **kwargs):
+        """
+            Checks classification status of BeatTheMachineSample.
+            If it's in progress, suitable result is returned.
+            If it's finished, labels match information is returned.
+
+            Parameters (GET):
+            `request_id` - Integer. Id of request to check status of.
+
+            Response format:
+            `error` - String. Value of error occured. Only included when error
+                      occured.
+            `status` - String. One of 'PENDING', 'SUCCESS'.
+            `labels_matched`- Boolean. True if expected label equals classified
+                              label. False otherwise.
+        """
+        self.method_check(request, allowed=['get'])
+        job_id = kwargs.get('job_id', None)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong job.'},
+                response_class=HttpNotFound,
+            )
+
+        request_id = request.GET.get('request_id', 0)
+        request_id = sanitize_positive_int(request_id)
+
+        try:
+            classified_sample = BeatTheMachineSample.objects.get(
+                job=job,
+                id=request_id,
+            )
+        except BeatTheMachineSample.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong request id.'},
+                response_class=HttpNotFound,
+            )
+
+        resp = {}
+        status = classified_sample.get_status()
+        resp['status'] = status
+        if classified_sample.is_successful():
+            resp['labels_matched'] = classified_sample.labels_matched()
+
+        return self.create_response(request, resp)
+
+
 class VoteResource(ModelResource):
     """ Entry point for externally gathered samples.
     """
@@ -938,7 +1082,8 @@ class VoteResource(ModelResource):
         for req in self.notification_required:
             if req not in data:
                 return self.create_response(request,
-                    {'error': 'Missing "%s" parameter.' % req})
+                    {'error': 'Missing "%s" parameter.' % req},
+                    response_class=HttpBadRequest)
 
         results = data['results']
 

@@ -4,10 +4,11 @@ from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import (Job, Sample, LABEL_NO, LABEL_YES,
+from urlannotator.main.models import (Job, Sample, Worker, LABEL_NO, LABEL_YES,
     LABEL_BROKEN)
 from urlannotator.flow_control.test import ToolsMockedMixin
-from urlannotator.crowdsourcing.models import SampleMapping, WorkerQualityVote
+from urlannotator.crowdsourcing.models import (SampleMapping,
+    WorkerQualityVote, BeatTheMachineSample)
 
 
 class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
@@ -26,7 +27,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
             no_of_urls=10,
         )
 
-        worker_id = 1234
+        worker_id = '1234'
 
         # Verifying first url (and adding)
         newest_url = 'google.com/1'
@@ -104,7 +105,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
             no_of_urls=2,
         )
 
-        worker_id = 1234
+        worker_id = '1234'
 
         # Verifying first url (and adding). We need one more.
         newest_url = 'google.com/1'
@@ -185,7 +186,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
             no_of_urls=10,
         )
 
-        worker_id = 1234
+        worker_id = '1234'
 
         # Error on not existing job.
         newest_url = 'google.com/1'
@@ -196,7 +197,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
 
         resp = self.c.post('%ssample/add/tagasauris/%s/?format=json'
             % (self.api_url, 1234567), json.dumps(data), "text/json")
-        self.assertEqual(resp.status_code, 200)
+        self.assertNotEqual(resp.status_code, 200)
 
         resp_dict = json.loads(resp.content)
 
@@ -213,7 +214,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
 
         resp = self.c.post('%ssample/add/tagasauris/%s/?format=json'
             % (self.api_url, job.id), data)
-        self.assertEqual(resp.status_code, 200)
+        self.assertNotEqual(resp.status_code, 200)
 
         resp_dict = json.loads(resp.content)
 
@@ -229,7 +230,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
 
         resp = self.c.post('%ssample/add/tagasauris/%s/?format=json'
             % (self.api_url, job.id), json.dumps(data), "text/json")
-        self.assertEqual(resp.status_code, 200)
+        self.assertNotEqual(resp.status_code, 200)
 
         resp_dict = json.loads(resp.content)
 
@@ -244,7 +245,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
 
         resp = self.c.post('%ssample/add/tagasauris/%s/?format=json'
             % (self.api_url, job.id), json.dumps(data), "text/json")
-        self.assertEqual(resp.status_code, 200)
+        self.assertNotEqual(resp.status_code, 200)
 
         resp_dict = json.loads(resp.content)
 
@@ -309,3 +310,130 @@ class TagasaurisVoteResourceTests(ToolsMockedMixin, TestCase):
             sample=sample, label=LABEL_YES).count(), 1)
         self.assertEqual(WorkerQualityVote.objects.filter(
             sample=sample, label=LABEL_BROKEN).count(), 1)
+
+
+class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
+
+    def setUp(self):
+        self.api_url = '/api/v1/'
+        self.user = User.objects.create_user(username='testing',
+            password='test')
+        self.c = Client()
+
+    def testAddBTMErrors(self):
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+        )
+
+        data = {}
+        resp = self.c.post('%sbtm/add/tagasauris/%s/?format=json'
+            % (self.api_url, job.id), json.dumps(data), "text/json")
+        resp_dict = json.loads(resp.content)
+        self.assertTrue('error' in resp_dict.keys())
+        self.assertNotEqual(resp.status_code, 200)
+
+        data = {'url': '', 'label': '', 'worker_id': ''}
+        resp = self.c.post('%sbtm/add/tagasauris/%s/?format=json'
+            % (self.api_url, 123456), json.dumps(data), "text/json")
+        resp_dict = json.loads(resp.content)
+        self.assertTrue('error' in resp_dict.keys())
+        self.assertNotEqual(resp.status_code, 200)
+
+        data = {'url': '', 'label': '', 'worker_id': ''}
+        resp = self.c.post('%sbtm/add/tagasauris/%s/?format=json'
+            % (self.api_url, job.id), data)
+        resp_dict = json.loads(resp.content)
+        self.assertTrue('error' in resp_dict.keys())
+        self.assertNotEqual(resp.status_code, 200)
+
+    def testAddBTM(self):
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+        )
+
+        worker_id = '1234'
+        data = {
+            'url': 'google.com',
+            'label': 'yes',
+            'worker_id': worker_id
+        }
+
+        resp = self.c.post('%sbtm/add/tagasauris/%s/?format=json'
+            % (self.api_url, job.id), json.dumps(data), "text/json")
+        self.assertEqual(resp.status_code, 200)
+
+        resp_dict = json.loads(resp.content)
+
+        self.assertTrue('request_id' in resp_dict.keys())
+        self.assertTrue('status_url' in resp_dict.keys())
+
+        self.assertEqual(BeatTheMachineSample.objects.all().count(), 1)
+
+        # Because of eager celery we can check this:
+        btm_sample = BeatTheMachineSample.objects.all()[0]
+        self.assertEqual(resp_dict['request_id'], btm_sample.id)
+        self.assertEqual(btm_sample.worker.external_id, worker_id)
+        self.assertEqual(btm_sample.expected_output, btm_sample.label)
+
+    def testStatusBTMErrors(self):
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+        )
+        worker, created = Worker.objects.get_or_create_tagasauris(1234)
+        classified_sample = BeatTheMachineSample.objects.create_by_worker(
+            job=job,
+            url='google.com',
+            label='',
+            expected_output=LABEL_YES,
+            worker=worker
+        )
+
+        data = {
+            'request_id': classified_sample.id
+        }
+        resp = self.c.get('%sbtm/status/tagasauris/%s/?format=json'
+            % (self.api_url, 123456), data)
+        self.assertNotEqual(resp.status_code, 200)
+        resp_dict = json.loads(resp.content)
+        self.assertTrue('error' in resp_dict.keys())
+
+        data = {
+            'request_id': 1234567
+        }
+        resp = self.c.get('%sbtm/status/tagasauris/%s/?format=json'
+            % (self.api_url, job.id), data)
+        self.assertNotEqual(resp.status_code, 200)
+        resp_dict = json.loads(resp.content)
+        self.assertTrue('error' in resp_dict.keys())
+
+    def testStatusBTM(self):
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+        )
+        worker, created = Worker.objects.get_or_create_tagasauris(1234)
+        classified_sample = BeatTheMachineSample.objects.create_by_worker(
+            job=job,
+            url='google.com',
+            label='',
+            expected_output=LABEL_YES,
+            worker=worker
+        )
+
+        data = {
+            'request_id': classified_sample.id
+        }
+
+        resp = self.c.get('%sbtm/status/tagasauris/%s/?format=json'
+            % (self.api_url, job.id), data)
+        self.assertEqual(resp.status_code, 200)
+
+        resp_dict = json.loads(resp.content)
+
+        self.assertTrue('status' in resp_dict.keys())
+        self.assertTrue('labels_matched' in resp_dict.keys())
+
+        self.assertEqual(resp_dict['labels_matched'], True)
