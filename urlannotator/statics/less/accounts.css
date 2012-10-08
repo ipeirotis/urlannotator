@@ -23,3 +23,7 @@
 header.header {
   display: none;
 }
+.body-login .alert,
+.body-register .alert {
+  margin-right: 25px;
+}
