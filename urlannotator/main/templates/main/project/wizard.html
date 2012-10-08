@@ -9,19 +9,19 @@
   <div class="row">
     <div class="span12">
       {% if wizard_error %}
-        <div class="alert alert-error">
+        <div class="alert alert-error span6 offset3">
           <button class="close" data-dismiss="alert">×</button>
           {{ wizard_error }}
         </div>
       {% endif %}
       {% if wizard_success %}
-        <div class="alert alert-success">
+        <div class="alert alert-success span6 offset3">
           <button class="close" data-dismiss="alert">×</button>
           {{ wizard_success }}
         </div>
       {% endif %}
       {% if wizard_alert %}
-        <div class="alert">
+        <div class="alert span6 offset3">
           <button class="close" data-dismiss="alert">×</button>
           {{ wizard_alert|safe }}
         </div>
