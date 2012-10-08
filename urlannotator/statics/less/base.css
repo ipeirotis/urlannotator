@@ -299,9 +299,7 @@ td.statusCol {
   -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
 }
-.btn-create:hover {
-  background-color: #c79155!important;
-}
+.btn-create:hover,
 .btn-create:active {
   background-color: #c79155!important;
 }
