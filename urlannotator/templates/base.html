@@ -53,7 +53,7 @@
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                           <div class="mail-wrapper">
                           <span class="login-desc">you are logged as:</span>
-                            <span class="mail">{% if user.get_profile.full_name%}{{user.get_profile.full_name}}{%else%}{{ user.username }}{%endif%}</span>
+                            <span class="mail">{% if user.get_profile.full_name %}{{ user.get_profile.full_name }}{% else %}{{ user.username }}{% endif %}</span>
                           </div>
                           <span class="down"></span>
                           <span class="left"></span>

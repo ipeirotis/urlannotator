@@ -34,7 +34,7 @@ body {
 }
 html,
 body {
-  min-width: 950px;
+  min-width: 1000px;
 }
 .sidebar-nav {
   padding: 9px 0;
@@ -305,7 +305,7 @@ td.statusCol {
 }
 .alert-container {
   position: absolute;
-  margin-top: -55px;
+  margin-top: -57px;
 }
 .alert-container .alert {
   margin-bottom: 6px;
