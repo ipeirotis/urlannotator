@@ -161,12 +161,12 @@
                   }
               });
               function insertAlert(text, id){
-                text = '<div id="alert-'+id+'" class="alert alert-info fade in our-alert"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
+                text = '<div id="alert-'+id+'" class="alert alert-info fade in our-alert span6 offset3"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
                 $('#alert-box').prepend(text);
               };
 
               function insertAction(action, id){
-                text = '<div id="action-'+id+'" class="alert action fade in"><button data-dismiss="alert" class="close" type="button">×</button>'+action+'</div>';
+                text = '<div id="action-'+id+'" class="alert action fade in span6 offset3"><button data-dismiss="alert" class="close" type="button">×</button>'+action+'</div>';
                 $('#alert-box').prepend(text);
               };
 
