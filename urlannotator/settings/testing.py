@@ -93,6 +93,8 @@ TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 
+TAGASAURIS_HIT_TYPE = 'social'
+
 TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'

@@ -288,6 +288,8 @@ TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 
+TAGASAURIS_HIT_TYPE = 'mturk'
+
 TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
 TAGASAURIS_VOTING_WORKFLOW = 'voting'
 
