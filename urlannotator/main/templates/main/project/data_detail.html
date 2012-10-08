@@ -2,16 +2,17 @@
 
 {% block data_active %}active{%endblock%}
 {% block project_content %}
-  <div class="row-fluid">
-    <div class="span1">
-      <a href="{% url project_data_view project.id %}">&lt; Back</a>
+  <div class="row">
+    <div class="span">
+      <ul class="pager">
+        <li><a href="{% url project_data_view project.id %}">&lt; Back</a></li>
+      </ul>
     </div>
-    <div class="span11">
-      <h5>URL</h5>
-      <h3>{{sample.url}} <a href="{{sample.url}}" style="font-size:70%">go to link</a></h3>
+    <div class="span10">
+      <h3><a href="{{sample.url}}">{{sample.url}}</a></h3>
     </div>
   </div>
-  <div class="row-fluid">
+  <div class="row">
     <div class="span9">
       &nbsp;
       <img style="width: 100%" src="{{sample.screenshot}}">
