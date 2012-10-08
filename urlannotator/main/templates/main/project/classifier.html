@@ -3,8 +3,8 @@
 {% block classifier_active %}active{% endblock %}
 {% block project_content %}
   <div class="row">
-    <div class="offset8 span3" style="text-align:right">
-      <a href="{% url project_classifier_data project.id %}" class="btn">Export Training Ready Data</a>
+    <div class="span12" style="text-align:right">
+      <a href="{% url project_classifier_data project.id %}" class="btn pull-right">Export Training Ready Data</a>
     </div>
     <div class="span6">
       <div id="classification-results">
