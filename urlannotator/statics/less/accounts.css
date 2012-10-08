@@ -30,3 +30,6 @@ header.header {
 .body-settings hr {
   margin-top: 10px;
 }
+.body-settings .accordion-group {
+  border: 0px none;
+}
