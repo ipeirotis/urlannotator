@@ -13,6 +13,21 @@
 
 
 {% block body-class%}body-register{% endblock %}
+{% block msg %}
+  {% if error %}
+    <div class="alert alert-error {% if login_view %}row{% endif %} span7 offset2">
+      <button class="close" data-dismiss="alert">×</button>
+      {{ error }}
+    </div>
+  {% endif %}
+
+  {% if success %}
+    <div class="alert alert-success span7 offset2">
+      <button class="close" data-dismiss="alert">×</button>
+      {{ success }}
+    </div>
+  {% endif %}
+{% endblock %}
 
 {% block main %}
 <div class="container container-register">

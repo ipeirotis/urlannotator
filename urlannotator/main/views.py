@@ -518,7 +518,7 @@ def debug_login(request):
     user = authenticate(username='test', password='test')
     if user is None:
         user = User.objects.create_user(username='test', email='test@test.com',
-            password='test', first_name='TestName', last_name='TestLastName')
+            password='test')
         user.is_superuser = True
         user.save()
         prof = user.get_profile()
