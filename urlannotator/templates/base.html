@@ -91,22 +91,24 @@
         </div>
 
         <div class="container container-main" role="main">
-          {% block msg %}
-            {% if error %}
-              <div class="alert alert-error {% if login_view %}row{% endif %}">
-                <button class="close" data-dismiss="alert">×</button>
-                {{ error }}
-              </div>
-            {% endif %}
+          <div class="alert-container">
+            {% block msg %}
+              {% if error %}
+                <div class="alert alert-error {% if login_view %}row{% endif %} span6 offset3">
+                  <button class="close" data-dismiss="alert">×</button>
+                  {{ error }}
+                </div>
+              {% endif %}
 
-            {% if success %}
-              <div class="alert alert-success">
-                <button class="close" data-dismiss="alert">×</button>
-                {{ success }}
-              </div>
-            {% endif %}
-          {% endblock %}
-          <div id="alert-box" class=""> </div>
+              {% if success %}
+                <div class="alert alert-success span6 offset3">
+                  <button class="close" data-dismiss="alert">×</button>
+                  {{ success }}
+                </div>
+              {% endif %}
+            {% endblock %}
+            <div id="alert-box" class=""> </div>
+          </div>
           {% block main %}
           {% endblock %}
         </div>

@@ -309,7 +309,17 @@ td.statusCol {
 }
 
 .btn-create {
-  .buttonBackground(#DEAF5D, #C79155);
-  color:white;
-  text-shadow:none;
+  &:hover {
+  }
+  &:active{
+    background-color: #c79155!important;
+  }
+}
+
+.alert-container {
+  position: absolute;
+  margin-top: -55px;
+  .alert {
+    margin-bottom:6px;
+  }
 }
