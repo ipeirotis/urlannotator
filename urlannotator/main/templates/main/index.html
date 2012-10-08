@@ -7,40 +7,41 @@
 {% block main %}
   {% if user.is_authenticated %}
     <div class="row">
-      <div class="span12">
-        <table class="table" style="width:100%">
-          <thead>
-            <tr>
-              <th>Project name</th>
-              <th>Status</th>
-              <th>Beat the machine</th>
-              <th>Links collected</th>
-              <th>Hours spent</th>
-              <th>Total cost (USD)</th>
-              <th>Budget (USD)</th>
-              <th>Classifier performance</th>
-              <th>Progress</th>
-            </tr>
-          </thead>
-          <tbody>
-          {% for p in projects %}
-            <tr>
-              <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}"><i class="icon-info-sign"></i></a></td>
-              <td class="statusCol">{{p.get_status}}</td>
-              <td class="beatMachineCol">--</td>
-              <td class="linksCol">{{p.get_urls_collected}}</td>
-              <td class="hoursSpentCol">{{p.get_hours_spent}}</td>
-              <td class="totalCostCol">{{p.get_cost}}</td>
-              <td class="budgetCol">{{p.budget}}</td>
-              <td class="classfierCol">{{p.get_classifier_performance}}</td>
-              <td class="progressCol">{{p.get_progress}}%</td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% if not projects %}
-        <div id="nothing-to-display" class="offset5 span4" style="font-size:120%; font-weight:bold">Nothing to display here.</div>
+      {% if projects %}
+        <div class="span12">
+          <table class="table" style="width:100%">
+            <thead>
+              <tr>
+                <th>Project name</th>
+                <th>Status</th>
+                <th>Beat the machine</th>
+                <th>Links collected</th>
+                <th>Hours spent</th>
+                <th>Total cost (USD)</th>
+                <th>Budget (USD)</th>
+                <th>Classifier performance</th>
+                <th>Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for p in projects %}
+              <tr>
+                <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}"><i class="icon-info-sign"></i></a></td>
+                <td class="statusCol">{{p.get_status}}</td>
+                <td class="beatMachineCol">--</td>
+                <td class="linksCol">{{p.get_urls_collected}}</td>
+                <td class="hoursSpentCol">{{p.get_hours_spent}}</td>
+                <td class="totalCostCol">{{p.get_cost}}</td>
+                <td class="budgetCol">{{p.budget}}</td>
+                <td class="classfierCol">{{p.get_classifier_performance}}</td>
+                <td class="progressCol">{{p.get_progress}}%</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div id="nothing-to-display" class="offset5 span4" style="font-size:120%; font-weight:bold">There's no projects. Create <a href="{% url project_wizard %}">new</a>!</div>
       {% endif %}
     </div>
   {% else %}

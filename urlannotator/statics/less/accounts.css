@@ -25,5 +25,5 @@ header.header {
 }
 .body-login .alert,
 .body-register .alert {
-  margin-right: 25px;
+  padding-right: 25px;
 }
