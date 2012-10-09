@@ -56,7 +56,7 @@ def workflow_definition(ext_id, job, task_type, survey_id):
             survey_id: {
                 "config": {
                     "hit_type": settings.TAGASAURIS_HIT_TYPE,
-                    # "hit_title": "Gather samples",
+                    "hit_title": "Gather samples for \"%s\"" % job.title,
                     # "workers_per_hit": "1",
                     # "price": "0.08",
                     # "job_external_id": "yes",
