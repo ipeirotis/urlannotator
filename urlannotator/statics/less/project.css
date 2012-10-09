@@ -31,7 +31,7 @@
   height: 200px;
 }
 #performanceGraph {
-  height: 235px;
+  height: 234px;
 }
 .body-draft div.navbar .bottom-bar {
   background-color: #e0b25d;
@@ -239,5 +239,8 @@ table#btm-statistics td:nth-of-type(2) {
   display: block;
 }
 .container-main {
+  padding-bottom: 80px;
+}
+.body-overview .container-main {
   padding-bottom: 0px;
 }

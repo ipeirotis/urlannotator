@@ -3,31 +3,41 @@
 {% block classifier_active %}active{% endblock %}
 {% block project_content %}
   <div class="row">
-    <div class="span1">
-      <h3>Classifier</h3>
+    <div class="span12" style="text-align:right">
+      <a href="{% url project_classifier_data project.id %}" class="btn pull-right">Export Training Ready Data</a>
     </div>
-    <div class="span8">&nbsp;</div>
-    <div class="span3" style="text-align:right">
-      <a href="{% url project_classifier_data project.id %}" class="btn">Export Training Ready Data</a>
+    <div class="span6">
+      <div id="classification-results">
+        <h4>Classification Results</h4>
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">Preview</th>
+              <th>URL</th>
+              <th style="width: 50px;">Class</th>
+              <th style="width: 130px;">Calculated Class Probability</th>
+            </tr>
+          </thead>
+          <tbody id="classifier-history" data-bind="foreach: entries">
+            <tr>
+              <td>
+                <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}"><img data-bind="visible: screenshot, attr: {src: screenshot}" style="width: 60px; height: 60px;"></a>
+              </td>
+              <td>
+                <a data-bind="attr: {href: url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
+              </td>
+              <td>
+                <span data-bind="text: getLabel">&nbsp;</span>
+              </td>
+              <td>
+                <span data-bind="text: getProbability">&nbsp;</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
-  <div class="row">
-    <div class="span2">
-      <h4>Classifier performance</h4>
-    </div>
-    <div class="span7">&nbsp;</div>
-    <!-- <div class="span3" style="text-align:right">
-      <select>
-        <option>04/19/2012-04/19/2012</option>
-      </select>
-    </div> -->
-  </div>
-  <div class="row" id="performanceGraph">
-    Graph
-  </div>
-  {% if project.is_classifier_trained %}
-  <div class="row">
-    <div class="span7">
+    <div class="span6">
       <h4>Test classifier</h4>
       To test the classifier you can input either URLs or text.
       <form name="classifyForm" method="POST" action="" onsubmit="return submitClassify();">
@@ -73,7 +83,13 @@
       </table>
       </form>
     </div>
-    <div class="span5">
+    <div class="span6 offset6">
+      <h4>Classifier performance</h4>
+      <div class="row" id="performanceGraph">
+        Graph
+      </div>
+    </div>
+    <div class="span6 offset6">
       <h4>Classifier statistics</h4>
       <table class="table" id="classifier-stats">
         <thead></thead>
@@ -86,35 +102,9 @@
       </table>
     </div>
   </div>
-  <div id="classification-results">
-    <h4>Classification Results</h4>
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width: 60px;">Preview</th>
-          <th>URL</th>
-          <th style="width: 50px;">Class</th>
-          <th style="width: 130px;">Calculated Class Probability</th>
-        </tr>
-      </thead>
-      <tbody id="classifier-history" data-bind="foreach: entries">
-        <tr>
-          <td>
-            <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}"><img data-bind="visible: screenshot, attr: {src: screenshot}" style="width: 60px; height: 60px;"></a>
-          </td>
-          <td>
-            <a data-bind="attr: {href: url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
-          </td>
-          <td>
-            <span data-bind="text: getLabel">&nbsp;</span>
-          </td>
-          <td>
-            <span data-bind="text: getProbability">&nbsp;</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+
+  {% if project.is_classifier_trained %}
+
   {% endif %}
 </div>
 {% endblock %}

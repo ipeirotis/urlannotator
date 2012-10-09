@@ -1,12 +1,12 @@
 {
-    "settings_name": "ci",
-    "instance": "staging",
+    "settings_name": "stable",
+    "instance": "stable",
     "domain": "urlannotator.10clouds.com",
     "db_name": "database.sqlite3.db",
     "db_user": "",
     "db_password": "",
     "db_port": "",
-    "pip_cache": "/tmp/urlannotator_pip",
+    "pip_cache": "/tmp/urlannotator_stable_pip",
     "pip_requirements": [
         "base.txt", "devel.txt", "production.txt"
     ],

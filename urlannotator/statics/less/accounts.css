@@ -23,3 +23,13 @@
 header.header {
   display: none;
 }
+.body-login .alert,
+.body-register .alert {
+  padding-right: 25px;
+}
+.body-settings hr {
+  margin-top: 10px;
+}
+.body-settings .accordion-group {
+  border: 0px none;
+}

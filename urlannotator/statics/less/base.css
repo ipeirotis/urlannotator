@@ -34,7 +34,7 @@ body {
 }
 html,
 body {
-  min-width: 950px;
+  min-width: 1000px;
 }
 .sidebar-nav {
   padding: 9px 0;
@@ -210,11 +210,11 @@ div.navbar .navbar-inner .container div.nav-collapse.in {
   background-color: black;
 }
 div.navbar span.create-icon {
-  background: url('/statics/img/url_anno_header_create_icon.png') no-repeat 0px 0px;
+  background: url('/statics/img/url_anno_header_create_icon.png') no-repeat -2px -1px;
   display: block;
   float: left;
   height: 20px;
-  width: 20px;
+  width: 24px;
 }
 div.navbar .bottom-bar {
   background: #e0b25d url('/statics/img/url_anno_header_navbar2_bg.png') no-repeat 0px 0px;
@@ -299,30 +299,14 @@ td.statusCol {
   -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
 }
-.btn-create {
-  background-color: #d5a35a;
-  background-image: -moz-linear-gradient(top, #deaf5d, #c79155);
-  background-image: -ms-linear-gradient(top, #deaf5d, #c79155);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#deaf5d), to(#c79155));
-  background-image: -webkit-linear-gradient(top, #deaf5d, #c79155);
-  background-image: -o-linear-gradient(top, #deaf5d, #c79155);
-  background-image: linear-gradient(top, #deaf5d, #c79155);
-  background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#deaf5d', endColorstr='#c79155', GradientType=0);
-  border-color: #c79155 #c79155 #9c6b33;
-  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
-  filter: progid:dximagetransform.microsoft.gradient(enabled=false);
-  color: white;
-  text-shadow: none;
-}
 .btn-create:hover,
-.btn-create:active,
-.btn-create.active,
-.btn-create.disabled,
-.btn-create[disabled] {
-  background-color: #c79155;
+.btn-create:active {
+  background-color: #c79155!important;
 }
-.btn-create:active,
-.btn-create.active {
-  background-color: #af783a \9;
+.alert-container {
+  position: absolute;
+  margin-top: -57px;
+}
+.alert-container .alert {
+  margin-bottom: 6px;
 }

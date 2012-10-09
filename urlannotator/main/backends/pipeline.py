@@ -1,5 +1,4 @@
 from django.contrib.auth.models import User
-from django.shortcuts import redirect
 
 
 def create_user(request, user, details, *args, **kwargs):
@@ -11,21 +10,14 @@ def create_user(request, user, details, *args, **kwargs):
     if user is not None:
         return None
 
-    email = details.get('email')
     is_new = False
     user = None
 
-    if 'registration' in request.session:
-        username = '%s-%s'\
-            % (request.session['registration'], details['username'])
-        user = User.objects.create_user(username=username, email=email,
-            password='!')
-        is_new = True
-        request.session.pop('registration')
-    elif user is None:
-        request.session['error'] = "Account for that social media doesn't "\
-            "exist. Please register first."
-        return redirect('register')
+    username = details['username']
+    email = details.get('email') or username
+    user = User.objects.create_user(username=username, email=email,
+        password='!')
+    is_new = True
 
     return {
         'user': user,

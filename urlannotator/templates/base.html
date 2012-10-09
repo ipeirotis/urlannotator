@@ -17,7 +17,7 @@
         <meta name="description" content="">
         <meta name="author" content="">
 
-        <link rel="shortcut icon" href="{{STATIC_URL}}img/favicon.png">
+        <link rel="shortcut icon" href="{{STATIC_URL}}img/favicon.ico">
 
         <!-- Mobile viewport optimized: h5bp.com/viewport -->
         <meta name="viewport" content="width=device-width">
@@ -53,7 +53,15 @@
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                           <div class="mail-wrapper">
                           <span class="login-desc">you are logged as:</span>
-                            <span class="mail">{% if user.get_profile.full_name%}{{user.get_profile.full_name}}{%else%}{{ user.username }}{%endif%}</span>
+                            <span class="mail">
+                              {% if user.get_profile.full_name %}
+                                {{ user.get_profile.full_name }}
+                              {% elif user.first_name and user.last_name %}
+                                {{ user.first_name }} {{ user.last_name }}
+                              {% elif user.email %}
+                                {{ user.email }}
+                              {% endif %}
+                              </span>
                           </div>
                           <span class="down"></span>
                           <span class="left"></span>
@@ -91,22 +99,24 @@
         </div>
 
         <div class="container container-main" role="main">
-          {% block msg %}
-            {% if error %}
-              <div class="alert alert-error {% if login_view %}row{% endif %}">
-                <button class="close" data-dismiss="alert">×</button>
-                {{ error }}
-              </div>
-            {% endif %}
+          <div class="alert-container row">
+            {% block msg %}
+              {% if error %}
+                <div class="alert alert-error {% if login_view %}row{% endif %} span9 offset1">
+                  <button class="close" data-dismiss="alert">×</button>
+                  {{ error }}
+                </div>
+              {% endif %}
 
-            {% if success %}
-              <div class="alert alert-success">
-                <button class="close" data-dismiss="alert">×</button>
-                {{ success }}
-              </div>
-            {% endif %}
-          {% endblock %}
-          <div id="alert-box" class=""> </div>
+              {% if success %}
+                <div class="alert alert-success span9 offset1">
+                  <button class="close" data-dismiss="alert">×</button>
+                  {{ success }}
+                </div>
+              {% endif %}
+            {% endblock %}
+            <div id="alert-box" class=""> </div>
+          </div>
           {% block main %}
           {% endblock %}
         </div>
@@ -158,13 +168,14 @@
                       }
                   }
               });
+              {% if user.get_profile.alerts %}
               function insertAlert(text, id){
-                text = '<div id="alert-'+id+'" class="alert alert-info fade in our-alert"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
+                text = '<div id="alert-'+id+'" class="alert alert-info fade in our-alert span9 offset1"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
                 $('#alert-box').prepend(text);
               };
 
               function insertAction(action, id){
-                text = '<div id="action-'+id+'" class="alert action fade in"><button data-dismiss="alert" class="close" type="button">×</button>'+action+'</div>';
+                text = '<div id="action-'+id+'" class="alert action fade in span9 offset1"><button data-dismiss="alert" class="close" type="button">×</button>'+action+'</div>';
                 $('#alert-box').prepend(text);
               };
 
@@ -204,6 +215,7 @@
 
               checkAlerts();
               setInterval(checkAlerts, 10 * 1000);
+              {% endif %}
             </script>
             {% endif %}
         {% endblock %}

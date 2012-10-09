@@ -1,7 +1,10 @@
 from django.db import models
 from django.conf import settings
+
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation)
+from urlannotator.classification.models import (ClassifiedSample,
+    ClassifiedSampleManager)
 
 
 class WorkerQualityVoteManager(models.Manager):
@@ -27,11 +30,21 @@ class WorkerQualityVote(models.Model):
         unique_together = ['worker', 'sample']
 
 
-class BeatTheMachineSamples(Sample):
-    expected_output = models.CharField(max_length=10)
-    classifier_output = models.CharField(max_length=10)
+class BeatTheMachineSampleManager(ClassifiedSampleManager):
+    def create_by_worker(self, *args, **kwargs):
+        return self.create_by_owner(*args, **kwargs)
+
+
+class BeatTheMachineSample(ClassifiedSample):
+    worker = models.ForeignKey(Worker)
+    expected_output = models.CharField(max_length=10, choices=LABEL_CHOICES)
     error_ratio = models.DecimalField(default=0, decimal_places=5,
         max_digits=7)
+
+    objects = BeatTheMachineSampleManager()
+
+    def labels_matched(self):
+        return self.expected_output == self.label
 
 
 class TagasaurisJobs(models.Model):

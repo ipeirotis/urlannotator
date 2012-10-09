@@ -157,9 +157,18 @@ class Classifier247(Classifier):
                     reader_id=writer.id,
                 )
 
-            # Refresh our `entry` object
-            entry = ClassifierModel.objects.get(id=self.id)
-            update_classifier_stats(self, entry.job)
+            try:
+                # Refresh our `entry` object
+                entry = ClassifierModel.objects.get(id=self.id)
+                update_classifier_stats(self, entry.job)
+            except Exception, e:
+                # If we fail during updating classifier stats - log it.
+                send_event(
+                    "EventClassifierCriticalTrainError",
+                    job_id=entry.job_id,
+                    message=e.message,
+                )
+                return
 
         finally:
             self.sync247.modified_release()
@@ -518,7 +527,7 @@ class GooglePredictionClassifier(Classifier):
         gs_upload_file(file_out)
         return file_name
 
-    def train(self, samples=[], turn_off=True, set_id=0):
+    def train(self, samples=[], turn_off=True, set_id=0 ):
         """
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample. Required model
@@ -569,12 +578,14 @@ class GooglePredictionClassifier(Classifier):
 
         label_probability = {}
         for score in result['outputMulti']:
-            label_probability[score['label'].capitalize()] = score['score']
-        sample.label_probability = json.dumps(label_probability)
-        sample.label = result['outputLabel']
-        sample.save()
+            probability = round(score['score'], 3)
+            label_probability[score['label'].capitalize()] = probability
 
-        return result
+        return {
+            'label': result['outputLabel'],
+            'labels_probability': label_probability,
+            'result': result,
+        }
 
     def classify(self, sample):
         """
@@ -582,14 +593,22 @@ class GooglePredictionClassifier(Classifier):
         """
         result = self._papi_classify(sample.sample)
         if result:
-            return result.get('outputLabel', None)
+            sample.label_probability = json.dumps(result['labels_probability'])
+            sample.label = result['label']
+            sample.save()
+            return result['label']
         else:
             return None
 
     def classify_with_info(self, sample):
         """
             Classifies given sample and returns more detailed data.
-            Currently only label.
         """
         result = self._papi_classify(sample.sample)
-        return result
+        if result:
+            sample.label_probability = json.dumps(result['labels_probability'])
+            sample.label = result['label']
+            sample.save()
+            return result['result']
+        else:
+            return None

@@ -286,7 +286,17 @@ TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 TAGASAURIS_LOGIN = 'urlannotator'
 TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'
-TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+TAGASAURIS_USE_SANDBOX = True
+
+TAGASAURIS_HIT_SOCIAL_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+TAGASAURIS_HIT_SANDBOX_URL = "https://workersandbox.mturk.com/mturk/preview?groupId=%s"
+TAGASAURIS_HIT_MTURK_URL = "https://mturk.com/mturk/preview?groupId=%s"
+
+TAGASAURIS_HIT_URL = TAGASAURIS_HIT_SANDBOX_URL
+
+TAGASAURIS_MTURK = 'mturk'
+TAGASAURIS_SOCIAL = 'social'
+TAGASAURIS_HIT_TYPE = TAGASAURIS_MTURK
 
 TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
 TAGASAURIS_VOTING_WORKFLOW = 'voting'

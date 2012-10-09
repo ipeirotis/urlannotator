@@ -17,7 +17,7 @@
     {% if field.errors or field.help_text %}
         <span class="help-inline">
         {% for err in field.errors %}
-        {{err}}<br>
+            {{err}}<br>
         {% endfor %}
         {% if field.help_text %}
             {{ field.help_text|safe }}<br>

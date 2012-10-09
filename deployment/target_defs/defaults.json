@@ -2,6 +2,7 @@
     "project_inner": "urlannotator",
     "django_project_name": "urlannotator",
     "manage_py_dir": "",
+    "domain": "urlannotator.10clouds.com",
     "settings_name": "defaults",
     "source_url": "git@github.com:10clouds/urlannotator.git",
     "default_prefix": "urlannotator",

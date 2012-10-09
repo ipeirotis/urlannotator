@@ -11,7 +11,7 @@ html, body {
 }
 
 html, body {
-  min-width:950px;
+  min-width:1000px;
 }
 
 
@@ -212,11 +212,11 @@ div.navbar {
   }
 
   span.create-icon {
-    background: url('/statics/img/url_anno_header_create_icon.png') no-repeat 0px 0px;
+    background: url('/statics/img/url_anno_header_create_icon.png') no-repeat -2px -1px;
     display: block;
     float: left;
     height: 20px;
-    width: 20px;
+    width: 24px;
   }
 
   .bottom-bar {
@@ -250,9 +250,11 @@ div.navbar {
   margin-bottom:-81px;
 }
 
+
 .container-main {
   padding-bottom:81px;
 }
+// this fix problems with overlaping footer
 .container-main2 {
   padding-bottom:81px;
 }
@@ -307,7 +309,15 @@ td.statusCol {
 }
 
 .btn-create {
-  .buttonBackground(#DEAF5D, #C79155);
-  color:white;
-  text-shadow:none;
+  &:hover, &:active {
+    background-color: #c79155!important;
+  }
+}
+
+.alert-container {
+  position: absolute;
+  margin-top: -57px;
+  .alert {
+    margin-bottom:6px;
+  }
 }

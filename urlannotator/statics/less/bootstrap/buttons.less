@@ -116,7 +116,9 @@
 .btn-info,
 .btn-info:hover,
 .btn-inverse,
-.btn-inverse:hover {
+.btn-inverse:hover
+.btn-create,
+.btn-create:hover{
   text-shadow: 0 -1px 0 rgba(0,0,0,.25);
   color: @white;
 }
@@ -126,7 +128,8 @@
 .btn-danger.active,
 .btn-success.active,
 .btn-info.active,
-.btn-inverse.active {
+.btn-inverse.active,
+.btn-create.active {
   color: rgba(255,255,255,.75);
 }
 
@@ -154,6 +157,9 @@
 // Inverse appears as dark gray
 .btn-inverse {
   .buttonBackground(@btnInverseBackground, @btnInverseBackgroundHighlight);
+}
+.btn-create {
+  .buttonBackground(@btnCreateBackground, @btnCreateBackgroundHighlight);
 }
 
 

@@ -2418,7 +2418,8 @@ ul.icons li .icon-large:before {
 .btn-info,
 .btn-info:hover,
 .btn-inverse,
-.btn-inverse:hover {
+.btn-inverse:hover.btn-create,
+.btn-create:hover {
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
   color: #ffffff;
 }
@@ -2427,7 +2428,8 @@ ul.icons li .icon-large:before {
 .btn-danger.active,
 .btn-success.active,
 .btn-info.active,
-.btn-inverse.active {
+.btn-inverse.active,
+.btn-create.active {
   color: rgba(255, 255, 255, 0.75);
 }
 .btn-primary {
@@ -2579,6 +2581,31 @@ ul.icons li .icon-large:before {
 .btn-inverse:active,
 .btn-inverse.active {
   background-color: #080808 \9;
+}
+.btn-create {
+  background-color: #d5a35a;
+  background-image: -moz-linear-gradient(top, #deaf5d, #c79155);
+  background-image: -ms-linear-gradient(top, #deaf5d, #c79155);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#deaf5d), to(#c79155));
+  background-image: -webkit-linear-gradient(top, #deaf5d, #c79155);
+  background-image: -o-linear-gradient(top, #deaf5d, #c79155);
+  background-image: linear-gradient(top, #deaf5d, #c79155);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#deaf5d', endColorstr='#c79155', GradientType=0);
+  border-color: #c79155 #c79155 #9c6b33;
+  border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+  filter: progid:dximagetransform.microsoft.gradient(enabled=false);
+}
+.btn-create:hover,
+.btn-create:active,
+.btn-create.active,
+.btn-create.disabled,
+.btn-create[disabled] {
+  background-color: #c79155;
+}
+.btn-create:active,
+.btn-create.active {
+  background-color: #af783a \9;
 }
 button.btn,
 input[type="submit"].btn {
