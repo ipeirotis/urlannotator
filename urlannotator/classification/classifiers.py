@@ -157,9 +157,18 @@ class Classifier247(Classifier):
                     reader_id=writer.id,
                 )
 
-            # Refresh our `entry` object
-            entry = ClassifierModel.objects.get(id=self.id)
-            update_classifier_stats(self, entry.job)
+            try:
+                # Refresh our `entry` object
+                entry = ClassifierModel.objects.get(id=self.id)
+                update_classifier_stats(self, entry.job)
+            except Exception, e:
+                # If we fail during updating classifier stats - log it.
+                send_event(
+                    "EventClassifierCriticalTrainError",
+                    job_id=entry.job_id,
+                    message=e.message,
+                )
+                return
 
         finally:
             self.sync247.modified_release()

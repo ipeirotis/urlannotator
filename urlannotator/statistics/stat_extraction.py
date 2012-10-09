@@ -205,8 +205,14 @@ def update_classifier_stats(classifier, job):
     stats = {}
     analyze = classifier.analyze()
     for metric in CLASSIFIER_PERFORMANCE_METRICS:
-        v = metric(classifier, job, analyze)
-        stats[v[0]] = v[1]
+        try:
+            v = metric(classifier, job, analyze)
+            stats[v[0]] = v[1]
+        except Exception, e:
+            raise Exception(
+                '%s error while computing metric %s with data %s'
+                % (e.message, metric, json.dumps(analyze))
+            )
 
     ClassifierPerformance.objects.create(
         job=job,
