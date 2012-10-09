@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 
 
-def create_user(request, user, details, uid, *args, **kwargs):
+def create_user(request, user, details, *args, **kwargs):
     """
         Inserted into django_social_auth pipeline to differentiate social
         register requests from login requests.
@@ -13,7 +13,6 @@ def create_user(request, user, details, uid, *args, **kwargs):
     is_new = False
     user = None
 
-    print details, uid, kwargs
     username = details['username']
     email = details.get('email') or username
     user = User.objects.create_user(username=username, email=email,
