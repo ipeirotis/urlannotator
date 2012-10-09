@@ -168,6 +168,7 @@
                       }
                   }
               });
+              {% if user.get_profile.alerts %}
               function insertAlert(text, id){
                 text = '<div id="alert-'+id+'" class="alert alert-info fade in our-alert span9 offset1"><button data-dismiss="alert" class="close" type="button">×</button>'+text+'</div>';
                 $('#alert-box').prepend(text);
@@ -214,6 +215,7 @@
 
               checkAlerts();
               setInterval(checkAlerts, 10 * 1000);
+              {% endif %}
             </script>
             {% endif %}
         {% endblock %}
