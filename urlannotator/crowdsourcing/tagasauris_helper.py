@@ -211,9 +211,9 @@ def _create_job(api_client, ext_id, kwargs):
     result = api_client.get_job(external_id=ext_id)
 
     if settings.TAGASAURIS_HIT_TYPE == settings.TAGASAURIS_MTURK:
-        hit_type = 'external_id'
-    else:
         hit_type = 'mturk_group_id'
+    else:
+        hit_type = 'external_id'
 
     hit = result['hits'][0][hit_type] if result['hits'] else None
 

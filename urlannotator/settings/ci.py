@@ -87,7 +87,7 @@ TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HIT_SANDBOX_URL
 
-TAGASAURIS_HIT_TYPE = 'mturk'
+TAGASAURIS_HIT_TYPE = TAGASAURIS_MTURK
 
 # TODO: This is ugly... any ideas how to change this?
 TAGASAURIS_NOTIFY = {
