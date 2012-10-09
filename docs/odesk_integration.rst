@@ -29,10 +29,6 @@ Issues:
 
 - oDesk allows to query their user only by cipher text, not via uuid. As such,
   we need to retrieve it from worker application approval, if provided (see 2.2)
-- oDesk doesn't allow to perform anonymous queries to their API to fetch users'
-  profile info (called Provider Info)
-- The application needs to have it's own oDesk account to query API for user
-  profiles
 
 2. oDesk contract management
 ============================
@@ -40,7 +36,7 @@ Issues:
 oDesk job workflow resembles the following:
 ::
 
-                    Contractor posts a job (hourly/fixed price)
+                    Contractor posts a job (fixed price)
                                 |
                                 V
                     Worker applies to the job
@@ -75,13 +71,12 @@ Possible solution:
   the return value inside DB
 
 Job is posted as a fixed price job, with parameters given at job wizard at our
-page.
+page. Enough jobs have to be posted in order to ensure enough URLs are found.
 
 Issues:
 
-- The application needs very own oDesk contractor credentials to make API calls
-  from
-- oDesk API Python bindings are missing Post a Job functionality
+- Missing budget division algorithm to split it into contracts
+- Minimum job budget is 5$
 
 2.2 Active worker applications query
 ====================================
@@ -97,7 +92,6 @@ Possible solutions:
 
 Issues:
 
-- We need a contractor account on oDesk we can use to make queries from
 - Uncertain content of Hiring > Jobs HR API > get a Specific Job API call
 
 2.3 Worker application approval/decline
@@ -112,12 +106,18 @@ Possible solutions:
 - Using `requests`, or other library, imitate real user's application approval
   or decline
 
+After accepting the worker, we have to send him an appriopriate message with
+futher details like Tagasauris link etc.
+Furthermore, Tagasauris has to be able to tell us who sent us the sample from
+oDesk.
+
 Issues:
 
 - Missing API calls
 - Python bindings to the above
 - If we are using libraries like `requests`, we have to be prepared for all kinds
   of 'Out of Service' messages, changes in page layout, etc.
+- Missing Tagasauris API calls to get worker's details.
 
 2.4. Worker contract end
 ========================
@@ -148,7 +148,6 @@ Outside the US:
 
 Issues:
 
-- We need a contractor account on oDesk we can use to make queries from
 - Missing API calls for 2nd option
 - Python bindins for the above
 - Fees
