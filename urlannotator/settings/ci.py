@@ -99,3 +99,5 @@ TAGASAURIS_NOTIFY = {
 TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'
+
+SOCIAL_AUTH_RAISE_EXCEPTIONS = False
