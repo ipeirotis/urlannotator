@@ -76,7 +76,10 @@ def create_sample_gather(api_client, job):
     ext_id = make_external_id()
 
     # Compute split of tasks per mediaobjects and workers.
-    gather_goal = int(job.no_of_urls * 1.2)
+    samples_goal_multiplication = 1.2
+    samples_per_job = 5
+    gather_goal = int(job.no_of_urls * samples_goal_multiplication /
+        samples_per_job)
     split = math.ceil(math.sqrt(gather_goal))
     workers_per_hit = split
     total_mediaobjects = split
@@ -91,7 +94,6 @@ def create_sample_gather(api_client, job):
         hit_title="Gather web page urls for \"%s\"",
         workers_per_hit=workers_per_hit)
 
-    samples_per_job = 5
     baseurl = settings.TAGASAURIS_CALLBACKS
     templates = baseurl + "/statics/js/templates/tagasauris/"
     kwargs["workflow"].update({
