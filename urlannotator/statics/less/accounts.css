@@ -33,3 +33,8 @@ header.header {
 .body-settings .accordion-group {
   border: 0px none;
 }
+.body-settings .accordion-heading a,
+.body-settings .accordion-heading a:hover {
+  text-decoration: none;
+  color: #E0B25D;
+}
