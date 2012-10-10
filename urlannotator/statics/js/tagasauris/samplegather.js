@@ -114,6 +114,9 @@
             } else {
                 this.$('.add-new-sample').removeAttr("disabled");
             }
+
+            this.$('.sample-counter').html("Gathered: " +
+                this.gathered.toString() + "/" + this.minSamples.toString());
         },
 
         checkAddNewSample: function (e) {
@@ -147,6 +150,7 @@
                             sample.reason = data.result;
                         }
                         sample.update();
+                        that.renderPartial();
 
                         if (that.gathered >= that.minSamples || data.all === true) {
                             that.clearValidatedSamples();
