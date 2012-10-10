@@ -147,12 +147,9 @@ table#btm-statistics td:nth-of-type(2) {
   -moz-border-radius: 0px;
   border-radius: 0px;
 }
-.accordion-group #collapseOne {
-  margin-bottom: 10px;
-}
 .accordion-group .accordion-heading {
   padding-bottom: 10px;
-  padding-top: 15px;
+  padding-top: 10px;
 }
 .accordion-group .accordion-heading .accordion-toggle {
   padding: 0px;
@@ -191,6 +188,9 @@ table#btm-statistics td:nth-of-type(2) {
 .accordion-group .accordion-inner {
   border: 0px none;
   padding: 0px;
+}
+.accordion-group .accordion-inner .container {
+  margin-bottom: 20px;
 }
 .accordion-group .accordion-inner .update-box {
   margin-bottom: 10px;
