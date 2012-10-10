@@ -102,6 +102,7 @@ def create_sample_gather(api_client, job):
                 "instruction_url": "",
                 "external_app": json.dumps({
                     "external_js": [
+                        baseurl + "/statics/js/tagasauris/core.js",
                         baseurl + "/statics/js/tagasauris/samplegather.js"
                     ],
                     "external_css": [],
@@ -149,6 +150,7 @@ def create_btm(api_client, job):
             "config": {
                 "external_app": json.dumps({
                     "external_js": [
+                        baseurl + "/statics/js/tagasauris/core.js",
                         baseurl + "/statics/js/tagasauris/btm.js"
                     ],
                     "external_css": [],
@@ -159,8 +161,8 @@ def create_btm(api_client, job):
                         "min_samples": samples_per_job,
                     },
                     "external_templates": {
-                        "samplegather": templates + "btm.ejs",
-                        "sample": templates + "btm_sample.ejs"
+                        "btm": templates + "btm.ejs",
+                        "btm_sample": templates + "btm_sample.ejs"
                     }
                 })
             }

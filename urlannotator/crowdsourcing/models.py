@@ -44,7 +44,7 @@ class BeatTheMachineSample(ClassifiedSample):
     objects = BeatTheMachineSampleManager()
 
     def labels_matched(self):
-        return self.expected_output == self.label
+        return self.expected_output.lower() == self.label.lower()
 
 
 class TagasaurisJobs(models.Model):
