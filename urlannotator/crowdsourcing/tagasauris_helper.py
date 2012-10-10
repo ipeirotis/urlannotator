@@ -42,7 +42,8 @@ def stop_job(external_id):
     tc.wait_for_complete(res['task_id'])
 
 
-def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s"):
+def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s",
+        workers_per_hit=1):
     return {
         "id": ext_id,
         "title": job.title,
@@ -57,7 +58,7 @@ def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s"):
                 "config": {
                     "hit_type": settings.TAGASAURIS_HIT_TYPE,
                     "hit_title": hit_title % job.title,
-                    # "workers_per_hit": "1",
+                    "workers_per_hit": workers_per_hit,
                     "price": "0.01",
                     # "job_external_id": "yes",
                     # "hit_description": "Gather samples",
@@ -74,6 +75,12 @@ def create_sample_gather(api_client, job):
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = make_external_id()
 
+    # Compute split of tasks per mediaobjects and workers.
+    gather_goal = int(job.no_of_urls * 1.2)
+    split = math.ceil(math.sqrt(gather_goal))
+    workers_per_hit = split
+    total_mediaobjects = split
+
     # Tagasauris Job is created with dummy media object (soo ugly...).
     # Before job creation we must configure Tagasauris account and
     # workflows. Account must have disabled billings & workflows need
@@ -81,7 +88,8 @@ def create_sample_gather(api_client, job):
 
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
-        "Gather web page urls for \"%s\"")
+        hit_title="Gather web page urls for \"%s\"",
+        workers_per_hit=workers_per_hit)
 
     samples_per_job = 5
     baseurl = settings.TAGASAURIS_CALLBACKS
@@ -110,10 +118,9 @@ def create_sample_gather(api_client, job):
         },
     })
 
-    total_mediaobjects = math.ceil(float(job.no_of_urls) / samples_per_job)
     url = settings.DUMMY_URLANNOTATOR_URL
     kwargs.update({"dummy_media":
-        [("dummy", url) for no in xrange(int(total_mediaobjects))]})
+        [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})
 
     return _create_job(api_client, ext_id, kwargs)
 
@@ -162,7 +169,7 @@ def create_btm(api_client, job):
     total_mediaobjects = 5
     url = settings.DUMMY_URLANNOTATOR_URL
     kwargs.update({"dummy_media":
-        [("dummy", url) for no in xrange(int(total_mediaobjects))]})
+        [("dummy-" + no, url) for no in xrange(int(total_mediaobjects))]})
 
     return _create_job(api_client, ext_id, kwargs)
 
