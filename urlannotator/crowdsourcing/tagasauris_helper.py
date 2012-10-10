@@ -140,7 +140,7 @@ def create_btm(api_client, job):
 
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
-        "Gather web page urls for \"%s\"")
+        "Beat the Machine for \"%s\"")
 
     samples_per_job = 5
     baseurl = settings.TAGASAURIS_CALLBACKS
@@ -173,7 +173,7 @@ def create_btm(api_client, job):
     total_mediaobjects = 5
     url = settings.DUMMY_URLANNOTATOR_URL
     kwargs.update({"dummy_media":
-        [("dummy-" + no, url) for no in xrange(int(total_mediaobjects))]})
+        [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})
 
     return _create_job(api_client, ext_id, kwargs)
 

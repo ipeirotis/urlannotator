@@ -8,7 +8,7 @@ from celery import task
 
 from urlannotator.main.models import Job, Sample
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_sample_gather, sample_to_mediaobject, stop_job)
+    create_sample_gather, sample_to_mediaobject, stop_job, create_btm)
 from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
 from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
 from urlannotator.flow_control import send_event
@@ -57,6 +57,11 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
 
         result = self.tc.get_job(external_id=voting_key)
         self.assertEqual(result['state'], 'stopped')
+
+    def testBTMCreation(self):
+        btm_key, btm_hit = create_btm(self.tc, self.job)
+        self.assertEqual(len(btm_hit), 32)
+        self.assertEqual(len(btm_key), 32)
 
 
 class TagasaurisInApi(ToolsMockedMixin, TestCase):
