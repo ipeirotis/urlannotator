@@ -58,7 +58,7 @@ def workflow_definition(ext_id, job, task_type, survey_id):
                     "hit_type": settings.TAGASAURIS_HIT_TYPE,
                     "hit_title": "Gather samples for \"%s\"" % job.title,
                     # "workers_per_hit": "1",
-                    # "price": "0.08",
+                    "price": "0.01",
                     # "job_external_id": "yes",
                     # "hit_description": "Gather samples",
                     "hit_instructions": job.description,
@@ -88,6 +88,7 @@ def create_sample_gather(api_client, job):
     kwargs["workflow"].update({
         settings.TAGASAURIS_FORM[task_type]: {
             "config": {
+                "instruction_url": "",
                 "external_app": json.dumps({
                     "external_js": [
                         baseurl + "/statics/js/tagasauris/samplegather.js"
