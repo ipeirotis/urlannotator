@@ -78,7 +78,7 @@ def create_sample_gather(api_client, job):
     # Compute split of tasks per mediaobjects and workers.
     samples_goal_multiplication = 1.2
     samples_per_job = 5
-    gather_goal = int(job.no_of_urls * samples_goal_multiplication /
+    gather_goal = math.ceil(job.no_of_urls * samples_goal_multiplication /
         samples_per_job)
     split = math.ceil(math.sqrt(gather_goal))
     workers_per_hit = split
