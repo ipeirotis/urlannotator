@@ -3,33 +3,35 @@
 {% block data_active %}active{%endblock%}
 {% block project_content %}
   <div class="row">
-    <div class="table-container-anno1">
-      <h2>Data</h2>
-      <div class="table-wrapper">
-        <table class="table">
-          <thead>
-            <tr>
-              <th style="width: 60px">Preview</th>
-              <th>URL</th>
-              <th style="width: 100px">Added on</th>
-              <th style="width: 100px">Workers</th>
-              <th style="width: 150px">Voting</th>
-              <th style="width: 100px">Class probability</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for data in data_set %}
+    <div class="span12">
+      <div class="table-container-anno1">
+        <h3>Data results</h3>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
               <tr>
-                <td><a href="{% url sample_thumbnail data.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail data.id 'small' %}"></a></td>
-                <td><a href="{% url project_data_detail project.id data.id%}">{{data.url}}</a></td>
-                <td>{{data.added_on|date:"Y-m-d H:i"}}</td>
-                <td>{{data.get_workers|length}}</td>
-                <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
-                <td>{{data.get_yes_probability}}% {{data.get_no_probability}}%</td>
+                <th style="width: 60px">Preview</th>
+                <th>URL</th>
+                <th style="width: 100px">Added on</th>
+                <th style="width: 100px">Workers</th>
+                <th style="width: 150px">Voting</th>
+                <th style="width: 100px">Class probability</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {% for data in data_set %}
+                <tr>
+                  <td><a href="{% url sample_thumbnail data.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail data.id 'small' %}"></a></td>
+                  <td><a href="{% url project_data_detail project.id data.id%}">{{data.url}}</a></td>
+                  <td>{{data.added_on|date:"Y-m-d H:i"}}</td>
+                  <td>{{data.get_workers|length}}</td>
+                  <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
+                  <td>{{data.get_yes_probability}}% {{data.get_no_probability}}%</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

@@ -1,11 +1,10 @@
 {% extends 'main/project/project_base.html' %}
 
-{% block body-class %}body-overview{% endblock %}
+{% block body-class %}{{ block.super }} body-overview{% endblock %}
 {% block overview_active %}active{% endblock %}
 {% block project_content %}
 </div> <!-- end of container main -->
 <div class="content content-accordion">
-
     <div class="accordion" id="accordion2">
       <div class="accordion-group">
         <div class="accordion-heading">

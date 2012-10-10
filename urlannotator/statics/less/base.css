@@ -99,9 +99,9 @@ div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dr
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper {
   text-shadow: none;
   color: #B99859;
+  overflow: hidden;
   width: 180px;
   text-overflow: ellipsis;
-  overflow: hidden;
   white-space: nowrap;
   float: left;
   padding: 25px 10px 13px 9px;

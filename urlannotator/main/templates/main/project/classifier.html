@@ -8,7 +8,7 @@
     </div>
     <div class="span6">
       <div id="classification-results"  class="table-container-anno1">
-        <h4>Classification Results</h4>
+        <h3>Classification Results</h3>
         <div class="table-wrapper">
           <table class="table">
             <thead>
@@ -24,7 +24,7 @@
                 <td>
                   <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}"><img data-bind="visible: screenshot, attr: {src: screenshot}" style="width: 60px; height: 60px;"></a>
                 </td>
-                <td>
+                <td class="td-url">
                   <a data-bind="attr: {href: url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
                 </td>
                 <td>
@@ -94,7 +94,7 @@
     <div class="span6 offset6">
 
       <div class="table-container-anno1">
-        <h4>Classifier statistics</h4>
+        <h3>Classifier statistics</h3>
         <div class="table-wrapper">
           <table class="table" id="classifier-stats">
             <thead></thead>
@@ -270,19 +270,3 @@ $(document).ready(function(){
 </script>
 {% endblock %}
 
-{% block css %}
-{{ block.super }}
-<style type="text/css">
-table#classifier-test td:first-child{
-    width: 120px;
-    text-align: right;
-    vertical-align: top;
-    padding-right: 10px;
-}
-
-#classifier-history td{
-  height: 60px;
-}
-
-</style>
-{% endblock %}

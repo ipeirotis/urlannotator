@@ -14,13 +14,6 @@
 
 // too short to place in separated file
 
-
-.overflow(@width: 100px) {
-    overflow: hidden;
-    width: @width;
-    text-overflow: ellipsis;
-}
-
 .chart-container {
   height:200px;
 }
@@ -152,6 +145,7 @@ table#btm-statistics td:nth-of-type(2){
 }
 
 .nav.nav-tabs {
+  margin-bottom:5px;
   li a {
     text-decoration: underline;
     color:@text-color;
@@ -269,4 +263,24 @@ table#btm-statistics td:nth-of-type(2){
 
 .body-overview .container-main {
   padding-bottom:0px;
+}
+
+// Classifier
+table#classifier-test td:first-child{
+    width: 120px;
+    text-align: right;
+    vertical-align: top;
+    padding-right: 10px;
+}
+
+#classifier-history td{
+  height: 60px;
+}
+tbody#classifier-history .td-url a span{
+  display: block;
+  .overflow(190px);
+  @media (min-width: 1200px) {
+    .overflow(300px);
+  }
+
 }
