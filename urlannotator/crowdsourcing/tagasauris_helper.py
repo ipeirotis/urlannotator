@@ -42,7 +42,7 @@ def stop_job(external_id):
     tc.wait_for_complete(res['task_id'])
 
 
-def workflow_definition(ext_id, job, task_type, survey_id):
+def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s"):
     return {
         "id": ext_id,
         "title": job.title,
@@ -56,7 +56,7 @@ def workflow_definition(ext_id, job, task_type, survey_id):
             survey_id: {
                 "config": {
                     "hit_type": settings.TAGASAURIS_HIT_TYPE,
-                    "hit_title": "Gather samples for \"%s\"" % job.title,
+                    "hit_title": hit_title % job.title,
                     # "workers_per_hit": "1",
                     "price": "0.01",
                     # "job_external_id": "yes",
@@ -80,7 +80,8 @@ def create_sample_gather(api_client, job):
     # to have "external" flag set.
 
     kwargs = workflow_definition(ext_id, job, task_type,
-        settings.TAGASAURIS_SURVEY[task_type])
+        settings.TAGASAURIS_SURVEY[task_type],
+        "Gather web page urls for \"%s\"")
 
     samples_per_job = 5
     baseurl = settings.TAGASAURIS_CALLBACKS
@@ -128,7 +129,8 @@ def create_btm(api_client, job):
     # to have "external" flag set.
 
     kwargs = workflow_definition(ext_id, job, task_type,
-        settings.TAGASAURIS_SURVEY[task_type])
+        settings.TAGASAURIS_SURVEY[task_type],
+        "Gather web page urls for \"%s\"")
 
     samples_per_job = 5
     baseurl = settings.TAGASAURIS_CALLBACKS
@@ -177,7 +179,8 @@ def create_voting(api_client, job, mediaobjects):
     # to have "external" flag set.
 
     kwargs = workflow_definition(ext_id, job, task_type,
-        settings.TAGASAURIS_SURVEY[task_type])
+        settings.TAGASAURIS_SURVEY[task_type],
+        "Verify web page urls from \"%s\"")
 
     # Setting callback for notify mechanical task.
     kwargs["workflow"].update({
