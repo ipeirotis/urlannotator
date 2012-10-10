@@ -7,34 +7,36 @@
       <a href="{% url project_classifier_data project.id %}" class="btn pull-right">Export Training Ready Data</a>
     </div>
     <div class="span6">
-      <div id="classification-results">
+      <div id="classification-results"  class="table-container-anno1">
         <h4>Classification Results</h4>
-        <table class="table">
-          <thead>
-            <tr>
-              <th style="width: 60px;">Preview</th>
-              <th>URL</th>
-              <th style="width: 50px;">Class</th>
-              <th style="width: 130px;">Calculated Class Probability</th>
-            </tr>
-          </thead>
-          <tbody id="classifier-history" data-bind="foreach: entries">
-            <tr>
-              <td>
-                <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}"><img data-bind="visible: screenshot, attr: {src: screenshot}" style="width: 60px; height: 60px;"></a>
-              </td>
-              <td>
-                <a data-bind="attr: {href: url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
-              </td>
-              <td>
-                <span data-bind="text: getLabel">&nbsp;</span>
-              </td>
-              <td>
-                <span data-bind="text: getProbability">&nbsp;</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th style="width: 60px;">Preview</th>
+                <th>URL</th>
+                <th style="width: 50px;">Class</th>
+                <th style="width: 130px;">Calculated Class Probability</th>
+              </tr>
+            </thead>
+            <tbody id="classifier-history" data-bind="foreach: entries">
+              <tr>
+                <td>
+                  <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}"><img data-bind="visible: screenshot, attr: {src: screenshot}" style="width: 60px; height: 60px;"></a>
+                </td>
+                <td>
+                  <a data-bind="attr: {href: url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
+                </td>
+                <td>
+                  <span data-bind="text: getLabel">&nbsp;</span>
+                </td>
+                <td>
+                  <span data-bind="text: getProbability">&nbsp;</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     <div class="span6">
@@ -90,16 +92,21 @@
       </div>
     </div>
     <div class="span6 offset6">
-      <h4>Classifier statistics</h4>
-      <table class="table" id="classifier-stats">
-        <thead></thead>
-        <tbody>
-          <tr><td>URLs collected</td><td data-bind="text: allCount">{{classifier_stats.count}}</td><td>-</td></tr>
-          <tr><td>yes class records</td><td data-bind="text: yesCount">{{classifier_stats.yes_labels.val}}</td><td><span data-bind="text: yesPerc">{{classifier_stats.yes_labels.perc}}</span>%</td></tr>
-          <tr><td>no class records</td><td data-bind="text: noCount">{{classifier_stats.no_labels.val}}</td><td><span data-bind="text: noPerc">{{classifier_stats.no_labels.perc}}</span>%</td></tr>
-          <tr><td>broken class records</td><td data-bind="text: brokenCount">{{classifier_stats.broken_labels.val}}</td><td><span data-bind="text: brokenPerc">{{classifier_stats.broken_labels.perc}}</span>%</td></tr>
-        </tbody>
-      </table>
+
+      <div class="table-container-anno1">
+        <h4>Classifier statistics</h4>
+        <div class="table-wrapper">
+          <table class="table" id="classifier-stats">
+            <thead></thead>
+            <tbody>
+              <tr><td>URLs collected</td><td data-bind="text: allCount">{{classifier_stats.count}}</td><td>-</td></tr>
+              <tr><td>yes class records</td><td data-bind="text: yesCount">{{classifier_stats.yes_labels.val}}</td><td><span data-bind="text: yesPerc">{{classifier_stats.yes_labels.perc}}</span>%</td></tr>
+              <tr><td>no class records</td><td data-bind="text: noCount">{{classifier_stats.no_labels.val}}</td><td><span data-bind="text: noPerc">{{classifier_stats.no_labels.perc}}</span>%</td></tr>
+              <tr><td>broken class records</td><td data-bind="text: brokenCount">{{classifier_stats.broken_labels.val}}</td><td><span data-bind="text: brokenPerc">{{classifier_stats.broken_labels.perc}}</span>%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 

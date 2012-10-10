@@ -109,15 +109,19 @@
         </div>
       </div>
       <div class="span6">
-        <h3>Top workers</h3>
-        <table class="table">
-          <thead>
-            <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
-          </thead>
-          <tbody data-bind="foreach: top_workers">
-            <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
-          </tbody>
-        </table>
+        <div class="table-container-anno1">
+          <h3>Top workers</h3>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
+              </thead>
+              <tbody data-bind="foreach: top_workers">
+                <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   {% endif%}

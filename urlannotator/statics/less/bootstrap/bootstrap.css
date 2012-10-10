@@ -1407,7 +1407,11 @@ table .span24 {
 .table-container-anno1 h3,
 .table-container-anno2 h3,
 .table-container-anno3 h3,
-.table-container-anno4 h3 {
+.table-container-anno4 h3,
+.table-container-anno1 h4,
+.table-container-anno2 h4,
+.table-container-anno3 h4,
+.table-container-anno4 h4 {
   color: white;
   padding: 3px 4px 5px 6px;
   font-weight: normal;
@@ -1430,35 +1434,39 @@ table .span24 {
   background: white;
 }
 .table-container-anno1 {
-  border-color: #5B4957;
+  border-color: #3a4354;
 }
 .table-container-anno1 h1,
 .table-container-anno1 h2,
-.table-container-anno1 h3 {
-  background-color: #5B4957;
+.table-container-anno1 h3,
+.table-container-anno1 h4 {
+  background-color: #3a4354;
 }
 .table-container-anno2 {
   border-color: #855759;
 }
 .table-container-anno2 h1,
 .table-container-anno2 h2,
-.table-container-anno2 h3 {
+.table-container-anno2 h3,
+.table-container-anno2 h4 {
   background-color: #855759;
 }
 .table-container-anno3 {
-  border-color: #3a4354;
+  border-color: #5B4957;
 }
 .table-container-anno3 h1,
 .table-container-anno3 h2,
-.table-container-anno3 h3 {
-  background-color: #3a4354;
+.table-container-anno3 h3,
+.table-container-anno3 h4 {
+  background-color: #5B4957;
 }
 .table-container-anno4 {
   border-color: #C79155;
 }
 .table-container-anno4 h1,
 .table-container-anno4 h2,
-.table-container-anno4 h3 {
+.table-container-anno4 h3,
+.table-container-anno4 h4 {
   background-color: #C79155;
 }
 /*  Font Awesome
