@@ -83,7 +83,7 @@ if os.path.isfile(local_settings):
 
 # Tagasauris settings
 TAGASAURIS_LOGIN = 'urlannotator'
-TAGASAURIS_PASS = 'annotator12'
+TAGASAURIS_PASS = 'GomObUdcor1'
 TAGASAURIS_HOST = 'http://stable.tagasauris.com'
 TAGASAURIS_USE_SANDBOX = False
 
