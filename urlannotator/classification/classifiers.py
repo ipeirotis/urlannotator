@@ -525,9 +525,9 @@ class GooglePredictionClassifier(Classifier):
 
         # Upload file to gs
         gs_upload_file(file_out)
-        return file_name
+        return file_out
 
-    def train(self, samples=[], turn_off=True, set_id=0 ):
+    def train(self, samples=[], turn_off=True, set_id=0):
         """
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample. Required model
