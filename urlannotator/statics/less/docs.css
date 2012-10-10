@@ -58,11 +58,11 @@ div#docs li {
 }
 div#docs a:link,
 div#docs a:visited {
-  color: #33e;
+  color: #3a4354;
   text-decoration: none;
 }
 div#docs a:hover {
-  color: #00f;
+  color: #3a4354;
   text-shadow: 1px 1px 2px #ccf;
   text-decoration: underline;
 }
@@ -96,4 +96,7 @@ div#url-annotator {
   width: 620px;
   float: left;
   margin-left: 20px;
+}
+div#docs a {
+  color: #3a4354;
 }
