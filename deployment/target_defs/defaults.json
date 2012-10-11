@@ -10,5 +10,6 @@
     "project_display_name": "URLAnnotator",
     "autodoc_excluded_apps": [],
     "global_python": "/usr",
-    "rabbitmq_port": 5673
+    "rabbitmq_port": 5673,
+    "http_port": 8081
 }
