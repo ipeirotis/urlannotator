@@ -21,7 +21,7 @@
         "supervisord.conf", "project.conf", "supervisor-services.conf", "services.conf"
     ],
     "nginx_sites_enabled": [
-        "urlannotator"
+        "urlannotator-stable"
     ],
     "branch": "master",
     "locals_path": "files/django/local.py",
