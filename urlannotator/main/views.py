@@ -167,7 +167,6 @@ def register_service(request, service):
 
 
 def odesk_register(request):
-    request.session['registration'] = 'odesk'
     return redirect('odesk_login')
 
 
@@ -428,11 +427,16 @@ def odesk_complete(request):
         settings.ODESK_CLIENT_SECRET
     )
     auth, user = client.auth.get_token(request.GET['frob'])
-    # FIXME: Add proper ciphertext support when its ready. Replace uid with
-    #        the ciphertext to use as an identifier.
-    #        Refer to OANNOTATOR-221
-    # cipher = client.getciphertext()
-    cipher = user['uid']
+    client = odesk.Client(
+        settings.ODESK_CLIENT_ID,
+        settings.ODESK_CLIENT_SECRET,
+        auth,
+    )
+    info = client.auth.my_info()
+    url = info['info']['profile_url']
+    # Extract the ciphertext from the profile url. This should be provided by
+    # API, no?
+    cipher = url.rsplit('/', 1)[1]
 
     if request.user.is_authenticated():
         if request.user.get_profile().odesk_uid == '':
@@ -452,12 +456,6 @@ def odesk_complete(request):
             login(request, u)
             return redirect('index')
         except Account.DoesNotExist:
-            if not 'registration' in request.session:
-                request.session['error'] = ("Account for that social media "
-                    "doesn't exist. Please register first.")
-                return redirect('index')
-            request.session.pop('registration')
-
             u = User.objects.create_user(email=user['mail'],
                 username=' '.join(['odesk', cipher]), password='1')
             profile = u.get_profile()

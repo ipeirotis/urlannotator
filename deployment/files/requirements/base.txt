@@ -5,7 +5,7 @@ django-pipeline>=1.2
 ipdb
 ipython
 django-social-auth
-python-odesk
+-e git+git@github.com:maciej-gol/python-odesk.git#egg=python-odesk.egg
 bootstrap
 docutils
 validictory
