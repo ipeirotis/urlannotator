@@ -350,11 +350,19 @@ def reload_services():
 
 
 @task
-def deploy_ci():
+def deploy_devel():
     env.user = 'urlannotator'
     env.host_string = 'ci.10clouds.com'
     env.forward_agent = True
     deploy(conf_file="target_defs/testing.json", prompt=False)
+
+
+@task
+def deploy_stable():
+    env.user = 'urlannotator'
+    env.host_string = 'ci.10clouds.com'
+    env.forward_agent = True
+    deploy(conf_file="target_defs/stable.json", prompt=False)
 
 
 @task

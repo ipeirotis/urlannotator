@@ -5,6 +5,7 @@ TEMPLATE_DEBUG = DEBUG
 JS_DEBUG = DEBUG
 PIPELINE = True
 
+SOCIAL_AUTH_RAISE_EXCEPTIONS = False
 
 DATABASES = {
     'default': {
@@ -58,11 +59,12 @@ if os.path.isfile(local_settings):
 
 # Tagasauris settings
 TAGASAURIS_LOGIN = 'urlannotator'
-TAGASAURIS_PASS = 'urlannotator'
-TAGASAURIS_HOST = 'http://devel.tagasauris.com'
-TAGASAURIS_HIT_URL = TAGASAURIS_HIT_SANDBOX_URL
+TAGASAURIS_PASS = 'GomObUdcor1'
+TAGASAURIS_HOST = 'http://stable.tagasauris.com'
+TAGASAURIS_USE_SANDBOX = False
 
 TAGASAURIS_HIT_TYPE = TAGASAURIS_MTURK
+TAGASAURIS_HIT_URL = TAGASAURIS_HIT_MTURK_URL
 
 # TODO: This is ugly... any ideas how to change this?
 TAGASAURIS_NOTIFY = {

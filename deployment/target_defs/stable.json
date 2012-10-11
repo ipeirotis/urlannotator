@@ -24,5 +24,6 @@
         "urlannotator"
     ],
     "branch": "master",
-    "locals_path": "files/django/local.py"
+    "locals_path": "files/django/local.py",
+    "rabbitmq_port": "5674"
 }

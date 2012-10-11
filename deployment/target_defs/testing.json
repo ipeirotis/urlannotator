@@ -1,7 +1,7 @@
 {
     "settings_name": "ci",
     "instance": "staging",
-    "domain": "urlannotator.10clouds.com",
+    "domain": "devel.urlannotator.10clouds.com",
     "db_name": "database.sqlite3.db",
     "db_user": "",
     "db_password": "",
@@ -24,5 +24,9 @@
         "urlannotator"
     ],
     "branch": "master",
-    "locals_path": "files/django/local.py"
+    "locals_path": "files/django/local.py",
+    "project_inner": "urlannotator",
+    "django_project_name": "urlannotator",
+    "manage_py_dir": "",
+    "projects_dir": "/home/urlannotator-devel/",
 }
