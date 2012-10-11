@@ -23,6 +23,7 @@
     "nginx_sites_enabled": [
         "urlannotator"
     ],
+    "nginx_files": ["nginx.urlannotator.conf", "sites-available/urlannotator"],
     "branch": "master",
     "locals_path": "files/django/local.py",
     "project_inner": "urlannotator",
