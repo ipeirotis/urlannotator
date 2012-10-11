@@ -48,7 +48,7 @@ def prepare_global_env():
     """Ensure global settings - one time only."""
     prep_apt_get()
     install_system_requirements()
-    setup_ssh()
+    # setup_ssh()
     setup_virtualenv()
     nginx.provision()
 

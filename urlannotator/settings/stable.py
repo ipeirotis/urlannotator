@@ -1,4 +1,6 @@
 from defaults import *
+from imagescale2 import *
+from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG

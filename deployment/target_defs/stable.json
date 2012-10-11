@@ -8,7 +8,7 @@
     "db_port": "",
     "pip_cache": "/tmp/urlannotator_stable_pip",
     "pip_requirements": [
-        "base.txt", "devel.txt", "production.txt"
+        "base.txt", "production.txt"
     ],
     "system_requirements": [
         "system_requirements.txt"
@@ -25,5 +25,5 @@
     ],
     "branch": "master",
     "locals_path": "files/django/local.py",
-    "rabbitmq_port": "5674"
+    "rabbitmq_port": 5674
 }

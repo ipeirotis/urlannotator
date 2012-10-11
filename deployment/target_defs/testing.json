@@ -27,6 +27,5 @@
     "locals_path": "files/django/local.py",
     "project_inner": "urlannotator",
     "django_project_name": "urlannotator",
-    "manage_py_dir": "",
-    "projects_dir": "/home/urlannotator-devel/",
+    "manage_py_dir": ""
 }
