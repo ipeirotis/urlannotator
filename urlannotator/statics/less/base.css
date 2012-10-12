@@ -245,13 +245,13 @@ div.navbar header.header span {
 }
 .wrapper {
   min-height: 100%;
-  margin-bottom: -81px;
+  margin-bottom: -61px;
 }
 .container-main {
-  padding-bottom: 81px;
+  padding-bottom: 61px;
 }
 .container-main2 {
-  padding-bottom: 101px;
+  padding-bottom: 81px;
 }
 footer.footer {
   padding: 20px 0;
@@ -260,7 +260,7 @@ footer.footer {
   background-color: #f5f5f5;
   margin: 0px;
   color: #075b8d;
-  height: 50px;
+  height: 20px;
 }
 td.progressCol {
   width: 30px;
