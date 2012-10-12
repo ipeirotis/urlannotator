@@ -78,6 +78,8 @@ TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'
 
+XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
+
 PIPELINE = not DEBUG
 if PIPELINE:
     STATICFILES_STORAGE = 'pipeline.storage.PipelineCachedStorage'
