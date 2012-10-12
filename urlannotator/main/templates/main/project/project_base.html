@@ -8,7 +8,7 @@
     {% compressed_css 'project' %}
 {% endblock %}
 
-{% block body-class %}body-{{project.get_status|lower}}{% endblock %}
+{% block body-class %}body-{{project.get_status|lower}} body-project{% endblock %}
 
 {% block header %}
   {% if project.is_draft %}
