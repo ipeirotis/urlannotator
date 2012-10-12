@@ -74,7 +74,6 @@ def mocked_task(*args, **kwargs):
 def eager_train(kwargs, *args, **kwds):
     train(set_id=kwargs['set_id'])
 
-
 # Mocks:
 # - website screenshot and content extraction to do nothing,
 # - classifier training to be eager, not in separate process,
@@ -94,6 +93,7 @@ hardcoded_mocks = [
     ('urlannotator.main.factories.web_screenshot_extraction', mocked_task),
     ('urlannotator.classification.event_handlers.process_execute', eager_train),
     ('urlannotator.crowdsourcing.event_handlers.ExternalJobsFactory.initialize_job', mock.Mock()),
+    ('urlannotator.main.models.odesk.Client', mock.MagicMock()),
 ]
 
 
