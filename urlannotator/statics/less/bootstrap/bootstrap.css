@@ -132,7 +132,7 @@ textarea {
 }
 body {
   margin: 0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: open-sans, Arial, sans-serif;
   font-size: 13px;
   line-height: 18px;
   color: #333333;
@@ -323,7 +323,7 @@ a:hover {
 }
 p {
   margin: 0 0 9px;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: open-sans, Arial, sans-serif;
   font-size: 13px;
   line-height: 18px;
 }
@@ -607,7 +607,7 @@ input,
 button,
 select,
 textarea {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: open-sans, Arial, sans-serif;
 }
 label {
   display: block;
