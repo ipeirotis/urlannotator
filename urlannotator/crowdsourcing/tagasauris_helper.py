@@ -17,7 +17,7 @@ def make_external_id():
     return hashlib.md5(str(uuid.uuid4())).hexdigest()
 
 
-def sample_to_mediaobject(sample):
+def sample_to_mediaobject(sample, caption=""):
     ext_id = make_external_id()
 
     return {
@@ -25,13 +25,16 @@ def sample_to_mediaobject(sample):
         'title': ext_id,
         'mimetype': "image/png",
         'url': sample.screenshot,
+        "attributes": {
+            "caption": caption,
+        }
     }
 
 
-def samples_to_mediaobjects(samples):
+def samples_to_mediaobjects(samples, caption=""):
     mediaobjects = {}
     for sample in samples:
-        mediaobjects.update({sample: sample_to_mediaobject(sample)})
+        mediaobjects.update({sample: sample_to_mediaobject(sample, caption)})
 
     return mediaobjects
 

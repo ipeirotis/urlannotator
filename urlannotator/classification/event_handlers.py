@@ -54,7 +54,8 @@ class SampleVotingManager(Task):
         """
 
         # Creates sample to mediaobject mapping
-        mediaobjects = samples_to_mediaobjects(new_samples)
+        mediaobjects = samples_to_mediaobjects(new_samples,
+            caption=job.description)
 
         # Objects to send.
         mo_values = mediaobjects.values()
@@ -83,7 +84,8 @@ class SampleVotingManager(Task):
         """
 
         # Creates sample to mediaobject mapping
-        mediaobjects = samples_to_mediaobjects(new_samples)
+        mediaobjects = samples_to_mediaobjects(new_samples,
+            caption=job.description)
 
         for sample, mediaobject in mediaobjects.items():
             SampleMapping(
