@@ -289,7 +289,7 @@ TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
 TAGASAURIS_LOGIN = 'urlannotator'
 TAGASAURIS_PASS = 'urlannotator'
-TAGASAURIS_HOST = 'http://devel.tagasauris.com'
+TAGASAURIS_HOST = 'http://devel.tagasauris.com'  # Mind updating XS_SHARING_*
 TAGASAURIS_USE_SANDBOX = True
 
 TAGASAURIS_HIT_SOCIAL_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'

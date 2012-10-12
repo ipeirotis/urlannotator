@@ -55,24 +55,24 @@ class TagasaurisJobs(models.Model):
     sample_gathering_hit = models.CharField(max_length=25, null=True,
         blank=True)
     voting_hit = models.CharField(max_length=25, null=True, blank=True)
+    beatthemachine_hit = models.CharField(max_length=25, null=True, blank=True)
+
+    def _get_job_url(self, task):
+        """ Returns URL under which Own Workforce can perform given task.
+        """
+        if task is not None:
+            return settings.TAGASAURIS_HIT_URL % task
+
+        return ''
 
     def get_sample_gathering_url(self):
-        """
-            Returns URL under which Own Workforce can submit new samples.
-        """
-        if self.sample_gathering_hit is not None:
-            return settings.TAGASAURIS_HIT_URL % self.sample_gathering_hit
-
-        return ''
+        return self._get_job_url(self.sample_gathering_hit)
 
     def get_voting_url(self):
-        """
-            Returns URL under which Own Workforce can vote on labels.
-        """
-        if self.voting_hit is not None:
-            return settings.TAGASAURIS_HIT_URL % self.voting_hit
+        return self._get_job_url(self.voting_hit)
 
-        return ''
+    def get_beatthemachine_url(self):
+        return self._get_job_url(self.beatthemachine_hit)
 
 
 class SampleMapping(models.Model):
