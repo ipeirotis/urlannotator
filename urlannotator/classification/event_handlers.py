@@ -140,11 +140,13 @@ class ProcessVotesManager(Task):
         active_jobs = Job.objects.get_active()
 
         for job in active_jobs:
-            ts = TrainingSet.objects.create(job=job)
-
             quality_algorithm = quality_factory.create_algorithm(job)
+            decisions = quality_algorithm.extract_decisions()
+            if not decisions:
+                continue
 
-            for sample_id, label in quality_algorithm.extract_decisions():
+            ts = TrainingSet.objects.create(job=job)
+            for sample_id, label in decisions:
                 sample = Sample.objects.get(id=sample_id)
                 TrainingSample.objects.create(
                     set=ts,

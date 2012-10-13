@@ -38,6 +38,9 @@ STATIC_URL = '/statics/'
 # urlannotator.classification.classifiers module
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
+VOTES_STORAGE = 'TroiaVotesStorage'
+QUALITY_ALGORITHM = 'DawidSkeneAlgorithm'
+
 
 SOCIAL_AUTH_CREATE_USERS = False
 

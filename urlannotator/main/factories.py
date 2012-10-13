@@ -127,6 +127,12 @@ class JobFactory(object):
             settings.JOB_DEFAULT_CLASSIFIER
         )
 
+    def init_quality(self, job_id):
+        Job.objects.filter(id=job_id).update(
+            votes_storage=settings.VOTES_STORAGE,
+            quality_algorithm=settings.QUALITY_ALGORITHM,
+        )
+
     def initialize_job(self, job_id, *args, **kwargs):
         """
             Initializes new job's elements from given job entry's id.
@@ -138,3 +144,4 @@ class JobFactory(object):
         self.create_classifier(job)
         self.prepare_gold_samples(job.id)
         self.classify_urls(job.id)
+        self.init_quality(job_id)

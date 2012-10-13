@@ -1,6 +1,4 @@
 import os
-import mock
-import sys
 
 from defaults import *
 # Import everything from imagescale2, but rename DEF_PORT

@@ -140,6 +140,8 @@ class Job(models.Model):
     collected_urls = models.PositiveIntegerField(default=0)
     initialization_status = models.IntegerField(default=0)
     activated = models.DateTimeField(auto_now_add=True)
+    votes_storage = models.CharField(max_length=25)
+    quality_algorithm = models.CharField(max_length=25)
 
     objects = JobManager()
 
@@ -354,6 +356,10 @@ class Job(models.Model):
 
     def set_gold_samples_done(self):
         self.set_flag(JOB_FLAGS_GOLD_SAMPLES_DONE)
+        send_event(
+            'EventGoldSamplesDone',
+            job_id=self.id,
+        )
 
     def is_gold_samples_done(self):
         return self.is_flag_set(JOB_FLAGS_GOLD_SAMPLES_DONE)

@@ -17,6 +17,19 @@ class VotesStorage(object):
             Should ignore repeated votes. Returns True on success.
         '''
 
+    def add_gold_vote(self, object_id, label):
+        '''
+            Adds gold vote. Returns True on success.
+        '''
+
+    def add_gold_votes(self, votes):
+        '''
+            Votes is a list of 2-tuples (object_id, label).
+            Adds gold votes. Returns True on success.
+        '''
+        for object_id, label in votes:
+            self.add_vote(object_id=object_id, label=label)
+
     def add_votes(self, votes):
         ''' Default implementation.
 
@@ -46,9 +59,30 @@ class DBVotesStorage(VotesStorage):
                 sample=sample,
                 label=label,
             )
+            return True
         except IntegrityError:
             # Skip duplicates
-            pass
+            return False
+
+    def reset(self):
+        super(DBVotesStorage, self).reset()
+        ids = WorkerQualityVote.objects.all().select_related('sample')
+        ids = [w.id for w in ids if w.sample.job_id == self.storage_id]
+        WorkerQualityVote.objects.filter(id__in=ids).delete()
+
+    def get_all_votes(self):
+        ids = WorkerQualityVote.objects.all().select_related('sample')
+        return [(w.worker_id, w.sample_id, w.label)
+            for w in ids if w.sample.job_id == self.storage_id]
+
+
+class TroiaDBStorage(VotesStorage):
+    def __init__(self, storage_id):
+        super(TroiaDBStorage, self).__init__(storage_id=storage_id)
+        self.tc = TroiaClient(settings.TROIA_HOST, None)
+
+    def add_vote(self, worker_id, object_id, label):
+        pass
 
     def reset(self):
         super(DBVotesStorage, self).reset()
