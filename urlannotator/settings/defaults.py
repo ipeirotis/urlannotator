@@ -158,6 +158,7 @@ PROJECT_APPS = (
     'urlannotator.tools',
     'urlannotator.statistics',
     'urlannotator.logging',
+    'urlannotator.payments',
 )
 
 INSTALLED_APPS = BASE_APPS + PROJECT_APPS
