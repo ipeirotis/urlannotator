@@ -51,35 +51,45 @@
   </div>
 
   <div class="row">
-    <div class="span12">
-      <div class="table-container-anno1">
-        <h3>Basic informations</h3>
-        <div class="table-wrapper table-infoboxes">
-          <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-            <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
-            <span>URLs collected</span>
+    <div class="table-container-anno3 span12">
+      <h3>Basic informations</h3>
+      <div class="table-wrapper table-infoboxes">
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
+          <span>URLs collected</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: hours_spent">{{hours_spent}}</h3>
+          <span>Hours spend</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: no_of_workers">{{no_of_workers}}</h3>
+          <span>Number of workers</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: cost">{{cost}}</h3>
+          <span>Cost (USD)</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: budget">{{budget}}</h3>
+          <span>Budget (USD)</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3><span data-bind="text: progress">{{progress}}</span>%</h3>
+          <span>Progress</span>
+        </div>
+        {% if not project.is_draft %}
+        <div class="row">
+          <div class="span3 chart-container" id="progressGraph">
           </div>
-          <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-            <h3 data-bind="text: hours_spent">{{hours_spent}}</h3>
-            <span>Hours spend</span>
+          <div class="span3 chart-container" id="spentGraph">
           </div>
-          <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-            <h3 data-bind="text: no_of_workers">{{no_of_workers}}</h3>
-            <span>Number of workers</span>
+          <div class="span3 chart-container" id="urlGraph">
           </div>
-          <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-            <h3 data-bind="text: cost">{{cost}}</h3>
-            <span>Cost (USD)</span>
-          </div>
-          <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-            <h3 data-bind="text: budget">{{budget}}</h3>
-            <span>Budget (USD)</span>
-          </div>
-          <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-            <h3><span data-bind="text: progress">{{progress}}</span>%</h3>
-            <span>Progress</span>
+          <div class="span3 chart-container" id="performanceGraph">
           </div>
         </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -92,16 +102,6 @@
       </div>
     </div>
   {% else %}
-    <div class="row">
-      <div class="span3 chart-container" id="progressGraph">
-      </div>
-      <div class="span3 chart-container" id="spentGraph">
-      </div>
-      <div class="span3 chart-container" id="urlGraph">
-      </div>
-      <div class="span3 chart-container" id="performanceGraph">
-      </div>
-    </div>
     <div class="row">
       <div class="span6 ">
         <div class="table-container-anno1">

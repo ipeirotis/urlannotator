@@ -105,8 +105,8 @@ div.span2.infobox h3 {
   line-height: 34px;
 }
 .table-infoboxes {
-  height: 100px;
-  padding: 6px 0px!important;
+  height: 90px;
+  padding: 20px 0px 15px 0px!important;
 }
 div.infobox-disabled {
   background-color: #F7F7F9;
