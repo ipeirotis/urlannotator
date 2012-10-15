@@ -327,6 +327,8 @@ TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'
 
+TAGASAURIS_DEFAULT_PRICE = "0.04"
+
 # Tagasauris needs sacrifice!
 DUMMY_URLANNOTATOR_URL =\
     'http://urlannotator.10clouds.com/statics/img/favicon.png'
