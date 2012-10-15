@@ -434,6 +434,5 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         resp_dict = json.loads(resp.content)
 
         self.assertTrue('status' in resp_dict.keys())
-        self.assertTrue('labels_matched' in resp_dict.keys())
-
-        self.assertEqual(resp_dict['labels_matched'], True)
+        self.assertTrue('points' in resp_dict.keys())
+        self.assertTrue('description' in resp_dict.keys())

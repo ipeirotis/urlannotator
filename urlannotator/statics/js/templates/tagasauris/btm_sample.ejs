@@ -1,11 +1,7 @@
-<span><%= attributes.url %> LABEL: <%= attributes.label %></span>
+<span><%= attributes.url %> | </span>
 
-<% if (matched === null) { %>
+<% if (description === null) { %>
     <span class="status">Pending</span>
-<% } else if (matched) { %>
-    <span class="status">'Label matched with classifier!'</span>
 <% } else { %>
-    <span class="status">'Classifier gave different label!'</span>
+    <span class="status"><%= description %></span>
 <% } %>
-
-

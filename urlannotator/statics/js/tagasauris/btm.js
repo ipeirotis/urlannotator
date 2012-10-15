@@ -13,7 +13,7 @@
         addNewSample: function () {
             if (this.gathered < this.minSamples) {
                 var url = this.$(".new-sample").val();
-                var expectedLabel = this.$(".expected-label").val();
+                var expectedLabel = "No";
 
                 sample = new Sample({id:url, url: url, label: expectedLabel});
 
@@ -50,21 +50,18 @@
                     that.coreUrl + status_url,
                     {request_id: request_id},
                     function (data) {
-                        if (data.labels_matched !== undefined) {
-                            if (data.labels_matched) {
-                                sample.matched = true;
-                            } else {
-                                sample.matched = false;
-                            }
+                        if (data.points !== undefined) {
+                            sample.points = data.points;
+                            sample.description = data.description;
                             that.gathered++;
+
+                            sample.update();
+
+                            if (that.gathered >= that.minSamples) {
+                                that.finishHIT();
+                            }
                         } else {
                             pollStatus(sample, status_url, request_id);
-                        }
-
-                        sample.update();
-
-                        if (that.gathered >= that.minSamples) {
-                            that.finishHIT();
                         }
                     }
                 );

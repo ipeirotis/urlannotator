@@ -84,7 +84,7 @@
             ' value="<%= url %>"></div>'),
 
         events: {
-            "click .add-new-sample": "addNewSample",
+            "click .add-new-sample": "addNewSampleClean",
             "keypress .new-sample": "checkAddNewSample"
         },
 
@@ -123,12 +123,21 @@
         checkAddNewSample: function (e) {
             if (e.keyCode == 13) {
                 e.preventDefault();
-                this.addNewSample();
+                this.addNewSampleClean();
             }
+        },
+
+        addNewSampleClean: function () {
+            this.addNewSample();
+            this.clearInputs();
         },
 
         addNewSample: function () {
             // Not implemented
+        },
+
+        clearInputs: function () {
+            this.$(".new-sample").val("");
         },
 
         finishHIT: function () {

@@ -1047,7 +1047,8 @@ class BeatTheMachineResource(ModelResource):
         status = classified_sample.get_status()
         resp['status'] = status
         if classified_sample.is_successful():
-            resp['labels_matched'] = classified_sample.labels_matched()
+            resp['points'] = 0
+            resp['description'] = "Dummy description"
 
         return self.create_response(request, resp)
 
