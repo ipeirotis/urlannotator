@@ -1,7 +1,7 @@
 {
     "settings_name": "stable",
     "instance": "stable",
-    "domain": "urlannotator.10clouds.com",
+    "domain": "buildaclassifier.com",
     "db_name": "database.sqlite3.db",
     "db_user": "",
     "db_password": "",

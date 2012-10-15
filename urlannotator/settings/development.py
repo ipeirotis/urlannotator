@@ -105,6 +105,8 @@ mock_tests(
     tests='urlannotator.crowdsourcing.tests',
 )
 
+TROIA_HOST = 'http://192.168.56.101:8080/GetAnotherLabel/rest'
+
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
