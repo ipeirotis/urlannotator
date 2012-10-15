@@ -328,6 +328,10 @@ TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'
 
 TAGASAURIS_DEFAULT_PRICE = "0.04"
+TAGASAURIS_GATHER_INSTRUCTION_URL = \
+    "https://s3.amazonaws.com/instructions.buildaclassifier.com/gatherer.task.html"
+TAGASAURIS_VOTING_INSTRUCTION_URL = \
+    "https://s3.amazonaws.com/instructions.buildaclassifier.com/voting.task.html"
 
 # Tagasauris needs sacrifice!
 DUMMY_URLANNOTATOR_URL =\

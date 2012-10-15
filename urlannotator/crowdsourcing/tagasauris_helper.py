@@ -102,7 +102,7 @@ def create_sample_gather(api_client, job):
     kwargs["workflow"].update({
         settings.TAGASAURIS_FORM[task_type]: {
             "config": {
-                "instruction_url": "",
+                "instruction_url": settings.TAGASAURIS_GATHER_INSTRUCTION_URL,
                 "external_app": json.dumps({
                     "external_js": [
                         baseurl + "/statics/js/tagasauris/core.js",
@@ -198,8 +198,7 @@ def create_voting(api_client, job, mediaobjects):
 
     # Setting callback for notify mechanical task.
     kwargs["workflow"].update({
-        # NOTE: Here we can modify number of workers/media per hit but
-        # i dont see use of it now.
+        # NOTE: Here we can modify number of workers/media per hit
         # settings.TAGASAURIS_SURVEY[task_type]: {
         #     "config": {
         #         "workers_per_hit": 1,

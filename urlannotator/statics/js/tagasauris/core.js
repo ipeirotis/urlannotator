@@ -116,8 +116,8 @@
                 this.$('.add-new-sample').removeAttr("disabled");
             }
 
-            this.$('.sample-counter').html("Gathered: " +
-                this.gathered.toString() + "/" + this.minSamples.toString());
+            this.$('.sample-counter').html("(" + this.gathered.toString() +
+                "/" + this.minSamples.toString() + ")");
         },
 
         checkAddNewSample: function (e) {
