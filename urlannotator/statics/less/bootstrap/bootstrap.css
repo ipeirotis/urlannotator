@@ -1422,7 +1422,7 @@ table .span24 {
   border-radius: 5px 5px 0px 0px;
   margin-left: -1px;
   margin-right: -1px;
-  font-size: 11px;
+  font-size: 13px;
 }
 .table-container-anno1 .table-wrapper,
 .table-container-anno2 .table-wrapper,
@@ -1434,6 +1434,12 @@ table .span24 {
   border-radius: 6px;
   padding: 6px;
   background: white;
+}
+.table-container-anno1 .table-wrapper table thead *,
+.table-container-anno2 .table-wrapper table thead *,
+.table-container-anno3 .table-wrapper table thead *,
+.table-container-anno4 .table-wrapper table thead * {
+  font-size: 11px;
 }
 .table-container-anno1 {
   border-color: #3a4354;
