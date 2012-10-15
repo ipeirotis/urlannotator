@@ -33,59 +33,60 @@
            chromium.org/developers/how-tos/chrome-frame-getting-started -->
         <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
 
+        <div class="wrapper">
+            <header class="content">
+                <!-- content for left column(gray) and right column(orange) -->
+                <div class="content content-columns">
+                    <div class="col-left"> </div>
+                    <div class="col-right"> </div>
+                </div>
 
-        <header class="content">
-            <!-- content for left column(gray) and right column(orange) -->
-            <div class="content content-columns">
-                <div class="col-left"> </div>
-                <div class="col-right"> </div>
-            </div>
+                <!-- content for centered colors - gradient -->
+                <div class="content content-colors">
+                    <div class="container container-colors"> </div>
+                </div>
 
-            <!-- content for centered colors - gradient -->
-            <div class="content content-colors">
-                <div class="container container-colors"> </div>
-            </div>
+                <!-- content for stripped overlay -->
+                <div class="content content-stripped"> </div>
 
-            <!-- content for stripped overlay -->
-            <div class="content content-stripped"> </div>
-
-            <!-- container for brand and login -->
-            <div class="content content-login">
-                <div class="container container-login">
-                    <div class="pull-right">
-                        <a href="{% url login %}" class="span btn  btn-login">Log in</a> 
-                        <span class="span">or</span>
-                        <a href="{% url register %}" class="span btn-register">Register</a>
+                <!-- container for brand and login -->
+                <div class="content content-login">
+                    <div class="container container-login">
+                        <div class="pull-right">
+                            <a href="{% url login %}" class="span btn  btn-login">Log in</a>
+                            <span class="span">or</span>
+                            <a href="{% url register %}" class="span btn-register">Register</a>
+                        </div>
+                        <a class="brand pull-left" href="{% url index %}"></a>
                     </div>
-                    <a class="brand pull-left" href="{% url index %}"></a>
                 </div>
-            </div>
-        </header>
-        <div class="clearfix auxiliary-clearfix"></div>
-        <section class="content">
-            <div class="container">
-                <div class="col-wrapper col1">
-                    <div class="col-container"></div>
-                    <h1>PLAN</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
+            </header>
+            <div class="clearfix auxiliary-clearfix"></div>
+            <section class="content">
+                <div class="container">
+                    <div class="col-wrapper col1">
+                        <div class="col-container"></div>
+                        <h1>PLAN</h1>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
+                    </div>
+                    <div class="col-wrapper col2">
+                        <div class="col-container"></div>
+                        <h1>CREATE</h1>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
+                    </div>
+                    <div class="col-wrapper col3">
+                        <div class="col-container"></div>
+                        <h1>WAIT</h1>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
+                    </div>
+                    <div class="col-wrapper col4">
+                        <div class="col-container"></div>
+                        <h1>USE</h1>
+                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
+                    </div>
                 </div>
-                <div class="col-wrapper col2">
-                    <div class="col-container"></div>
-                    <h1>CREATE</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
-                </div>
-                <div class="col-wrapper col3">
-                    <div class="col-container"></div>
-                    <h1>WAIT</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
-                </div>
-                <div class="col-wrapper col4">
-                    <div class="col-container"></div>
-                    <h1>USE</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
-                </div>
-            </div>
-        </section>
+            </section>
+        </div>
 
         <footer class="footer">
           <div class="container container-footer">
