@@ -42,9 +42,13 @@
         </div>
       </div>
     </div>
-
 </div>
 <div class="container container-main2" role="main">
+  <div class="row">
+    <div class="span3">
+      <p><h3>Overview</h3></p>
+    </div>
+  </div>
   <div class="row">
     <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
       <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
