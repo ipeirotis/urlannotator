@@ -45,7 +45,6 @@ div.navbar .brand {
   background: url('/statics/img/url_anno_nav_logo.png') no-repeat center center;
   width: 168px;
   height: 35px;
-  border-right: 1px solid #4D5564;
 }
 div.navbar .dropdown .caret {
   margin-top: 18px;
