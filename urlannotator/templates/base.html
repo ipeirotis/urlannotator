@@ -116,7 +116,7 @@
                 </div>
               {% endif %}
             {% endblock %}
-            <div id="alert-box" class=""> </div>
+            <div id="alert-box" class="async-alerts"> </div>
           </div>
           {% block main %}
           {% endblock %}
@@ -217,6 +217,11 @@
               checkAlerts();
               setInterval(checkAlerts, 10 * 1000);
               {% endif %}
+              $(function(){
+                setTimeout(function(){
+                  $('.alert').fadeOut();
+                },7000);
+              });
             </script>
             {% endif %}
         {% endblock %}
