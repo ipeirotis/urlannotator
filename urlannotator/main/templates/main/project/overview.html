@@ -104,7 +104,7 @@
   {% else %}
     <div class="row">
       <div class="span6 ">
-        <div class="table-container-anno1">
+        <div class="table-container-anno1 newest-corrected">
           <h3>Newest Correct Voted Data</h3>
           <div class="table-wrapper">
             <table class="table">
@@ -112,7 +112,7 @@
                 <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
               </thead>
               <tbody data-bind="foreach: newest_votes">
-                <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url"></td><td data-bind="text: added_on"></td></tr>
+                <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url" class="url"></td><td data-bind="text: added_on"></td></tr>
               </tbody>
             </table>
           </div>
