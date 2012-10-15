@@ -46,7 +46,9 @@ def stop_job(external_id):
 
 
 def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s",
-        workers_per_hit=1):
+        workers_per_hit=1, media_per_hit=1, hit_instructions=None):
+    if hit_instructions is None:
+        hit_instructions = job.description
     return {
         "id": ext_id,
         "title": job.title,
@@ -65,8 +67,8 @@ def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s",
                     "price": settings.TAGASAURIS_DEFAULT_PRICE,
                     # "job_external_id": "yes",
                     # "hit_description": "Gather samples",
-                    "hit_instructions": job.description,
-                    # "media_per_hit": "1",
+                    "hit_instructions": hit_instructions,
+                    "media_per_hit": media_per_hit,
                 }
             },
         }
@@ -194,17 +196,13 @@ def create_voting(api_client, job, mediaobjects):
 
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
-        "Verify web page urls from \"%s\"")
+        hit_title="Verify web page urls from \"%s\"",
+        workers_per_hit=3,
+        media_per_hit=5,
+        hit_instructions=settings.TAGASAURIS_VOTING_INSTRUCTION_URL)
 
     # Setting callback for notify mechanical task.
     kwargs["workflow"].update({
-        # NOTE: Here we can modify number of workers/media per hit
-        # settings.TAGASAURIS_SURVEY[task_type]: {
-        #     "config": {
-        #         "workers_per_hit": 1,
-        #         "media_per_hit": 1,
-        #     }
-        # },
         settings.TAGASAURIS_NOTIFY[task_type]: {
             "config": {
                 "notify_url": settings.TAGASAURIS_VOTING_CALLBACK % job.id
