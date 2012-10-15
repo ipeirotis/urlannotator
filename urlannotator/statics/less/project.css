@@ -87,7 +87,8 @@ div.span2.infobox {
   background-color: #fafafa;
   text-align: center;
   border: 1px solid transparent;
-  margin-left: 18px;
+  margin-left: 14px;
+  margin-right: -2px;
 }
 @media (max-width: 979px) and (min-width: 768px) {
   div.span2.infobox {
@@ -96,13 +97,17 @@ div.span2.infobox {
 }
 @media (min-width: 1200px) {
   div.span2.infobox {
-    margin-left: 28px;
+    margin-left: 22px;
   }
 }
 div.span2.infobox h3 {
   color: #8CC04A;
   font-size: 30px;
   line-height: 34px;
+}
+.table-infoboxes {
+  height: 90px;
+  padding: 6px 0px!important;
 }
 div.infobox-disabled {
   background-color: #F7F7F9;
