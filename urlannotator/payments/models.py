@@ -4,8 +4,13 @@ from urlannotator.main.models import Job, Worker
 from tenclouds.django.jsonfield.fields import JSONField
 
 # Payment statuses breakdown:
-PAYMENT_STATUS_INITIALIZED = 0  # Payment has been initialized by us.
+# NOTE: Not every backend could use all of those statuses.
+PAYMENT_STATUS_INITIALIZED = 0  # Payment has been initialized by us, but not sent.
+                                # It'll be used by the payments monitor to complete
+                                # it after certain time since initialization.
 PAYMENT_STATUS_ISSUED = 1  # Payment has been issued by us using given backend.
+                           # A payment is issued if a request has been sent by us
+                           # to the specific service that will complete it.
 PAYMENT_STATUS_PENDING = 2  # Payment has been issued and we are awaiting completion.
 PAYMENT_STATUS_FINALIZATION = 3  # Payment is being finalized.
 PAYMENT_STATUS_COMPLETED = 3  # Payment has been completed successfully.
@@ -63,33 +68,30 @@ class WorkerPaymentManager(models.Manager):
         )
 
     def pay_sample_gathering(self, worker, job, amount, backend):
-        return self.create(
+        return self.pay_task(
             worker=worker,
             job=job,
             amount=amount,
             backend=backend,
-            job_task=JOB_TASK_SAMPLE_GATHERING,
-            status=PAYMENT_STATUS_INITIALIZATION,
+            task=JOB_TASK_SAMPLE_GATHERING,
         )
 
     def pay_voting(self, worker, job, amount, backend):
-        return self.create(
+        return self.pay_task(
             worker=worker,
             job=job,
             amount=amount,
             backend=backend,
-            job_task=JOB_TASK_VOTING,
-            status=PAYMENT_STATUS_INITIALIZATION,
+            task=JOB_TASK_VOTING,
         )
 
     def pay_btm(self, worker, job, amount, backend):
-        return self.create(
+        return self.pay_task(
             worker=worker,
             job=job,
             amount=amount,
             backend=backend,
-            job_task=JOB_TASK_BTM,
-            status=PAYMENT_STATUS_INITIALIZATION,
+            task=JOB_TASK_BTM,
         )
 
     def get_sample_gathering(self, job):
@@ -145,6 +147,7 @@ class JobPaymentSettings(models.Model):
     split_budget = JSONField(default={})
     backend = models.CharField(max_length=25)
     main = models.BooleanField(default=True)
+    backend_params = JSONField(default={})
 
     class Meta:
         unique_together = ['job', 'main']
@@ -182,6 +185,9 @@ class WorkerPayment(models.Model):
 
     def is_finalizing(self):
         return self.status == PAYMENT_STATUS_FINALIZATION
+
+    def is_initialized(self):
+        return self.status == PAYMENT_STATUS_INITIALIZED
 
     def is_combined_payment(self):
         return self.combined_payment_id is not None
