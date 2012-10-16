@@ -1385,6 +1385,9 @@ table .span24 {
   width: 1884px;
   margin-left: 0;
 }
+table thead * {
+  font-size: 11px;
+}
 .table-container-anno1,
 .table-container-anno2,
 .table-container-anno3,
