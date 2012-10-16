@@ -1,5 +1,6 @@
 .container-register p,
-.container-login p {
+.container-login p,
+.container-reset p {
   margin-top: 10px;
   margin-bottom: 10px;
 }
@@ -24,7 +25,8 @@ header.header {
   display: none;
 }
 .body-login .alert,
-.body-register .alert {
+.body-register .alert,
+.body-reset .alert {
   padding-right: 25px;
 }
 .body-settings hr {
