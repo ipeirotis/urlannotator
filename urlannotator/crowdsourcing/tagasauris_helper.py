@@ -7,6 +7,9 @@ from django.conf import settings
 
 from tagapi.api import TagasaurisClient
 
+import logging
+log = logging.getLogger(__name__)
+
 
 def make_tagapi_client():
     return TagasaurisClient(settings.TAGASAURIS_LOGIN,
@@ -34,6 +37,11 @@ def sample_to_mediaobject(sample, caption=""):
 def samples_to_mediaobjects(samples, caption=""):
     mediaobjects = {}
     for sample in samples:
+        if not sample.screenshot:
+            log.critical(
+                'samples_to_mediaobjects: sample %d has no url, '
+                'skipping.' % sample.id)
+            continue
         mediaobjects.update({sample: sample_to_mediaobject(sample, caption)})
 
     return mediaobjects
