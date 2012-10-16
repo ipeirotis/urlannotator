@@ -76,8 +76,8 @@ div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a {
   font-weight: bold;
   line-height: 20px;
-  padding: 3px 6px;
-  margin-top: 15px;
+  padding: 6px 9px;
+  margin-top: 12px;
 }
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a:before {
   font-size: 16px;
