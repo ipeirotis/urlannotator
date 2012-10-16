@@ -30,8 +30,9 @@ class SampleVotingManager(Task):
         """
         mapped_samples = SampleMapping.objects.select_related('sample').all()
         mapped_samples_ids = set([s.sample.id for s in mapped_samples])
-        return Sample.objects.select_related('job').exclude(
+        samples = Sample.objects.select_related('job').exclude(
             id__in=mapped_samples_ids)
+        return samples.exclude(screenshot='')
 
     def get_jobs(self, all_samples):
         """ Auxiliary function for divide samples in job related groups and
@@ -127,8 +128,10 @@ class SampleVotingManager(Task):
                     self.update_job(tc, job, new_samples)
                 else:
                     self.initialize_job(tc, job, new_samples)
-        except Exception:
-            pass
+        except Exception, e:
+            log.critical(
+                'SampleVotingManager: exception while handling job: %s.' % e
+            )
 
 
 send_for_voting = registry.tasks[SampleVotingManager.name]

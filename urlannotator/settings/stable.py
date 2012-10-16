@@ -78,6 +78,12 @@ TAGASAURIS_CALLBACKS = 'http://' + SITE_URL
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'
 
+TAGASAURIS_HIT_SOCIAL_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
+
+# Tagasauris needs sacrifice!
+DUMMY_URLANNOTATOR_URL =\
+    'http://' + SITE_URL + '/statics/img/favicon.png'
+
 XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
 
 PIPELINE = not DEBUG

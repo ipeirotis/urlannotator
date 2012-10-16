@@ -6,6 +6,7 @@ import math
 from django.conf import settings
 
 from tagapi.api import TagasaurisClient
+from tagapi.error import TagasaurisApiException
 
 import logging
 log = logging.getLogger(__name__)
@@ -239,7 +240,12 @@ def _create_job(api_client, ext_id, kwargs):
 
         hit = result['hits'][0][hit_type] if result['hits'] else None
         return ext_id, hit
-    except Exception:
+    except TagasaurisApiException, e:
+        log.exception('Failed to create Tagasauris job: %s, %s' % (e, e.response))
+        stop_job(external_id=ext_id)
+        raise
+    except Exception, e:
+        log.exception('Failed to create Tagasauris job: %s' % e)
         # Exception occured during further job creation steps, but TAG job
         # has been already created! It has to be stopped.
         stop_job(external_id=ext_id)

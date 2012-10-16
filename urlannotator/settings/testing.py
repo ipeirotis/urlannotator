@@ -93,7 +93,7 @@ TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 
 TAGASAURIS_HIT_TYPE = TAGASAURIS_SOCIAL
 
-TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
+TAGASAURIS_CALLBACKS = 'http://devel.urlannotator.10clouds.com'
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'
 

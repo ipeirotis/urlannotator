@@ -41,6 +41,7 @@ TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 VOTES_STORAGE = 'TroiaVotesStorage'
 QUALITY_ALGORITHM = 'DawidSkeneAlgorithm'
 
+SITE_URL = 'devel.urlannotator.10clouds.com'
 
 SOCIAL_AUTH_CREATE_USERS = False
 
@@ -323,7 +324,7 @@ TAGASAURIS_FORM = {
     TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Form_1',
 }
 
-TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
+TAGASAURIS_CALLBACKS = 'http://' + SITE_URL
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'
 
@@ -335,7 +336,7 @@ TAGASAURIS_VOTING_INSTRUCTION_URL = \
 
 # Tagasauris needs sacrifice!
 DUMMY_URLANNOTATOR_URL =\
-    'http://urlannotator.10clouds.com/statics/img/favicon.png'
+    'http://' + SITE_URL + '/statics/img/favicon.png'
 
 # Tagasauris will ask for some infro via xhr ($.post() etc). It is different
 # domain so we need to allow it explicit.
