@@ -42,50 +42,56 @@
       </div>
     </div>
     <div class="span6">
-      <h4>Test classifier</h4>
-      To test the classifier you can input either URLs or text.
-      <form name="classifyForm" method="POST" action="" onsubmit="return submitClassify();">
-      <table id="classifier-test">
-        <tbody>
-          <tr>
-            <td></td>
-            <td>
-              <input id="radio-urls" type="radio" name="test-type" checked="checked" value="urls">URL(s)
-              <input id="radio-texts" type="radio" name="test-type" value="texts">Text(s)
-            </td>
-          </tr>
-          <tr id="input-test-urls">
-            <td>
-              Input test URL(s):
-            </td>
-            <td>
-              <textarea id='test-urls' name="test-urls" cols="40" rows="5" placeholder="URLs"></textarea>
-            </td>
-          </tr>
-          <tr class="input-test-texts" style="display:none;">
-            <td>
-              Input Text:
-            </td>
-            <td>
-              <textarea name="test-texts" cols="40" rows="5"></textarea>
-            </td>
-          </tr>
-          <tr class="input-test-texts" style="display:none;">
-            <td></td>
-            <td>
-              <button id="new-text-button" href="#" class="btn" style="width: 100%">+</button>
-            </td>
-          </tr>
-          <tr>
-            <td></td>
-            <td>
-              {%csrf_token%}
-              <input type="submit" href="#" class="btn" value="Classify!">
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </form>
+
+      <div class="table-container-anno3">
+        <h4>Test classifier</h4>
+
+        <div class="table-wrapper">
+          To test the classifier you can input either URLs or text.
+          <form name="classifyForm" method="POST" action="" onsubmit="return submitClassify();">
+          <table id="classifier-test">
+            <tbody>
+              <tr>
+                <td></td>
+                <td>
+                  <input id="radio-urls" type="radio" name="test-type" checked="checked" value="urls">URL(s)
+                  <input id="radio-texts" type="radio" name="test-type" value="texts">Text(s)
+                </td>
+              </tr>
+              <tr id="input-test-urls">
+                <td>
+                  Input test URL(s):
+                </td>
+                <td>
+                  <textarea id='test-urls' name="test-urls" cols="40" rows="5" placeholder="URLs"></textarea>
+                </td>
+              </tr>
+              <tr class="input-test-texts" style="display:none;">
+                <td>
+                  Input Text:
+                </td>
+                <td>
+                  <textarea name="test-texts" cols="40" rows="5"></textarea>
+                </td>
+              </tr>
+              <tr class="input-test-texts" style="display:none;">
+                <td></td>
+                <td>
+                  <button id="new-text-button" href="#" class="btn" style="width: 100%">+</button>
+                </td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  {%csrf_token%}
+                  <input type="submit" href="#" class="btn" value="Classify!">
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          </form>
+        </div>
+      </div>
     </div>
     <div class="span6 pull-right">
       <div class="table-container-anno1">
