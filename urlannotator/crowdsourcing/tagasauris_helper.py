@@ -241,12 +241,10 @@ def _create_job(api_client, ext_id, kwargs):
         hit = result['hits'][0][hit_type] if result['hits'] else None
         return ext_id, hit
     except TagasaurisApiException, e:
-        log.exception('Failed to create Tagasauris job: %s, %s' % (e, e.response))
-        stop_job(external_id=ext_id)
-        raise
+        log.exception('Failed to obtain Tagasauris hit: %s, %s' % (e, e.response))
+        # Failed to get info about Tagasauris job - return None as hit
+        return ext_id, None
     except Exception, e:
-        log.exception('Failed to create Tagasauris job: %s' % e)
-        # Exception occured during further job creation steps, but TAG job
-        # has been already created! It has to be stopped.
-        stop_job(external_id=ext_id)
-        raise
+        log.exception('Failed to obtain Tagasauris hit: %s' % e)
+        # Failed to get info about Tagasauris job - return None as hit
+        return ext_id, None
