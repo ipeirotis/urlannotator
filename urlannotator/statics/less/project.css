@@ -150,7 +150,7 @@ table#btm-statistics td:nth-of-type(2) {
   float: right!important;
 }
 .accordion {
-  margin-bottom: 0px;
+  margin-bottom: 18px;
 }
 .accordion .accordion-group {
   background: url('/statics/img/url_anno_stream_bg.png') repeat 0px 0px;
