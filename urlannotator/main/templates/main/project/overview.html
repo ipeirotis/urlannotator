@@ -111,7 +111,10 @@
                 <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
               </thead>
               <tbody data-bind="foreach: newest_votes">
-                <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url" class="url"></td><td data-bind="text: added_on"></td></tr>
+                <tr>
+                  <td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td>
+                  <td data-bind="text: url" class="url"></td>
+                  <td data-bind="text: added_on"></td></tr>
               </tbody>
             </table>
           </div>

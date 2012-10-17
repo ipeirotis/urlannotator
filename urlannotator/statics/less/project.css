@@ -79,7 +79,7 @@ div.status-completed {
   background-color: #3a4354;
   border: 1px solid #252b36;
 }
-div.span2.infobox {
+div.infobox {
   -webkit-box-shadow: inset 0px 0px 2px 2px #f8f8f8;
   -moz-box-shadow: inset 0px 0px 2px 2px #f8f8f8;
   box-shadow: inset 0px 0px 2px 2px #f8f8f8;
@@ -91,16 +91,16 @@ div.span2.infobox {
   margin-left: 12px;
 }
 @media (max-width: 979px) and (min-width: 768px) {
-  div.span2.infobox {
+  div.infobox {
     height: 63px;
   }
 }
 @media (min-width: 1200px) {
-  div.span2.infobox {
+  div.infobox {
     margin-left: 20px;
   }
 }
-div.span2.infobox h3 {
+div.infobox h3 {
   color: #8CC04A;
   font-size: 30px;
   line-height: 34px;
@@ -283,5 +283,29 @@ tbody#classifier-history .td-url a span {
     overflow: hidden;
     width: 300px;
     text-overflow: ellipsis;
+    white-space: pre;
+    /* CSS 2.0 */
+  
+    white-space: pre-wrap;
+    /* CSS 2.1 */
+  
+    white-space: pre-line;
+    /* CSS 3.0 */
+  
+    white-space: -pre-wrap;
+    /* Opera 4-6 */
+  
+    white-space: -o-pre-wrap;
+    /* Opera 7 */
+  
+    white-space: -moz-pre-wrap;
+    /* Mozilla */
+  
+    white-space: -hp-pre-wrap;
+    /* HP Printers */
+  
+    word-wrap: break-word;
+    /* IE 5+ */
+  
   }
 }
