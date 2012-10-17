@@ -123,7 +123,7 @@ class SampleVotingManager(Task):
         voting_lock = settings.SITE_URL + '-voting-lock'
         p = POSIXLock(name=voting_lock)
         with POSIXLock(name=mutex_name):
-            if p.lock.semaphore.value:
+            if not p.lock.semaphore.value:
                 # Lock is taken, voting manager in progress
                 log.warning(
                     'SampleVotingManager: Processing already in progress'
