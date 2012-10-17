@@ -309,6 +309,15 @@ tbody#classifier-history .td-url a span {
   
   }
 }
+table tbody tr td.url {
+  width: 200px;
+}
 table tbody tr td.added-on {
   width: 50px;
+}
+table tbody tr td.preview {
+  width: 54px;
+}
+table.fix {
+  table-layout: fixed;
 }
