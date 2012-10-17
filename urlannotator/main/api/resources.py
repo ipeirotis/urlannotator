@@ -1077,47 +1077,47 @@ class VoteResource(ModelResource):
             associated with job. Returns task id on success.
         """
 
-        try:
-            data = json.loads(request.raw_post_data)
+        data = json.loads(request.raw_post_data)
 
-            self.method_check(request, allowed=['post'])
-            for req in self.notification_required:
-                if req not in data:
-                    return self.create_response(request,
-                        {'error': 'Missing "%s" parameter.' % req},
-                        response_class=HttpBadRequest)
+        self.method_check(request, allowed=['post'])
+        for req in self.notification_required:
+            if req not in data:
+                return self.create_response(request,
+                    {'error': 'Missing "%s" parameter.' % req},
+                    response_class=HttpBadRequest)
 
-            results = data['results']
+        results = data['results']
 
-            for worker_id, mediaobjects in results.iteritems():
-                worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
+        for worker_id, mediaobjects in results.iteritems():
+            worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
 
-                for mediaobject_id, answers in mediaobjects.iteritems():
+            for mediaobject_id, answers in mediaobjects.iteritems():
+                try:
                     sample = SampleMapping.objects.get(
                         external_id=mediaobject_id,
                         crowscourcing_type=SampleMapping.TAGASAURIS
                     ).sample
+                except Exception, e:
+                    log.exception(
+                        "AddVote: Exception caught when adding votes: "
+                        "input %s, err %s" % (request.raw_post_data, e)
+                    )
+                    continue
 
-                    for answer in answers:
-                        if answer['tag'] in ['yes', 'no', 'broken']:
-                            label = None
-                            if answer['tag'] == 'broken':
-                                label = LABEL_BROKEN
-                            elif answer['tag'] == 'yes':
-                                label = LABEL_YES
-                            elif answer['tag'] == 'no':
-                                label = LABEL_NO
+                for answer in answers:
+                    if answer['tag'] in ['yes', 'no', 'broken']:
+                        label = None
+                        if answer['tag'] == 'broken':
+                            label = LABEL_BROKEN
+                        elif answer['tag'] == 'yes':
+                            label = LABEL_YES
+                        elif answer['tag'] == 'no':
+                            label = LABEL_NO
 
-                            if label is not None:
-                                WorkerQualityVote.objects.new_vote(
-                                    worker=worker,
-                                    sample=sample,
-                                    label=label
-                                )
-        except Exception, e:
-            log.exception(
-                "AddVote: Exception caught when adding votes: "
-                "input %s, err %s" % (request.raw_post_data, e)
-            )
-            raise
+                        if label is not None:
+                            WorkerQualityVote.objects.new_vote(
+                                worker=worker,
+                                sample=sample,
+                                label=label
+                            )
         return self.create_response(request, {})
