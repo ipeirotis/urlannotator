@@ -209,8 +209,8 @@ def create_voting(api_client, job, mediaobjects):
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
         hit_title="Verify web page urls from \"%s\"",
-        workers_per_hit=3,
-        media_per_hit=5,
+        # workers_per_hit=3,
+        # media_per_hit=5,
         hit_instructions=settings.TAGASAURIS_VOTING_INSTRUCTION_URL)
 
     # Setting callback for notify mechanical task.
