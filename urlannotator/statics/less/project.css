@@ -232,7 +232,7 @@ table#btm-statistics td:nth-of-type(2) {
   overflow: hidden;
   width: 150px;
   text-overflow: ellipsis;
-  float: left;
+  float: right;
   height: 60px;
 }
 @media (min-width: 1200px) {
@@ -307,15 +307,26 @@ tbody#classifier-history .td-url a span {
     word-wrap: break-word;
     /* IE 5+ */
   
+    white-space: nowrap;
   }
 }
-table tbody tr td.url {
+td.url,
+th.url {
+  overflow: hidden;
   width: 200px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-table tbody tr td.added-on {
-  width: 50px;
+td.url a,
+th.url a {
+  white-space: nowrap;
 }
-table tbody tr td.preview {
+td.added-on,
+th.added-on {
+  width: 110px;
+}
+td.preview,
+th.preview {
   width: 54px;
 }
 table.fix {
