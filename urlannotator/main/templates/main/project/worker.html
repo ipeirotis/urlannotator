@@ -3,43 +3,42 @@
 {% block workers_active %}active{% endblock %}
 {% block project_content %}
   <div class="row">
-    <div class="span2">
+    <div class="span">
       <ul class="pager">
         <li><a href="{% url project_workers_view project.id%}">&lt; Back</a></li>
       </ul>
     </div>
-    <div class="span2 pull-right">
+    <div class="pull-right">
       <a href="#" class="btn">End contract</a>
     </div>
   </div>
   <div class="row">
-    <h3>{{worker.name}}&nbsp;</h3>
+    <div class="table-container-anno3 span12">
+      <h3>{{worker.name}}</h3>
+      <div class="table-wrapper">
+        <div class="span2 infobox">
+          <h3>{{worker.urls_collected}}</h3>
+          URLs collected
+        </div>
+        <div class="span2 infobox">
+          <h3>{{worker.votes_added}}</h3>
+          Votes
+        </div>
+        <div class="span2 infobox">
+          <h3>{{worker.hours_spent}}</h3>
+          Hours spent
+        </div>
+        <div class="span2 infobox">
+          <h3>{{worker.quality}}</h3>
+          Quality
+        </div>
+        <div class="span2 infobox">
+          <h3>{{worker.earned}}</h3>
+          Money earned (USD)
+        </div>
+      </div>
   </div>
-  <div class="row">
-    <div class="span2 infobox">
-      <h3>{{worker.urls_collected}}</h3>
-      URLs collected
-    </div>
-    <div class="span2 infobox">
-      <h3>{{worker.votes_added}}</h3>
-      Votes
-    </div>
-    <div class="span2 infobox">
-      <h3>{{worker.hours_spent}}</h3>
-      Hours spent
-    </div>
-    <div class="span2 infobox">
-      <h3>{{worker.quality}}</h3>
-      Quality
-    </div>
-    <div class="span2 infobox">
-      <h3>{{worker.earned}}</h3>
-      Money earned (USD)
-    </div>
-  </div>
-  <div class="row">
-    <hr>
-  </div>
+  
   <div class="row">
     <div class="span3">
       <h3>Statistics</h3>
