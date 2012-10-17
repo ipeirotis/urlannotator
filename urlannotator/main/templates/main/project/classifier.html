@@ -101,9 +101,9 @@
             <thead></thead>
             <tbody>
               <tr><td>URLs collected</td><td data-bind="text: allCount">{{classifier_stats.count}}</td><td>-</td></tr>
-              <tr><td>yes class records</td><td data-bind="text: yesCount">{{classifier_stats.yes_labels.val}}</td><td><span data-bind="text: yesPerc">{{classifier_stats.yes_labels.perc}}</span>%</td></tr>
-              <tr><td>no class records</td><td data-bind="text: noCount">{{classifier_stats.no_labels.val}}</td><td><span data-bind="text: noPerc">{{classifier_stats.no_labels.perc}}</span>%</td></tr>
-              <tr><td>broken class records</td><td data-bind="text: brokenCount">{{classifier_stats.broken_labels.val}}</td><td><span data-bind="text: brokenPerc">{{classifier_stats.broken_labels.perc}}</span>%</td></tr>
+              <tr><td>yes class records</td><td data-bind="text: yesCount">{{classifier_stats.yes_labels.val}}</td><td><span data-bind="text: yesPerc">{{classifier_stats.yes_labels.perc|floatformat:1}}</span>%</td></tr>
+              <tr><td>no class records</td><td data-bind="text: noCount">{{classifier_stats.no_labels.val}}</td><td><span data-bind="text: noPerc">{{classifier_stats.no_labels.perc|floatformat:1}}</span>%</td></tr>
+              <tr><td>broken class records</td><td data-bind="text: brokenCount">{{classifier_stats.broken_labels.val}}</td><td><span data-bind="text: brokenPerc">{{classifier_stats.broken_labels.perc|floatformat:1}}</span>%</td></tr>
             </tbody>
           </table>
           <div class="" id="performanceGraph">
