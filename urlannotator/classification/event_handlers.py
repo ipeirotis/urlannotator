@@ -2,6 +2,7 @@ from multiprocessing.pool import Process
 
 from celery import task, Task, registry
 from celery.task import current
+from django.conf import settings
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
@@ -12,7 +13,7 @@ from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_voting, samples_to_mediaobjects)
 from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.main.models import Sample, Job
-
+from urlannotator.tools.synchronization import POSIXLock
 
 import logging
 log = logging.getLogger(__name__)
@@ -118,8 +119,22 @@ class SampleVotingManager(Task):
     def run(self, *args, **kwargs):
         """ Main task function.
         """
-        unmapped_samples = self.get_unmapped_samples()
+        mutex_name = settings.SITE_URL + '-voting-mutex'
+        voting_lock = settings.SITE_URL + '-voting-lock'
+        p = POSIXLock(name=voting_lock)
+        with POSIXLock(name=mutex_name):
+            if p.lock.semaphore.value:
+                # Lock is taken, voting manager in progress
+                log.warning(
+                    'SampleVotingManager: Processing already in progress'
+                )
+                return
+            else:
+                # value != 0
+                p.acquire()
+
         try:
+            unmapped_samples = self.get_unmapped_samples()
             jobs = self.get_jobs(unmapped_samples)
             tc = make_tagapi_client()
 
@@ -132,6 +147,8 @@ class SampleVotingManager(Task):
             log.critical(
                 'SampleVotingManager: exception while handling job: %s.' % e
             )
+        finally:
+            p.release()
 
 
 send_for_voting = registry.tasks[SampleVotingManager.name]
