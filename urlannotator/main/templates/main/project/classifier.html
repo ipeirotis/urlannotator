@@ -225,7 +225,17 @@ function updateClassifierHistory(){
 
     for (en in data['entries']){
       el = data['entries'][en]
-      new_entries.push(new classifier_history_entry(el['screenshot'], el['url'], el['label'], Math.round(el['label_probability']['Yes']), Math.round(el['label_probability']['No']), 0, el['finished']));
+      new_entries.push(
+        new classifier_history_entry(
+          el['screenshot'], 
+          el['url'], 
+          el['label'], 
+          Math.round(el['label_probability']['Yes']), 
+          Math.round(el['label_probability']['No']), 
+          0, 
+          el['finished']
+        )
+      );
 
       if (!(el['id'] in image_cache)){
         img = new Image();
