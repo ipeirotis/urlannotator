@@ -1438,6 +1438,12 @@ table thead * {
   padding: 6px;
   background: white;
 }
+.table-container-anno1 .table-wrapper table,
+.table-container-anno2 .table-wrapper table,
+.table-container-anno3 .table-wrapper table,
+.table-container-anno4 .table-wrapper table {
+  table-layout: fixed;
+}
 .table-container-anno1 .table-wrapper table thead *,
 .table-container-anno2 .table-wrapper table thead *,
 .table-container-anno3 .table-wrapper table thead *,

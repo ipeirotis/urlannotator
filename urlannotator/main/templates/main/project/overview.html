@@ -112,7 +112,9 @@
               </thead>
               <tbody data-bind="foreach: newest_votes">
                 <tr>
-                  <td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td>
+                  <td class="preview">
+                    <a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a>
+                  </td>
                   <td class="url" data-bind="text: url"></td>
                   <td class="added-on" data-bind="text: added_on"></td>
                 </tr>
