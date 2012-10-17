@@ -297,7 +297,7 @@ table#classifier-test td:first-child{
 tbody#classifier-history .td-url a span{
   display: block;
   .overflow(190px);
-  .url-wrap();
+  white-space: nowrap;
   @media (min-width: 1200px) {
     .overflow(300px);
   }
@@ -307,9 +307,9 @@ tbody#classifier-history .td-url a span{
 td.url,
 th.url {
   .overflow(200px);
-  .url-wrap();
+  white-space: nowrap;
   a {
-  .url-wrap();
+    white-space: nowrap;
   }
 }
 
