@@ -277,30 +277,7 @@ tbody#classifier-history .td-url a span {
   overflow: hidden;
   width: 190px;
   text-overflow: ellipsis;
-  white-space: pre;
-  /* CSS 2.0 */
-
-  white-space: pre-wrap;
-  /* CSS 2.1 */
-
-  white-space: pre-line;
-  /* CSS 3.0 */
-
-  white-space: -pre-wrap;
-  /* Opera 4-6 */
-
-  white-space: -o-pre-wrap;
-  /* Opera 7 */
-
-  white-space: -moz-pre-wrap;
-  /* Mozilla */
-
-  white-space: -hp-pre-wrap;
-  /* HP Printers */
-
-  word-wrap: break-word;
-  /* IE 5+ */
-
+  white-space: nowrap;
 }
 @media (min-width: 1200px) {
   tbody#classifier-history .td-url a span {
@@ -314,57 +291,11 @@ th.url {
   overflow: hidden;
   width: 200px;
   text-overflow: ellipsis;
-  white-space: pre;
-  /* CSS 2.0 */
-
-  white-space: pre-wrap;
-  /* CSS 2.1 */
-
-  white-space: pre-line;
-  /* CSS 3.0 */
-
-  white-space: -pre-wrap;
-  /* Opera 4-6 */
-
-  white-space: -o-pre-wrap;
-  /* Opera 7 */
-
-  white-space: -moz-pre-wrap;
-  /* Mozilla */
-
-  white-space: -hp-pre-wrap;
-  /* HP Printers */
-
-  word-wrap: break-word;
-  /* IE 5+ */
-
+  white-space: nowrap;
 }
 td.url a,
 th.url a {
-  white-space: pre;
-  /* CSS 2.0 */
-
-  white-space: pre-wrap;
-  /* CSS 2.1 */
-
-  white-space: pre-line;
-  /* CSS 3.0 */
-
-  white-space: -pre-wrap;
-  /* Opera 4-6 */
-
-  white-space: -o-pre-wrap;
-  /* Opera 7 */
-
-  white-space: -moz-pre-wrap;
-  /* Mozilla */
-
-  white-space: -hp-pre-wrap;
-  /* HP Printers */
-
-  word-wrap: break-word;
-  /* IE 5+ */
-
+  white-space: nowrap;
 }
 td.added-on,
 th.added-on {
