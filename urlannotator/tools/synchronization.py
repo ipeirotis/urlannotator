@@ -4,6 +4,8 @@ import threading
 import weakref
 
 from tenclouds.lock.rwlock import RWLock
+import logging
+log = logging.getLogger(__name__)
 
 memcache_client = memcache.Client(['127.0.0.1:11211'], debug=0)
 
@@ -23,7 +25,6 @@ class _POSIXSemProxy(object):
             flags=posix_ipc.O_CREAT,
             initial_value=1,
         )
-        self.semaphore.unlink()
 
     def acquire(self):
         self.semaphore.acquire()
