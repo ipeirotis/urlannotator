@@ -194,6 +194,9 @@ def create_btm(api_client, job):
 
 def create_voting(api_client, job, mediaobjects):
     task_type = settings.TAGASAURIS_VOTING_WORKFLOW
+    log.debug(
+        'TagasaurisHelper: Creating voting job for %s (%d).' % (job.title, job.id)
+    )
 
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = make_external_id()
