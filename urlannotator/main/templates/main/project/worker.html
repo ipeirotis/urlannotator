@@ -38,26 +38,24 @@
         </div>
       </div>
   </div>
-  
   <div class="row">
-    <div class="span3">
+    <div class="table-container-anno1 span6">
       <h3>Statistics</h3>
-      <div id="urlGraph"></div>
-    </div>
-    <div class="span9">
-      <h3>More information</h3>
-      <table id="more-information">
-        <thead></thead>
-        <tbody>
-          <tr><td>Work since</td><td>{{worker.work_started}}</td></tr>
-          <tr><td>Projects worked on</td><td>
-          {% autoescape off %}
-          {{ worker.projects|join:', '}}
-          {% endautoescape %}
-          </td></tr>
-          <tr><td>Status</td><td>{{worker.status}}</td></tr>
-        </tbody>
-      </table>
+      <div class="table-wrapper">
+        <table id="more-information">
+          <thead></thead>
+          <tbody>
+            <tr><td>Work since</td><td>{{worker.work_started}}</td></tr>
+            <tr><td>Projects worked on</td><td>
+            {% autoescape off %}
+            {{ worker.projects|join:', '}}
+            {% endautoescape %}
+            </td></tr>
+            <tr><td>Status</td><td>{{worker.status}}</td></tr>
+          </tbody>
+        </table>
+        <div id="urlGraph"></div>
+      </div>
     </div>
   </div>
 {% endblock %}
