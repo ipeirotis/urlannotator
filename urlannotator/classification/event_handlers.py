@@ -68,15 +68,16 @@ class SampleVotingManager(Task):
         tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
         tag_jobs.voting_key = voting_key
 
+        # ALWAYS add mediaobject mappings assuming Tagasauris will handle them
+        # TODO: possibly check mediaobject status?
+        for sample, mediaobject in mediaobjects.items():
+            SampleMapping(
+                sample=sample,
+                external_id=mediaobject['id'],
+                crowscourcing_type=SampleMapping.TAGASAURIS,
+            ).save()
+
         if voting_hit is not None:
-            # Update mapping if HIT was generaed. TODO: Not sure if we should
-            # check is tagasauris get all our screenshots.
-            for sample, mediaobject in mediaobjects.items():
-                SampleMapping(
-                    sample=sample,
-                    external_id=mediaobject['id'],
-                    crowscourcing_type=SampleMapping.TAGASAURIS,
-                ).save()
             tag_jobs.voting_hit = voting_hit
 
         tag_jobs.save()
