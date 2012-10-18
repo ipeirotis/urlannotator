@@ -261,6 +261,7 @@ class ClassifiedSampleResource(Resource):
             `sample_url` - String. URL you can query connected sample from.
             'finished' - Boolean. Whether the sample's classification has
                          finished.
+            `sample_url` - String. URL pointing to sample's data view.
         """
         class_sample = ClassifiedSample.objects.get(id=class_id)
         screenshot = ''
@@ -277,6 +278,10 @@ class ClassifiedSampleResource(Resource):
             'label_probability': class_sample.label_probability,
             'label': class_sample.label,
             'finished': class_sample.is_successful(),
+            'sample_url': reverse('project_data_detail', kwargs={
+                'id': class_sample.job_id,
+                'data_id': class_sample.sample.id,
+            }),
         }
 
 
@@ -691,6 +696,10 @@ class JobResource(ModelResource):
             newest_votes = [{
                 'screenshot': s.sample.get_small_thumbnail_url(),
                 'url': s.sample.url,
+                'sample_url': reverse('project_data_detail', kwargs={
+                    'id': job_id,
+                    'data_id': s.sample.id,
+                }),
                 'label': s.label,
                 'added_on': s.sample.added_on.strftime('%Y-%m-%d %H:%M:%S'),
                 'date': date,
