@@ -273,6 +273,13 @@ def classify(sample_id, from_name='', *args, **kwargs):
 
     classifier = classifier_factory.create_classifier(job.id)
     label = classifier.classify(class_sample)
+    if label is None:
+        # Something went wrong
+        log.warning(
+            '[Classification] Got None label for sample %d. Retrying.' % class_sample.id
+        )
+        current.retry(countdown=min(60 * 2 ** current.request.retries,
+            60 * 60 * 24))
     ClassifiedSample.objects.filter(id=sample_id).update(label=label)
     send_event(
         'EventSampleClassified',

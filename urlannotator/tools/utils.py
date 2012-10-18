@@ -1,5 +1,7 @@
 import platform
 
+from django.conf import settings
+
 
 def os_result_to_code(code):
     """
@@ -27,3 +29,10 @@ def os_result_to_code(code):
         return high_byte
 
     return code
+
+
+def setting(name, default):
+    """
+        Returns a settings value. If not present, returns `default`.
+    """
+    return getattr(settings, name, default)

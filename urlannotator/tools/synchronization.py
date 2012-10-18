@@ -4,13 +4,15 @@ import threading
 import weakref
 
 from tenclouds.lock.rwlock import RWLock
+from urlannotator.tools.utils import setting
+
 import logging
 log = logging.getLogger(__name__)
 
 memcache_client = memcache.Client(['127.0.0.1:11211'], debug=0)
 
 
-_posix_sem_prefix = 'urlannotator'
+_posix_sem_prefix = setting('SITE_URL', 'testing')
 
 
 class _POSIXSemProxy(object):
