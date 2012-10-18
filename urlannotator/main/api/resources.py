@@ -270,7 +270,7 @@ class ClassifiedSampleResource(Resource):
         for label in class_sample.label_probability:
             class_sample.label_probability[label] *= 100
 
-        return {
+        data = {
             'id': class_sample.id,
             'screenshot': screenshot,
             'url': class_sample.url,
@@ -278,11 +278,15 @@ class ClassifiedSampleResource(Resource):
             'label_probability': class_sample.label_probability,
             'label': class_sample.label,
             'finished': class_sample.is_successful(),
-            'sample_url': reverse('project_data_detail', kwargs={
+        }
+
+        if class_sample.sample:
+            data['sample_url'] = reverse('project_data_detail', kwargs={
                 'id': class_sample.job_id,
                 'data_id': class_sample.sample.id,
-            }),
-        }
+            })
+
+        return data
 
 
 class ClassifierResource(Resource):
