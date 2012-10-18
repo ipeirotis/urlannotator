@@ -34,7 +34,7 @@
                   <td>{{data.added_on|date:"Y-m-d H:i"}}</td>
                   <td>{{data.get_workers|length}}</td>
                   <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
-                  <td>{{data.get_yes_probability}}% {{data.get_no_probability}}%</td>
+                  <td>{% if data.is_gold_sample %}GOLD SAMPLE{% else %}{{data.get_yes_probability}}% {{data.get_no_probability}}%{% endif %}</td>
                 </tr>
               {% endfor %}
               {% else %}
