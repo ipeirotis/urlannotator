@@ -299,7 +299,7 @@ class Job(models.Model):
         """
         workers = self.get_workers()
         workers.sort(
-            key=lambda w: w.get_urls_collected_count_for_job(self)
+            key=lambda w: -w.get_urls_collected_count_for_job(self)
         )
         return workers[:num]
 

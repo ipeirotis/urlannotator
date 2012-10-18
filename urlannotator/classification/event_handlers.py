@@ -18,6 +18,10 @@ from urlannotator.tools.synchronization import POSIXLock
 import logging
 log = logging.getLogger(__name__)
 
+# Max amount of samples to update. To avoid a single job blocking whole service
+# while uploading loads of medias.
+VOTING_MAX_SAMPLES = 20
+
 
 @task(ignore_result=True)
 class SampleVotingManager(Task):
@@ -33,7 +37,7 @@ class SampleVotingManager(Task):
         mapped_samples_ids = set([s.sample.id for s in mapped_samples])
         samples = Sample.objects.select_related('job').exclude(
             id__in=mapped_samples_ids)
-        return samples.exclude(screenshot='')
+        return samples.exclude(screenshot='')[:VOTING_MAX_SAMPLES]
 
     def get_jobs(self, all_samples):
         """ Auxiliary function for divide samples in job related groups and
@@ -58,11 +62,17 @@ class SampleVotingManager(Task):
         # Creates sample to mediaobject mapping
         mediaobjects = samples_to_mediaobjects(new_samples,
             caption=job.description)
+        log.info(
+            'SampleVotingManager: Mapped mediaobjects dict for job %d.' % job.id
+        )
 
         # Objects to send.
         mo_values = mediaobjects.values()
 
         # Creating new job with mediaobjects
+        log.info(
+            'SampleVotingManager: Creating voting job for job %d.' % job.id
+        )
         voting_key, voting_hit = create_voting(tc, job, mo_values)
 
         tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
@@ -70,12 +80,19 @@ class SampleVotingManager(Task):
 
         # ALWAYS add mediaobject mappings assuming Tagasauris will handle them
         # TODO: possibly check mediaobject status?
+        log.info(
+            'SampleVotingManager: Voting job created. '
+            'Creating SampleMapping for job %d.' % job.id
+        )
         for sample, mediaobject in mediaobjects.items():
             SampleMapping(
                 sample=sample,
                 external_id=mediaobject['id'],
                 crowscourcing_type=SampleMapping.TAGASAURIS,
             ).save()
+        log.info(
+            'SampleVotingManager: SampleMapping created for job %d.' % job.id
+        )
 
         if voting_hit is not None:
             tag_jobs.voting_hit = voting_hit
@@ -89,6 +106,9 @@ class SampleVotingManager(Task):
         # Creates sample to mediaobject mapping
         mediaobjects = samples_to_mediaobjects(new_samples,
             caption=job.description)
+        log.info(
+            'SampleVotingManager: Mapped mediaobjects dict for job %d. Creating SampleMappings.' % job.id
+        )
 
         for sample, mediaobject in mediaobjects.items():
             SampleMapping(
@@ -100,14 +120,22 @@ class SampleVotingManager(Task):
         # New objects
         mediaobjects = mediaobjects.values()
 
+        log.info(
+            'SampleVotingManager: SampleMappings done for job %d. Sending.' % job.id
+        )
         res = tc.mediaobject_send(mediaobjects)
         tc.wait_for_complete(res)
 
         # We must wait for media objects beeing uploaded before we can attach
         # them to job.
+        log.info(
+            'SampleVotingManager: Medias uploaded job %d. Adding to job.' % job.id
+        )
         tc.job_add_media(
             external_ids=[mo['id'] for mo in mediaobjects],
             external_id=job.tagasaurisjobs.voting_key)
+
+        log.info('SampleVotingManager: Medias added to job %d.' % job.id)
 
         # In case if tagasauris job was created without screenshots earlier.
         if job.tagasaurisjobs.voting_hit is None:
@@ -139,6 +167,7 @@ class SampleVotingManager(Task):
             jobs = self.get_jobs(unmapped_samples)
             tc = make_tagapi_client()
 
+            log.info('SampleVotingManager: Gathered samples and jobs.')
             for job, new_samples, initialized in jobs:
                 try:
                     if initialized:

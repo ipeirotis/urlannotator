@@ -28,5 +28,5 @@
     "locals_path": "files/django/local.py",
     "rabbitmq_port": 5674,
     "http_port": 8084,
-    "celery_log_level": "CRITICAL"
+    "celery_log_level": "INFO"
 }
