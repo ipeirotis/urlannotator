@@ -11,5 +11,6 @@
     "autodoc_excluded_apps": [],
     "global_python": "/usr",
     "rabbitmq_port": 5673,
-    "http_port": 8081
+    "http_port": 8081,
+    "celery_log_level": "DEBUG"
 }
