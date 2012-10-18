@@ -158,26 +158,43 @@ send_for_voting = registry.tasks[SampleVotingManager.name]
 @task(ignore_result=True)
 class ProcessVotesManager(Task):
     def run(*args, **kwargs):
-        active_jobs = Job.objects.get_active()
-
-        for job in active_jobs:
-            quality_algorithm = quality_factory.create_algorithm(job)
-            decisions = quality_algorithm.extract_decisions()
-            if not decisions:
-                continue
-
-            ts = TrainingSet.objects.create(job=job)
-            for sample_id, label in decisions:
-                sample = Sample.objects.get(id=sample_id)
-                TrainingSample.objects.create(
-                    set=ts,
-                    sample=sample,
-                    label=label,
+        mutex_name = settings.SITE_URL + '-process-votes-mutex'
+        voting_lock = settings.SITE_URL + '-process-votes-lock'
+        p = POSIXLock(name=voting_lock)
+        with POSIXLock(name=mutex_name):
+            if not p.lock.semaphore.value:
+                # Lock is taken, voting manager in progress
+                log.warning(
+                    'ProcessVotesManager: Processing already in progress'
                 )
-            send_event(
-                'EventTrainingSetCompleted',
-                set_id=ts.id,
-            )
+                return
+            else:
+                # value != 0
+                p.acquire()
+
+        try:
+            active_jobs = Job.objects.get_active()
+
+            for job in active_jobs:
+                quality_algorithm = quality_factory.create_algorithm(job)
+                decisions = quality_algorithm.extract_decisions()
+                if not decisions:
+                    continue
+
+                ts = TrainingSet.objects.create(job=job)
+                for sample_id, label in decisions:
+                    sample = Sample.objects.get(id=sample_id)
+                    TrainingSample.objects.create(
+                        set=ts,
+                        sample=sample,
+                        label=label,
+                    )
+                send_event(
+                    'EventTrainingSetCompleted',
+                    set_id=ts.id,
+                )
+        finally:
+            p.release()
 
 process_votes = registry.tasks[ProcessVotesManager.name]
 
