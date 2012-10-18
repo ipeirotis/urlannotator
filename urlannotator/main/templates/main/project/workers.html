@@ -23,6 +23,7 @@
               </tr>
             </thead>
             <tbody>
+              {% if workers %}
               {% for worker in workers %}
                 <tr>
                   <td><a href="{% url project_worker_view project.id worker.id%}">{{worker.name}}</a></td>
@@ -32,6 +33,11 @@
                   <td>{{worker.hours_spent}}</td>
                 </tr>
               {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="4">No data</td>
+                </tr>
+              {% endif %}
             </tbody>
           </table>
         </div>

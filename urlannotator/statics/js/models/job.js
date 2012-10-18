@@ -15,6 +15,7 @@ function vote(){
   this.url = ko.observable();
   this.added_on = ko.observable();
   this.label = ko.observable();
+  this.sample_url = ko.observable();
 }
 
 
@@ -54,5 +55,11 @@ function job(){
 
   this.hasOwnWorkforceLinks = ko.computed(function(){
     return (this.gather_url() != "") || (this.voting_url() != "");
+  }, this);
+  this.has_newest_votes = ko.computed(function(){
+    return this.newest_votes().length > 0
+  }, this);
+  this.has_top_workers = ko.computed(function(){
+    return this.top_workers().length > 0
   }, this);
 }

@@ -1,6 +1,6 @@
 // Requires Knockout to be imported inside importing script's scope
 
-var classifier_history_entry = function(screenshot, url, label, yes_prob, no_prob, broken_prob, finished){
+var classifier_history_entry = function(screenshot, url, label, yes_prob, no_prob, broken_prob, finished, sample_url){
   this.screenshot = screenshot;
   this.url = url;
   this.label = label;
@@ -8,6 +8,7 @@ var classifier_history_entry = function(screenshot, url, label, yes_prob, no_pro
   this.no_prob = no_prob;
   this.broken_prob = broken_prob;
   this.finished = finished;
+  this.sample_url = sample_url;
 
   this.probability = ko.computed(function(){
     return this.yes_prob + '% ' + this.no_prob + '% ' + this.broken_prob + '%';
@@ -25,9 +26,13 @@ var classifier_history_entry = function(screenshot, url, label, yes_prob, no_pro
       return this.probability();
     return '-';
   }, this);
+
 };
 
 function classifier_history(){
   this.entries = ko.observableArray();
+  this.has_entries = ko.computed(function(){
+    return this.entries().length > 0;
+  }, this);
 };
 

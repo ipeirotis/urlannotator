@@ -24,6 +24,7 @@
               </tr>
             </thead>
             <tbody>
+              {% if data_set %}
               {% for data in data_set %}
                 <tr>
                   <td><a href="{% url sample_thumbnail data.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail data.id 'small' %}"></a></td>
@@ -36,6 +37,11 @@
                   <td>{{data.get_yes_probability}}% {{data.get_no_probability}}%</td>
                 </tr>
               {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="6">No data</td>
+                </tr>
+              {% endif %}
             </tbody>
           </table>
         </div>

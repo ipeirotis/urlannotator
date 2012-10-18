@@ -12,7 +12,7 @@
       <div id="classification-results"  class="table-container-anno1">
         <h3>Classification Results</h3>
         <div class="table-wrapper">
-          <table class="table fix">
+          <table class="table fix" id="classifier-history">
             <thead>
               <tr>
                 <th style="width: 60px;">Preview</th>
@@ -21,13 +21,13 @@
                 <th style="width: 90px;">Calculated Class Probability</th>
               </tr>
             </thead>
-            <tbody id="classifier-history" data-bind="foreach: entries">
+            <tbody data-bind="foreach: entries">
               <tr>
                 <td>
                   <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}"><img data-bind="visible: screenshot, attr: {src: screenshot}" style="width: 60px; height: 60px;"></a>
                 </td>
                 <td class="td-url">
-                  <a data-bind="attr: {href: url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
+                  <a data-bind="attr: {href: sample_url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
                 </td>
                 <td>
                   <span data-bind="text: getLabel">&nbsp;</span>
@@ -36,6 +36,11 @@
                   <span data-bind="text: getProbability">&nbsp;</span>
                 </td>
               </tr>
+            </tbody>
+            <tbody data-bind="ifnot: has_entries">
+                <tr>
+                  <td colspan="4">No data</td>
+                </tr>
             </tbody>
           </table>
         </div>
@@ -227,13 +232,14 @@ function updateClassifierHistory(){
       el = data['entries'][en]
       new_entries.push(
         new classifier_history_entry(
-          el['screenshot'], 
-          el['url'], 
-          el['label'], 
-          Math.round(el['label_probability']['Yes']), 
-          Math.round(el['label_probability']['No']), 
-          0, 
-          el['finished']
+          el['screenshot'],
+          el['url'],
+          el['label'],
+          Math.round(el['label_probability']['Yes']),
+          Math.round(el['label_probability']['No']),
+          0,
+          el['finished'],
+          el['sample_url']
         )
       );
 

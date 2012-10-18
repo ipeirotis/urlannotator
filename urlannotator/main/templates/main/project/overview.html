@@ -119,8 +119,13 @@
                   <td class="preview">
                     <a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a>
                   </td>
-                  <td class="url" data-bind="text: url"></td>
+                  <td class="url"><a data-bind="attr: {href: sample_url}, text: url"></a></td>
                   <td class="added-on" data-bind="text: added_on"></td>
+                </tr>
+              </tbody>
+              <tbody data-bind="ifnot: has_newest_votes">
+                <tr>
+                  <td colspan="3">No data</td>
                 </tr>
               </tbody>
             </table>
@@ -140,6 +145,11 @@
                   <td data-bind="text: name"></td>
                   <td data-bind="text: urls_collected"></td>
                   <td data-bind="text: hours_spent"></td></tr>
+              </tbody>
+              <tbody data-bind="ifnot: has_top_workers">
+                <tr>
+                  <td colspan="3">No data</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -358,6 +368,7 @@ function updateNewestVotes(votes){
     new_vote.url(val['url']);
     new_vote.added_on(val['added_on']);
     new_vote.label(val['label'])
+    new_vote.sample_url(val['sample_url'])
     new_votes.push(new_vote);
   });
   job.newest_votes(new_votes);
