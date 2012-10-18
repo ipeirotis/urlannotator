@@ -241,6 +241,10 @@ class MajorityVoting(CrowdsourcingQualityAlgorithm):
                 counts[LABEL_BROKEN] = count + 1
 
             votes[object_id] = counts
+            WorkerQualityVote.objects.filter(
+                worker=worker_id,
+                sample=object_id,
+            ).update(is_new=False)
 
         decisions = [(el, max(val.iteritems(), key=lambda x: x[1])[0])
             for el, val in votes.iteritems()]

@@ -151,6 +151,15 @@ class Job(models.Model):
             'id': self.id,
         })
 
+    def has_new_votes(self):
+        """
+            Returns whether there are new votes in the job.
+        """
+        for sample in self.sample_set.iterator():
+            if sample.workerqualityvote_set.filter(is_new=True).count():
+                return True
+        return False
+
     def get_link_with_title(self):
         return '<a href="%s">%s</a>' % (self.get_absolute_url(), self.title)
 

@@ -182,6 +182,9 @@ class ProcessVotesManager(Task):
             active_jobs = Job.objects.get_active()
 
             for job in active_jobs:
+                if not job.has_new_votes():
+                    continue
+
                 quality_algorithm = quality_factory.create_algorithm(job)
                 decisions = quality_algorithm.extract_decisions()
                 if not decisions:
