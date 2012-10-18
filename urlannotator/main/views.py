@@ -100,13 +100,18 @@ def updates_box_view(request, job_id):
     return HttpResponse(json.dumps(res))
 
 
-def sample_thumbnail(request, id, thumb_type='small'):
+def sample_thumbnail(request, id, thumb_type=None, width=0, height=0):
     try:
         sample = Sample.objects.get(id=id)
     except Sample.DoesNotExist:
         raise Http404
 
-    if thumb_type == 'small':
+    if thumb_type is None and width and height:
+        return HttpResponse(
+            sample.get_thumbnail(width=width, height=height),
+            content_type='image/png'
+        )
+    elif thumb_type == 'small':
         return HttpResponse(
             sample.get_small_thumbnail(),
             content_type='image/png'
