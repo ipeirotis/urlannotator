@@ -195,10 +195,10 @@ class ProcessVotesManager(Task):
                         sample=sample,
                         label=label,
                     )
-                send_event(
-                    'EventTrainingSetCompleted',
-                    set_id=ts.id,
-                )
+                # send_event(
+                #     'EventTrainingSetCompleted',
+                #     set_id=ts.id,
+                # )
         finally:
             p.release()
 
