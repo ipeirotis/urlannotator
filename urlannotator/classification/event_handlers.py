@@ -174,6 +174,10 @@ class ProcessVotesManager(Task):
                     sample=sample,
                     label=label,
                 )
+            send_event(
+                'EventTrainingSetCompleted',
+                set_id=ts.id,
+            )
 
 process_votes = registry.tasks[ProcessVotesManager.name]
 

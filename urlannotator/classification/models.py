@@ -161,7 +161,7 @@ class ClassifiedSample(models.Model):
         '''
             Returns current classification status.
         '''
-        if self.sample and self.label:
+        if self.sample and self.label and self.label is not None:
             return CLASSIFIED_SAMPLE_SUCCESS
         return CLASSIFIED_SAMPLE_PENDING
 
@@ -179,3 +179,16 @@ class ClassifiedSample(models.Model):
             source_type=self.source_type,
             source_val=self.source_val,
         )
+
+    def reclassify(self, force=False):
+        """
+            Reclassifies current sample. If `force` is True, then the sample is
+            reclassified even if previous classification was successful.
+
+            This call is asynchronous.
+        """
+        if self.is_pending() or force:
+            send_event(
+                'EventNewClassifySample',
+                sample_id=self.id,
+            )
