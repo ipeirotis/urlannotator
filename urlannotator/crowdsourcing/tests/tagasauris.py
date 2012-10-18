@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 from celery import task
 
-from urlannotator.main.models import Job, Sample
+from urlannotator.main.models import Job, Sample, LABEL_YES
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_sample_gather, sample_to_mediaobject, stop_job, create_btm)
 from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
@@ -24,7 +24,7 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
             description='test_description',
             no_of_urls=2,
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
         self.sample = Sample.objects.all()[0]
 
         self.tc = make_tagapi_client()
@@ -80,7 +80,7 @@ class TagasaurisInApi(ToolsMockedMixin, TestCase):
             description='test_description',
             no_of_urls=2,
             account=self.user.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
     def testCreateAndStop(self):
         # From closing tagasauris job view there is no difference between those
@@ -153,7 +153,7 @@ class TagasaurisJobCreationChain(TestCase):
                 description='test_description',
                 no_of_urls=2,
                 account=self.u.get_profile(),
-                gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+                gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.assertEqual(TagasaurisJobs.objects.count(), 1)
         tj = TagasaurisJobs.objects.all()[0]
@@ -172,9 +172,9 @@ class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
             no_of_urls=2,
             account=self.u.get_profile(),
             gold_samples=[
-                {'url': '10clouds.com/1', 'label': 'Yes'},
-                {'url': '10clouds.com/2', 'label': 'Yes'},
-                {'url': '10clouds.com/3', 'label': 'Yes'}
+                {'url': '10clouds.com/1', 'label': LABEL_YES},
+                {'url': '10clouds.com/2', 'label': LABEL_YES},
+                {'url': '10clouds.com/3', 'label': LABEL_YES}
             ]
         )
 
@@ -211,7 +211,7 @@ class TagasaurisJobsModelTest(ToolsMockedMixin, TestCase):
             description='test_description',
             no_of_urls=2,
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
     def testJobUrlsGeneration(self):
 

@@ -346,6 +346,14 @@ class Job(models.Model):
 
             if self.initialization_status == JOB_FLAGS_ALL:
                 self.activate()
+            elif (self.is_training_set_created()
+                    and self.is_gold_samples_done()
+                    and self.is_classifier_created()
+                    and not self.gold_samples
+                ):
+                # If we have no gold samples, activate without training
+                # the classifier.
+                self.activate()
 
     def unset_flag(self, flag):
         self.initialization_status = F('initialization_status') & (~flag)
@@ -607,7 +615,7 @@ class Sample(models.Model):
             return 0
 
         cs = max(cs_set, key=(lambda x: x.id))
-        yes_prob = cs.label_probability['Yes']
+        yes_prob = cs.label_probability[LABEL_YES]
         return yes_prob * 100
 
     def get_no_probability(self):
@@ -620,7 +628,7 @@ class Sample(models.Model):
             return 0
 
         cs = max(cs_set, key=(lambda x: x.id))
-        no_prob = cs.label_probability['No']
+        no_prob = cs.label_probability[LABEL_NO]
         return no_prob * 100
 
     def is_gold_sample(self):
@@ -833,7 +841,7 @@ class WorkerJobAssociation(models.Model):
     started_on = models.DateTimeField(auto_now_add=True)
     worked_hours = models.DecimalField(default=0, decimal_places=2,
         max_digits=10)
-    data = JSONField(default={})
+    data = JSONField(default='{}')
 
     objects = WorkerJobManager()
 

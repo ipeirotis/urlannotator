@@ -22,7 +22,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
     def testVerifyFromTagasauris(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
             same_domain_allowed=2,
             no_of_urls=10,
         )
@@ -100,7 +100,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
     def testVerifyFromTagasaurisLimit(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
             same_domain_allowed=20,
             no_of_urls=2,
         )
@@ -181,7 +181,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
     def testVerifyFromTagasaurisErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
             same_domain_allowed=2,
             no_of_urls=10,
         )
@@ -265,7 +265,7 @@ class TagasaurisVoteResourceTests(ToolsMockedMixin, TestCase):
     def testAddFromTagasaurisErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
 
         data = {}
@@ -278,7 +278,7 @@ class TagasaurisVoteResourceTests(ToolsMockedMixin, TestCase):
     def testAddFromTagasauris(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
 
         sample = Sample.objects.all()[0]
@@ -323,7 +323,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
     def testAddBTMErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
 
         data = {}
@@ -350,13 +350,13 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
     def testAddBTM(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
 
         worker_id = '1234'
         data = {
             'url': 'google.com',
-            'label': 'yes',
+            'label': LABEL_YES,
             'worker_id': worker_id
         }
 
@@ -380,7 +380,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
     def testStatusBTMErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
         worker, created = Worker.objects.get_or_create_tagasauris(1234)
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
@@ -412,7 +412,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
     def testStatusBTM(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
         worker, created = Worker.objects.get_or_create_tagasauris(1234)
         classified_sample = BeatTheMachineSample.objects.create_by_worker(

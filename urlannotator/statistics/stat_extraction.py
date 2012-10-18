@@ -4,7 +4,7 @@ import json
 from django.utils.timezone import now
 
 from urlannotator.main.models import (SpentStatistics, ProgressStatistics,
-    URLStatistics, LinksStatistics)
+    URLStatistics, LinksStatistics, LABEL_YES, LABEL_NO)
 from urlannotator.classification.models import ClassifierPerformance
 
 
@@ -164,9 +164,9 @@ def TruePositiveMetric(classifier, job, analyze):
         Calculates probability of saying True if the label is True in real.
     '''
     matrix = analyze['modelDescription']['confusionMatrix']
-    yes = matrix.get('Yes', {'Yes': 0.0, 'No': 0.0})
-    yesCount = yes.get('Yes', 0.0)
-    noCount = yes.get('No', 0.0)
+    yes = matrix.get(LABEL_YES, {LABEL_YES: 0.0, LABEL_NO: 0.0})
+    yesCount = yes.get(LABEL_YES, 0.0)
+    noCount = yes.get(LABEL_NO, 0.0)
     div = (yesCount + noCount) or 1
     return ('TPR', round(yesCount / div, 4))
 
@@ -176,9 +176,9 @@ def TrueNegativeMetric(classifier, job, analyze):
         Calculates probability of saying No if the label is No in real.
     '''
     matrix = analyze['modelDescription']['confusionMatrix']
-    no = matrix.get('No', {'Yes': 0.0, 'No': 0.0})
-    yesCount = no.get('Yes', 0.0)
-    noCount = no.get('No', 0.0)
+    no = matrix.get(LABEL_NO, {LABEL_YES: 0.0, LABEL_NO: 0.0})
+    yesCount = no.get(LABEL_YES, 0.0)
+    noCount = no.get(LABEL_YES, 0.0)
     div = (yesCount + noCount) or 1
     return ('TNR', round(noCount / div, 4))
 

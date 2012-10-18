@@ -7,7 +7,7 @@ from urlannotator.flow_control import send_event
 from urlannotator.flow_control.test import (FlowControlMixin,
     ToolsMockedMixin, ToolsMocked)
 from urlannotator.flow_control.event_handlers import test_task_2
-from urlannotator.main.models import Sample, Job
+from urlannotator.main.models import Sample, Job, LABEL_YES
 
 
 class TestEventBusSender(TestCase):
@@ -65,7 +65,7 @@ class TestToolsMocking(ToolsMockedMixin, TestCase):
         u = User.objects.create_user(username='test', password='test')
         j = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': 'http://google.com', 'label': 'Yes'}],
+            gold_samples=[{'url': 'http://google.com', 'label': LABEL_YES}],
         )
 
         s = Sample.objects.get(job=j, url='http://google.com')

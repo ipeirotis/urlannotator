@@ -12,7 +12,7 @@ from tastypie.exceptions import ImmediateHttpResponse
 from social_auth.models import UserSocialAuth
 
 from urlannotator.main.models import (Account, Job, Worker, Sample, GoldSample,
-    WorkerJobAssociation)
+    WorkerJobAssociation, LABEL_YES)
 from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
@@ -29,7 +29,7 @@ class SampleFactoryTest(TestCase):
         with ToolsMocked():
             self.job = Job.objects.create_active(
                 account=self.u.get_profile(),
-                gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+                gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
     def testSimpleSample(self):
         test_url = 'http://google.com'
@@ -84,7 +84,7 @@ class DomainCreationTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         url = 'http://google.com/123'
@@ -106,7 +106,7 @@ class JobFactoryTest(ToolsMockedMixin, TestCase):
         # Nothing new added.
         self.assertEqual(Sample.objects.all().count(), 0)
 
-        gold_samples = [{'url': 'google.com', 'label': 'Yes'}]
+        gold_samples = [{'url': 'google.com', 'label': LABEL_YES}]
         Job.objects.create_active(
             account=self.u.get_profile(),
             gold_samples=json.dumps(gold_samples)
@@ -527,7 +527,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             title='test',
             description='test',
             account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         self.assertTrue(GoldSample.objects.filter(label='').count() == 0)
@@ -556,7 +556,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             title='test',
             description='test',
             account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         self.c.post(reverse('project_classifier_view', args=[job.id]),
@@ -572,7 +572,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             title='test',
             description='test',
             account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
         resp = self.c.get(
             reverse('project_workers_view', args=[job.id]),
@@ -600,7 +600,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             title='test',
             description='test',
             account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
         resp = self.c.get(
             reverse('project_data_view', args=[job.id]),
@@ -644,7 +644,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
@@ -702,7 +702,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         job = Job.objects.create_active(
             account=u.get_profile(),
             data_source=0,
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         resp = self.c.get('%sjob/%d/?format=json' % (self.api_url, job.id),
@@ -732,7 +732,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.c.login(username='testing', password='test')
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/classifier/'),
@@ -868,7 +868,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.c.login(username='testing', password='test')
         Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         log = LogEntry.objects.all()[:1][0]
@@ -885,7 +885,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.c.login(username='testing', password='test')
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         cs = ClassifiedSample.objects.create(job=job)
@@ -918,7 +918,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.c.login(username='testing', password='test')
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         Sample.objects.create_by_worker(
@@ -964,7 +964,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
@@ -1009,7 +1009,7 @@ class TestAdmin(ToolsMockedMixin, TestCase):
         u = User.objects.create_user(username='test3', password='1')
         j = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         r = c.get(reverse('admin_index'), follow=True)

@@ -14,7 +14,7 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.workers = [Worker.objects.create_tagasauris(external_id=x)
             for x in xrange(20)]
@@ -217,7 +217,7 @@ class ChainedVotesStorageTests(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.workers = [Worker.objects.create_tagasauris(external_id=x)
             for x in xrange(20)]

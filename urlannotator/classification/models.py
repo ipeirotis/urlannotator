@@ -5,7 +5,8 @@ from tenclouds.django.jsonfield.fields import JSONField
 from django.db import models
 from django.db.models.signals import post_save
 
-from urlannotator.main.models import Job, Sample, LABEL_CHOICES
+from urlannotator.main.models import (Job, Sample, LABEL_CHOICES,
+    LABEL_YES, LABEL_NO, LABEL_BROKEN)
 from urlannotator.flow_control import send_event
 
 
@@ -153,7 +154,11 @@ class ClassifiedSample(models.Model):
     label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
     source_type = models.CharField(max_length=100, blank=False)
     source_val = models.CharField(max_length=100, blank=True, null=True)
-    label_probability = JSONField()
+    label_probability = JSONField(default=json.dumps({
+        LABEL_YES: 0.0,
+        LABEL_NO: 0.0,
+        LABEL_BROKEN: 0.0,
+    }))
 
     objects = ClassifiedSampleManager()
 

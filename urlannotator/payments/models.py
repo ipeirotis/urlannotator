@@ -144,10 +144,10 @@ class WorkerPaymentManager(models.Manager):
 
 class JobPaymentSettings(models.Model):
     job = models.ForeignKey(Job)
-    split_budget = JSONField(default={})
+    split_budget = JSONField(default='{}')
     backend = models.CharField(max_length=25)
     main = models.BooleanField(default=True)
-    backend_params = JSONField(default={})
+    backend_params = JSONField(default='{}')
 
     class Meta:
         unique_together = ['job', 'main']
@@ -163,7 +163,7 @@ class WorkerPayment(models.Model):
     job_task = models.PositiveIntegerField(choices=JOB_TASK_CHOICES)
     combined_payment = models.ForeignKey('WorkerPayment', null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
-    additional_data = JSONField(default={})
+    additional_data = JSONField(default='{}')
 
     objects = WorkerPaymentManager()
 

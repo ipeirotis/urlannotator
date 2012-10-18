@@ -32,7 +32,7 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.train_data = [
             Sample(job=self.job, source_type='',
@@ -48,7 +48,7 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
             Sample(job=self.job, source_type='',
                 text='Green tan with true fox')
         ]
-        self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
+        self.labels = [LABEL_YES, LABEL_YES, LABEL_NO, LABEL_NO, LABEL_NO, LABEL_NO]
         self.classified = []
         for idx, sample in enumerate(self.train_data):
             self.classified.append(ClassifiedSample.objects.create(
@@ -175,7 +175,7 @@ class SimpleClassifierTests(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.job = Job.objects.all()[0]
 
@@ -193,7 +193,7 @@ class SimpleClassifierTests(ToolsMockedMixin, TestCase):
             Sample(job=self.job, source_type='',
                 text='Green tan with true fox')
         ]
-        self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
+        self.labels = [LABEL_YES, LABEL_YES, LABEL_NO, LABEL_NO, LABEL_NO, LABEL_NO]
         self.classified = []
         for idx, sample in enumerate(self.train_data):
             self.classified.append(ClassifiedSample.objects.create(
@@ -242,7 +242,7 @@ class TrainingSetManagerTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         ts = TrainingSet(job=job)
         ts.save()
@@ -256,7 +256,7 @@ class ClassifierPerformanceTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}],
         )
 
         self.assertTrue(ClassifierPerformance.objects.latest_for_job(job))
@@ -270,7 +270,7 @@ class ClassifiedSampleTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}],
         )
         with self.assertRaises(KeyError):
             ClassifiedSample.objects.create_by_owner(job=job)
@@ -293,12 +293,12 @@ class ClassifierFactoryTests(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
     def testClassifierFactory(self):
         job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}],
         )
         factory = classifier_factory.create_classifier(job.id)
         self.assertEqual(factory.__class__, Classifier247)
@@ -325,7 +325,7 @@ class LongTrainingTest(FlowControlMixin, TransactionTestCase):
     def testLongTraining(self):
         job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
         time.sleep(2)
 
         # Refresh our job object
@@ -406,13 +406,13 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
             'analyze': {
                 'modelDescription': {
                     'confusionMatrix': {
-                        'Yes': {
-                            'Yes': 1,
-                            'No': 0,
+                        LABEL_YES: {
+                            LABEL_YES: 1,
+                            LABEL_NO: 0,
                         },
-                        'No': {
-                            'Yes': 0,
-                            'No': 1,
+                        LABEL_NO: {
+                            LABEL_YES: 0,
+                            LABEL_NO: 1,
                         }
                     }
                 }
@@ -468,7 +468,7 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         classifier = classifier_factory.create_classifier(job.id)
         classifier.analyze()
@@ -490,14 +490,14 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
         classifier.train(set_id=train_set.id, turn_off=True)
         job.set_classifier_trained()
 
-        results['predict'] = {'outputLabel': 'Yes', 'outputMulti': [{'label': 'Yes', 'score': 1},{'label': 'No', 'score': 0}]}
+        results['predict'] = {'outputLabel': LABEL_YES, 'outputMulti': [{'label': LABEL_YES, 'score': 1},{'label': LABEL_NO, 'score': 0}]}
         cs = ClassifiedSample.objects.create_by_owner(
             job=job,
             url='http://google.com',
         )
         # Refresh the Classified Sample
         cs = ClassifiedSample.objects.get(id=cs.id)
-        self.assertEqual(classifier.classify(sample=cs), 'Yes')
+        self.assertEqual(classifier.classify(sample=cs), LABEL_YES)
         self.assertEqual(classifier.classify_with_info(sample=cs), results['predict'])
 
         # What if we remove the classfier's id?!?!
