@@ -140,13 +140,19 @@ class SampleVotingManager(Task):
             tc = make_tagapi_client()
 
             for job, new_samples, initialized in jobs:
-                if initialized:
-                    self.update_job(tc, job, new_samples)
-                else:
-                    self.initialize_job(tc, job, new_samples)
+                try:
+                    if initialized:
+                        self.update_job(tc, job, new_samples)
+                    else:
+                        self.initialize_job(tc, job, new_samples)
+                except Exception, e:
+                    log.warning(
+                        'SampleVotingManager: Error in job %d: %s.' % (job.id, e)
+                    )
+                    continue
         except Exception, e:
             log.critical(
-                'SampleVotingManager: exception while handling job: %s.' % e
+                'SampleVotingManager: exception while all jobs: %s.' % e
             )
         finally:
             p.release()
