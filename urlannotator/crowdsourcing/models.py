@@ -3,8 +3,7 @@ from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER)
-from urlannotator.classification.models import (ClassifiedSample,
-    ClassifiedSampleManager)
+from urlannotator.classification.models import ClassifiedSampleCore
 from urlannotator.flow_control import send_event
 
 
@@ -31,7 +30,7 @@ class WorkerQualityVote(models.Model):
         unique_together = ['worker', 'sample']
 
 
-class BeatTheMachineSampleManager(ClassifiedSampleManager):
+class BeatTheMachineSampleManager(models.Manager):
     def create_by_worker(self, *args, **kwargs):
         self._sanitize(args, kwargs)
         kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
@@ -60,7 +59,7 @@ class BeatTheMachineSampleManager(ClassifiedSampleManager):
         return classified_sample
 
 
-class BeatTheMachineSample(ClassifiedSample):
+class BeatTheMachineSample(ClassifiedSampleCore):
     # BTM status and description/points mapping
     BTM_PENDING = 0
     BTM_KNOWN = 1

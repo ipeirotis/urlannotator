@@ -139,7 +139,7 @@ CLASSIFIED_SAMPLE_SUCCESS = 'SUCCESS'
 CLASSIFIED_SAMPLE_PENDING = 'PENDING'
 
 
-class ClassifiedSample(models.Model):
+class ClassifiedSampleCore(models.Model):
     """
         A sample classification request was made for. The sample field is set
         when corresponding sample is created.
@@ -156,7 +156,8 @@ class ClassifiedSample(models.Model):
         LABEL_BROKEN: 0.0,
     }))
 
-    objects = ClassifiedSampleManager()
+    class Meta:
+        abstract = True
 
     def get_status(self):
         '''
@@ -196,3 +197,7 @@ class ClassifiedSample(models.Model):
             )
             return True
         return False
+
+
+class ClassifiedSample(ClassifiedSampleCore):
+    objects = ClassifiedSampleManager()
