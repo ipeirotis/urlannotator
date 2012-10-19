@@ -2,7 +2,7 @@ from celery import task, registry, Task
 
 from urlannotator.statistics.monitors import JobMonitor, WorkerMonitor
 from urlannotator.main.models import (ProgressStatistics, SpentStatistics,
-    URLStatistics, LinksStatistics)
+    URLStatistics, LinksStatistics, VotesStatistics)
 
 
 @task(ignore_result=True)
@@ -75,3 +75,21 @@ class LinksMonitor(WorkerMonitor, Task):
         return worker.get_links_collected()
 
 links_monitor = registry.tasks[LinksMonitor.name]
+
+
+@task(ignore_result=True)
+class VotesMonitor(JobMonitor, Task):
+    def __init__(self, *args, **kwargs):
+        self.model_cls = VotesStatistics
+        # Warning: Don't use super(self.__class__, ~~ deeper in inheritance -
+        # it will cause infinite loop! It's used here because @task decorator
+        # manipulates the class itself.
+        super(self.__class__, self).__init__(
+            cls=VotesStatistics,
+            *args, **kwargs
+        )
+
+    def get_value(self, job):
+        return job.get_votes.gathered()
+
+votes_monitor = registry.tasks[VotesMonitor.name]

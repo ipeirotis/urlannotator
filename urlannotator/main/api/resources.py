@@ -735,6 +735,9 @@ class JobResource(ModelResource):
             'hours_spent': job.get_hours_spent(),
             'top_workers': top_workers,
             'newest_votes': newest_votes,
+            'progress_urls': job.get_progress_urls(),
+            'progress_votes': job.get_progress_votes(),
+            'votes_gathered': job.get_votes_gathered(),
         }
         if job.is_own_workforce():
             additional = {

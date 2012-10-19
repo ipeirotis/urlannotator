@@ -3,6 +3,7 @@ from multiprocessing.pool import Process
 from celery import task, Task, registry
 from celery.task import current
 from django.conf import settings
+from itertools import imap
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
@@ -10,7 +11,7 @@ from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_voting, samples_to_mediaobjects)
+    create_voting, samples_to_mediaobjects, update_voting_job)
 from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.main.models import Sample, Job
 from urlannotator.tools.synchronization import POSIXLock
@@ -37,7 +38,7 @@ class SampleVotingManager(Task):
         mapped_samples_ids = set([s.sample.id for s in mapped_samples])
         samples = Sample.objects.select_related('job').exclude(
             id__in=mapped_samples_ids)
-        return samples.exclude(screenshot='')[:VOTING_MAX_SAMPLES]
+        return samples.exclude(screenshot='')
 
     def get_jobs(self, all_samples):
         """ Auxiliary function for divide samples in job related groups and
@@ -48,8 +49,12 @@ class SampleVotingManager(Task):
         jobs = set([s.job for s in all_samples])
 
         for job in jobs:
+            # Don't handle inactive (initializing/stopped/completed) jobs.
+            if not job.is_active():
+                continue
+
             try:
-                job_samples = [s for s in all_samples if s.job == job]
+                job_samples = [s for s in all_samples if s.job == job][:VOTING_MAX_SAMPLES]
                 initialized = job.tagasaurisjobs.voting_key is not None
                 yield job, job_samples, initialized
             except TagasaurisJobs.DoesNotExist:
@@ -69,11 +74,15 @@ class SampleVotingManager(Task):
         # Objects to send.
         mo_values = mediaobjects.values()
 
-        # Creating new job with mediaobjects
+        # Creating new job  with mediaobjects
         log.info(
             'SampleVotingManager: Creating voting job for job %d.' % job.id
         )
         voting_key, voting_hit = create_voting(tc, job, mo_values)
+
+        # Job creation failed (maximum retries exceeded or other error)
+        if not voting_key:
+            return
 
         tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
         tag_jobs.voting_key = voting_key
@@ -121,21 +130,18 @@ class SampleVotingManager(Task):
         mediaobjects = mediaobjects.values()
 
         log.info(
-            'SampleVotingManager: SampleMappings done for job %d. Sending.' % job.id
+            'SampleVotingManager: SampleMappings done for job %d. Sending and adding.' % job.id
         )
-        res = tc.mediaobject_send(mediaobjects)
-        tc.wait_for_complete(res)
 
-        # We must wait for media objects beeing uploaded before we can attach
-        # them to job.
-        log.info(
-            'SampleVotingManager: Medias uploaded job %d. Adding to job.' % job.id
-        )
-        tc.job_add_media(
-            external_ids=[mo['id'] for mo in mediaobjects],
-            external_id=job.tagasaurisjobs.voting_key)
+        res = update_voting_job(tc, mediaobjects, job.tagasaurisjobs.voting_key)
 
-        log.info('SampleVotingManager: Medias added to job %d.' % job.id)
+        # If updating was failed - delete created. Why not create them here?
+        # Because someone might have completed a HIT in the mean time, and we
+        # would lose that info.
+        if not res:
+            SampleMapping.objects.filter(
+                sample__in=imap(lambda x: x.sample, mediaobjects.items())
+            ).delete()
 
         # In case if tagasauris job was created without screenshots earlier.
         if job.tagasaurisjobs.voting_hit is None:
@@ -218,6 +224,10 @@ class ProcessVotesManager(Task):
                 decisions = quality_algorithm.extract_decisions()
                 if not decisions:
                     continue
+
+                log.info(
+                    'ProcessVotesManager: Creating training set for job %d.' % job.id
+                )
 
                 ts = TrainingSet.objects.create(job=job)
                 for sample_id, label in decisions:

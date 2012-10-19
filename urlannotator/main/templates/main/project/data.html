@@ -34,7 +34,17 @@
                   <td>{{data.added_on|date:"Y-m-d H:i"}}</td>
                   <td>{{data.get_workers|length}}</td>
                   <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
-                  <td>{% if data.is_gold_sample %}GOLD SAMPLE{% else %}{{data.get_yes_probability}}% {{data.get_no_probability}}%{% endif %}</td>
+                  <td>
+                    {% if data.is_gold_sample %}
+                    GOLD SAMPLE
+                    {% else %}
+                    {% if data.is_classified %}
+                    {{data.get_yes_probability}}% {{data.get_no_probability}}%
+                    {% else %}
+                    Not classifed yet
+                    {% endif %}
+                    {% endif %}
+                  </td>
                 </tr>
               {% endfor %}
               {% else %}

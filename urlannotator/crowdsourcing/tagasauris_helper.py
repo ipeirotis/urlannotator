@@ -6,7 +6,7 @@ import math
 from django.conf import settings
 
 from tagapi.api import TagasaurisClient
-from tagapi.error import TagasaurisApiException
+from tagapi.error import TagasaurisApiException, TagasaurisApiMaxRetries
 
 import logging
 log = logging.getLogger(__name__)
@@ -228,6 +228,24 @@ def create_voting(api_client, job, mediaobjects):
     return _create_job(api_client, ext_id, kwargs)
 
 
+def update_voting_job(api_client, mediaobjects, ext_id):
+    try:
+        res = api_client.mediaobject_send(mediaobjects)
+        api_client.wait_for_complete(res)
+
+        api_client.job_add_media(
+            external_ids=[mo['id'] for mo in mediaobjects],
+            external_id=ext_id
+        )
+        return True
+    except TagasaurisApiException, e:
+        log.exception('Failed to update Tagasauris voting job: %s, %s' % (e, e.response))
+        return False
+    except Exception, e:
+        log.exception('Failed to update Tagasauris voting job: %s' % e)
+        return False
+
+
 def _create_job(api_client, ext_id, kwargs):
     result = api_client.create_job(**kwargs)
 
@@ -243,6 +261,10 @@ def _create_job(api_client, ext_id, kwargs):
 
         hit = result['hits'][0][hit_type] if result['hits'] else None
         return ext_id, hit
+    except TagasaurisApiMaxRetries, e:
+        log.exception('Failed to obtain Tagasauris hit: %s, %s' % (e, e.response))
+        # Failed to wait for job's completion - return no id and retry later.
+        return None, None
     except TagasaurisApiException, e:
         log.exception('Failed to obtain Tagasauris hit: %s, %s' % (e, e.response))
         # Failed to get info about Tagasauris job - return None as hit

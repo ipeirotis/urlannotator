@@ -577,7 +577,8 @@ def project_view(request, id):
     context['no_of_workers'] = proj.get_no_of_workers()
     context['cost'] = proj.get_cost()
     context['budget'] = proj.budget
-    context['progress'] = proj.get_progress()
+    context['progress_urls'] = proj.get_progress_urls()
+    context['progress_votes'] = proj.get_progress_votes()
 
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))

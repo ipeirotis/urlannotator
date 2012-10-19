@@ -311,14 +311,44 @@ class Job(models.Model):
         # FIXME: Add proper billing entries?
         return self.hourly_rate * self.get_hours_spent()
 
+    def get_votes_gathered(self):
+        """
+            Returns amount of votes gathered.
+        """
+        samples = self.sample_set.all().iterator()
+        count = 0
+        for sample in samples:
+            count += sample.workerqualityvote_set.all().count()
+        return count
+
     def get_progress(self):
         """
             Returns actual progress (in percents) in the job.
+        """
+
+    def get_progress_urls(self):
+        """
+            Returns actual progress of urls collecting.
         """
         if not self.no_of_urls:
             return 100
         div = self.no_of_urls
         return min((100 * self.get_urls_collected()) / div, 100)
+
+    def get_progress_votes(self):
+        """
+            Returns actual progress of votes collecting.
+        """
+        # TODO: Correct calculation?
+        count = 0
+        got = 0
+
+        for sample in self.sample_set.all():
+            count += 1
+            got += sample.workerqualityvote_set.all().count()
+
+        count = count or 1
+        return min((100 * got) / count, 100)
 
     def is_completed(self):
         return self.status == JOB_STATUS_COMPLETED
@@ -632,6 +662,15 @@ class Sample(models.Model):
         no_prob = cs.label_probability[LABEL_NO]
         return no_prob * 100
 
+    def is_classified(self):
+        """
+            Returns whether this sample has been classified at least once.
+        """
+        yes_prob = self.get_yes_probability()
+        no_prob = self.get_no_probability()
+
+        return yes_prob or no_prob
+
     def is_gold_sample(self):
         try:
             return self.goldsample is not None
@@ -940,6 +979,31 @@ class URLStatistics(models.Model):
     objects = URLStatManager()
 
 
+class VotesStatManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns votes collected statistic for given job.
+        """
+        els = super(VotesStatManager, self).get_query_set().filter(job=job).\
+            order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class VotesStatistics(models.Model):
+    """
+        Keeps track of votes gathered for a job per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = VotesStatManager()
+
+
 class LinksStatManager(models.Manager):
     def latest_for_worker(self, worker):
         """ Returns url collected statistic for given worker.
@@ -971,5 +1035,6 @@ def create_stats(sender, instance, created, **kwargs):
         ProgressStatistics.objects.create(job=instance, value=0)
         SpentStatistics.objects.create(job=instance, value=0)
         URLStatistics.objects.create(job=instance, value=0)
+        VotesStatistics.objects.create(job=instance, value=0)
 
 post_save.connect(create_stats, sender=Job)
