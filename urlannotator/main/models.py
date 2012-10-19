@@ -463,6 +463,31 @@ class SampleManager(models.Manager):
 
         return self._create_sample(*args, **kwargs)
 
+    def create_by_btm(self, *args, **kwargs):
+        '''
+            Asynchronously creates a new sample with tagasauris worker as a
+            source.
+            It will be BTM (Beat The Machine) sample so it wont get into
+            voting unless vote_sample parameter will be set.
+        '''
+        self._sanitize(args, kwargs)
+        kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
+        kwargs['vote_sample'] = False
+        kwargs['btm_sample'] = True
+
+        # Add worker-job association.
+        worker, created = Worker.objects.get_or_create_tagasauris(
+            worker_id=kwargs['source_val']
+        )
+        job = Job.objects.get(id=kwargs['job_id'])
+
+        WorkerJobAssociation.objects.associate(
+            job=job,
+            worker=worker,
+        )
+
+        return self._create_sample(*args, **kwargs)
+
     def by_worker(self, source_type, source_val, **kwargs):
         """
             Returns samples done by the worker.
@@ -482,6 +507,8 @@ class Sample(models.Model):
     source_type = models.CharField(max_length=100, blank=False)
     source_val = models.CharField(max_length=100, blank=True, null=True)
     added_on = models.DateTimeField(auto_now_add=True)
+    btm_sample = models.BooleanField(default=False)
+    vote_sample = models.BooleanField(default=True)
 
     objects = SampleManager()
 

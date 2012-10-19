@@ -144,6 +144,13 @@ def log_sample_classified(job_id, class_id, *args, **kwargs):
 
 
 @task(ignore_result=True)
+def log_btm_sample_classified(job_id, btm_id, *args, **kwargs):
+    # TODO: Add info about btm status. Ignore expected labels; show important
+    # ones.
+    pass
+
+
+@task(ignore_result=True)
 def log_sample_screenshot_done(sample_id, *args, **kwargs):
     sample = Sample.objects.get(id=sample_id)
     params = {
@@ -248,6 +255,7 @@ FLOW_DEFINITIONS = [
     (r'^EventNewJobInitializationDone$', log_new_job_done),
     (r'^EventClassifierTrained$', log_classifier_trained),
     (r'^EventSampleClassified$', log_sample_classified),
+    (r'^EventSampleBTM$', log_btm_sample_classified),
     (r'^EventTrainingSetCompleted$', log_classifier_train_start),
     (r'^EventSampleScreenshotDone$', log_sample_screenshot_done),
     (r'^EventSampleScreenshotFail$', log_sample_screenshot_fail),

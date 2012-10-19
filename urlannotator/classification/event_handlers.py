@@ -36,8 +36,8 @@ class SampleVotingManager(Task):
         """
         mapped_samples = SampleMapping.objects.select_related('sample').all()
         mapped_samples_ids = set([s.sample.id for s in mapped_samples])
-        samples = Sample.objects.select_related('job').exclude(
-            id__in=mapped_samples_ids)
+        samples = Sample.objects.select_related('job').filter(
+            vote_sample=True).exclude(id__in=mapped_samples_ids)
         return samples.exclude(screenshot='')[:VOTING_MAX_SAMPLES]
 
     def get_jobs(self, all_samples):
@@ -342,16 +342,48 @@ def classify(sample_id, from_name='', *args, **kwargs):
             60 * 60 * 24))
     ClassifiedSample.objects.filter(id=sample_id).update(label=label)
 
-    try:
-        class_sample.beatthemachinesample.updateBTMStatus()
-    except BeatTheMachineSample.DoesNotExist:
-        pass
-
     send_event(
         'EventSampleClassified',
         job_id=job.id,
         class_id=class_sample.id,
         sample_id=class_sample.sample.id,
+    )
+
+
+@task(ignore_result=True)
+def classify_btm(sample_id, from_name='', *args, **kwargs):
+    """
+        Classifies given samples
+    """
+    btm_sample = BeatTheMachineSample.objects.get(id=sample_id)
+    if btm_sample.label:
+        return
+
+    job = btm_sample.job
+
+    # If classifier is not trained, retry later
+    if not job.is_classifier_trained():
+        current.retry(countdown=min(60 * 2 ** current.request.retries,
+            60 * 60 * 24))
+
+    classifier = classifier_factory.create_classifier(job.id)
+    label = classifier.classify(btm_sample)
+    if label is None:
+        # Something went wrong
+        log.warning(
+            '[Classification] Got None label for sample %d. Retrying.' % btm_sample.id
+        )
+        current.retry(countdown=min(60 * 2 ** current.request.retries,
+            60 * 60 * 24))
+
+    BeatTheMachineSample.objects.filter(id=sample_id).update(label=label)
+    btm_sample.beatthemachinesample.updateBTMStatus()
+
+    send_event(
+        'EventSampleBTM',
+        job_id=job.id,
+        btm_id=btm_sample.id,
+        sample_id=btm_sample.sample.id,
     )
 
 
@@ -365,6 +397,7 @@ FLOW_DEFINITIONS = [
     (r'^EventSamplesVoting$', send_for_voting),
     (r'^EventProcessVotes$', process_votes),
     (r'^EventNewClassifySample$', classify),
+    (r'^EventNewBTMSample$', classify_btm),
     (r'^EventTrainingSetCompleted$', train_on_set),
     (r'^EventClassifierTrained$', update_classifier_stats),
 ]
