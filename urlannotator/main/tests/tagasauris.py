@@ -350,13 +350,12 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
     def testAddBTM(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_NO}]),
         )
 
         worker_id = '1234'
         data = {
             'url': 'google.com',
-            'label': LABEL_YES,
             'worker_id': worker_id
         }
 

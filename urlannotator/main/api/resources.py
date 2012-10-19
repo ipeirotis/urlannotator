@@ -977,7 +977,7 @@ class BeatTheMachineResource(ModelResource):
                 {'error': 'Malformed request json.'},
                 response_class=HttpBadRequest)
 
-        required = ['url', 'label', 'worker_id']
+        required = ['url', 'worker_id']
         for req in required:
             if req not in data:
                 return self.create_response(request,
@@ -985,7 +985,6 @@ class BeatTheMachineResource(ModelResource):
                     response_class=HttpBadRequest)
 
         url = data.get('url')
-        label = sanitize_label(data.get('label'))
         worker_id = data.get('worker_id')
         worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
 
@@ -993,7 +992,7 @@ class BeatTheMachineResource(ModelResource):
             job=job,
             url=url,
             label='',
-            expected_output=label,
+            expected_output=LABEL_NO,
             worker=worker
         )
 

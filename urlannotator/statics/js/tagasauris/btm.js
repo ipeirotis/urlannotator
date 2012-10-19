@@ -13,9 +13,8 @@
         addNewSample: function () {
             if (this.gathered < this.minSamples) {
                 var url = this.$(".new-sample").val();
-                var expectedLabel = "No";
 
-                sample = new Sample({id:url, url: url, label: expectedLabel});
+                sample = new Sample({id:url, url: url});
 
                 var view = new SampleView({model: sample}).render().el;
                 this.$(".samples").append(view);
@@ -25,8 +24,7 @@
                 $.post(
                     this.coreUrl + '/api/v1/btm/add/tagasauris/' +
                         this.jobId + '/',
-                    JSON.stringify({url: url, label: expectedLabel,
-                        worker_id: this.workerId}),
+                    JSON.stringify({url: url, worker_id: this.workerId}),
                     function (data) {
                         if (data.request_id !== undefined) {
                             that.pollStatus(sample, data.status_url,
