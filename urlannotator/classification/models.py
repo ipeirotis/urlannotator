@@ -6,7 +6,7 @@ from django.db import models
 from django.db.models.signals import post_save
 
 from urlannotator.main.models import (Job, Sample, LABEL_CHOICES,
-    LABEL_YES, LABEL_NO, LABEL_BROKEN)
+    LABEL_YES, LABEL_NO, LABEL_BROKEN, SAMPLE_SOURCE_OWNER)
 from urlannotator.flow_control import send_event
 
 
@@ -94,10 +94,6 @@ class TrainingSample(models.Model):
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=20, choices=LABEL_CHOICES)
 
-# Classified sample source_type breakdown:
-# owner - classify request from job owner. Source_val is irrelevant.
-CLASS_SAMPLE_SOURCE_OWNER = 'owner'
-
 
 class ClassifiedSampleManager(models.Manager):
     def _sanitize(self, args, kwargs):
@@ -111,7 +107,7 @@ class ClassifiedSampleManager(models.Manager):
 
     def create_by_owner(self, *args, **kwargs):
         self._sanitize(args, kwargs)
-        kwargs['source_type'] = CLASS_SAMPLE_SOURCE_OWNER
+        kwargs['source_type'] = SAMPLE_SOURCE_OWNER
         kwargs['source_val'] = ''
         try:
             kwargs['sample'] = Sample.objects.get(

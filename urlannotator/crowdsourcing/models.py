@@ -2,9 +2,10 @@ from django.db import models
 from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
-    WorkerJobAssociation)
+    WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER)
 from urlannotator.classification.models import (ClassifiedSample,
     ClassifiedSampleManager)
+from urlannotator.flow_control import send_event
 
 
 class WorkerQualityVoteManager(models.Manager):
@@ -32,19 +33,78 @@ class WorkerQualityVote(models.Model):
 
 class BeatTheMachineSampleManager(ClassifiedSampleManager):
     def create_by_worker(self, *args, **kwargs):
-        return self.create_by_owner(*args, **kwargs)
+        self._sanitize(args, kwargs)
+        kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
+        kwargs['source_val'] = kwargs['worker_id']
+        try:
+            kwargs['sample'] = Sample.objects.get(
+                job=kwargs['job'],
+                url=kwargs['url']
+            )
+        except Sample.DoesNotExist:
+            pass
+
+        classified_sample = self.create(**kwargs)
+        # If sample exists, step immediately to classification
+        if 'sample' in kwargs:
+            send_event('EventNewClassifySample',
+                sample_id=classified_sample.id)
+        else:
+            Sample.objects.create_by_worker(
+                job_id=kwargs['job'].id,
+                url=kwargs['url'],
+                source_val=kwargs['source_val'],
+                create_classified=False,
+            )
+
+        return classified_sample
 
 
 class BeatTheMachineSample(ClassifiedSample):
-    worker = models.ForeignKey(Worker)
+    # BTM status and description/points mapping
+    BTM_PENDING = 0
+    BTM_KNOWN = 1
+
+    BTM_STATUS = (
+        (BTM_PENDING, "Pending"),
+        (BTM_KNOWN,  "Known"),
+    )
+
+    BTM_POINTS = {
+        BTM_PENDING: 0,
+        BTM_KNOWN: 0,
+    }
+
     expected_output = models.CharField(max_length=10, choices=LABEL_CHOICES)
-    error_ratio = models.DecimalField(default=0, decimal_places=5,
-        max_digits=7)
+    btm_status = models.IntegerField(default=BTM_PENDING, choices=BTM_STATUS)
+    points = models.IntegerField(default=0)
 
     objects = BeatTheMachineSampleManager()
 
+    @property
+    def confidence(self):
+        return self.label_probability[self.label]
+
+    def updateBTMStatus(self, save=True):
+        status = self.calculate_status(
+            matched=self.labels_matched(),
+            confidence=self.confidence)
+
+        self.btm_status = status
+        self.points = self.BTM_POINTS[status]
+
+        if save:
+            self.save()
+
     def labels_matched(self):
         return self.expected_output.lower() == self.label.lower()
+
+    def btm_status_mapping():
+        return ""
+
+    @classmethod
+    def calculate_status(cls, matched, confidence):
+        return cls.BTM_KNOWN
 
 
 class TagasaurisJobs(models.Model):

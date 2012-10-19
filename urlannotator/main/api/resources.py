@@ -986,14 +986,13 @@ class BeatTheMachineResource(ModelResource):
 
         url = data.get('url')
         worker_id = data.get('worker_id')
-        worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
 
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
             job=job,
             url=url,
             label='',
             expected_output=LABEL_NO,
-            worker=worker
+            worker_id=worker_id
         )
 
         return self.create_response(
@@ -1059,8 +1058,8 @@ class BeatTheMachineResource(ModelResource):
         status = classified_sample.get_status()
         resp['status'] = status
         if classified_sample.is_successful():
-            resp['points'] = 0
-            resp['description'] = "Dummy description"
+            resp['points'] = classified_sample.points
+            resp['btm_status'] = classified_sample.btm_status_mapping()
 
         return self.create_response(request, resp)
 

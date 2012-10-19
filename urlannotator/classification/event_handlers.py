@@ -8,7 +8,8 @@ from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
     TrainingSample)
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
+from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
+    BeatTheMachineSample)
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_voting, samples_to_mediaobjects)
 from urlannotator.crowdsourcing.factories import quality_factory
@@ -340,6 +341,12 @@ def classify(sample_id, from_name='', *args, **kwargs):
         current.retry(countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
     ClassifiedSample.objects.filter(id=sample_id).update(label=label)
+
+    try:
+        class_sample.beatthemachinesample.updateBTMStatus()
+    except BeatTheMachineSample.DoesNotExist:
+        pass
+
     send_event(
         'EventSampleClassified',
         job_id=job.id,
