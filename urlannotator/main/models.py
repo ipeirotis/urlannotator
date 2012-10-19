@@ -17,7 +17,8 @@ from tenclouds.django.jsonfield.fields import JSONField
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 from urlannotator.settings import imagescale2
-from urlannotator.crowdsourcing.tagasauris_helper import stop_job
+from urlannotator.crowdsourcing.tagasauris_helper import (stop_job,
+    make_tagapi_client)
 
 LABEL_BROKEN = 'Broken'
 LABEL_YES = 'Yes'
@@ -735,6 +736,12 @@ class Worker(models.Model):
             )
             r = client.provider.get_provider(self.external_id)
             return r['dev_full_name']
+
+        if self.worker_type == WORKER_TYPE_TAGASAURIS:
+            tc = make_tagapi_client()
+            worker_info = tc.get_worker(external_id=self.external_id)
+            return worker_info['name']
+
         return 'Temp Name %d' % self.id
 
     def get_urls_collected_count_for_job(self, job):
