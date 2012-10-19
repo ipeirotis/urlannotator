@@ -54,6 +54,7 @@
                             that.gathered++;
 
                             sample.update();
+                            that.updatePoints();
 
                             if (that.gathered >= that.minSamples) {
                                 that.finishHIT();
@@ -64,6 +65,19 @@
                     }
                 );
             }, 2000);
+        },
+
+        getPoints: function () {
+            var points = 0;
+            this.samples.each(function (sample) {
+                points += sample.points;
+            });
+            return points;
+        },
+
+        updatePoints: function () {
+            var points = this.getPoints();
+            this.$(".sample-points").html(points);
         }
 
     });
