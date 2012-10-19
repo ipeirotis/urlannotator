@@ -325,6 +325,7 @@ class Job(models.Model):
         """
             Returns actual progress (in percents) in the job.
         """
+        return (self.get_progress_urls() + self.get_progress_votes()) / 2.0
 
     def get_progress_urls(self):
         """
