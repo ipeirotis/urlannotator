@@ -30,7 +30,8 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
 from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_YES, LABEL_NO, LABEL_BROKEN)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
-    extract_url_stats, extract_spent_stats, extract_performance_stats)
+    extract_url_stats, extract_spent_stats, extract_performance_stats,
+    extract_votes_stats)
 from urlannotator.classification.models import (ClassifierPerformance,
     ClassifiedSample, TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
@@ -572,6 +573,7 @@ def project_view(request, id):
     extract_url_stats(proj, context)
     extract_spent_stats(proj, context)
     extract_performance_stats(proj, context)
+    extract_votes_stats(proj, context)
     context['hours_spent'] = proj.get_hours_spent()
     context['urls_collected'] = proj.get_urls_collected()
     context['no_of_workers'] = proj.get_no_of_workers()
@@ -654,6 +656,7 @@ def project_worker_view(request, id, worker_id):
 def project_debug(request, id, debug):
     try:
         proj = Job.objects.get(id=id)
+
     except Job.DoesNotExist:
         request.session['error'] = "Such project doesn't exist."
         return redirect('index')
