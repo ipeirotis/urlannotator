@@ -200,3 +200,12 @@ class ClassifiedSample(models.Model):
             )
             return True
         return False
+
+    def get_yes_probability(self):
+        return self.label_probability.get(LABEL_YES, 0.0) * 100
+
+    def get_no_probability(self):
+        return self.label_probability.get(LABEL_NO, 0.0) * 100
+
+    def get_broken_probability(self):
+        return self.label_probability.get(LABEL_BROKEN, 0.0) * 100

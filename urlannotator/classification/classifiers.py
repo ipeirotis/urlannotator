@@ -18,7 +18,7 @@ from urlannotator.classification.models import (Classifier as ClassifierModel,
 from urlannotator.tools.synchronization import RWSynchronize247
 from urlannotator.statistics.stat_extraction import update_classifier_stats
 from urlannotator.flow_control import send_event
-from urlannotator.main.models import Job, LABEL_YES, LABEL_NO
+from urlannotator.main.models import Job, LABEL_YES, LABEL_NO, LABEL_BROKEN
 
 import logging
 log = logging.getLogger(__name__)
@@ -322,10 +322,17 @@ class SimpleClassifier(Classifier):
                     LABEL_YES: {
                         LABEL_YES: 1,
                         LABEL_NO: 0,
+                        LABEL_BROKEN: 0,
                     },
                     LABEL_NO: {
                         LABEL_YES: 0,
                         LABEL_NO: 1,
+                        LABEL_BROKEN: 0,
+                    },
+                    LABEL_BROKEN: {
+                        LABEL_YES: 0,
+                        LABEL_NO: 0,
+                        LABEL_BROKEN: 1,
                     }
                 }
             }
@@ -375,6 +382,13 @@ class SimpleClassifier(Classifier):
     def get_train_status(self):
         return CLASS_TRAIN_STATUS_DONE
 
+    def get_default_probabilities(self):
+        return {
+            LABEL_YES: 0.0,
+            LABEL_NO: 0.0,
+            LABEL_BROKEN: 0.0,
+        }
+
     def classify(self, class_sample):
         """
             Classifies gives sample and saves result to the model.
@@ -392,7 +406,7 @@ class SimpleClassifier(Classifier):
 
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {LABEL_YES: 0.0, LABEL_NO: 0.0}
+        label_probability = self.get_default_probabilities()
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
 
@@ -416,7 +430,7 @@ class SimpleClassifier(Classifier):
 
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {LABEL_YES: 0.0, LABEL_NO: 0.0}
+        label_probability = self.get_default_probabilities()
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
 
@@ -483,10 +497,17 @@ class GooglePredictionClassifier(Classifier):
                         LABEL_YES: {
                             LABEL_YES: 1,
                             LABEL_NO: 0,
+                            LABEL_BROKEN: 0,
                         },
                         LABEL_NO: {
                             LABEL_YES: 0,
                             LABEL_NO: 1,
+                            LABEL_BROKEN: 0,
+                        },
+                        LABEL_BROKEN: {
+                            LABEL_YES: 0,
+                            LABEL_NO: 0,
+                            LABEL_BROKEN: 1,
                         }
                     }
                 }
@@ -573,7 +594,7 @@ class GooglePredictionClassifier(Classifier):
             body = {'input': {'csvInstance': [sample.text]}}
             result = self.papi.predict(body=body, id=self.model).execute()
 
-            label_probability = {}
+            label_probability = self.get_default_probabilities()
             for score in result['outputMulti']:
                 probability = round(score['score'], 3)
                 label_probability[score['label'].capitalize()] = probability
@@ -596,6 +617,7 @@ class GooglePredictionClassifier(Classifier):
         return {
             LABEL_YES: 0.0,
             LABEL_NO: 0.0,
+            LABEL_BROKEN: 0.0,
         }
 
     def classify(self, sample):

@@ -267,15 +267,19 @@ class ClassifiedSampleResource(Resource):
         screenshot = ''
         if class_sample.sample:
             screenshot = class_sample.sample.get_small_thumbnail_url()
-        for label in class_sample.label_probability:
-            class_sample.label_probability[label] *= 100
+
+        label_probability = {
+            LABEL_YES: class_sample.get_yes_probability(),
+            LABEL_NO: class_sample.get_no_probability(),
+            LABEL_BROKEN: class_sample.get_broken_probability(),
+        }
 
         data = {
             'id': class_sample.id,
             'screenshot': screenshot,
             'url': class_sample.url,
             'job_id': class_sample.job_id,
-            'label_probability': class_sample.label_probability,
+            'label_probability': label_probability,
             'label': class_sample.label,
             'finished': class_sample.is_successful(),
         }

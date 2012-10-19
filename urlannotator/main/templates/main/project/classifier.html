@@ -237,7 +237,7 @@ function updateClassifierHistory(){
           el['label'],
           Math.round(el['label_probability']['Yes']),
           Math.round(el['label_probability']['No']),
-          0,
+          Math.round(el['label_probability']['Broken']),
           el['finished'],
           el['sample_url']
         )

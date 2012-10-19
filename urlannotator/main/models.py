@@ -646,8 +646,8 @@ class Sample(models.Model):
             return 0
 
         cs = max(cs_set, key=(lambda x: x.id))
-        yes_prob = cs.label_probability[LABEL_YES]
-        return yes_prob * 100
+        yes_prob = cs.get_yes_probability()
+        return yes_prob
 
     def get_no_probability(self):
         """
@@ -659,8 +659,21 @@ class Sample(models.Model):
             return 0
 
         cs = max(cs_set, key=(lambda x: x.id))
-        no_prob = cs.label_probability[LABEL_NO]
-        return no_prob * 100
+        no_prob = cs.get_no_probability()
+        return no_prob
+
+    def get_broken_probability(self):
+        """
+            Returns probability of BROKEN label on this sample, that is the
+            percentage from the most recent classification.
+        """
+        cs_set = self.classifiedsample_set.all()
+        if not cs_set:
+            return 0
+
+        cs = max(cs_set, key=(lambda x: x.id))
+        broken_prob = cs.get_broken_probability()
+        return broken_prob
 
     def is_classified(self):
         """
