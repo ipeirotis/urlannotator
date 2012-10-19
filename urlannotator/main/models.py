@@ -739,7 +739,7 @@ class Worker(models.Model):
 
         if self.worker_type == WORKER_TYPE_TAGASAURIS:
             tc = make_tagapi_client()
-            worker_info = tc.get_worker(external_id=self.external_id)
+            worker_info = tc.get_worker(worker_id=self.external_id)
             return worker_info['name']
 
         return 'Temp Name %d' % self.id

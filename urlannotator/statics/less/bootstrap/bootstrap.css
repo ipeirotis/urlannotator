@@ -4440,6 +4440,9 @@ a.thumbnail:hover {
 .pull-left {
   float: left;
 }
+.Pull-Right {
+  float: right!important;
+}
 .hide {
   display: none;
 }
