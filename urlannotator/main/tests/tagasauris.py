@@ -435,3 +435,6 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         self.assertTrue('status' in resp_dict.keys())
         self.assertTrue('points' in resp_dict.keys())
         self.assertTrue('btm_status' in resp_dict.keys())
+
+    def testBTMSampleIsNoVoting(self):
+        raise
