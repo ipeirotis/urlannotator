@@ -266,7 +266,7 @@ CELERYBEAT_SCHEDULE = {
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },
-    'progress_monitor': {
+    'votes_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.VotesMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
