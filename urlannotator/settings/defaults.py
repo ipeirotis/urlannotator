@@ -41,7 +41,7 @@ TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 VOTES_STORAGE = 'TroiaVotesStorage'
 QUALITY_ALGORITHM = 'DawidSkeneAlgorithm'
 
-SITE_URL = '89.76.71.95:30000'
+SITE_URL = 'devel.urlannotator.10clouds.com'
 
 SOCIAL_AUTH_CREATE_USERS = False
 
