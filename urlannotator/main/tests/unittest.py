@@ -533,20 +533,26 @@ class ProjectTests(ToolsMockedMixin, TestCase):
         self.assertTrue(GoldSample.objects.filter(label='').count() == 0)
 
         testUrl = 'http://google.com'
+
+        oldNum = ClassifiedSample.objects.filter(url=testUrl).count()
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
+        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
+
         # Classification request
-        self.assertEqual(ClassifiedSample.objects.all().count(), 1)
+        self.assertEqual(newNum - oldNum, 1)
         # New sample (new sample shares url with gold sample)
         self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
             1)
 
+        oldNum = newNum
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
+        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
 
         # classification request + old data
-        self.assertEqual(ClassifiedSample.objects.all().count(), 2)
+        self.assertEqual(newNum - oldNum, 1)
         # old data + new sample
         self.assertEqual(Sample.objects.filter(job=job).count(),
             1)
@@ -559,11 +565,13 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
+        oldNum = newNum
         self.c.post(reverse('project_classifier_view', args=[job.id]),
             {'test-urls': testUrl}, follow=True)
+        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
 
-        # classification request + old data
-        self.assertEqual(ClassifiedSample.objects.all().count(), 3)
+        # classification request + training reclassify + old data
+        self.assertEqual(newNum - oldNum, 2)
         # old data, no new sample since this is the same url
         self.assertEqual(Sample.objects.filter(job=job).count(), 1)
 

@@ -9,6 +9,7 @@ from urlannotator.main.models import Job, Sample
 from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample,
     copy_sample_to_job)
+from urlannotator.tools.utils import setting
 
 import logging
 log = logging.getLogger(__name__)
@@ -122,9 +123,11 @@ class JobFactory(object):
         """
             Creates classifier entry with type equal to JOB_DEFAULT_CLASSIFIER.
         """
+        classifier_prefix = '%s-' % setting('SITE_URL', '127.0.0.1')
         classifier_factory.initialize_classifier(
-            job.id,
-            settings.JOB_DEFAULT_CLASSIFIER
+            job_id=job.id,
+            classifier_name=settings.JOB_DEFAULT_CLASSIFIER,
+            prefix=classifier_prefix,
         )
 
     def init_quality(self, job_id):

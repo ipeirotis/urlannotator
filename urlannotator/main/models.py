@@ -152,6 +152,13 @@ class Job(models.Model):
             'id': self.id,
         })
 
+    def reclassify_samples(self):
+        """
+            Asynchronousle reclassifies all samples.
+        """
+        for sample in self.sample_set.all().iterator():
+            sample.reclassify()
+
     def has_new_votes(self):
         """
             Returns whether there are new votes in the job.
@@ -531,6 +538,18 @@ class Sample(models.Model):
             return None
         elif source_type == SAMPLE_TAGASAURIS_WORKER:
             return Worker.objects.get_tagasauris(worker_id=source_val)
+
+    def reclassify(self):
+        """
+            Asynchronously reclassifies given `sample`.
+        """
+        # Possible loop imports here
+        from urlannotator.classification.models import ClassifiedSample
+        ClassifiedSample.objects.create_by_owner(
+            job=self.job,
+            url=self.url,
+            sample=self,
+        )
 
     def get_source_worker(self):
         """
