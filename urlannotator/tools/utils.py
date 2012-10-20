@@ -1,4 +1,5 @@
 import platform
+import urlparse
 
 from django.conf import settings
 
@@ -36,3 +37,10 @@ def setting(name, default):
         Returns a settings value. If not present, returns `default`.
     """
     return getattr(settings, name, default)
+
+
+def sanitize_url(url):
+    result = urlparse.urlsplit(url)
+    if not result.scheme:
+        return 'http://%s' % url
+    return url

@@ -373,7 +373,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         # Because of eager celery we can check this:
         btm_sample = BeatTheMachineSample.objects.all()[0]
         self.assertEqual(resp_dict['request_id'], btm_sample.id)
-        self.assertEqual(btm_sample.worker.external_id, worker_id)
+        self.assertEqual(btm_sample.source_val, worker_id)
         self.assertEqual(btm_sample.expected_output, btm_sample.label)
 
     def testStatusBTMErrors(self):
@@ -381,13 +381,12 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
             account=self.user.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
-        worker, created = Worker.objects.get_or_create_tagasauris(1234)
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
             job=job,
             url='google.com',
             label='',
             expected_output=LABEL_YES,
-            worker=worker
+            worker_id=123
         )
 
         data = {
@@ -413,13 +412,12 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
             account=self.user.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
-        worker, created = Worker.objects.get_or_create_tagasauris(1234)
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
             job=job,
             url='google.com',
             label='',
             expected_output=LABEL_YES,
-            worker=worker
+            worker_id=124
         )
 
         data = {
@@ -435,6 +433,3 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         self.assertTrue('status' in resp_dict.keys())
         self.assertTrue('points' in resp_dict.keys())
         self.assertTrue('btm_status' in resp_dict.keys())
-
-    def testBTMSampleIsNoVoting(self):
-        raise

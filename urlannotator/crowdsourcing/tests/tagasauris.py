@@ -9,7 +9,8 @@ from celery import task
 from urlannotator.main.models import Job, Sample, LABEL_YES
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_sample_gather, sample_to_mediaobject, stop_job, create_btm)
-from urlannotator.crowdsourcing.models import SampleMapping, TagasaurisJobs
+from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
+    BeatTheMachineSample)
 from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
 from urlannotator.flow_control import send_event
 from urlannotator.classification.event_handlers import train
@@ -240,3 +241,65 @@ class TagasaurisJobsModelTest(ToolsMockedMixin, TestCase):
             tj.get_voting_url())
         self.assertTrue('tagasauris' in tj.get_voting_url())
         self.assertTrue('annotation' in tj.get_voting_url())
+
+
+class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
+
+    def setUp(self):
+        self.u = User.objects.create_user(username='testing', password='test')
+        self.job = Job.objects.create_active(
+            title='urlannotator_test_tagapi_client',
+            description='test_description',
+            no_of_urls=2,
+            account=self.u.get_profile(),
+            gold_samples=[
+                {'url': '10clouds.com/1', 'label': LABEL_YES},
+                {'url': '10clouds.com/2', 'label': LABEL_YES},
+                {'url': '10clouds.com/3', 'label': LABEL_YES}
+            ]
+        )
+
+        TagasaurisJobs.objects.create(urlannotator_job=self.job)
+
+        for s in Sample.objects.all():
+            s.screenshot = "http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
+            s.save()
+
+    def testBTMSampleIsNoVoting(self):
+        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
+        self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 0)
+
+        BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/1',
+            label='',
+            expected_output=LABEL_YES,
+            worker_id=1234
+        )
+        BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/2',
+            label='',
+            expected_output=LABEL_YES,
+            worker_id=12345
+        )
+
+        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
+        self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 2)
+
+        send_event('EventSamplesVoting')
+
+        # Only 3 gold samples! No BTM Samples!
+        self.assertEqual(SampleMapping.objects.count(), 3)
+
+        Sample.objects.filter(btm_sample=True).update(vote_sample=True)
+
+        # Sample must have screenshot
+        for s in Sample.objects.all():
+            s.screenshot = "http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
+            s.save()
+
+        send_event('EventSamplesVoting')
+
+        # 5 - incude added BTM Samples.
+        self.assertEqual(SampleMapping.objects.count(), 5)

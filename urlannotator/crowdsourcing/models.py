@@ -5,6 +5,7 @@ from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER)
 from urlannotator.classification.models import ClassifiedSampleCore
 from urlannotator.flow_control import send_event
+from urlannotator.tools.utils import sanitize_url
 
 
 class WorkerQualityVoteManager(models.Manager):
@@ -32,9 +33,10 @@ class WorkerQualityVote(models.Model):
 
 class BeatTheMachineSampleManager(models.Manager):
     def create_by_worker(self, *args, **kwargs):
-        self._sanitize(args, kwargs)
+        kwargs['url'] = sanitize_url(kwargs['url'])
         kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
         kwargs['source_val'] = kwargs['worker_id']
+        del kwargs['worker_id']
         try:
             kwargs['sample'] = Sample.objects.get(
                 job=kwargs['job'],
@@ -43,11 +45,11 @@ class BeatTheMachineSampleManager(models.Manager):
         except Sample.DoesNotExist:
             pass
 
-        classified_sample = self.create(**kwargs)
+        btm_sample = self.create(**kwargs)
         # If sample exists, step immediately to classification
         if 'sample' in kwargs:
             send_event('EventNewBTMSample',
-                sample_id=classified_sample.id)
+                sample_id=btm_sample.id)
         else:
             Sample.objects.create_by_btm(
                 job_id=kwargs['job'].id,
@@ -56,7 +58,7 @@ class BeatTheMachineSampleManager(models.Manager):
                 create_classified=False,
             )
 
-        return classified_sample
+        return btm_sample
 
 
 class BeatTheMachineSample(ClassifiedSampleCore):
@@ -98,7 +100,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     def labels_matched(self):
         return self.expected_output.lower() == self.label.lower()
 
-    def btm_status_mapping():
+    def btm_status_mapping(self):
         return ""
 
     @classmethod

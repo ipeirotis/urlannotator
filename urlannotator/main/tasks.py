@@ -81,7 +81,7 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
 @task()
 def create_sample(extraction_result, sample_id, job_id, url,
         source_type, source_val='', domain='', label=None, silent=False,
-        *args, **kwargs):
+        vote_sample=True, btm_sample=False, *args, **kwargs):
     """
     If error while capturing web propagate it. Finally deletes TemporarySample.
     extraction_result should be [True, True] - otherwise chaining failed.
@@ -98,6 +98,8 @@ def create_sample(extraction_result, sample_id, job_id, url,
             source_type=source_type,
             source_val=source_val,
             domain=domain,
+            vote_sample=vote_sample,
+            btm_sample=btm_sample,
         )
         sample = Sample.objects.get(id=sample_id)
 

@@ -1,5 +1,4 @@
 import json
-import urlparse
 
 from tenclouds.django.jsonfield.fields import JSONField
 from django.db import models
@@ -8,6 +7,7 @@ from django.db.models.signals import post_save
 from urlannotator.main.models import (Job, Sample, LABEL_CHOICES,
     LABEL_YES, LABEL_NO, LABEL_BROKEN, SAMPLE_SOURCE_OWNER)
 from urlannotator.flow_control import send_event
+from urlannotator.tools.utils import sanitize_url
 
 
 class Classifier(models.Model):
@@ -100,10 +100,7 @@ class ClassifiedSampleManager(models.Manager):
         """
             Sanitizes information passed by users.
         """
-        url = kwargs['url']
-        result = urlparse.urlsplit(url)
-        if not result.scheme:
-            kwargs['url'] = 'http://%s' % url
+        kwargs['url'] = sanitize_url(kwargs['url'])
 
     def create_by_owner(self, *args, **kwargs):
         self._sanitize(args, kwargs)
