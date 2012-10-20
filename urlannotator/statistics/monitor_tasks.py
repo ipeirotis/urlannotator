@@ -90,6 +90,6 @@ class VotesMonitor(JobMonitor, Task):
         )
 
     def get_value(self, job):
-        return job.get_votes.gathered()
+        return job.get_votes_gathered()
 
 votes_monitor = registry.tasks[VotesMonitor.name]

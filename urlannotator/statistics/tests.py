@@ -4,12 +4,12 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 
 from urlannotator.main.models import (Job, SpentStatistics, URLStatistics,
-    ProgressStatistics, LABEL_YES, LABEL_NO)
+    ProgressStatistics, LABEL_YES, LABEL_NO, VotesStatistics)
 from urlannotator.statistics.monitor_tasks import (spent_monitor, url_monitor,
-    progress_monitor)
+    progress_monitor, votes_monitor)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats,
-    update_classifier_stats)
+    update_classifier_stats, extract_votes_stats)
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.classification.models import ClassifierPerformance
 from urlannotator.flow_control.test import ToolsMockedMixin
@@ -36,6 +36,7 @@ class testJobMonitors(ToolsMockedMixin, TestCase):
             (SpentStatistics, spent_monitor),
             (URLStatistics, url_monitor),
             (ProgressStatistics, progress_monitor),
+            (VotesStatistics, votes_monitor)
         ]
         for cls, mon in monitor_list:
             self.assertEqual(cls.objects.filter(job=self.job).count(), 1)
@@ -70,6 +71,7 @@ class testStatExtraction(ToolsMockedMixin, TestCase):
             (extract_spent_stats, 'spent_stats'),
             (extract_url_stats, 'url_stats'),
             (extract_progress_stats, 'progress_stats'),
+            (extract_votes_stats, 'votes_stats'),
         ]
         for ex in extractors:
             ex[0](self.job, context)
