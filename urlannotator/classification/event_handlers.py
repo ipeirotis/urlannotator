@@ -301,11 +301,18 @@ def train(set_id):
 
     samples = (training_sample
         for training_sample in training_set.training_samples.all())
+
     classifier.train(samples, set_id=set_id)
-    send_event(
-        "EventClassifierTrained",
-        job_id=job.id,
-    )
+
+    job = Job.objects.get(id=job.id)
+    if job.is_classifier_trained():
+        send_event(
+            "EventClassifierTrained",
+            job_id=job.id,
+        )
+
+        # Reclassify samples using new classifier
+        job.reclassify_samples()
 
 
 @task(ignore_result=True)
