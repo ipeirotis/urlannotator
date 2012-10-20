@@ -309,11 +309,21 @@ class ClassifierResource(Resource):
         job_id = kwargs.get('job_id', 0)
         job = Job.objects.get(id=job_id)
 
-        # QuerySets are executed lazily
-        yes_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_YES)
-        no_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_NO)
-        broken_labels = ClassifiedSample.objects.filter(job=job,
-            label=LABEL_BROKEN)
+        yes_labels = []
+        no_labels = []
+        broken_labels = []
+
+        for sample in job.sample_set.all().iterator():
+            class_sample = sample.classifiedsample_set.order_by('-id')
+            if class_sample:
+                class_sample = class_sample[0]
+                label = class_sample.label
+                if label == LABEL_YES:
+                    yes_labels.append(sample)
+                elif label == LABEL_NO:
+                    no_labels.append(sample)
+                elif label == LABEL_BROKEN:
+                    broken_labels.append(sample)
 
         return self.create_response(
             request, {
@@ -334,9 +344,9 @@ class ClassifierResource(Resource):
                         'api_name': 'v1',
                     }
                 ),
-                'yes_count': yes_labels.count(),
-                'no_count': no_labels.count(),
-                'broken_count': broken_labels.count(),
+                'yes_count': len(yes_labels),
+                'no_count': len(no_labels),
+                'broken_count': len(broken_labels),
             }
         )
 

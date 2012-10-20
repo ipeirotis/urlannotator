@@ -143,6 +143,8 @@ class Job(models.Model):
     activated = models.DateTimeField(auto_now_add=True)
     votes_storage = models.CharField(max_length=25)
     quality_algorithm = models.CharField(max_length=25)
+    btm_active = models.BooleanField(default=False)
+    btm_to_gather = models.PositiveIntegerField(default=0)
 
     objects = JobManager()
 
@@ -152,9 +154,28 @@ class Job(models.Model):
             'id': self.id,
         })
 
+    def is_btm_active(self):
+        return self.is_btm_active
+
+    def get_btm_to_gather(self):
+        return self.btm_to_gather
+
+    def get_btm_gathered(self):
+        return self.beatthemachinesample_set.all().count()
+
+    def get_btm_progress(self):
+        to_gather = self.get_btm_to_gather() or 1
+
+        return round((100 * self.get_btm_gathered()) / to_gather, 2)
+
+    def get_accepted_btm_samples(self):
+        """
+            Returns list of btm samples to add to training set.
+        """
+
     def reclassify_samples(self):
         """
-            Asynchronousle reclassifies all samples.
+            Asynchronously reclassifies all samples.
         """
         for sample in self.sample_set.all().iterator():
             sample.reclassify()
