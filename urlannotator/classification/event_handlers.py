@@ -371,13 +371,14 @@ def classify_btm(sample_id, from_name='', *args, **kwargs):
     if label is None:
         # Something went wrong
         log.warning(
-            '[Classification] Got None label for sample %d. Retrying.' % btm_sample.id
+            '[BTMClassification] Got None label for sample %d. Retrying.'
+                % btm_sample.id
         )
         current.retry(countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
 
     BeatTheMachineSample.objects.filter(id=sample_id).update(label=label)
-    btm_sample.beatthemachinesample.updateBTMStatus()
+    btm_sample.updateBTMStatus()
 
     send_event(
         'EventSampleBTM',
