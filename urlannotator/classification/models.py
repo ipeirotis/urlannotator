@@ -17,7 +17,7 @@ class Classifier(models.Model):
     """
     job = models.ForeignKey(Job)
     type = models.CharField(max_length=20)
-    parameters = JSONField()
+    parameters = JSONField(default='{}')
     main = models.BooleanField(default=True)
 
 
@@ -44,7 +44,7 @@ class ClassifierPerformance(Statistics):
     """
     job = models.ForeignKey(Job)
     date = models.DateTimeField(auto_now_add=True)
-    value = JSONField()
+    value = JSONField(default='{}')
 
     objects = PerformanceManager()
 
