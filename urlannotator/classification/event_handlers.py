@@ -344,8 +344,10 @@ def classify(sample_id, from_name='', *args, **kwargs):
 
     # If classifier is not trained, retry later
     if not job.is_classifier_trained():
-        current.retry(countdown=min(60 * 2 ** current.request.retries,
-            60 * 60 * 24))
+        current.retry(
+            countdown=min(60 * 2 ** current.request.retries, 60 * 60 * 24),
+            max_retires=None,
+        )
 
     classifier = classifier_factory.create_classifier(job.id)
     label = classifier.classify(class_sample)
@@ -354,8 +356,10 @@ def classify(sample_id, from_name='', *args, **kwargs):
         log.warning(
             '[Classification] Got None label for sample %d. Retrying.' % class_sample.id
         )
-        current.retry(countdown=min(60 * 2 ** current.request.retries,
-            60 * 60 * 24))
+        current.retry(
+            countdown=min(60 * 2 ** current.request.retries, 60 * 60 * 24),
+            max_retries=None,
+        )
     ClassifiedSample.objects.filter(id=sample_id).update(label=label)
     send_event(
         'EventSampleClassified',
