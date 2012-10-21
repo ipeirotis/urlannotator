@@ -154,6 +154,82 @@ class Job(models.Model):
             'id': self.id,
         })
 
+    def start_btm(self, topic, description, no_of_urls):
+        Job.objects.filter(id=self.id).update(
+            btm_active=True,
+            btm_to_gather=no_of_urls,
+        )
+        self.btm_active = True
+        self.btm_to_gather = no_of_urls
+
+        send_event(
+            'EventBTMStarted',
+            job_id=self.id,
+            topic=topic,
+            description=description,
+            no_of_urls=no_of_urls,
+        )
+
+    def get_btm_status(self):
+        """
+            Returns a string representing job's BTM status.
+        """
+        # TODO: Fill this out
+        return '---'
+
+    def get_btm_verified_samples(self):
+        """
+            Returns list of samples verified by BTM to be added to training set.
+        """
+        # TODO: Proper query that returns a list of Sample objects.
+        return []
+
+    def get_btm_pending_samples(self):
+        """
+            Returns a list of samples that need to be added to the job by the
+            owner.
+        """
+        # TODO: Proper query
+        return [{
+            'id': 0,
+            'get_type': 'test',
+            'url': 'test',
+            'added_on': datetime.datetime.now(),
+            'get_yes_probability': 100,
+            'get_no_probability': 100,
+            'get_broken_probability': 100,
+            'get_yes_votes': 10,
+            'get_no_votes': 10,
+            'get_broken_votes': 10,
+            'label': 'yes',
+        },
+        {
+            'id': 1,
+            'get_type': 'test',
+            'url': 'test2',
+            'added_on': datetime.datetime.now(),
+            'get_yes_probability': 100,
+            'get_no_probability': 100,
+            'get_broken_probability': 100,
+            'get_yes_votes': 10,
+            'get_no_votes': 10,
+            'get_broken_votes': 10,
+            'label': 'no',
+        }]
+
+    def add_btm_verified_sample(self, sample):
+        """
+            Should add a BTM-verified sample to the job so it can be included
+            in new training sets.
+        """
+        # TODO: Fill this out.
+        return None
+
+    def is_btm_finished(self):
+        return (self.is_btm_active()
+            and (self.get_btm_gathered() == self.get_btm_to_gather())
+        )
+
     def is_btm_active(self):
         return self.btm_active
 
@@ -170,7 +246,7 @@ class Job(models.Model):
     def get_btm_progress(self):
         to_gather = self.get_btm_to_gather() or 1
 
-        return round((100 * self.get_btm_gathered()) / to_gather, 2)
+        return round((100 * len(self.get_btm_gathered())) / to_gather, 2)
 
     def get_accepted_btm_samples(self):
         """

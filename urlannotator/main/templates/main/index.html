@@ -26,7 +26,7 @@
               <tr>
                 <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">&nbsp;<i class="icon-info-sign"></i></a></td>
                 <td class="statusCol">{{p.get_status}}</td>
-                <td class="beatMachineCol">--</td>
+                <td class="beatMachineCol">{{p.get_btm_status}}</td>
                 <td class="linksCol">{{p.get_urls_collected}}</td>
                 <td class="budgetCol">{{p.budget}}</td>
                 <td class="classfierCol">{{p.get_classifier_performance}}%</td>

@@ -695,8 +695,8 @@ def project_btm_view(request, id):
         return redirect('index')
 
     context = {'project': job}
-    print job.is_btm_active()
     if job.is_btm_active():
+        context['pending_samples'] = job.get_btm_pending_samples()
         return render(request, 'main/project/btm_view.html',
             RequestContext(request, context))
     else:
@@ -704,7 +704,12 @@ def project_btm_view(request, id):
         if request.method == 'POST':
             form = BTMForm(request.POST)
             if form.is_valid():
-                pass
+                job.start_btm(
+                    topic=form.cleaned_data['topic'],
+                    description=form.cleaned_data['topic_desc'],
+                    no_of_urls=form.cleaned_data['no_of_urls'],
+                )
+                return redirect('project_btm_view', id=id)
             context['form'] = form
         return render(request, 'main/project/btm.html',
             RequestContext(request, context))
