@@ -9,10 +9,10 @@
 </div>
 <div class="row">
   <div class="span9">
-    Beat the Machine starts a new tagasauris task that will gather urls that may be misjudged by the classifier.
-    If an url is submittable (we don't want urls that category both submiteer and classifier agree on) we send it to actual
+    Beat the Machine starts a new tagasauris task that will gather urls that may be misjudged by the classifier. <a id="more-button" href="#" onclick="$('#more-desc').css('display', ''); $(this).css('display', 'none');">(more)</a>
+    <span style="display: none;" id="more-desc">If an url is submittable (we don't want urls that category both submiteer and classifier agree on) we send it to actual
     user validation. Based on the difference on the classifier reslult and user result a bonus will be paid out to the worker
-    that submitted that url. <a href="#">(less)</a>
+    that submitted that url. <a href="#" onclick="$('#more-button').css('display', ''); $('#more-desc').css('display', 'none')">(less)</a></span>
 
     {% include 'main/project/own_workforce_links.html' %}
   </div>

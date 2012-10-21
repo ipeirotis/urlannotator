@@ -26,7 +26,7 @@ from oauth2client.client import OAuth2WebServerFlow
 
 from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
-    GeneralEmailUserForm, GeneralUserForm)
+    GeneralEmailUserForm, GeneralUserForm, BTMForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_YES, LABEL_NO, LABEL_BROKEN)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
@@ -684,19 +684,29 @@ def project_debug(request, id, debug):
 @login_required
 def project_btm_view(request, id):
     try:
-        proj = Job.objects.get(id=id)
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    if (proj.account != request.user.get_profile()
+    if (job.account != request.user.get_profile()
             and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
-    return render(request, 'main/project/btm_view.html',
-        RequestContext(request, context))
+    context = {'project': job}
+    print job.is_btm_active()
+    if job.is_btm_active():
+        return render(request, 'main/project/btm_view.html',
+            RequestContext(request, context))
+    else:
+        if request.method == 'POST':
+            form = BTMForm(request.POST)
+            if form.is_valid():
+                pass
+        context['form'] = form
+        return render(request, 'main/project/btm.html',
+            RequestContext(request, context))
 
 
 @login_required

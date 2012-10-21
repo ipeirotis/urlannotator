@@ -155,13 +155,17 @@ class Job(models.Model):
         })
 
     def is_btm_active(self):
-        return self.is_btm_active
+        return self.btm_active
 
     def get_btm_to_gather(self):
         return self.btm_to_gather
 
     def get_btm_gathered(self):
-        return self.beatthemachinesample_set.all().count()
+        # TODO: Fill this. Should return a list of samples so that
+        #       get_btm_gathered|length == number of samples that count towards
+        #       BTM progress.
+        #       Refer to OANNOTATOR-55
+        return []
 
     def get_btm_progress(self):
         to_gather = self.get_btm_to_gather() or 1
