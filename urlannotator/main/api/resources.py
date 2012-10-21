@@ -314,16 +314,13 @@ class ClassifierResource(Resource):
         broken_labels = []
 
         for sample in job.sample_set.all().iterator():
-            class_sample = sample.classifiedsample_set.order_by('-id')
-            if class_sample:
-                class_sample = class_sample[0]
-                label = class_sample.label
-                if label == LABEL_YES:
-                    yes_labels.append(sample)
-                elif label == LABEL_NO:
-                    no_labels.append(sample)
-                elif label == LABEL_BROKEN:
-                    broken_labels.append(sample)
+            label = sample.get_classified_label()
+            if label == LABEL_YES:
+                yes_labels.append(sample)
+            elif label == LABEL_NO:
+                no_labels.append(sample)
+            elif label == LABEL_BROKEN:
+                broken_labels.append(sample)
 
         return self.create_response(
             request, {

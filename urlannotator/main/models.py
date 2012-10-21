@@ -560,6 +560,12 @@ class Sample(models.Model):
         elif source_type == SAMPLE_TAGASAURIS_WORKER:
             return Worker.objects.get_tagasauris(worker_id=source_val)
 
+    def get_classified_label(self):
+        class_set = self.classifiedsample_set.all().order_by('-id')
+        if class_set:
+            return class_set[0].label
+        return None
+
     def reclassify(self):
         """
             Asynchronously reclassifies given `sample`.
