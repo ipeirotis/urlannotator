@@ -700,11 +700,12 @@ def project_btm_view(request, id):
         return render(request, 'main/project/btm_view.html',
             RequestContext(request, context))
     else:
+        context['form'] = BTMForm()
         if request.method == 'POST':
             form = BTMForm(request.POST)
             if form.is_valid():
                 pass
-        context['form'] = form
+            context['form'] = form
         return render(request, 'main/project/btm.html',
             RequestContext(request, context))
 

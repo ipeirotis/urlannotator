@@ -446,7 +446,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                         'topic_desc': 'Test desc',
                         'data_source': source,
                         'project_type': '0',
-                        'no_of_urls': '0',
+                        'no_of_urls': '1',
                         'hourly_rate': '1.0',
                         'budget': '1.0',
                         'same_domain': '0',
