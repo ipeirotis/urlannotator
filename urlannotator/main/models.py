@@ -373,7 +373,7 @@ class Job(models.Model):
         got = 0
 
         for sample in self.sample_set.all():
-            count += 1
+            count += 3
             got += sample.workerqualityvote_set.all().count()
 
         count = count or 1
