@@ -1486,6 +1486,11 @@ table thead * {
 .table-container-anno4 > h4 {
   background-color: #C79155;
 }
+table img {
+  width: 40px!important;
+  height: 40px!important;
+  background: url('http://placehold.it/40x40') no-repeat 0px 0px;
+}
 /*  Font Awesome
     the iconic font designed for use with Twitter Bootstrap
     -------------------------------------------------------
