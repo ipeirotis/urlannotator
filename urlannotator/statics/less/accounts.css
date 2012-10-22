@@ -28,6 +28,14 @@ header.header {
 .body-register .alert,
 .body-reset .alert {
   padding-right: 25px;
+  margin-left: 200px;
+}
+@media (min-width: 1200px) {
+  .body-login .alert,
+  .body-register .alert,
+  .body-reset .alert {
+    margin-left: 260px;
+  }
 }
 .body-settings hr {
   margin-top: 10px;

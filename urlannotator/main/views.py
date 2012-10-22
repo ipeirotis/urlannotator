@@ -158,10 +158,13 @@ def register_view(request):
             cont = Context({'key': key, 'site': settings.SITE_URL})
             send_mail(subjectTemplate.render(cont).replace('\n', ''),
                 bodyTemplate.render(cont), 'URL Annotator', [user.email])
-            request.session['success'] = ('Thanks for registering. '
+            context = {'success': ('Thanks for registering. '
                 'An activation email has been sent '
-                'to %s with further instructions.') % user.email
-            return redirect('index')
+                'to %s with further instructions.') % user.email,
+                'login_view': True,
+                'form':UserLoginForm()}
+            return render(request, 'main/login.html',
+                RequestContext(request, context))
 
         return render(request, 'main/register.html',
             RequestContext(request, context))
@@ -183,28 +186,31 @@ def logout_view(request):
 
 def activation_view(request, key):
     prof_id = key.rsplit('-', 1)
+    context = {}
     if len(prof_id) != 2:
         context = {'error': 'Wrong activation key.'}
-        return render(request, 'main/index.html',
+        return render(request, 'main/login.html',
             RequestContext(request, context))
 
     try:
         prof = Account.objects.get(id=int(prof_id[1]))
     except Account.DoesNotExist:
         context = {'error': 'Wrong activation key.'}
-        return render(request, 'main/index.html',
+        return render(request, 'main/login.html',
             RequestContext(request, context))
 
     if prof.activation_key != key:
         context = {'error': 'Wrong activation key.'}
-        return render(request, 'main/index.html',
+        return render(request, 'main/login.html',
             RequestContext(request, context))
     prof.user.is_active = True
     prof.user.save()
     prof.activation_key = 'activated'
     prof.save()
-    request.session['success'] = 'Your account has been activated.'
-    return redirect('index')
+    context = { 'success': 'Your account has been activated.',
+                'form':UserLoginForm()}
+    return render(request, 'main/login.html',
+        RequestContext(request, context))
 
 
 @csrf_protect
