@@ -835,9 +835,8 @@ class Sample(models.Model):
         """
         yes_prob = self.get_yes_probability()
         no_prob = self.get_no_probability()
-        broken_prob = self.get_broken_probability()
 
-        return yes_prob or no_prob or broken_prob
+        return yes_prob or no_prob
 
     def is_gold_sample(self):
         try:

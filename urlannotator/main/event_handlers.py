@@ -2,7 +2,7 @@ from celery import task, Task, registry
 from factories import SampleFactory, JobFactory
 
 from urlannotator.classification.models import TrainingSample, TrainingSet
-from urlannotator.main.models import GoldSample
+from urlannotator.main.models import GoldSample, LABEL_BROKEN
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 
@@ -51,12 +51,13 @@ class GoldSamplesMonitor(Task):
         if not job.is_training_set_created():
             registry.tasks[GoldSamplesMonitor.name].retry(countdown=30)
 
-        training_set = TrainingSet.objects.newest_for_job(job)
-        TrainingSample.objects.create(
-            set=training_set,
-            sample=gold_sample.sample,
-            label=gold_sample.label
-        )
+        if gold_sample.label != LABEL_BROKEN:
+            training_set = TrainingSet.objects.newest_for_job(job)
+            TrainingSample.objects.create(
+                set=training_set,
+                sample=gold_sample.sample,
+                label=gold_sample.label
+            )
 
         lock_key = 'TrainingSampleLock-%d' % job.id
         # Send training set completed event. Used here as we are certain no

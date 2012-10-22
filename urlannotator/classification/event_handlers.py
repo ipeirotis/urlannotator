@@ -14,7 +14,7 @@ from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_voting, samples_to_mediaobjects, update_voting_job)
 from urlannotator.crowdsourcing.factories import quality_factory
-from urlannotator.main.models import Sample, Job
+from urlannotator.main.models import Sample, Job, LABEL_BROKEN
 from urlannotator.tools.synchronization import POSIXLock
 
 import logging
@@ -232,6 +232,11 @@ class ProcessVotesManager(Task):
 
                 ts = TrainingSet.objects.create(job=job)
                 for sample_id, label in decisions:
+                    if label == LABEL_BROKEN:
+                        log.info(
+                            'ProcessVotesManager: Omitted broken label of sample %d.' % sample_id
+                        )
+                        continue
                     sample = Sample.objects.get(id=sample_id)
                     TrainingSample.objects.create(
                         set=ts,
