@@ -1,7 +1,12 @@
 import platform
 import urlparse
+import requests
+import json
 
 from django.conf import settings
+
+import logging
+log = logging.getLogger(__name__)
 
 
 def os_result_to_code(code):
@@ -44,3 +49,56 @@ def sanitize_url(url):
     if not result.scheme:
         return 'http://%s' % url
     return url
+
+
+class DiffbotClient(object):
+    """
+    A simple Python interface for the Diffbot api.
+    Relies on the Requests library - python-requests.org
+
+    Usage:
+    YOUR_DIFFBOT_DEV_TOKEN = '12345'
+
+    diffbot = Diffbot(YOUR_DIFFBOT_DEV_TOKEN)
+
+    diffbot.get_article({
+    'url': 'http://example.com/page',
+    })
+
+    diffbot.get_frontpage({
+    'url': 'http://example.com',
+    })
+
+    by david-torres (https://gist.github.com/1337245)
+    """
+    output_format = 'json'
+
+    def __init__(self, dev_token):
+        self.dev_token = dev_token
+
+    def get_article(self, params={}):
+        api_endpoint = 'http://www.diffbot.com/api/article'
+        params.update({
+            'token': self.dev_token,
+            'format': self.output_format,
+        })
+        r = requests.get(api_endpoint, params=params)
+        content = json.loads(r.content)
+
+        if r.status_code >= 400 or 'error' in content:
+            log.warning(
+                '[Diffbot] Error while getting url %s: %s.'
+                % (params['url'], content)
+            )
+            return ''
+
+        return content
+
+    def get_frontpage(self, params={}):
+        api_endpoint = 'http://www.diffbot.com/api/frontpage'
+        params.update({
+            'token': self.dev_token,
+            'format': self.output_format,
+        })
+        r = requests.get(api_endpoint, params=params)
+        return json.loads(r.content)

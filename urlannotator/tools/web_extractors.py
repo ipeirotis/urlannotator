@@ -12,8 +12,11 @@ from itertools import ifilter
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 
-from urlannotator.tools.utils import os_result_to_code
+from urlannotator.tools.utils import os_result_to_code, DiffbotClient
 from urlannotator.tools.webkit2png import error_code_to_exception
+
+import logging
+log = logging.gerLogger(__name__)
 
 SCREEN_DUMPS_BUCKET_NAME = "urlannotator_web_screenshot"
 S3_SERVER_NAME = "https://s3.amazonaws.com/"
@@ -100,12 +103,43 @@ def is_proper_url(url):
     return True
 
 
-def get_web_text(url):
+def links_extractor(url):
     """ Using links we extract content from web.
     """
     # Simply calling links/lynx
     text = subprocess.check_output(["links", "-dump", url])
     return extract_words(text)
+
+
+def diffbot_extractor(url):
+    """
+        Extracts page content using Diffbot Article API.
+    """
+    try:
+        client = DiffbotClient(settings.DIFFBOT_TOKEN)
+        content = client.get_article({
+            'url': url,
+        })
+        return content
+    except Exception, e:
+        log.exception(
+            '[DiffBot] Exception while getting url %s.' % url
+        )
+        return ''
+
+
+def get_web_text(url):
+    """ Using links we extract content from web.
+    """
+    # Firstly, check if Diffbot can extract the content
+    content = diffbot_extractor(url)
+    if not content:
+        log.warning(
+            '[TextExtract] Diffbot failed to extract %s : %s.'
+            'Falling back to Links' % (url, content)
+        )
+        content = links_extractor(url)
+    return content
 
 DEFAULT_QUALITY = 50
 DEF_SCREEN_WIDTH = 1024
