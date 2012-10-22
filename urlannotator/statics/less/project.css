@@ -139,7 +139,7 @@ span.badge-info {
   padding-left: 8px;
   display: inline-block;
   width: 56px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 span.badge-info i {
   padding-right: 5px;
@@ -333,6 +333,17 @@ th.preview {
 }
 table.fix {
   table-layout: fixed;
+}
+.body-data .data-url {
+  margin-bottom: 8px;
+  font-weight: normal;
+}
+.body-data .data-url a {
+  color: #3A4354;
+}
+.body-data .data-url a:hover {
+  color: #3A4354;
+  text-decoration: none;
 }
 .body-data .screen-wrapper {
   border: 5px solid #eee;
