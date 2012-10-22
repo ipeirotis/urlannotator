@@ -833,6 +833,19 @@ class Sample(models.Model):
         """
             Returns whether this sample has been classified at least once.
         """
+        # Check if we have been voted down as BROKEN
+        from urlannotator.classification.models import (TrainingSet,
+            TrainingSample)
+        ts = TrainingSet.objects.newest_for_job(self.job)
+        count = TrainingSample.objects.filter(
+            sample=self,
+            label=LABEL_BROKEN,
+            set=ts,
+        ).count()
+
+        if not count:
+            return False
+
         yes_prob = self.get_yes_probability()
         no_prob = self.get_no_probability()
 
