@@ -73,6 +73,9 @@ div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a {
   color: white;
 }
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project {
+  margin-right: 20px;
+}
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a {
   font-weight: bold;
   line-height: 20px;
