@@ -32,10 +32,14 @@
             <tbody data-bind="foreach: entries">
               <tr>
                 <td>
-                  <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}"><img data-bind="visible: screenshot, attr: {src: screenshot}" style="width: 60px; height: 60px;"></a>
+                  <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}">
+                    <img data-bind="visible: screenshot, attr: {src: screenshot}">
+                  </a>
                 </td>
                 <td class="td-url">
-                  <a data-bind="attr: {href: sample_url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
+                  <a data-bind="attr: {href: sample_url, title: url}">
+                    <span data-bind="text: url">&nbsp;</span>
+                  </a>
                 </td>
                 <td>
                   <span data-bind="text: getLabel">&nbsp;</span>

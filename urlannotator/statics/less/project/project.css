@@ -168,7 +168,7 @@ table#classifier-test td:first-child {
 #classifier-history td {
   height: 60px;
 }
-tbody#classifier-history .td-url a span {
+#classifier-history .td-url a span {
   display: block;
   overflow: hidden;
   width: 190px;
@@ -176,7 +176,7 @@ tbody#classifier-history .td-url a span {
   white-space: nowrap;
 }
 @media (min-width: 1200px) {
-  tbody#classifier-history .td-url a span {
+  #classifier-history .td-url a span {
     overflow: hidden;
     width: 300px;
     text-overflow: ellipsis;
