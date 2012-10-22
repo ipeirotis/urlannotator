@@ -64,16 +64,43 @@ class BeatTheMachineSampleManager(models.Manager):
 class BeatTheMachineSample(ClassifiedSampleCore):
     # BTM status and description/points mapping
     BTM_PENDING = 0
-    BTM_KNOWN = 1
+    BTM_NO_STATUS = 1
+    BTM_HUMAN = 2
+    BTM_KNOWN = 3
+    BTM_KNOWN_UNSURE = 4
+    BTM_NOT_X_UNSURE = 5
+    BTM_KNOWN_UNCERTAIN = 6
+    BTM_HOLE = 7
+    BTM_NOT_X = 8
 
     BTM_STATUS = (
         (BTM_PENDING, "Pending"),
-        (BTM_KNOWN,  "Known"),
+        (BTM_PENDING, "NoStatus"),
+        (BTM_HUMAN, "Human"),
+        (BTM_KNOWN, "Known"),
+        (BTM_KNOWN_UNSURE, "KnownUnsure"),
+        (BTM_NOT_X_UNSURE, "NotXUnsre"),
+        (BTM_KNOWN_UNCERTAIN, "KnownUncertain"),
+        (BTM_HOLE, "Hole"),
+        (BTM_NOT_X, "NotX"),
     )
+
+    BTM_REWARD_0 = 0
+    BTM_REWARD_1 = 1
+    BTM_REWARD_2 = 1
+    BTM_REWARD_3 = 3
+    BTM_REWARD_4 = 4
 
     BTM_POINTS = {
         BTM_PENDING: 0,
-        BTM_KNOWN: 0,
+        BTM_NO_STATUS: 0,
+        BTM_HUMAN: BTM_REWARD_0,
+        BTM_KNOWN: BTM_REWARD_0,
+        BTM_KNOWN_UNSURE: BTM_REWARD_1,
+        BTM_NOT_X_UNSURE: BTM_REWARD_2,
+        BTM_KNOWN_UNCERTAIN: BTM_REWARD_3,
+        BTM_HOLE: BTM_REWARD_4,
+        BTM_NOT_X: BTM_REWARD_0,
     }
 
     expected_output = models.CharField(max_length=10, choices=LABEL_CHOICES)
@@ -87,9 +114,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
         return self.label_probability[self.label]
 
     def updateBTMStatus(self, save=True):
-        status = self.calculate_status(
-            matched=self.labels_matched(),
-            confidence=self.confidence)
+        status = self.calculate_status()
 
         self.btm_status = status
         self.points = self.BTM_POINTS[status]
@@ -101,11 +126,80 @@ class BeatTheMachineSample(ClassifiedSampleCore):
         return self.expected_output.lower() == self.label.lower()
 
     def btm_status_mapping(self):
-        return ""
+        return dict(self.BTM_STATUS)[self.btm_status]
+
+    CONF_HIGH_TRESHOLD = 0.8
+    CONF_MEDIUM_TRESHOLD = 0.5
+    CONF_HIGH = 1
+    CONF_MEDIUM = 2
+    CONF_LOW = 3
 
     @classmethod
-    def calculate_status(cls, matched, confidence):
-        return cls.BTM_KNOWN
+    def confidence_level(cls, confidence):
+        """
+            Conf_high meaning Conf_cl > 80%
+            Conf_low meaning Conf_cl > 50% and Conf_cl < 80%
+        """
+        if confidence > cls.CONF_HIGH_TRESHOLD:
+            return cls.CONF_HIGH
+        if confidence > cls.CONF_MEDIUM_TRESHOLD:
+            return cls.CONF_MEDIUM
+        else:
+            return cls.CONF_LOW
+
+    def calculate_status(self):
+        """ Status calculation using expected output and  classified class
+            with its confidence.
+        """
+        conf_cl = self.confidence
+        confidence = self.confidence_level(conf_cl)
+
+        cat_cl = self.label.lower()
+        expect = self.expected_output.lower()
+
+        if cat_cl == expect and confidence == self.CONF_HIGH:
+            return self.BTM_KNOWN
+
+        elif cat_cl == expect and confidence == self.CONF_MEDIUM:
+            return self.BTM_HUMAN
+
+        elif cat_cl != expect and confidence == self.CONF_MEDIUM:
+            return self.BTM_HUMAN
+
+        elif cat_cl != expect and confidence == self.CONF_HIGH:
+            return self.BTM_HUMAN
+
+        # Should not happened!
+        return self.BTM_NO_STATUS
+
+    def recalculate_human(self, cat_h):
+        """ Recalculates btm sample status after voting of unsure sample.
+        """
+        conf_cl = self.confidence
+        confidence = self.confidence_level(conf_cl)
+
+        cat_cl = self.label.lower()
+        expect = self.expected_output.lower()
+
+        if cat_cl == expect and confidence == self.CONF_MEDIUM:
+            if cat_h == expect:
+                self.btm_status = self.BTM_KNOWN_UNSURE
+            else:
+                self.btm_status = self.BTM_NOT_X_UNSURE
+
+        elif cat_cl != expect and confidence == self.CONF_MEDIUM:
+            if cat_h == expect:
+                self.btm_status = self.BTM_KNOWN_UNCERTAIN
+            else:
+                self.btm_status = self.BTM_NOT_X_UNSURE
+
+        elif cat_cl != expect and confidence == self.CONF_HIGH:
+            if cat_h == expect:
+                self.btm_status = self.BTM_HOLE
+            else:
+                self.btm_status = self.BTM_NOT_X
+
+        self.save()
 
 
 class TagasaurisJobs(models.Model):
