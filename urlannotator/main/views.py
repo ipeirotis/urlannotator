@@ -334,7 +334,7 @@ def project_wizard(request):
     else:
         topic_form = WizardTopicForm(request.POST)
         attr_form = WizardAttributesForm(odeskLogged, request.POST)
-        addt_form = WizardAdditionalForm(request.POST)
+        addt_form = WizardAdditionalForm(request.POST, request.FILES)
         is_draft = request.POST['submit'] == 'draft'
 
         context = {'topic_form': topic_form,
