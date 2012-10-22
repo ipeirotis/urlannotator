@@ -1,4 +1,10 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'overview' %}
+{% endblock %}
 
 {% block body-class %}{{ block.super }} body-overview{% endblock %}
 {% block overview_active %}active{% endblock %}

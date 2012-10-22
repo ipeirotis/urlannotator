@@ -1,0 +1,133 @@
+.clearfix {
+  *zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  /* Make inputs at least the height of their button counterpart */
+
+  /* Makes inputs behave like true block-level elements */
+
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.body-overview .container-main {
+  padding-bottom: 0px;
+}
+.body-overview .accordion {
+  margin-bottom: 18px;
+}
+.body-overview .accordion .accordion-group {
+  background: url('/statics/img/url_anno_stream_bg.png') repeat 0px 0px;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+}
+.body-overview .accordion .accordion-group .accordion-heading {
+  padding-bottom: 10px;
+  padding-top: 10px;
+}
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle {
+  padding: 0px;
+  color: #d0a271;
+}
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle .accordion-notify .show,
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle .accordion-notify .hide {
+  margin-right: 6px;
+  text-decoration: underline;
+}
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle .accordion-notify .show i,
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle .accordion-notify .hide i {
+  width: 9px;
+  height: 9px;
+  background: url('/statics/img/url_anno_proj_arrows.png') 0px 0px;
+  display: block;
+  float: right;
+  margin-top: 6px;
+  text-decoration: none;
+}
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle .accordion-notify .show {
+  display: none;
+}
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle .accordion-notify .hide {
+  display: inline;
+}
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle .accordion-notify .hide i {
+  background-position: 0px -9px;
+}
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle.collapsed .accordion-notify .show {
+  display: inline;
+}
+.body-overview .accordion .accordion-group .accordion-heading .accordion-toggle.collapsed .accordion-notify .hide {
+  display: none;
+}
+.body-overview .accordion .accordion-group .accordion-inner {
+  border: 0px none;
+  padding: 0px;
+}
+.body-overview .accordion .accordion-group .accordion-inner .container {
+  margin-bottom: 20px;
+}
+.body-overview .accordion .accordion-group .accordion-inner .update-box {
+  margin-bottom: 10px;
+  background-color: white;
+  border-bottom: 1px solid #eee;
+  border-right: 1px solid #eee;
+  margin-right: -1px;
+  -webkit-box-shadow: 1px 1px 2px #eeeeee;
+  -moz-box-shadow: 1px 1px 2px #eeeeee;
+  box-shadow: 1px 1px 2px #eeeeee;
+  color: #d0a271;
+}
+.body-overview .accordion .accordion-group .accordion-inner .update-box a {
+  color: #d0a271;
+  text-decoration: underline;
+}
+.body-overview .accordion .accordion-group .accordion-inner .update-box .box-img {
+  float: left;
+  width: 55px;
+  height: 55px;
+  padding: 5px;
+}
+.body-overview .accordion .accordion-group .accordion-inner .update-box .box-img img {
+  width: 55px;
+  height: 55px;
+}
+.body-overview .accordion .accordion-group .accordion-inner .update-box .box-inner {
+  overflow: hidden;
+  width: 150px;
+  text-overflow: ellipsis;
+  float: right;
+  height: 60px;
+}
+@media (min-width: 1200px) {
+  .body-overview .accordion .accordion-group .accordion-inner .update-box .box-inner {
+    overflow: hidden;
+    width: 200px;
+    text-overflow: ellipsis;
+  }
+}
+.body-overview .accordion .accordion-group .accordion-inner .update-box span.box-header {
+  display: block;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+}
+.body-overview .accordion .accordion-group .accordion-inner .update-box span.box-content {
+  display: block;
+}

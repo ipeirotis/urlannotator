@@ -1,4 +1,12 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'workers' %}
+{% endblock %}
+
+{% block body-class %}body-{{project.get_status|lower}} body-workers{% endblock %}
 
 {% block workers_active %}active{% endblock %}
 {% block project_content %}
@@ -40,15 +48,4 @@
       </div>
     </div>
   </div>
-{% endblock %}
-
-{% block css %}
-{{ block.super }}
-<style type="text/css">
-table#more-information td:first-child {
-  width: 140px;
-  text-align: right;
-  padding-right: 10px;
-}
-</style>
 {% endblock %}

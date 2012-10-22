@@ -1,5 +1,12 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
 
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'btm' %}
+{% endblock %}
+
+{% block body-class %}{{ block.super }} body-btm{% endblock %}
 {% block btm_active %}active{% endblock %}
 {% block project_content %}
   <div class="row-fluid">
@@ -38,24 +45,4 @@
     </div>
     </form>
   </div>
-{% endblock %}
-
-{% block css %}
-{{ block.super }}
-<style type="text/css">
-table#start-btm td:nth-of-type(1) {
-    width: 150px;
-    text-align: right;
-    padding-right: 10px;
-}
-table#start-btm td:nth-of-type(2) {
-    padding-right: 10px;
-}
-table#start-btm td:nth-of-type(3) {
-    width: 350px;
-}
-table#start-btm td{
-    vertical-align: top;
-}
-</style>
 {% endblock %}

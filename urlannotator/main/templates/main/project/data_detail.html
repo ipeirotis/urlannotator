@@ -1,9 +1,14 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'data' %}
+{% endblock %}
+
+{% block body-class %}{{ block.super }} body-data-detail{% endblock %}
 
 {% block data_active %}active{%endblock%}
-
-{% block body-class %}{{block.super}} body-data{% endblock %}
-
 {% block project_content %}
   <div class="row">
     <div class="span">
@@ -46,15 +51,4 @@
         <pre>{{sample.text}}</pre>
     </div>
   </div>
-{% endblock %}
-
-{% block css %}
-{{ block.super }}
-<style type="text/css">
-table#more-information td:first-child {
-  width: 140px;
-  text-align: right;
-  padding-right: 10px;
-}
-</style>
 {% endblock %}
