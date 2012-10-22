@@ -1,0 +1,86 @@
+.clearfix {
+  *zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  /* Make inputs at least the height of their button counterpart */
+
+  /* Makes inputs behave like true block-level elements */
+
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.body-data table#more-information td:first-child {
+  width: 140px;
+  text-align: right;
+  padding-right: 10px;
+}
+.body-data-detail table#more-information td:first-child {
+  width: 140px;
+  text-align: right;
+  padding-right: 10px;
+}
+.body-data-detail .data-url {
+  margin-bottom: 8px;
+  font-weight: normal;
+}
+.body-data-detail .data-url a {
+  color: #3A4354;
+}
+.body-data-detail .data-url a:hover {
+  color: #3A4354;
+  text-decoration: none;
+}
+.body-data-detail .screen-wrapper {
+  border: 5px solid #eee;
+  padding: 5px;
+  width: 680px;
+}
+@media (min-width: 1200px) {
+  .body-data-detail .screen-wrapper {
+    width: 850px;
+  }
+}
+.body-data-detail span.badge-info {
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  padding-right: 25px;
+  padding-left: 8px;
+  display: inline-block;
+  width: 56px;
+  margin-bottom: 4px;
+}
+.body-data-detail span.badge-info i {
+  padding-right: 5px;
+  margin-right: 25px;
+  border-right: 2px solid white;
+  width: 12px;
+  display: inline-block;
+}
+.body-data-detail span.badge-info.badge-yes {
+  background-color: #1FA134;
+}
+.body-data-detail span.badge-info.badge-no {
+  background-color: #E6363E;
+}
+.body-data-detail span.badge-info.badge-broken {
+  background-color: #855759;
+}

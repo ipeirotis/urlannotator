@@ -53,3 +53,10 @@ header.header {
   text-decoration: none;
   color: #E0B25D;
 }
+.body-settings .alert-container {
+  position: absolute;
+  margin-top: -17px;
+}
+.body-settings .alert-container .alert {
+  margin-bottom: 6px;
+}

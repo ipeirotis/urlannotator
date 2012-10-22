@@ -26,18 +26,212 @@
   -moz-box-sizing: border-box;
   -ms-box-sizing: border-box;
   box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
 }
-html,
-body {
-  height: 100%;
-  min-height: 100%;
+.clearfix {
+  *zoom: 1;
 }
-html,
-body {
-  min-width: 1000px;
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
 }
-.sidebar-nav {
-  padding: 9px 0;
+.clearfix:after {
+  clear: both;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  /* Make inputs at least the height of their button counterpart */
+
+  /* Makes inputs behave like true block-level elements */
+
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+table thead * {
+  font-size: 11px;
+}
+.table-container-anno1,
+.table-container-anno2,
+.table-container-anno3,
+.table-container-anno4 {
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  border: 1px solid;
+  border-top: 0px none;
+  margin-right: -2px;
+  margin-bottom: 18px;
+}
+.table-container-anno1 > h1,
+.table-container-anno2 > h1,
+.table-container-anno3 > h1,
+.table-container-anno4 > h1,
+.table-container-anno1 > h2,
+.table-container-anno2 > h2,
+.table-container-anno3 > h2,
+.table-container-anno4 > h2,
+.table-container-anno1 > h3,
+.table-container-anno2 > h3,
+.table-container-anno3 > h3,
+.table-container-anno4 > h3,
+.table-container-anno1 > h4,
+.table-container-anno2 > h4,
+.table-container-anno3 > h4,
+.table-container-anno4 > h4 {
+  color: white;
+  padding: 3px 4px 5px 6px;
+  font-weight: normal;
+  background: url('/statics/img/url_anno_table_strip_pattern.png') repeat-x 0px 0px;
+  -webkit-border-radius: 5px 5px 0px 0px;
+  -moz-border-radius: 5px 5px 0px 0px;
+  border-radius: 5px 5px 0px 0px;
+  -webkit-border-radius: 5px 5px 0px 0px;
+  -moz-border-radius: 5px 5px 0px 0px;
+  border-radius: 5px 5px 0px 0px;
+  -webkit-border-radius: 5px 5px 0px 0px;
+  -moz-border-radius: 5px 5px 0px 0px;
+  border-radius: 5px 5px 0px 0px;
+  margin-left: -1px;
+  margin-right: -1px;
+  font-size: 13px;
+}
+.table-container-anno1 .table-wrapper,
+.table-container-anno2 .table-wrapper,
+.table-container-anno3 .table-wrapper,
+.table-container-anno4 .table-wrapper {
+  margin-top: -3px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
+  padding: 6px;
+  background: white;
+}
+.table-container-anno1 .table-wrapper table,
+.table-container-anno2 .table-wrapper table,
+.table-container-anno3 .table-wrapper table,
+.table-container-anno4 .table-wrapper table {
+  table-layout: fixed;
+}
+.table-container-anno1 .table-wrapper table thead *,
+.table-container-anno2 .table-wrapper table thead *,
+.table-container-anno3 .table-wrapper table thead *,
+.table-container-anno4 .table-wrapper table thead * {
+  font-size: 11px;
+}
+.table-container-anno1 {
+  border-color: #3a4354;
+}
+.table-container-anno1 > h1,
+.table-container-anno1 > h2,
+.table-container-anno1 > h3,
+.table-container-anno1 > h4 {
+  background-color: #3a4354;
+}
+.table-container-anno2 {
+  border-color: #855759;
+}
+.table-container-anno2 > h1,
+.table-container-anno2 > h2,
+.table-container-anno2 > h3,
+.table-container-anno2 > h4 {
+  background-color: #855759;
+}
+.table-container-anno3 {
+  border-color: #5B4957;
+}
+.table-container-anno3 > h1,
+.table-container-anno3 > h2,
+.table-container-anno3 > h3,
+.table-container-anno3 > h4 {
+  background-color: #5B4957;
+}
+.table-container-anno4 {
+  border-color: #C79155;
+}
+.table-container-anno4 > h1,
+.table-container-anno4 > h2,
+.table-container-anno4 > h3,
+.table-container-anno4 > h4 {
+  background-color: #C79155;
+}
+table img {
+  width: 40px!important;
+  height: 40px!important;
+  background: url('http://placehold.it/40x40') no-repeat 0px 0px;
+}
+.clearfix {
+  *zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  /* Make inputs at least the height of their button counterpart */
+
+  /* Makes inputs behave like true block-level elements */
+
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
 }
 div.navbar .brand {
   margin: 14px 3px 11px 0px;
@@ -54,6 +248,18 @@ div.navbar .navbar-inner {
   -webkit-box-shadow: none;
   -moz-box-shadow: none;
   box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
   -webkit-border-radius: 0px;
   -moz-border-radius: 0px;
   border-radius: 0px;
@@ -101,6 +307,12 @@ div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dr
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown a.dropdown-toggle .mail-wrapper {
   text-shadow: none;
   color: #B99859;
+  overflow: hidden;
+  width: 180px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  width: 180px;
+  text-overflow: ellipsis;
   overflow: hidden;
   width: 180px;
   text-overflow: ellipsis;
@@ -158,7 +370,19 @@ div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropd
   -webkit-border-radius: 0px;
   -moz-border-radius: 0px;
   border-radius: 0px;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
   margin-top: 0px;
+  -webkit-box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+  -webkit-box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+  -moz-box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
   -webkit-box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
   -moz-box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
   box-shadow: 0 10px 10px rgba(0, 0, 0, 0.2);
@@ -197,6 +421,12 @@ div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open a.dropd
   display: none;
 }
 div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu {
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
   -webkit-border-radius: 0px;
   -moz-border-radius: 0px;
   border-radius: 0px;
@@ -245,6 +475,18 @@ div.navbar header.header span {
   line-height: 40px;
   vertical-align: top;
 }
+html,
+body {
+  height: 100%;
+  min-height: 100%;
+}
+html,
+body {
+  min-width: 1000px;
+}
+.sidebar-nav {
+  padding: 9px 0;
+}
 .wrapper {
   min-height: 100%;
   margin-bottom: -61px;
@@ -288,19 +530,6 @@ td.beatMachineCol {
 td.statusCol {
   width: 90px;
 }
-.well-anno {
-  padding: 19px 0px;
-  margin-bottom: 20px;
-  background-color: #f5f5f5;
-  border: 1px solid #eee;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  border-radius: 4px;
-  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
-  -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
-}
 .btn-create:hover,
 .btn-create:active {
   background-color: #c79155!important;
@@ -310,12 +539,5 @@ td.statusCol {
   margin-top: -99px;
 }
 .alert-container .alert {
-  margin-bottom: 6px;
-}
-.body-settings .alert-container {
-  position: absolute;
-  margin-top: -17px;
-}
-.body-settings .alert-container .alert {
   margin-bottom: 6px;
 }

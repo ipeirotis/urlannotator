@@ -1,4 +1,12 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'classifier' %}
+{% endblock %}
+
+{% block body-class %}{{ block.super }} body-classifier{% endblock %}
 
 {% block classifier_active %}active{% endblock %}
 {% block project_content %}
