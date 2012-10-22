@@ -131,6 +131,32 @@ span.badge.badge-stopped {
 span.badge.badge-completed {
   background-color: #3a4354;
 }
+span.badge-info {
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  padding-right: 25px;
+  padding-left: 8px;
+  display: inline-block;
+  width: 56px;
+  margin-bottom: 8px;
+}
+span.badge-info i {
+  padding-right: 5px;
+  margin-right: 25px;
+  border-right: 2px solid white;
+  width: 12px;
+  display: inline-block;
+}
+span.badge-info.badge-yes {
+  background-color: #1FA134;
+}
+span.badge-info.badge-no {
+  background-color: #E6363E;
+}
+span.badge-info.badge-broken {
+  background-color: #855759;
+}
 table#btm-statistics td:nth-of-type(2) {
   width: 100px;
   text-align: right;
@@ -307,4 +333,14 @@ th.preview {
 }
 table.fix {
   table-layout: fixed;
+}
+.body-data .screen-wrapper {
+  border: 5px solid #eee;
+  padding: 5px;
+  width: 680px;
+}
+@media (min-width: 1200px) {
+  .body-data .screen-wrapper {
+    width: 850px;
+  }
 }

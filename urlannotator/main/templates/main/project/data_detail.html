@@ -1,60 +1,40 @@
 {% extends 'main/project/project_base.html' %}
 
 {% block data_active %}active{%endblock%}
+
+{% block body-class %}{{block.super}} body-data{% endblock %}
+
 {% block project_content %}
   <div class="row">
     <div class="span">
-      <ul class="pager">
-        <li><a href="{% url project_data_view project.id %}">&lt; Back</a></li>
-      </ul>
+        <a href="{% url project_data_view project.id %}" class="btn">&lt; Back</a>
     </div>
     <div class="span10">
       <h3><a href="{{sample.url}}">{{sample.url}}</a></h3>
     </div>
   </div>
+  &nbsp;
   <div class="row">
-    <div class="span9">
-      &nbsp;
+    <div class="span9 screen-wrapper">
       <img style="width: 100%" src="{{sample.screenshot}}">
     </div>
-    <div class="span3">
-      <div>
-        <h3>URL detail</h3>
-        <table id="more-information">
-          <thead></thead>
-          <tbody>
-            <tr><td>Added on</td><td>{{sample.added_on|date:"Y-m-d H:i"}}</td></tr>
-            {% if sample.get_source_worker %}
-            <tr><td>Uploaded by</td><td>{{sample.get_source_worker}}</td></tr>
-            {% endif %}
-          </tbody>
-        </table>
-        <hr/>
-      </div>
+    <div class="span3 table-container-anno1">
+      <h3>URL detail</h3>
+      <div class="table-wrapper">
+        <span>Added on: </span><em>{{sample.added_on|date:"Y-m-d H:i"}}</em>
+        {% if sample.get_source_worker %}
+        <span>Uploaded by: </span><em>{{sample.get_source_worker}}</em>
+        {% endif %}
+        <p><a href="{{sample.url}}">Go to url</a></p>
+        <p><h3>Voting stats</h3></p>
+        <span class="badge badge-info badge-yes"><i class="icon icon-ok"></i>{{sample.get_yes_votes}}</span>
+        <span class="badge badge-info badge-no"><i class="icon icon-remove"></i>{{sample.get_no_votes}}</span>
+        <span class="badge badge-info badge-broken"><i class="icon icon-minus-sign"></i>{{sample.get_broken_votes}}</span>
 
-      <div>
-        <h4>Voting stats</h4>
-        <table id="more-information">
-          <thead></thead>
-          <tbody>
-            <tr><td>Yes</td><td>{{sample.get_yes_votes}}</td></tr>
-            <tr><td>No</td><td>{{sample.get_no_votes}}</td></tr>
-            <tr><td>Broken</td><td>{{sample.get_broken_votes}}</td></tr>
-          </tbody>
-        </table>
-        <hr/>
-      </div>
-
-      <div>
-        <h4>Class probability</h4>
-        <table id="more-information">
-          <thead></thead>
-          <tbody>
-            <tr><td>Yes</td><td>{{sample.get_yes_probability}}%</td></tr>
-            <tr><td>No</td><td>{{sample.get_no_probability}}%</td></tr>
-            <tr><td>Broken</td><td>{{sample.get_broken_probability}}%</td></tr>
-          </tbody>
-        </table>
+        <p><h3>Class probability</h3></p>
+        <span class="badge badge-info badge-yes"><i class="icon icon-ok"></i>{{ sample.get_yes_probability|floatformat:0 }}%</span>
+        <span class="badge badge-info badge-no"><i class="icon icon-remove"></i>{{ sample.get_no_probability|floatformat:0 }}%</span>
+        <span class="badge badge-info badge-broken"><i class="icon icon-minus-sign"></i>{{ sample.get_broken_probability|floatformat:0 }}%</span>
       </div>
     </div>
   </div>
