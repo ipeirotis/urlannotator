@@ -45,7 +45,7 @@ table {
   }
   // Account for multiple tbody instances
   tbody + tbody {
-    border-top: 2px solid @tableBorder;
+    border-top: 0px none @tableBorder;
   }
 }
 
@@ -175,7 +175,7 @@ table thead * {
     .border-radius(6px);
     padding:6px;
     background:white;
-    table{ 
+    table{
       table-layout: fixed;
       thead * {
         font-size:11px;
@@ -207,4 +207,10 @@ table thead * {
   > h1, > h2, > h3, > h4 {
     background-color:#C79155;
   }
+}
+
+table img {
+  width:40px!important;
+  height:40px!important;
+  background: url('http://placehold.it/40x40') no-repeat 0px 0px;
 }
