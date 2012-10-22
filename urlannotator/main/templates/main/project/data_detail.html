@@ -52,9 +52,20 @@
           <tbody>
             <tr><td>Yes</td><td>{{sample.get_yes_probability}}%</td></tr>
             <tr><td>No</td><td>{{sample.get_no_probability}}%</td></tr>
+            <tr><td>Broken</td><td>{{sample.get_broken_probability}}%</td></tr>
           </tbody>
         </table>
       </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="span3">
+        <h3>Sample text</h3>
+    </div>
+  </div>
+  <div class="row">
+    <div class="span12">
+        <pre>{{sample.text}}</pre>
     </div>
   </div>
 {% endblock %}

@@ -3,6 +3,7 @@ from multiprocessing.pool import Process
 from celery import task, Task, registry
 from celery.task import current
 from django.conf import settings
+from itertools import imap
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
@@ -11,7 +12,7 @@ from urlannotator.classification.factories import classifier_factory
 from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
     BeatTheMachineSample)
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_voting, samples_to_mediaobjects)
+    create_voting, samples_to_mediaobjects, update_voting_job)
 from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.main.models import Sample, Job
 from urlannotator.tools.synchronization import POSIXLock
@@ -38,7 +39,7 @@ class SampleVotingManager(Task):
         mapped_samples_ids = set([s.sample.id for s in mapped_samples])
         samples = Sample.objects.select_related('job').filter(
             vote_sample=True).exclude(id__in=mapped_samples_ids)
-        return samples.exclude(screenshot='')[:VOTING_MAX_SAMPLES]
+        return samples.exclude(screenshot='')
 
     def get_jobs(self, all_samples):
         """ Auxiliary function for divide samples in job related groups and
@@ -49,8 +50,12 @@ class SampleVotingManager(Task):
         jobs = set([s.job for s in all_samples])
 
         for job in jobs:
+            # Don't handle inactive (initializing/stopped/completed) jobs.
+            if not job.is_active():
+                continue
+
             try:
-                job_samples = [s for s in all_samples if s.job == job]
+                job_samples = [s for s in all_samples if s.job == job][:VOTING_MAX_SAMPLES]
                 initialized = job.tagasaurisjobs.voting_key is not None
                 yield job, job_samples, initialized
             except TagasaurisJobs.DoesNotExist:
@@ -70,11 +75,15 @@ class SampleVotingManager(Task):
         # Objects to send.
         mo_values = mediaobjects.values()
 
-        # Creating new job with mediaobjects
+        # Creating new job  with mediaobjects
         log.info(
             'SampleVotingManager: Creating voting job for job %d.' % job.id
         )
         voting_key, voting_hit = create_voting(tc, job, mo_values)
+
+        # Job creation failed (maximum retries exceeded or other error)
+        if not voting_key:
+            return
 
         tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
         tag_jobs.voting_key = voting_key
@@ -122,21 +131,18 @@ class SampleVotingManager(Task):
         mediaobjects = mediaobjects.values()
 
         log.info(
-            'SampleVotingManager: SampleMappings done for job %d. Sending.' % job.id
+            'SampleVotingManager: SampleMappings done for job %d. Sending and adding.' % job.id
         )
-        res = tc.mediaobject_send(mediaobjects)
-        tc.wait_for_complete(res)
 
-        # We must wait for media objects beeing uploaded before we can attach
-        # them to job.
-        log.info(
-            'SampleVotingManager: Medias uploaded job %d. Adding to job.' % job.id
-        )
-        tc.job_add_media(
-            external_ids=[mo['id'] for mo in mediaobjects],
-            external_id=job.tagasaurisjobs.voting_key)
+        res = update_voting_job(tc, mediaobjects, job.tagasaurisjobs.voting_key)
 
-        log.info('SampleVotingManager: Medias added to job %d.' % job.id)
+        # If updating was failed - delete created. Why not create them here?
+        # Because someone might have completed a HIT in the mean time, and we
+        # would lose that info.
+        if not res:
+            SampleMapping.objects.filter(
+                sample__in=imap(lambda x: x.sample, mediaobjects.items())
+            ).delete()
 
         # In case if tagasauris job was created without screenshots earlier.
         if job.tagasaurisjobs.voting_hit is None:
@@ -220,6 +226,10 @@ class ProcessVotesManager(Task):
                 if not decisions:
                     continue
 
+                log.info(
+                    'ProcessVotesManager: Creating training set for job %d.' % job.id
+                )
+
                 ts = TrainingSet.objects.create(job=job)
                 for sample_id, label in decisions:
                     sample = Sample.objects.get(id=sample_id)
@@ -292,11 +302,18 @@ def train(set_id):
 
     samples = (training_sample
         for training_sample in training_set.training_samples.all())
+
     classifier.train(samples, set_id=set_id)
-    send_event(
-        "EventClassifierTrained",
-        job_id=job.id,
-    )
+
+    job = Job.objects.get(id=job.id)
+    if job.is_classifier_trained():
+        send_event(
+            "EventClassifierTrained",
+            job_id=job.id,
+        )
+
+        # Reclassify samples using new classifier
+        job.reclassify_samples()
 
 
 @task(ignore_result=True)
@@ -326,10 +343,10 @@ def classify(sample_id, from_name='', *args, **kwargs):
 
     job = class_sample.job
 
-    # If classifier is not trained, retry later
+    # If classifier is not trained, return - it will be reclassified if
+    # the classifier finishes training
     if not job.is_classifier_trained():
-        current.retry(countdown=min(60 * 2 ** current.request.retries,
-            60 * 60 * 24))
+        return
 
     classifier = classifier_factory.create_classifier(job.id)
     label = classifier.classify(class_sample)
@@ -338,8 +355,10 @@ def classify(sample_id, from_name='', *args, **kwargs):
         log.warning(
             '[Classification] Got None label for sample %d. Retrying.' % class_sample.id
         )
-        current.retry(countdown=min(60 * 2 ** current.request.retries,
-            60 * 60 * 24))
+        current.retry(
+            countdown=min(60 * 2 ** (current.request.retries % 6), 60 * 60 * 1),
+            max_retries=None,
+        )
     ClassifiedSample.objects.filter(id=sample_id).update(label=label)
 
     send_event(

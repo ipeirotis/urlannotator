@@ -267,15 +267,19 @@ class ClassifiedSampleResource(Resource):
         screenshot = ''
         if class_sample.sample:
             screenshot = class_sample.sample.get_small_thumbnail_url()
-        for label in class_sample.label_probability:
-            class_sample.label_probability[label] *= 100
+
+        label_probability = {
+            LABEL_YES: class_sample.get_yes_probability(),
+            LABEL_NO: class_sample.get_no_probability(),
+            LABEL_BROKEN: class_sample.get_broken_probability(),
+        }
 
         data = {
             'id': class_sample.id,
             'screenshot': screenshot,
             'url': class_sample.url,
             'job_id': class_sample.job_id,
-            'label_probability': class_sample.label_probability,
+            'label_probability': label_probability,
             'label': class_sample.label,
             'finished': class_sample.is_successful(),
         }
@@ -305,11 +309,18 @@ class ClassifierResource(Resource):
         job_id = kwargs.get('job_id', 0)
         job = Job.objects.get(id=job_id)
 
-        # QuerySets are executed lazily
-        yes_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_YES)
-        no_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_NO)
-        broken_labels = ClassifiedSample.objects.filter(job=job,
-            label=LABEL_BROKEN)
+        yes_labels = []
+        no_labels = []
+        broken_labels = []
+
+        for sample in job.sample_set.all().iterator():
+            label = sample.get_classified_label()
+            if label == LABEL_YES:
+                yes_labels.append(sample)
+            elif label == LABEL_NO:
+                no_labels.append(sample)
+            elif label == LABEL_BROKEN:
+                broken_labels.append(sample)
 
         return self.create_response(
             request, {
@@ -330,9 +341,9 @@ class ClassifierResource(Resource):
                         'api_name': 'v1',
                     }
                 ),
-                'yes_count': yes_labels.count(),
-                'no_count': no_labels.count(),
-                'broken_count': broken_labels.count(),
+                'yes_count': len(yes_labels),
+                'no_count': len(no_labels),
+                'broken_count': len(broken_labels),
             }
         )
 
@@ -631,6 +642,9 @@ class JobResource(ModelResource):
                 r'worker/(?P<worker_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('worker'),
                 name='api_job_worker'),
+            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/btm/'
+                % self._meta.resource_name,
+                self.wrap_view('btm'), name='api_job_btm'),
         ]
 
     def worker(self, request, **kwargs):
@@ -650,6 +664,34 @@ class JobResource(ModelResource):
                 job_id=job_id,
                 worker_id=worker_id,
             )
+        )
+
+    def btm(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self._check_job(request, **kwargs)
+        job_id = kwargs.get('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong parameters.'},
+                response_class=HttpNotFound,
+            )
+
+        samples = request.POST.get('samples', '[]')
+        samples = json.loads(samples)
+
+        for sample in samples:
+            sample_id = sanitize_positive_int(sample)
+            # TODO: sample_id -> sample
+            job.add_btm_verified_sample(sample_id)
+
+        return self.create_response(
+            request,
+            {'status': 'ok'},
         )
 
     def get_detail(self, request, **kwargs):
@@ -735,6 +777,9 @@ class JobResource(ModelResource):
             'hours_spent': job.get_hours_spent(),
             'top_workers': top_workers,
             'newest_votes': newest_votes,
+            'progress_urls': job.get_progress_urls(),
+            'progress_votes': job.get_progress_votes(),
+            'votes_gathered': job.get_votes_gathered(),
         }
         if job.is_own_workforce():
             additional = {

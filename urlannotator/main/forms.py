@@ -89,7 +89,7 @@ class WizardAttributesForm(forms.Form):
     project_type = forms.ChoiceField(JOB_TYPE_CHOICES, required=False,
         label="Project type")
     no_of_urls = forms.IntegerField(required=False,
-        label="No. of URLs to collect")
+        label="No. of URLs to collect", min_value=1)
     hourly_rate = forms.DecimalField(required=False, decimal_places=2,
         max_digits=10, label="Hourly rate (US$)")
     budget = forms.DecimalField(required=False, decimal_places=2,
@@ -141,7 +141,16 @@ class WizardAdditionalForm(forms.Form):
     """
     same_domain = forms.IntegerField(
         label="No. of allowed multiple URLs from the same domain")
-    file_gold_urls = forms.FileField(required=False,
+    file_gold_urls = forms.FileField(required=True,
         label="Upload gold, (preclassified) urls", help_text="(i)")
     file_classify_urls = forms.FileField(required=False,
         label="Upload additional non classified URLs", help_text="(i)")
+
+
+class BTMForm(forms.Form):
+    topic = forms.CharField(required=True, label="Topic",
+            help_text="e.g. Chocolate bar chocolate cake gingerbread pudding.")
+    topic_desc = forms.CharField(required=True, widget=forms.Textarea,
+        label="Topic description",
+        help_text='e.g. Sesame snaps suger plum dessert macaroon gummi<br/> bears gingerbread sweet roll. Marshmallow jelly beans<br/> toffee biscuit chocolate bar ice cream. Toffee souffle jelly<br/> jujubes gummies jelly beans jelly powder.')
+    no_of_urls = forms.IntegerField(min_value=1, label='Number of urls')

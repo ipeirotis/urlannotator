@@ -41,7 +41,7 @@ TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 VOTES_STORAGE = 'TroiaVotesStorage'
 QUALITY_ALGORITHM = 'DawidSkeneAlgorithm'
 
-SITE_URL = '89.76.71.95:30000'
+SITE_URL = 'devel.urlannotator.10clouds.com'
 
 SOCIAL_AUTH_CREATE_USERS = False
 
@@ -183,11 +183,21 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
+        },
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         }
     },
     'loggers': {
@@ -196,6 +206,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        'urlannotator': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': True,
+        }
     }
 }
 
@@ -263,6 +278,11 @@ CELERYBEAT_SCHEDULE = {
     },
     'progress_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.ProgressMonitor',
+        'schedule': JOB_MONITOR_INTERVAL,
+        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
+    },
+    'votes_monitor': {
+        'task': 'urlannotator.statistics.monitor_tasks.VotesMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
     },

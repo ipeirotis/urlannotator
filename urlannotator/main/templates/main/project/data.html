@@ -15,7 +15,7 @@
           <table class="table">
             <thead>
               <tr>
-                <th style="width: 60px">Preview</th>
+                <!-- <th style="width: 60px">Preview</th> -->
                 <th class="url">URL</th>
                 <th style="width: 100px">Added on</th>
                 <th style="width: 50px">Workers</th>
@@ -27,14 +27,24 @@
               {% if data_set %}
               {% for data in data_set %}
                 <tr>
-                  <td><a href="{% url sample_thumbnail data.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail data.id 'small' %}"></a></td>
+                  <!-- <td><a href="{% url sample_thumbnail data.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail data.id 'small' %}"></a></td> -->
                   <td class="url">
                     <a href="{% url project_data_detail project.id data.id%}">{{data.url}}</a>
                   </td>
                   <td>{{data.added_on|date:"Y-m-d H:i"}}</td>
                   <td>{{data.get_workers|length}}</td>
                   <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
-                  <td>{% if data.is_gold_sample %}GOLD SAMPLE{% else %}{{data.get_yes_probability}}% {{data.get_no_probability}}%{% endif %}</td>
+                  <td>
+                    {% if data.is_gold_sample %}
+                    GOLD SAMPLE
+                    {% else %}
+                    {% if data.is_classified %}
+                    {{data.get_yes_probability}}% {{data.get_no_probability}}% {{data.get_broken_probability}}%
+                    {% else %}
+                    Not classifed yet
+                    {% endif %}
+                    {% endif %}
+                  </td>
                 </tr>
               {% endfor %}
               {% else %}

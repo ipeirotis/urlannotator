@@ -17,7 +17,8 @@ from tenclouds.django.jsonfield.fields import JSONField
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 from urlannotator.settings import imagescale2
-from urlannotator.crowdsourcing.tagasauris_helper import stop_job
+from urlannotator.crowdsourcing.tagasauris_helper import (stop_job,
+    make_tagapi_client)
 
 LABEL_BROKEN = 'Broken'
 LABEL_YES = 'Yes'
@@ -142,6 +143,8 @@ class Job(models.Model):
     activated = models.DateTimeField(auto_now_add=True)
     votes_storage = models.CharField(max_length=25)
     quality_algorithm = models.CharField(max_length=25)
+    btm_active = models.BooleanField(default=False)
+    btm_to_gather = models.PositiveIntegerField(default=0)
 
     objects = JobManager()
 
@@ -150,6 +153,112 @@ class Job(models.Model):
         return ('project_view', (), {
             'id': self.id,
         })
+
+    def start_btm(self, topic, description, no_of_urls):
+        Job.objects.filter(id=self.id).update(
+            btm_active=True,
+            btm_to_gather=no_of_urls,
+        )
+        self.btm_active = True
+        self.btm_to_gather = no_of_urls
+
+        send_event(
+            'EventBTMStarted',
+            job_id=self.id,
+            topic=topic,
+            description=description,
+            no_of_urls=no_of_urls,
+        )
+
+    def get_btm_status(self):
+        """
+            Returns a string representing job's BTM status.
+        """
+        # TODO: Fill this out
+        return '---'
+
+    def get_btm_verified_samples(self):
+        """
+            Returns list of samples verified by BTM to be added to training set.
+        """
+        # TODO: Proper query that returns a list of Sample objects.
+        return []
+
+    def get_btm_pending_samples(self):
+        """
+            Returns a list of samples that need to be added to the job by the
+            owner.
+        """
+        # TODO: Proper query
+        return [{
+            'id': 0,
+            'get_type': 'test',
+            'url': 'test',
+            'added_on': datetime.datetime.now(),
+            'get_yes_probability': 100,
+            'get_no_probability': 100,
+            'get_broken_probability': 100,
+            'get_yes_votes': 10,
+            'get_no_votes': 10,
+            'get_broken_votes': 10,
+            'label': 'yes',
+        },
+        {
+            'id': 1,
+            'get_type': 'test',
+            'url': 'test2',
+            'added_on': datetime.datetime.now(),
+            'get_yes_probability': 100,
+            'get_no_probability': 100,
+            'get_broken_probability': 100,
+            'get_yes_votes': 10,
+            'get_no_votes': 10,
+            'get_broken_votes': 10,
+            'label': 'no',
+        }]
+
+    def add_btm_verified_sample(self, sample):
+        """
+            Should add a BTM-verified sample to the job so it can be included
+            in new training sets.
+        """
+        # TODO: Fill this out.
+        return None
+
+    def is_btm_finished(self):
+        return (self.is_btm_active()
+            and (self.get_btm_gathered() == self.get_btm_to_gather())
+        )
+
+    def is_btm_active(self):
+        return self.btm_active
+
+    def get_btm_to_gather(self):
+        return self.btm_to_gather
+
+    def get_btm_gathered(self):
+        # TODO: Fill this. Should return a list of samples so that
+        #       get_btm_gathered|length == number of samples that count towards
+        #       BTM progress.
+        #       Refer to OANNOTATOR-55
+        return []
+
+    def get_btm_progress(self):
+        to_gather = self.get_btm_to_gather() or 1
+
+        return round((100 * len(self.get_btm_gathered())) / to_gather, 2)
+
+    def get_accepted_btm_samples(self):
+        """
+            Returns list of btm samples to add to training set.
+        """
+
+    def reclassify_samples(self):
+        """
+            Asynchronously reclassifies all samples.
+        """
+        for sample in self.sample_set.all().iterator():
+            sample.reclassify()
 
     def has_new_votes(self):
         """
@@ -310,14 +419,45 @@ class Job(models.Model):
         # FIXME: Add proper billing entries?
         return self.hourly_rate * self.get_hours_spent()
 
+    def get_votes_gathered(self):
+        """
+            Returns amount of votes gathered.
+        """
+        samples = self.sample_set.all().iterator()
+        count = 0
+        for sample in samples:
+            count += sample.workerqualityvote_set.all().count()
+        return count
+
     def get_progress(self):
         """
             Returns actual progress (in percents) in the job.
+        """
+        return (self.get_progress_urls() + self.get_progress_votes()) / 2.0
+
+    def get_progress_urls(self):
+        """
+            Returns actual progress of urls collecting.
         """
         if not self.no_of_urls:
             return 100
         div = self.no_of_urls
         return min((100 * self.get_urls_collected()) / div, 100)
+
+    def get_progress_votes(self):
+        """
+            Returns actual progress of votes collecting.
+        """
+        # TODO: Correct calculation?
+        count = 0
+        got = 0
+
+        for sample in self.sample_set.all():
+            count += 3
+            got += sample.workerqualityvote_set.all().count()
+
+        count = count or 1
+        return min((100 * got) / count, 100)
 
     def is_completed(self):
         return self.status == JOB_STATUS_COMPLETED
@@ -527,6 +667,24 @@ class Sample(models.Model):
         elif source_type == SAMPLE_TAGASAURIS_WORKER:
             return Worker.objects.get_tagasauris(worker_id=source_val)
 
+    def get_classified_label(self):
+        class_set = self.classifiedsample_set.all().order_by('-id')
+        if class_set:
+            return class_set[0].label
+        return None
+
+    def reclassify(self):
+        """
+            Asynchronously reclassifies given `sample`.
+        """
+        # Possible loop imports here
+        from urlannotator.classification.models import ClassifiedSample
+        ClassifiedSample.objects.create_by_owner(
+            job=self.job,
+            url=self.url,
+            sample=self,
+        )
+
     def get_source_worker(self):
         """
             Returns a worker that has sent this sample.
@@ -642,8 +800,8 @@ class Sample(models.Model):
             return 0
 
         cs = max(cs_set, key=(lambda x: x.id))
-        yes_prob = cs.label_probability[LABEL_YES]
-        return yes_prob * 100
+        yes_prob = cs.get_yes_probability()
+        return yes_prob
 
     def get_no_probability(self):
         """
@@ -655,8 +813,31 @@ class Sample(models.Model):
             return 0
 
         cs = max(cs_set, key=(lambda x: x.id))
-        no_prob = cs.label_probability[LABEL_NO]
-        return no_prob * 100
+        no_prob = cs.get_no_probability()
+        return no_prob
+
+    def get_broken_probability(self):
+        """
+            Returns probability of BROKEN label on this sample, that is the
+            percentage from the most recent classification.
+        """
+        cs_set = self.classifiedsample_set.all()
+        if not cs_set:
+            return 0
+
+        cs = max(cs_set, key=(lambda x: x.id))
+        broken_prob = cs.get_broken_probability()
+        return broken_prob
+
+    def is_classified(self):
+        """
+            Returns whether this sample has been classified at least once.
+        """
+        yes_prob = self.get_yes_probability()
+        no_prob = self.get_no_probability()
+        broken_prob = self.get_broken_probability()
+
+        return yes_prob or no_prob or broken_prob
 
     def is_gold_sample(self):
         try:
@@ -762,6 +943,12 @@ class Worker(models.Model):
             )
             r = client.provider.get_provider(self.external_id)
             return r['dev_full_name']
+
+        if self.worker_type == WORKER_TYPE_TAGASAURIS:
+            tc = make_tagapi_client()
+            worker_info = tc.get_worker(worker_id=self.external_id)
+            return worker_info['name']
+
         return 'Temp Name %d' % self.id
 
     def get_urls_collected_count_for_job(self, job):
@@ -960,6 +1147,31 @@ class URLStatistics(models.Model):
     objects = URLStatManager()
 
 
+class VotesStatManager(models.Manager):
+    def latest_for_job(self, job):
+        """
+            Returns votes collected statistic for given job.
+        """
+        els = super(VotesStatManager, self).get_query_set().filter(job=job).\
+            order_by('-date')
+        if not els.count():
+            return None
+
+        return els[0]
+
+
+class VotesStatistics(models.Model):
+    """
+        Keeps track of votes gathered for a job per hour.
+    """
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+    delta = models.IntegerField(default=0)
+
+    objects = VotesStatManager()
+
+
 class LinksStatManager(models.Manager):
     def latest_for_worker(self, worker):
         """ Returns url collected statistic for given worker.
@@ -991,5 +1203,6 @@ def create_stats(sender, instance, created, **kwargs):
         ProgressStatistics.objects.create(job=instance, value=0)
         SpentStatistics.objects.create(job=instance, value=0)
         URLStatistics.objects.create(job=instance, value=0)
+        VotesStatistics.objects.create(job=instance, value=0)
 
 post_save.connect(create_stats, sender=Job)

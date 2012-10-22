@@ -57,8 +57,7 @@ class StatsMonitor(object):
     def run(self, interval=datetime.timedelta(hours=1), *args, **kwargs):
         """
             Scans all active objects for the ones that require stats
-            recomputation. Does it in an infinite loop, after
-            settings.*_MONITOR_INTERVAL seconds from previous loop.
+            recomputation.
         """
         objects = self.get_objects()
         to_handle = []

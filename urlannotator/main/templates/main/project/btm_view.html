@@ -9,10 +9,10 @@
 </div>
 <div class="row">
   <div class="span9">
-    Beat the Machine starts a new tagasauris task that will gather urls that may be misjudged by the classifier.
-    If an url is submittable (we don't want urls that category both submiteer and classifier agree on) we send it to actual
+    Beat the Machine starts a new tagasauris task that will gather urls that may be misjudged by the classifier. <a id="more-button" href="#" onclick="$('#more-desc').css('display', ''); $(this).css('display', 'none');">(more)</a>
+    <span style="display: none;" id="more-desc">If an url is submittable (we don't want urls that category both submiteer and classifier agree on) we send it to actual
     user validation. Based on the difference on the classifier reslult and user result a bonus will be paid out to the worker
-    that submitted that url. <a href="#">(less)</a>
+    that submitted that url. <a href="#" onclick="$('#more-button').css('display', ''); $('#more-desc').css('display', 'none')">(less)</a></span>
 
     {% include 'main/project/own_workforce_links.html' %}
   </div>
@@ -21,9 +21,13 @@
     <table id="btm-statistics">
       <thead></thead>
       <tbody>
-        <tr><td>Status: In progress</td><td>1%</td></tr>
-        <tr><td>No. of URLs to gather</td><td>200</td></tr>
-        <tr><td>No. of URLs gathered</td><td>2</td></tr>
+        {% if project.is_btm_finished %}
+        <tr><td>Status: Finished</td></tr>
+        {% else %}
+        <tr><td>Status: In progress</td><td>{{ project.get_btm_progress }}%</td></tr>
+        {% endif %}
+        <tr><td>No. of URLs to gather</td><td>{{ project.get_btm_to_gather }}</td></tr>
+        <tr><td>No. of URLs gathered</td><td>{{ project.get_btm_gathered|length }}</td></tr>
       </tbody>
     </table>
   </div>
@@ -40,21 +44,68 @@
   </div>
 </div>
 <div class="row">
-  <div class="span12">
+  <div class="span12" id="pending_samples">
     <table class="table" style="margin-bottom:0px;">
       <thead>
         <tr>
-          <th style="width:14px;"><input type="checkbox" name="check-all"></th>
-          <th style="width:20px;">Preview</th>
+          <th style="width:14px;"><input type="checkbox" id="check-all" onclick="$('#pending_samples input').attr('checked', this.checked);"></th>
+          <!-- <th style="width:20px;">Preview</th> -->
           <th>URL</th>
           <th style="width:120px;">Added on</th>
-          <th style="width:120px;">Calculated Class Probability</th>
-          <th style="width:120px;">Voting</th>
+          <th style="width:140px;">Calculated Class Probability</th>
+          <th style="width:180px;">Voting</th>
           <th style="width:14px;">Class</th>
           <th style="width:14px;">Type</th>
         </tr>
       </thead>
+      <tbody>
+      {% for sample in pending_samples %}
+        <tr>
+          <td><input type="checkbox" name="sample-checkbox" value="{{sample.id}}"></td>
+          <!-- <td><a href="{% url sample_thumbnail sample.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail sample.id 'small' %}"></a></td> -->
+          <td><a href="{% url project_data_detail project.id sample.id%}">sample.url</a></td>
+          <td>{{sample.added_on|date:"Y-m-d H:i"}}</td>
+          <td>{{sample.get_yes_probability}}% {{sample.get_no_probability}}% {{sample.get_broken_probability}}%</td>
+          <td>{{sample.get_yes_votes}} YES {{sample.get_no_votes}} NO {{sample.get_broken_votes}} BROKEN</td>
+          <td>{{sample.label}}</td>
+          <td>{{sample.get_type}}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      {% csrf_token %}
     </table>
+      <div class="row">
+        <span id="no-selected" style="display: none" class="offset7">You need to check, which URLs you want to add to the classifier data first.</span>
+      </div>
+      <div class="row">
+        <button id="submit-samples" class="btn offset10" type="submit" onclick="submitSamples();">Add to classifier data</button>
+      </div>
   </div>
 </div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript">
+
+var csrftoken;
+function submitSamples()
+{
+  var button = $('#submit-samples');
+  button.prop('disabled', 'disabled');
+  var samples = $('#pending_samples input[type=checkbox][name=sample-checkbox]:checked');
+  csrftoken = $('#pending_samples input[type=hidden][name=csrfmiddlewaretoken]')[0].value;
+  var ids = [];
+  $.each(samples, function(val){
+    ids.push(val);
+  });
+  $.post('/api/v1/job/{{project.id}}/btm/',
+    JSON.stringify(ids),
+    function(data){
+      $(samples).parent().parent().remove();
+    }
+  );
+  button.prop('disabled', '');
+}
+</script>
 {% endblock %}

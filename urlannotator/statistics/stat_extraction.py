@@ -4,7 +4,7 @@ import json
 from django.utils.timezone import now
 
 from urlannotator.main.models import (SpentStatistics, ProgressStatistics,
-    URLStatistics, LinksStatistics, LABEL_YES, LABEL_NO)
+    URLStatistics, LinksStatistics, LABEL_YES, LABEL_NO, VotesStatistics)
 from urlannotator.classification.models import ClassifierPerformance
 
 
@@ -83,6 +83,14 @@ def extract_url_stats(job, context):
     context['url_stats'] = extract_stat(URLStatistics, stats)
 
 
+def extract_votes_stats(job, context):
+    '''
+        Extracts job's votes gathered statistics as difference per hour.
+    '''
+    stats = VotesStatistics.objects.filter(job=job).order_by('date')
+    context['votes_stats'] = extract_stat(URLStatistics, stats)
+
+
 def extract_workerlinks_stats(worker, context):
     '''
         Extracts job's url statistics as difference per hour.
@@ -123,7 +131,6 @@ def extract_stat_by_val(cls, job, val_fun):
             idx += 1
 
         stat = stats[idx - 1]
-        print val_fun(stat), actual_value, val_fun(stat) - actual_value
         list_stats.append({
             'date': actual_time,
             'delta': val_fun(stat) - actual_value
@@ -168,7 +175,7 @@ def TruePositiveMetric(classifier, job, analyze):
     yesCount = yes.get(LABEL_YES, 0.0)
     noCount = yes.get(LABEL_NO, 0.0)
     div = (yesCount + noCount) or 1
-    return ('TPR', round(yesCount / div, 4))
+    return ('TPR', round(100 * yesCount / div, 4))
 
 
 def TrueNegativeMetric(classifier, job, analyze):
@@ -180,7 +187,7 @@ def TrueNegativeMetric(classifier, job, analyze):
     yesCount = no.get(LABEL_YES, 0.0)
     noCount = no.get(LABEL_YES, 0.0)
     div = (yesCount + noCount) or 1
-    return ('TNR', round(noCount / div, 4))
+    return ('TNR', round(100 * noCount / div, 4))
 
 
 def AUCMetric(classifier, job, analyze):

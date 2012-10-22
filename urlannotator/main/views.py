@@ -26,11 +26,12 @@ from oauth2client.client import OAuth2WebServerFlow
 
 from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
-    GeneralEmailUserForm, GeneralUserForm)
+    GeneralEmailUserForm, GeneralUserForm, BTMForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_YES, LABEL_NO, LABEL_BROKEN)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
-    extract_url_stats, extract_spent_stats, extract_performance_stats)
+    extract_url_stats, extract_spent_stats, extract_performance_stats,
+    extract_votes_stats)
 from urlannotator.classification.models import (ClassifierPerformance,
     ClassifiedSample, TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
@@ -333,7 +334,7 @@ def project_wizard(request):
     else:
         topic_form = WizardTopicForm(request.POST)
         attr_form = WizardAttributesForm(odeskLogged, request.POST)
-        addt_form = WizardAdditionalForm(request.POST)
+        addt_form = WizardAdditionalForm(request.POST, request.FILES)
         is_draft = request.POST['submit'] == 'draft'
 
         context = {'topic_form': topic_form,
@@ -572,12 +573,14 @@ def project_view(request, id):
     extract_url_stats(proj, context)
     extract_spent_stats(proj, context)
     extract_performance_stats(proj, context)
+    extract_votes_stats(proj, context)
     context['hours_spent'] = proj.get_hours_spent()
     context['urls_collected'] = proj.get_urls_collected()
     context['no_of_workers'] = proj.get_no_of_workers()
     context['cost'] = proj.get_cost()
     context['budget'] = proj.budget
-    context['progress'] = proj.get_progress()
+    context['progress_urls'] = proj.get_progress_urls()
+    context['progress_votes'] = proj.get_progress_votes()
 
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
@@ -653,6 +656,7 @@ def project_worker_view(request, id, worker_id):
 def project_debug(request, id, debug):
     try:
         proj = Job.objects.get(id=id)
+
     except Job.DoesNotExist:
         request.session['error'] = "Such project doesn't exist."
         return redirect('index')
@@ -680,19 +684,35 @@ def project_debug(request, id, debug):
 @login_required
 def project_btm_view(request, id):
     try:
-        proj = Job.objects.get(id=id)
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    if (proj.account != request.user.get_profile()
+    if (job.account != request.user.get_profile()
             and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
-    return render(request, 'main/project/btm_view.html',
-        RequestContext(request, context))
+    context = {'project': job}
+    if job.is_btm_active():
+        context['pending_samples'] = job.get_btm_pending_samples()
+        return render(request, 'main/project/btm_view.html',
+            RequestContext(request, context))
+    else:
+        context['form'] = BTMForm()
+        if request.method == 'POST':
+            form = BTMForm(request.POST)
+            if form.is_valid():
+                job.start_btm(
+                    topic=form.cleaned_data['topic'],
+                    description=form.cleaned_data['topic_desc'],
+                    no_of_urls=form.cleaned_data['no_of_urls'],
+                )
+                return redirect('project_btm_view', id=id)
+            context['form'] = form
+        return render(request, 'main/project/btm.html',
+            RequestContext(request, context))
 
 
 @login_required
