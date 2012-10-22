@@ -319,8 +319,6 @@ class ClassifierResource(Resource):
                 yes_labels.append(sample)
             elif label == LABEL_NO:
                 no_labels.append(sample)
-            elif label == LABEL_BROKEN:
-                broken_labels.append(sample)
 
         return self.create_response(
             request, {

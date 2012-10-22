@@ -378,6 +378,8 @@ class SimpleClassifier(Classifier):
         if os.path.exists(self.get_file_name()):
             with open(self.get_file_name(), 'rb') as f:
                 self.classifier = pickle.load(f)
+        else:
+            log.warning('No classifier %s.' % self.get_file_name())
 
     def get_train_status(self):
         return CLASS_TRAIN_STATUS_DONE
