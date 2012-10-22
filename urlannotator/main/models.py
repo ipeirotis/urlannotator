@@ -880,11 +880,11 @@ class Sample(models.Model):
         ts = TrainingSet.objects.newest_for_job(self.job)
         count = TrainingSample.objects.filter(
             sample=self,
-            label=LABEL_BROKEN,
             set=ts,
         ).count()
 
-        if count:
+        # We are not adding broken samples to training sets
+        if not count:
             return False
 
         yes_prob = self.get_yes_probability()
