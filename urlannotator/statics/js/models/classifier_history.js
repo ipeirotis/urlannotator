@@ -11,7 +11,7 @@ var classifier_history_entry = function(screenshot, url, label, yes_prob, no_pro
   this.sample_url = sample_url;
 
   this.probability = ko.computed(function(){
-    return this.yes_prob + '% ' + this.no_prob + '% ' + this.broken_prob + '%';
+    return this.yes_prob + '% ' + this.no_prob + '%';
   }, this);
   this.hasScreenshot = ko.computed(function(){
     return this.screenshot && this.screenshot != '';
