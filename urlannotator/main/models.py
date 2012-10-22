@@ -154,6 +154,38 @@ class Job(models.Model):
             'id': self.id,
         })
 
+    def recreate_training_set(self, force=False):
+        """
+            Recreates a training set from quality algorithm and trains
+            classifier on it.
+        """
+        from urlannotator.crowdsourcing.factories import quality_factory
+        from urlannotator.classification.models import (TrainingSet,
+            TrainingSample)
+
+        if not self.has_new_votes() and not force:
+            return
+
+        quality_algorithm = quality_factory.create_algorithm(self)
+        decisions = quality_algorithm.extract_decisions()
+        if not decisions:
+            return
+
+        ts = TrainingSet.objects.create(job=self)
+        for sample_id, label in decisions:
+            if label == LABEL_BROKEN:
+                continue
+            sample = Sample.objects.get(id=sample_id)
+            TrainingSample.objects.create(
+                set=ts,
+                sample=sample,
+                label=label,
+            )
+        send_event(
+            'EventTrainingSetCompleted',
+            set_id=ts.id,
+        )
+
     def start_btm(self, topic, description, no_of_urls):
         Job.objects.filter(id=self.id).update(
             btm_active=True,
@@ -843,7 +875,7 @@ class Sample(models.Model):
             set=ts,
         ).count()
 
-        if not count:
+        if count:
             return False
 
         yes_prob = self.get_yes_probability()
