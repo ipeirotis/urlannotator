@@ -55,15 +55,21 @@ def stop_job(external_id):
 
 
 def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s",
-        workers_per_hit=1, media_per_hit=1, hit_instructions=None):
+        workers_per_hit=1, media_per_hit=1, hit_instructions=None, topic=None,
+        description=None):
+
     if hit_instructions is None:
-        hit_instructions = job.description
+        hit_instructions = job.description if description is None else description
+
+    topic = job.title if topic is None else topic
+    description = job.description if description is None else description
+
     return {
         "id": ext_id,
-        "title": job.title,
+        "title": topic,
         "task": {
             "id": task_type,
-            "instruction": job.description,
+            "instruction": description,
             "paid": "0.0",
             "keywords": ""
         },
@@ -71,7 +77,7 @@ def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s",
             survey_id: {
                 "config": {
                     "hit_type": settings.TAGASAURIS_HIT_TYPE,
-                    "hit_title": hit_title % job.title,
+                    "hit_title": hit_title % topic,
                     "workers_per_hit": workers_per_hit,
                     "price": settings.TAGASAURIS_DEFAULT_PRICE,
                     # "job_external_id": "yes",
@@ -142,7 +148,7 @@ def create_sample_gather(api_client, job):
     return _create_job(api_client, ext_id, kwargs)
 
 
-def create_btm(api_client, job):
+def create_btm(api_client, job, topic, description, no_of_urls):
     task_type = settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = make_external_id()
@@ -152,9 +158,21 @@ def create_btm(api_client, job):
     # workflows. Account must have disabled billings & workflows need
     # to have "external" flag set.
 
+    # Compute split of tasks per mediaobjects and workers.
+    samples_goal_multiplication = 1.2
+    samples_per_job = 5
+    gather_goal = math.ceil(no_of_urls * samples_goal_multiplication /
+        samples_per_job)
+    split = math.ceil(math.sqrt(gather_goal))
+    workers_per_hit = split
+    total_mediaobjects = split
+
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
-        "Beat the Machine for \"%s\"")
+        hit_title="Beat the Machine for \"%s\"",
+        workers_per_hit=workers_per_hit,
+        topic=topic,
+        description=description)
 
     samples_per_job = 5
     baseurl = settings.TAGASAURIS_CALLBACKS
@@ -184,7 +202,6 @@ def create_btm(api_client, job):
     })
 
     # TODO: check how may btm should be running?
-    total_mediaobjects = 5
     url = settings.DUMMY_URLANNOTATOR_URL
     kwargs.update({"dummy_media":
         [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})

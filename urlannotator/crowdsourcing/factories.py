@@ -1,6 +1,6 @@
 from urlannotator.crowdsourcing.models import TagasaurisJobs
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_sample_gather)
+    create_sample_gather, create_btm)
 from urlannotator.crowdsourcing.quality.algorithms import (MajorityVoting,
     DBVotesStorage)
 from urlannotator.crowdsourcing.troia_helper import init_troia
@@ -26,6 +26,20 @@ class ExternalJobsFactory(object):
             sample_gathering_key=sample_gathering_key,
             sample_gathering_hit=sample_gathering_hit,
         )
+
+    def initialize_btm(self, job_id, topic, description, no_of_urls):
+        job = Job.objects.get(id=job_id)
+
+        c = make_tagapi_client()
+
+        beatthemachine_key, beatthemachine_hit = create_btm(c, job, topic,
+            description, no_of_urls)
+
+        # Our link to tagasauris jobs.
+        tj = TagasaurisJobs.objects.get_or_create(urlannotator_job=job)
+        tj.beatthemachine_key = beatthemachine_key
+        tj.beatthemachine_hit = beatthemachine_hit
+        tj.save()
 
 
 class VoteStorageFactory(object):
