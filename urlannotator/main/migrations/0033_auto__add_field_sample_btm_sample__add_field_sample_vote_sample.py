@@ -86,6 +86,8 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Job'},
             'account': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Account']"}),
             'activated': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'btm_active': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'btm_to_gather': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
             'budget': ('django.db.models.fields.DecimalField', [], {'default': '0', 'max_digits': '10', 'decimal_places': '2'}),
             'classify_urls': ('tenclouds.django.jsonfield.fields.JSONField', ['{}'], {'blank': 'True'}),
             'collected_urls': ('django.db.models.fields.PositiveIntegerField', [], {'default': '0'}),
@@ -145,6 +147,14 @@ class Migration(SchemaMigration):
         },
         'main.urlstatistics': {
             'Meta': {'object_name': 'URLStatistics'},
+            'date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'delta': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
+            'value': ('django.db.models.fields.IntegerField', [], {'default': '0'})
+        },
+        'main.votesstatistics': {
+            'Meta': {'object_name': 'VotesStatistics'},
             'date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'delta': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
