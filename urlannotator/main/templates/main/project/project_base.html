@@ -20,11 +20,10 @@
   {% else %}
 
       <div class="pull-right btn-group">
-        <a class="btn " href="#">Export data</a>
+        <a class="btn " data-toggle="modal" href="#exportModal">Export data</a>
         <a class="btn " data-toggle="modal" href="#closeProjectModal">Close project</a>
         <a class="btn " href="#">Settings</a>
         <a class="btn " data-toggle="modal" href="#workface">Own workforce</a>
-        <a href="{% url project_classifier_data project.id %}" class="btn pull-right">Export Training Ready Data</a>
       </div>
   {% endif %}
   <h2>{{project.title}} </h2><span class="badge badge-{{project.get_status|lower}}">{{project.get_status|lower}}</span>
@@ -53,8 +52,16 @@
             {% csrf_token %}
             <input type="hidden" name="id" value="{{project.id}}">
             <input type="submit" name="submit" value="Close project" class="btn btn-primary">
-            <button class="btn" data-dismiss="modal" href="#">Close</button>
+            <button class="btn" data-dismiss="modal" href="#">Cancel</button>
         </form>
+    </div>
+</div>
+<div id="exportModal" class="modal hide">
+    <div class="modal-body">
+        <a href="{% url project_classifier_data project.id %}" class="btn pull-left">Export Training Ready Data</a>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" data-dismiss="modal" href="#">Cancel</button>
     </div>
 </div>
 <div id="workface" class="modal hide">
