@@ -275,24 +275,22 @@ div.navbar .navbar-inner .container div.nav-collapse ul.nav.project li a {
   color: #B99859;
   font-style: italic;
 }
-div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a,
-div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a {
-  color: white;
-}
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project {
   margin-right: 20px;
 }
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a {
+  color: white;
   font-weight: bold;
   line-height: 20px;
   padding: 6px 9px;
   margin-top: 12px;
 }
-div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a:before {
-  font-size: 16px;
-  line-height: 16px;
-  content: '●';
-  margin-right: 6px;
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a span.create-icon {
+  background: url('/statics/img/url_anno_header_create_icon.png') no-repeat -2px -1px;
+  display: block;
+  float: left;
+  height: 20px;
+  width: 24px;
 }
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.dropdown {
   margin-top: 5px;
@@ -414,39 +412,8 @@ div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropd
 div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.open ul.dropdown-menu li:last-child {
   border-bottom: 0px none;
 }
-div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open a.dropdown-toggle .down {
-  display: inline-block;
-}
-div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open a.dropdown-toggle .left {
-  display: none;
-}
-div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu {
-  -webkit-border-radius: 0px;
-  -moz-border-radius: 0px;
-  border-radius: 0px;
-  -webkit-border-radius: 0px;
-  -moz-border-radius: 0px;
-  border-radius: 0px;
-  -webkit-border-radius: 0px;
-  -moz-border-radius: 0px;
-  border-radius: 0px;
-  margin-top: 0px;
-}
-div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu:before {
-  display: none;
-}
-div.navbar .navbar-inner .container div.nav-collapse ul.loginNav li.open ul.dropdown-menu:after {
-  display: none;
-}
 div.navbar .navbar-inner .container div.nav-collapse.in {
   background-color: black;
-}
-div.navbar span.create-icon {
-  background: url('/statics/img/url_anno_header_create_icon.png') no-repeat -2px -1px;
-  display: block;
-  float: left;
-  height: 20px;
-  width: 24px;
 }
 div.navbar .bottom-bar {
   background: #e0b25d url('/statics/img/url_anno_header_navbar2_bg.png') no-repeat 0px 0px;

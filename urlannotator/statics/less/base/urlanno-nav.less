@@ -38,25 +38,21 @@ div.navbar {
           }
         }
         ul.userNav {
-          li.new-project a,
-          li.documentation a {
-            color:white;
-          }
           li.new-project {
+            margin-right:20px;
             a {
+              color:white;
               font-weight: bold;
               line-height:20px;
               padding:6px 9px;
               margin-top:12px;
-            }
-            margin-right:20px;
-          }
-          li.documentation {
-            a:before{
-              font-size:16px;
-              line-height: 16px;
-              content:'●';
-              margin-right:6px;
+              span.create-icon {
+                background: url('/statics/img/url_anno_header_create_icon.png') no-repeat -2px -1px;
+                display: block;
+                float: left;
+                height: 20px;
+                width: 24px;
+              }
             }
           }
           li.dropdown {
@@ -160,43 +156,11 @@ div.navbar {
             }
           }
         }
-        ul.loginNav {
-          li.open {
-            a.dropdown-toggle {
-              .down {
-                display: inline-block;
-              }
-              .left {
-                display: none;
-              }
-            }
-
-            ul.dropdown-menu {
-              .border-radius(0px);
-              margin-top: 0px;
-              &:before {
-                display: none;
-              }
-              &:after {
-                display: none;
-              }
-            }
-          }
-
-        }
         &.in { // this is for smarphones aka @media (max-width: 979px)
           background-color: black;
         }
       }
     }
-  }
-
-  span.create-icon {
-    background: url('/statics/img/url_anno_header_create_icon.png') no-repeat -2px -1px;
-    display: block;
-    float: left;
-    height: 20px;
-    width: 24px;
   }
 
   .bottom-bar {
