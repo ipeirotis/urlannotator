@@ -92,7 +92,7 @@ class DiffbotClient(object):
             )
             return ''
 
-        return content
+        return content['text']
 
     def get_frontpage(self, params={}):
         api_endpoint = 'http://www.diffbot.com/api/frontpage'
