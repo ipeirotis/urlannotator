@@ -182,6 +182,9 @@ class Job(models.Model):
                 )
                 continue
             sample = Sample.objects.get(id=sample_id)
+            log.info(
+                'Job %d: Added training sample %d %s.' % (self.id, sample_id, label)
+            )
             TrainingSample.objects.create(
                 set=ts,
                 sample=sample,
