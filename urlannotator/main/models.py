@@ -20,6 +20,9 @@ from urlannotator.settings import imagescale2
 from urlannotator.crowdsourcing.tagasauris_helper import (stop_job,
     make_tagapi_client)
 
+import logging
+log = logging.getLogger(__name__)
+
 LABEL_BROKEN = 'Broken'
 LABEL_YES = 'Yes'
 LABEL_NO = 'No'
@@ -174,6 +177,9 @@ class Job(models.Model):
         ts = TrainingSet.objects.create(job=self)
         for sample_id, label in decisions:
             if label == LABEL_BROKEN:
+                log.info(
+                    'Job %d: Skipped broken training sample %d.' % (self.id, sample_id)
+                )
                 continue
             sample = Sample.objects.get(id=sample_id)
             TrainingSample.objects.create(
