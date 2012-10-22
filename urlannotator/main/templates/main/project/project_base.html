@@ -20,11 +20,10 @@
   {% else %}
 
       <div class="pull-right btn-group">
-        <!--<a class="btn " href="#">Export data</a>
+        <a class="btn " href="#">Export data</a>
         <a class="btn " data-toggle="modal" href="#closeProjectModal">Close project</a>
         <a class="btn " href="#">Settings</a>
         <a class="btn " data-toggle="modal" href="#workface">Own workforce</a>
-    -->
         <a href="{% url project_classifier_data project.id %}" class="btn pull-right">Export Training Ready Data</a>
       </div>
   {% endif %}
