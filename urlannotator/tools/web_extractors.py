@@ -16,7 +16,7 @@ from urlannotator.tools.utils import os_result_to_code, DiffbotClient
 from urlannotator.tools.webkit2png import error_code_to_exception
 
 import logging
-log = logging.gerLogger(__name__)
+log = logging.getLogger(__name__)
 
 SCREEN_DUMPS_BUCKET_NAME = "urlannotator_web_screenshot"
 S3_SERVER_NAME = "https://s3.amazonaws.com/"
