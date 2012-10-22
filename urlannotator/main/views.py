@@ -813,18 +813,25 @@ def project_classifier_view(request, id):
                 classified_samples.append(cs.id)
             request.session['classified-samples'] = classified_samples
         return redirect('project_classifier_view', id)
-    samples = ClassifiedSample.objects.filter(job=job).exclude(label='')
-    yes_labels = samples.filter(label=LABEL_YES)
-    yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
-    no_labels = samples.filter(label=LABEL_NO)
-    no_perc = int(no_labels.count() * 100 / (samples.count() or 1))
-    broken_labels = samples.filter(label=LABEL_BROKEN)
-    broken_perc = int(broken_labels.count() * 100 / (samples.count() or 1))
+    yes_labels = []
+    no_labels = []
+
+    for sample in job.sample_set.all().iterator():
+        label = sample.get_classified_label()
+        if label == LABEL_YES:
+            yes_labels.append(sample)
+        elif label == LABEL_NO:
+            no_labels.append(sample)
+
+    yc = len(yes_labels)
+    nc = len(no_labels)
+    yes_perc = int(yc * 100 / ((yc + nc) or 1))
+    no_perc = int(nc * 100 / ((yc + nc) or 1))
     context['classifier_stats'] = {
-        'count': samples.count(),
-        'yes_labels': {'val': yes_labels.count(), 'perc': yes_perc},
-        'no_labels': {'val': no_labels.count(), 'perc': no_perc},
-        'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
+        'count': yc + nc,
+        'yes_labels': {'val': yc, 'perc': yes_perc},
+        'no_labels': {'val': nc, 'perc': no_perc},
+        'broken_labels': {'val': 0, 'perc': 0}}
 
     context['performance_TPR'] = []
     context['performance_TNR'] = []
