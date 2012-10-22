@@ -24,16 +24,21 @@
 header.header {
   display: none;
 }
-.body-login .alert,
-.body-register .alert,
-.body-reset .alert {
+.body-login .alert-container,
+.body-register .alert-container,
+.body-reset .alert-container {
+  margin-top: -54px;
+}
+.body-login .alert-container .alert,
+.body-register .alert-container .alert,
+.body-reset .alert-container .alert {
   padding-right: 25px;
   margin-left: 200px;
 }
 @media (min-width: 1200px) {
-  .body-login .alert,
-  .body-register .alert,
-  .body-reset .alert {
+  .body-login .alert-container .alert,
+  .body-register .alert-container .alert,
+  .body-reset .alert-container .alert {
     margin-left: 260px;
   }
 }
