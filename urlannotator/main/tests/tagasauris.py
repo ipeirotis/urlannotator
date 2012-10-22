@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import (Job, Sample, Worker, LABEL_NO, LABEL_YES,
+from urlannotator.main.models import (Job, Sample, LABEL_NO, LABEL_YES,
     LABEL_BROKEN)
 from urlannotator.flow_control.test import ToolsMockedMixin
 from urlannotator.crowdsourcing.models import (SampleMapping,

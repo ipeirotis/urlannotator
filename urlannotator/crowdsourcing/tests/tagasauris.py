@@ -60,7 +60,8 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
         self.assertEqual(result['state'], 'stopped')
 
     def testBTMCreation(self):
-        btm_key, btm_hit = create_btm(self.tc, self.job)
+        btm_key, btm_hit = create_btm(self.tc, self.job, "topic",
+            "description", 10)
         self.assertEqual(len(btm_hit), 32)
         self.assertEqual(len(btm_key), 32)
 
