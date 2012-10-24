@@ -31,7 +31,7 @@
                             that.gathered++;
                             that.$(".sample-error").html("");
                         } else {
-                            that.$(".sample-error").html("Rejected url: " +
+                            that.$(".sample-error").html("Rejecting url: " +
                                 url + ", reason: " + data.result);
                         }
 
