@@ -13,13 +13,6 @@
         addNewSample: function () {
             if (this.gathered < this.minSamples) {
                 var url = this.$(".new-sample").val();
-
-                var sample = new Sample({id:url, url: url});
-
-                var view = new SampleView({model: sample}).render().el;
-                this.$(".pending").append(view);
-                this.samples.add(sample);
-
                 var that = this;
                 $.post(
                     this.coreUrl + '/api/v1/sample/add/tagasauris/' +
@@ -27,17 +20,21 @@
                     JSON.stringify({url: url, worker_id: this.workerId}),
                     function (data) {
                         if (data.result === 'added') {
+                            var sample = new Sample({id:url, url: url});
                             sample.added = true;
-                            sample.clear();
+
+                            that.samples.add(sample);
+
                             var view = new SampleView({model: sample}).render().el;
                             that.$(".samples").append(view);
+
                             that.gathered++;
+                            that.$(".sample-error").html("");
                         } else {
-                            sample.added = false;
-                            sample.reason = data.result;
+                            that.$(".sample-error").html("Rejected url: " +
+                                url + ", reason: " + data.result);
                         }
 
-                        sample.update();
                         that.renderPartial();
 
                         if (that.gathered >= that.minSamples ||
