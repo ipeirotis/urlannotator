@@ -66,12 +66,14 @@ class DBVotesStorage(VotesStorage):
 
     def reset(self):
         super(DBVotesStorage, self).reset()
-        ids = WorkerQualityVote.objects.all().select_related('sample')
+        ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
         ids = [w.id for w in ids if w.sample.job_id == self.storage_id]
         WorkerQualityVote.objects.filter(id__in=ids).delete()
 
     def get_all_votes(self):
-        ids = WorkerQualityVote.objects.all().select_related('sample')
+        ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
         return [(w.worker_id, w.sample_id, w.label)
             for w in ids if w.sample.job_id == self.storage_id]
 
@@ -86,12 +88,14 @@ class TroiaDBStorage(VotesStorage):
 
     def reset(self):
         super(DBVotesStorage, self).reset()
-        ids = WorkerQualityVote.objects.all().select_related('sample')
+        ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
         ids = [w.id for w in ids if w.sample.job_id == self.storage_id]
         WorkerQualityVote.objects.filter(id__in=ids).delete()
 
     def get_all_votes(self):
-        ids = WorkerQualityVote.objects.all().select_related('sample')
+        ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
         return [(w.worker_id, w.sample_id, w.label)
             for w in ids if w.sample.job_id == self.storage_id]
 

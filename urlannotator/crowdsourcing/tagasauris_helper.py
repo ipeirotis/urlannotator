@@ -220,7 +220,7 @@ def create_btm(api_client, job, topic, description, no_of_urls):
     return _create_job(api_client, ext_id, kwargs)
 
 
-def create_voting(api_client, job, mediaobjects):
+def _create_voting(api_client, job, mediaobjects, notify_url):
     task_type = settings.TAGASAURIS_VOTING_WORKFLOW
     log.debug(
         'TagasaurisHelper: Creating voting job for %s (%d).' % (job.title, job.id)
@@ -246,7 +246,7 @@ def create_voting(api_client, job, mediaobjects):
     kwargs["workflow"].update({
         settings.TAGASAURIS_NOTIFY[task_type]: {
             "config": {
-                "notify_url": settings.TAGASAURIS_VOTING_CALLBACK % job.id
+                "notify_url": notify_url
             }
         },
     })
@@ -255,6 +255,16 @@ def create_voting(api_client, job, mediaobjects):
     kwargs.update({"mediaobjects": mediaobjects})
 
     return _create_job(api_client, ext_id, kwargs)
+
+
+def create_voting(api_client, job, mediaobjects):
+    return _create_voting(api_client, job, mediaobjects,
+        notify_url=settings.TAGASAURIS_VOTING_CALLBACK % job.id)
+
+
+def create_btm_voting(api_client, job, mediaobjects):
+    return _create_voting(api_client, job, mediaobjects,
+        notify_url=settings.TAGASAURIS_BTM_VOTING_CALLBACK % job.id)
 
 
 def update_voting_job(api_client, mediaobjects, ext_id):

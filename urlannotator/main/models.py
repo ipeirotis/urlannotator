@@ -17,8 +17,7 @@ from tenclouds.django.jsonfield.fields import JSONField
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 from urlannotator.settings import imagescale2
-from urlannotator.crowdsourcing.tagasauris_helper import (stop_job,
-    make_tagapi_client)
+from urlannotator.crowdsourcing.tagasauris_helper import stop_job
 
 import logging
 log = logging.getLogger(__name__)
@@ -67,7 +66,7 @@ JOB_ODESK_DATA_SOURCE_CHOICES = (
 )
 
 JOB_DATA_SOURCE_CHOICES = JOB_BASIC_DATA_SOURCE_CHOICES + \
-                          JOB_ODESK_DATA_SOURCE_CHOICES
+    JOB_ODESK_DATA_SOURCE_CHOICES
 JOB_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
 
 # Job status breakdown:
@@ -232,31 +231,31 @@ class Job(models.Model):
         """
         # TODO: Proper query
         return [{
-            'id': 0,
-            'get_type': 'test',
-            'url': 'test',
-            'added_on': datetime.datetime.now(),
-            'get_yes_probability': 100,
-            'get_no_probability': 100,
-            'get_broken_probability': 100,
-            'get_yes_votes': 10,
-            'get_no_votes': 10,
-            'get_broken_votes': 10,
-            'label': 'yes',
-        },
-        {
-            'id': 1,
-            'get_type': 'test',
-            'url': 'test2',
-            'added_on': datetime.datetime.now(),
-            'get_yes_probability': 100,
-            'get_no_probability': 100,
-            'get_broken_probability': 100,
-            'get_yes_votes': 10,
-            'get_no_votes': 10,
-            'get_broken_votes': 10,
-            'label': 'no',
-        }]
+                'id': 0,
+                'get_type': 'test',
+                'url': 'test',
+                'added_on': datetime.datetime.now(),
+                'get_yes_probability': 100,
+                'get_no_probability': 100,
+                'get_broken_probability': 100,
+                'get_yes_votes': 10,
+                'get_no_votes': 10,
+                'get_broken_votes': 10,
+                'label': 'yes',
+            }, {
+                'id': 1,
+                'get_type': 'test',
+                'url': 'test2',
+                'added_on': datetime.datetime.now(),
+                'get_yes_probability': 100,
+                'get_no_probability': 100,
+                'get_broken_probability': 100,
+                'get_yes_votes': 10,
+                'get_no_votes': 10,
+                'get_broken_votes': 10,
+                'label': 'no',
+            }
+        ]
 
     def add_btm_verified_sample(self, sample):
         """
@@ -268,8 +267,7 @@ class Job(models.Model):
 
     def is_btm_finished(self):
         return (self.is_btm_active()
-            and (self.get_btm_gathered() == self.get_btm_to_gather())
-        )
+            and (self.get_btm_gathered() == self.get_btm_to_gather()))
 
     def is_btm_active(self):
         return self.btm_active
@@ -530,8 +528,7 @@ class Job(models.Model):
             elif (self.is_training_set_created()
                     and self.is_gold_samples_done()
                     and self.is_classifier_created()
-                    and not self.gold_samples
-                ):
+                    and not self.gold_samples):
                 # If we have no gold samples, activate without training
                 # the classifier.
                 self.activate()
@@ -655,6 +652,7 @@ class SampleManager(models.Manager):
         kwargs['source_type'] = SAMPLE_TAGASAURIS_WORKER
         kwargs['vote_sample'] = False
         kwargs['btm_sample'] = True
+        kwargs['training'] = False
 
         # Add worker-job association.
         worker, created = Worker.objects.get_or_create_tagasauris(
@@ -690,6 +688,7 @@ class Sample(models.Model):
     added_on = models.DateTimeField(auto_now_add=True)
     btm_sample = models.BooleanField(default=False)
     vote_sample = models.BooleanField(default=True)
+    training = models.BooleanField(default=True)
 
     objects = SampleManager()
 

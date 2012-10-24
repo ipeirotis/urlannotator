@@ -237,7 +237,11 @@ class ProcessVotesManager(Task):
                             'ProcessVotesManager: Omitted broken label of sample %d.' % sample_id
                         )
                         continue
+
                     sample = Sample.objects.get(id=sample_id)
+                    if not sample.training:
+                        continue  # Skipping (BTM non trainable sample)
+
                     TrainingSample.objects.create(
                         set=ts,
                         sample=sample,

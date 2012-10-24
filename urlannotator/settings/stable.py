@@ -77,6 +77,8 @@ TAGASAURIS_NOTIFY = {
 TAGASAURIS_CALLBACKS = 'http://' + SITE_URL
 TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
     '/api/v1/vote/add/tagasauris/%s/'
+TAGASAURIS_BTM_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/btm/tagasauris/%s/'
 
 TAGASAURIS_HIT_SOCIAL_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 

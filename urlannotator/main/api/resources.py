@@ -1129,9 +1129,13 @@ class VoteResource(ModelResource):
                 '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('add_from_tagasauris'),
                 name='sample_add_from_tagasauris'),
+            url(r'^(?P<resource_name>%s)/btm/tagasauris/'
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('btm_from_tagasauris'),
+                name='sample_btm_from_tagasauris'),
         ]
 
-    def add_from_tagasauris(self, request, **kwargs):
+    def _add_from_tagasauris(self, request, vote_constructor, **kwargs):
         """
             Initiates classification on passed url using classifier
             associated with job. Returns task id on success.
@@ -1175,9 +1179,29 @@ class VoteResource(ModelResource):
                             label = LABEL_NO
 
                         if label is not None:
-                            WorkerQualityVote.objects.new_vote(
+                            vote_constructor(
                                 worker=worker,
                                 sample=sample,
                                 label=label
                             )
         return self.create_response(request, {})
+
+    def add_from_tagasauris(self, request, **kwargs):
+        """
+            Initiates classification on passed url using classifier
+            associated with job. Returns task id on success.
+        """
+
+        return self._add_from_tagasauris(request,
+            vote_constructor=WorkerQualityVote.objects.new_vote,
+            **kwargs)
+
+    def btm_from_tagasauris(self, request, **kwargs):
+        """
+            Initiates classification on passed url using classifier
+            associated with job. Returns task id on success.
+        """
+
+        return self._add_from_tagasauris(request,
+            vote_constructor=WorkerQualityVote.objects.new_btm_vote,
+            **kwargs)
