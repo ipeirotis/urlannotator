@@ -192,9 +192,9 @@ table thead * {
   background-color: #C79155;
 }
 table img {
-  width: 40px!important;
-  height: 40px!important;
-  background: url('http://placehold.it/40x40') no-repeat 0px 0px;
+  width: 60px!important;
+  height: 45px!important;
+  background: url('/statics/img/placeholder_60x45.png') no-repeat 0px 0px;
 }
 .clearfix {
   *zoom: 1;
