@@ -35,15 +35,15 @@ PIPELINE_CSS = {
             'rel': 'stylesheet/less',
         },
     },
-    # 'wizard': {
-    #     'source_filenames': (
-    #         'less/base/wizard.less',
-    #     ),
-    #     'output_filename': 'css/wizard.css',
-    #     'extra_context': {
-    #         'rel': 'stylesheet/less',
-    #     },
-    # },
+    'wizard': {
+        'source_filenames': (
+            'less/base/wizard.less',
+        ),
+        'output_filename': 'css/wizard.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
     'project': {
         'source_filenames': (
             'less/project/project.less',

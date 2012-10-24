@@ -1,4 +1,12 @@
 {% extends 'base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'wizard' %}
+{% endblock %}
+
+{% block body-class %}{{ block.super }} body-wizard{% endblock %}
 
     {% block header %}
       <h2>Project creator</h2>
@@ -9,19 +17,19 @@
   <div class="row alert-container">
     <div class="span12">
       {% if wizard_error %}
-        <div class="alert alert-error span9 offset1">
+        <div class="alert alert-error  ">
           <button class="close" data-dismiss="alert">×</button>
           {{ wizard_error }}
         </div>
       {% endif %}
       {% if wizard_success %}
-        <div class="alert alert-success span9 offset1">
+        <div class="alert alert-success  ">
           <button class="close" data-dismiss="alert">×</button>
           {{ wizard_success }}
         </div>
       {% endif %}
       {% if wizard_alert %}
-        <div class="alert span9 offset1">
+        <div class="alert  ">
           <button class="close" data-dismiss="alert">×</button>
           {{ wizard_alert|safe }}
         </div>
@@ -122,3 +130,5 @@ $('#id_data_source').change();
 setTimeout("$('.alert-error').css('display', 'none');", 30*1000);
 </script>
 {% endblock %}
+
+{% block timeout %}{% endblock %}

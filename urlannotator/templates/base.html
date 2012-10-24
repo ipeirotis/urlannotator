@@ -215,13 +215,17 @@
               checkAlerts();
               setInterval(checkAlerts, 10 * 1000);
               {% endif %}
+            </script>
+            {% endif %}
+        {% endblock %}
+        {% block timeout %}
+            <script type="text/javascript">
               $(function(){
                 setTimeout(function(){
                   $('.alert').fadeOut();
                 },7000);
               });
             </script>
-            {% endif %}
         {% endblock %}
         <!-- end scripts -->
 
