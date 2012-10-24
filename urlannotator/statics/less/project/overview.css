@@ -99,6 +99,9 @@
   color: #d0a271;
   text-decoration: underline;
 }
+.body-overview .accordion .accordion-group .accordion-inner .update-box * {
+  font-size: 11px;
+}
 .body-overview .accordion .accordion-group .accordion-inner .update-box .box-img {
   float: left;
   width: 60px;
@@ -135,9 +138,11 @@
   color: #0088cc;
   text-decoration: none;
   font-weight: normal;
-  font-size: 11px;
 }
 .body-overview .accordion .accordion-group .accordion-inner .update-box span.box-content {
   display: block;
-  font-size: 11px;
+}
+.body-overview .accordion .accordion-group .accordion-inner .update-box span.date {
+  color: #ddd;
+  font-style: italic;
 }
