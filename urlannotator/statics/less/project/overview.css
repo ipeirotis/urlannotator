@@ -101,23 +101,26 @@
 }
 .body-overview .accordion .accordion-group .accordion-inner .update-box .box-img {
   float: left;
-  width: 55px;
-  height: 55px;
+  width: 60px;
+  height: 45px;
   padding: 5px;
 }
 .body-overview .accordion .accordion-group .accordion-inner .update-box .box-img img {
-  width: 55px;
-  height: 55px;
+  width: 60px;
+  height: 45px;
+  background: url('/statics/img//placeholder_60x45.png') no-repeat 0px 0px;
 }
 .body-overview .accordion .accordion-group .accordion-inner .update-box .box-inner {
-  overflow: hidden;
-  width: 150px;
-  text-overflow: ellipsis;
   float: right;
   height: 60px;
 }
+.body-overview .accordion .accordion-group .accordion-inner .update-box .box-inner span.box-header {
+  overflow: hidden;
+  width: 150px;
+  text-overflow: ellipsis;
+}
 @media (min-width: 1200px) {
-  .body-overview .accordion .accordion-group .accordion-inner .update-box .box-inner {
+  .body-overview .accordion .accordion-group .accordion-inner .update-box .box-inner span.box-header {
     overflow: hidden;
     width: 200px;
     text-overflow: ellipsis;
@@ -128,6 +131,13 @@
   font-weight: bold;
   border-bottom: 1px solid #eee;
 }
+.body-overview .accordion .accordion-group .accordion-inner .update-box span.box-header a {
+  color: #0088cc;
+  text-decoration: none;
+  font-weight: normal;
+  font-size: 11px;
+}
 .body-overview .accordion .accordion-group .accordion-inner .update-box span.box-content {
   display: block;
+  font-size: 11px;
 }
