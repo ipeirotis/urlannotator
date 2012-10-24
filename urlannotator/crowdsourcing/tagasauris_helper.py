@@ -54,9 +54,9 @@ def stop_job(external_id):
     tc.wait_for_complete(res['task_id'])
 
 
-def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s",
-        workers_per_hit=1, media_per_hit=1, hit_instructions=None, topic=None,
-        description=None):
+def workflow_definition(ext_id, job, task_type, survey_id, price,
+        hit_title="%s", workers_per_hit=1, media_per_hit=1,
+        hit_instructions=None, topic=None, description=None):
 
     if hit_instructions is None:
         hit_instructions = job.description if description is None else description
@@ -79,14 +79,23 @@ def workflow_definition(ext_id, job, task_type, survey_id, hit_title="%s",
                     "hit_type": settings.TAGASAURIS_HIT_TYPE,
                     "hit_title": hit_title % topic,
                     "workers_per_hit": workers_per_hit,
-                    "price": settings.TAGASAURIS_DEFAULT_PRICE,
+                    "price": price,
                     # "job_external_id": "yes",
                     # "hit_description": "Gather samples",
                     "hit_instructions": hit_instructions,
                     "media_per_hit": media_per_hit,
                 }
             },
-        }
+        },
+        "mturk_config": {
+            "qualifications": [
+                {
+                    "compare_to": "60",
+                    "type": "hit_approval_rate",
+                    "comparator": "greater_or_equal_to"
+                }
+            ],
+        },
     }
 
 
@@ -111,6 +120,7 @@ def create_sample_gather(api_client, job):
 
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
+        settings.TAGASAURIS_GATHER_PRICE,
         hit_title="Gather web page urls for \"%s\"",
         workers_per_hit=workers_per_hit)
 
@@ -169,6 +179,7 @@ def create_btm(api_client, job, topic, description, no_of_urls):
 
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
+        settings.TAGASAURIS_GATHER_PRICE,
         hit_title="Beat the Machine for \"%s\"",
         workers_per_hit=workers_per_hit,
         topic=topic,
@@ -225,9 +236,10 @@ def create_voting(api_client, job, mediaobjects):
 
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
+        settings.TAGASAURIS_VOTE_PRICE,
         hit_title="Verify web page urls from \"%s\"",
         workers_per_hit=3,
-        media_per_hit=5,
+        media_per_hit=settings.TAGASAURIS_VOTE_MEDIA_PER_HIT,
         hit_instructions=settings.TAGASAURIS_VOTING_INSTRUCTION_URL)
 
     # Setting callback for notify mechanical task.
