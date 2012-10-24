@@ -14,10 +14,10 @@
             if (this.gathered < this.minSamples) {
                 var url = this.$(".new-sample").val();
 
-                sample = new Sample({id:url, url: url});
+                var sample = new Sample({id:url, url: url});
 
                 var view = new SampleView({model: sample}).render().el;
-                this.$(".samples").append(view);
+                this.$(".pending").append(view);
                 this.samples.add(sample);
 
                 var that = this;
@@ -28,11 +28,15 @@
                     function (data) {
                         if (data.result === 'added') {
                             sample.added = true;
+                            sample.clear();
+                            var view = new SampleView({model: sample}).render().el;
+                            that.$(".samples").append(view);
                             that.gathered++;
                         } else {
                             sample.added = false;
                             sample.reason = data.result;
                         }
+
                         sample.update();
                         that.renderPartial();
 

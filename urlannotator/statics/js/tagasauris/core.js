@@ -14,7 +14,6 @@
         matched: null,
 
         clear: function () {
-            Samples.remove(this);
             $(this.view.el).remove();
         },
 
