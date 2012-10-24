@@ -75,7 +75,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
     BTM_STATUS = (
         (BTM_PENDING, "Pending"),
-        (BTM_PENDING, "NoStatus"),
+        (BTM_NO_STATUS, "NoStatus"),
         (BTM_HUMAN, "Human"),
         (BTM_KNOWN, "Known"),
         (BTM_KNOWN_UNSURE, "KnownUnsure"),

@@ -374,7 +374,9 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         btm_sample = BeatTheMachineSample.objects.all()[0]
         self.assertEqual(resp_dict['request_id'], btm_sample.id)
         self.assertEqual(btm_sample.source_val, worker_id)
-        self.assertEqual(btm_sample.expected_output, btm_sample.label)
+
+        # Not sure if I should test it here
+        # self.assertEqual(btm_sample.expected_output, btm_sample.label)
 
     def testStatusBTMErrors(self):
         job = Job.objects.create_active(
