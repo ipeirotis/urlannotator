@@ -187,10 +187,6 @@ td.url a,
 th.url a {
   white-space: nowrap;
 }
-td.added-on,
-th.added-on {
-  width: 110px;
-}
 td.preview,
 th.preview {
   width: 54px;

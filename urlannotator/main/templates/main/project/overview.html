@@ -113,9 +113,9 @@
             <table class="table fix">
               <thead>
                 <tr>
-                  <th class="preview">Preview</th>
-                  <th class="url">URL</th>
-                  <th class="added-on">Added on</th>
+                  <th class="preview">URL</th>
+                  <th class="url"></th>
+                  <th class="tiny-col">Added on</th>
                 </tr>
               </thead>
               <tbody data-bind="foreach: newest_votes">
@@ -124,7 +124,7 @@
                     <a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a>
                   </td>
                   <td class="url"><a data-bind="attr: {href: sample_url}, text: url"></a></td>
-                  <td class="added-on" data-bind="text: added_on"></td>
+                  <td class="tiny-col" data-bind="text: added_on"></td>
                 </tr>
               </tbody>
               <tbody data-bind="ifnot: has_newest_votes">
@@ -142,13 +142,17 @@
           <div class="table-wrapper">
             <table class="table fix">
               <thead>
-                <tr><th>Worker name</th><th>Urls collected</th><th>Votes added</th></tr>
+                <tr>
+                  <th>Worker name</th>
+                  <th class="tiny-col">Urls collected</th>
+                  <th class="tiny-col">Votes added</th>
+                </tr>
               </thead>
               <tbody data-bind="foreach: top_workers">
                 <tr>
                   <td data-bind="text: name"></td>
-                  <td data-bind="text: urls_collected"></td>
-                  <td data-bind="text: votes_added"></td></tr>
+                  <td class="tiny-col" data-bind="text: urls_collected"></td>
+                  <td class="tiny-col" data-bind="text: votes_added"></td></tr>
               </tbody>
               <tbody data-bind="ifnot: has_top_workers">
                 <tr>
