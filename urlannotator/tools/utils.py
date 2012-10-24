@@ -2,6 +2,7 @@ import platform
 import urlparse
 import requests
 import json
+import re
 
 from django.conf import settings
 
@@ -102,3 +103,15 @@ class DiffbotClient(object):
         })
         r = requests.get(api_endpoint, params=params)
         return json.loads(r.content)
+
+
+url_correct_re = re.compile(
+    r'^(?:http|ftp)s?://'
+    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'
+    r'(?::\d+)?'
+    r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+
+def url_correct(url):
+    return bool(url_correct_re.match(url))

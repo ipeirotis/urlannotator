@@ -18,6 +18,7 @@ from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.crowdsourcing.models import (SampleMapping,
     WorkerQualityVote, BeatTheMachineSample)
 from urlannotator.logging.models import LogEntry
+from urlannotator.tools.utils import url_correct
 
 import logging
 log = logging.getLogger(__name__)
@@ -958,9 +959,13 @@ class SampleResource(ModelResource):
                 'result': ''
             })
 
-        if Sample.objects.filter(url=Sample.sanitize_url(url),
+        sanitized_url = Sample.sanitize_url(url)
+        if not url_correct(sanitized_url):
+            result = 'malformed url'
+
+        elif Sample.objects.filter(url=sanitized_url,
                 job=job).count() == 0:
-            domain = Sample.objects._domain(Sample.sanitize_url(url))
+            domain = Sample.objects._domain(sanitized_url)
             if Sample.objects.filter(domain=domain, job=job
                     ).count() >= job.same_domain_allowed:
                 result = 'domain duplicate'
@@ -973,6 +978,7 @@ class SampleResource(ModelResource):
                 res.get()
                 collected += 1
                 result = 'added'
+
         else:
             result = 'duplicate'
 
