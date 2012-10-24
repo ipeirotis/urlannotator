@@ -18,8 +18,9 @@
 <div class="accordion container" id="accordion1">
     <div class="accordion-group">
         <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseOne">
-                <i class="pull-right icon-arrow-up"></i><h4>General</h4>
+            <a class="accordion-toggle" data-parent="#accordion1" data-href="#collapseOne" data-toggle="" >
+                <i class="pull-right icon-arrow-up"></i>
+                <h4>General</h4>
             </a>
         </div>
         <div id="collapseOne" class="accordion-body collapse in">
@@ -40,11 +41,12 @@
 {% if password_form %}
     <div class="accordion-group">
         <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseTwo">
-                <i class="pull-right icon-arrow-down"></i><h4>Password</h4>
+            <a class="accordion-toggle"data-parent="#accordion1" data-href="#collapseTwo" data-toggle="" >
+                <i class="pull-right icon-arrow-down"></i>
+                <h4>Password</h4>
             </a>
         </div>
-        <div id="collapseTwo" class="accordion-body collapse">
+        <div id="collapseTwo" class="accordion-body collapse in">
             <div class="accordion-inner">
                 <form method="POST" action="#" class="form form-horizontal">
                     <fieldset>
@@ -62,11 +64,12 @@
 {% endif %}
     <div class="accordion-group">
         <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseThree">
-                <i class="pull-right icon-arrow-down"></i><h4>Alerts setup</h4>
+            <a class="accordion-toggle" data-parent="#accordion1" data-href="#collapseThree" data-toggle="">
+                <i class="pull-right icon-arrow-down"></i>
+                <h4>Alerts setup</h4>
             </a>
         </div>
-        <div id="collapseThree" class="accordion-body collapse">
+        <div id="collapseThree" class="accordion-body collapse in">
             <div class="accordion-inner">
                 <form method="POST" action="#" class="form form-horizontal">
                     <fieldset>
@@ -83,11 +86,12 @@
     </div>
     <div class="accordion-group">
         <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseFour">
-                <i class="pull-right icon-arrow-down"></i><h4>Odesk integration</h4>
+            <a class="accordion-toggle" data-parent="#accordion1" data-href="#collapseFour" data-toggle="">
+                <i class="pull-right icon-arrow-down"></i>
+                <h4>Odesk integration</h4>
             </a>
         </div>
-        <div id="collapseFour" class="accordion-body collapse">
+        <div id="collapseFour" class="accordion-body collapse in">
             <div class="accordion-inner">
                 {% if odesk %}
                     <p>Status: Connected as <b>{{ odesk.name }}</b>, <a href="https://www.odesk.com/UserSettings/linked-accounts">administrate</a>, <a href="{% url odesk_disconnect %}">disconnect</a></p>
@@ -108,11 +112,11 @@
     </div>
     <div class="accordion-group">
         <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1" href="#collapseFive">
+            <a class="accordion-toggle" data-parent="#accordion1" data-href="#collapseFive" data-toggle="">
                 <i class="pull-right icon-arrow-down"></i><h4>Other applications</h4>
             </a>
         </div>
-        <div id="collapseFive" class="accordion-body collapse">
+        <div id="collapseFive" class="accordion-body collapse in">
             <div class="accordion-inner">
                 <table class="table">
                     <thead>

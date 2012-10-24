@@ -53,6 +53,9 @@ header.header {
   text-decoration: none;
   color: #E0B25D;
 }
+.body-settings .accordion-heading .accordion-toggle i {
+  display: none;
+}
 .body-settings .alert-container {
   position: absolute;
   margin-top: -17px;
