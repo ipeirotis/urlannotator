@@ -30,7 +30,42 @@
 .img-tag {
   height: 36px;
 }
-div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a::before:before,
-div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a:before {
+div.navbar .navbar-inner {
+  background: url('/statics/img/url_hit_header_navbar.png') repeat-x 0px 0px;
+}
+div.navbar .navbar-inner .container div.nav-collapse ul.nav-links li {
+  padding: 20px 5px;
+  font-size: 16px;
+  color: white;
+  font-style: italic;
+}
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a {
+  margin-top: 7px;
+  font-style: italic;
+}
+div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a:before:before {
   content: none;
+}
+div.stats {
+  display: block!important;
+  position: static;
+}
+div.stats h3 {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+  font-weight: normal;
+  color: #3A4354;
+}
+div.stats .arrow {
+  bottom: 0;
+  left: 50%;
+  margin-left: -5px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #000000;
+  position: relative;
+  width: 0;
+  height: 0;
+  bottom: 5px!important;
+  left: 20%!important;
 }

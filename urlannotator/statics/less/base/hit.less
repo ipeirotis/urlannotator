@@ -3,9 +3,51 @@
 
 
 .img-tag {
-    height:36px;
+  height:36px;
 }
 
-div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.new-project a::before, div.navbar .navbar-inner .container div.nav-collapse ul.userNav li.documentation a {
-    &:before {content:none;}
+div.navbar {
+  .navbar-inner {
+    background:url('/statics/img/url_hit_header_navbar.png') repeat-x 0px 0px;
+    .container {
+      div.nav-collapse {
+        ul.nav-links {
+          li {
+            padding: 20px 5px;
+            font-size: 16px;
+            color: white;
+            font-style: italic;
+          }
+        }
+        ul.userNav {
+          li.new-project a {
+            margin-top: 7px;
+            font-style:italic;
+          }
+          li.new-project a:before {
+            &:before {content:none;}
+          }
+        }
+      }
+    }
+  }
+}
+
+div.stats {
+  display: block!important;
+  position: static;
+  h3 {
+    border-bottom:1px solid #ccc;
+    padding-bottom:10px;
+    font-weight:normal;
+    color:#3A4354;
+  }
+  .arrow {
+    #popoverArrow > .top();
+    position: relative;
+    width: 0;
+    height: 0;
+    bottom: 5px!important;
+    left:20%!important;
+  }
 }
