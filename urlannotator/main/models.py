@@ -11,6 +11,7 @@ from django.db.models.signals import post_save
 from django.utils.timezone import now
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.core.cache import get_cache
 from itertools import ifilter
 from tenclouds.django.jsonfield.fields import JSONField
 
@@ -155,6 +156,14 @@ class Job(models.Model):
         return ('project_view', (), {
             'id': self.id,
         })
+
+    def update_cache(self):
+        """
+            Forces cache recalculation.
+        """
+        self.get_hours_spent()
+        self.get_progress()
+        self.get_top_workers()
 
     def recreate_training_set(self, force=False):
         """
@@ -407,25 +416,51 @@ class Job(models.Model):
         send_event('EventNewJobInitialization',
             job_id=self.id)
 
-    def get_hours_spent(self):
+    def get_hours_spent(self, cache=False):
         """
             Returns number of hours workers have worked on this project
             altogether.
+
+            Parameters:
+            :param cache: - whether to use cache. If not or the cache has
+                            expired, it will be updated.
         """
+        key = 'job-%d-hours-spent' % self.id
+        mc = get_cache('memcache')
+        val = mc.get(key)
+        if val and cache:
+            return val
+
         sum_res = WorkerJobAssociation.objects.filter(job=self).\
             aggregate(Sum('worked_hours'))
         sum_res = sum_res['worked_hours__sum']
-        return sum_res if sum_res else 0
+        sum_res = sum_res if sum_res else 0
 
-    def get_urls_collected(self):
+        mc.set(key, sum_res, 0)
+        return sum_res
+
+    def get_urls_collected(self, cache=False):
         """
             Returns number of urls collected (samples without gold samples).
+
+            Parameters:
+            :param cache: - whether to use cache. If not or the cache has
+                            expired, it will be updated.
         """
+        key = 'job-%d-urls-collected' % self.id
+        mc = get_cache('memcache')
+        val = mc.get(key)
+        if val and cache:
+            return val
+
         samples = self.sample_set.all().select_related('goldsample').iterator()
         gold_samples = [gold['url'] for gold in self.gold_samples]
 
-        collected = filter(lambda x: not x.is_gold_sample() and not x.url in gold_samples, samples)
-        return sum(1 for _ in collected)
+        collected = ifilter(lambda x: not x.is_gold_sample() and not x.url in gold_samples, samples)
+        collected = sum(1 for _ in collected)
+
+        mc.set(key, collected, 0)
+        return collected
 
     def get_workers(self):
         """
@@ -441,62 +476,116 @@ class Job(models.Model):
         """
         return WorkerJobAssociation.objects.filter(job=self).count()
 
-    def get_top_workers(self, num=3):
+    def get_top_workers(self, num=3, cache=False):
         """
             Returns `num` top of workers.
+
+            Parameters:
+            :param cache: - whether to use cache. If not or the cache has
+                            expired, it will be updated.
         """
+        key = 'job-%d-top-workers' % self.id
+        mc = get_cache('memcache')
+        val = mc.get(key)
+        if val and cache:
+            return val
+
         workers = self.get_workers()
         workers.sort(
             key=lambda w: -w.get_urls_collected_count_for_job(self)
         )
-        return workers[:num]
 
-    def get_cost(self):
+        workers = workers[:num]
+        mc.set(key, workers, 0)
+        return workers
+
+    def get_cost(self, cache=False):
         """
             Returns amount of money the job has costed so far.
+
+            Parameters:
+            :param cache: - whether to use cache. If not or the cache has
+                            expired, it will be updated.
         """
         # FIXME: Add proper billing entries?
-        return self.hourly_rate * self.get_hours_spent()
+        return self.hourly_rate * self.get_hours_spent(cache=cache)
 
-    def get_votes_gathered(self):
+    def get_votes_gathered(self, cache=False):
         """
             Returns amount of votes gathered.
+
+            Parameters:
+            :param cache: - whether to use cache. If not or the cache has
+                            expired, it will be updated.
         """
+        key = 'job-%d-votes-gathered' % self.id
+        mc = get_cache('memcache')
+        val = mc.get(key)
+        if val and cache:
+            return val
+
         samples = self.sample_set.all().iterator()
         count = 0
         for sample in samples:
-            count += sample.workerqualityvote_set.all().count()
+            count += sample.workerqualityvote_set.filter(btm_vote=False).count()
+
+        mc.set(key, count, 0)
         return count
 
-    def get_progress(self):
+    def get_progress(self, cache=False):
         """
             Returns actual progress (in percents) in the job.
-        """
-        return (self.get_progress_urls() + self.get_progress_votes()) / 2.0
 
-    def get_progress_urls(self):
+            Parameters:
+            :param cache: - whether to use cache. If not or the cache has
+                            expired, it will be updated.
+        """
+        return (self.get_progress_urls(cache=cache)
+            + self.get_progress_votes(cache=cache)) / 2.0
+
+    def get_progress_urls(self, cache=False):
         """
             Returns actual progress of urls collecting.
+
+            Parameters:
+            :param cache: - whether to use cache. If not or the cache has
+                            expired, it will be updated.
         """
+        key = 'job-%d-progress-urls' % self.id
+        mc = get_cache('memcache')
+        val = mc.get(key)
+        if val and cache:
+            return val
+
         if not self.no_of_urls:
             return 100
-        div = self.no_of_urls
-        return min((100 * self.get_urls_collected()) / div, 100)
 
-    def get_progress_votes(self):
+        div = self.no_of_urls
+        val = min((100 * self.get_urls_collected(cache=cache)) / div, 100)
+        mc.set(key, val, 0)
+        return val
+
+    def get_progress_votes(self, cache=False):
         """
             Returns actual progress of votes collecting.
-        """
-        # TODO: Correct calculation?
-        count = 0
-        got = 0
 
-        for sample in self.sample_set.all():
-            count += 3
-            got += sample.workerqualityvote_set.all().count()
+            Parameters:
+            :param cache: - whether to use cache. If not or the cache has
+                            expired, it will be updated.
+        """
+        key = 'job-%d-progress-votes' % self.id
+        mc = get_cache('memcache')
+        val = mc.get(key)
+        if val and cache:
+            return val
+
+        count = self.sample_set.all().count() * 3
+        got = self.get_votes_gathered(cache=cache)
 
         count = count or 1
-        return min((100 * got) / count, 100)
+        val = min((100 * got) / count, 100)
+        mc.set(key, val, 0)
+        return val
 
     def is_completed(self):
         return self.status == JOB_STATUS_COMPLETED

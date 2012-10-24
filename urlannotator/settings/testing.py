@@ -11,13 +11,12 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-        'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
+        # 'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
     }
 }
 
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'SimpleClassifier'
-
 
 CELERY_RESULT_BACKEND = 'amqp://'
 BROKER_URL = 'amqp://'
@@ -33,6 +32,9 @@ JENKINS_TASKS = (
     'django_jenkins.tasks.django_tests',
     'django_jenkins.tasks.with_local_celery',
 )
+
+# Don't use memcache in testing
+CACHES['memcache']['BACKEND'] = 'django.core.cache.backends.dummy.DummyCache'
 
 try:
     import devserver

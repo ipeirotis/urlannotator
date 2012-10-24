@@ -42,6 +42,7 @@ VOTES_STORAGE = 'TroiaVotesStorage'
 QUALITY_ALGORITHM = 'DawidSkeneAlgorithm'
 
 SITE_URL = 'devel.urlannotator.10clouds.com'
+MEMCACHE_ADDR = '127.0.0.1:11211'
 
 SOCIAL_AUTH_CREATE_USERS = False
 
@@ -126,7 +127,14 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
         'LOCATION': os.path.join(_tempdir, 'urlannotator__file_based_cache'),
-    }
+    },
+    'memcache': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'KEY_PREFIX': 'devel_urlannotator',
+        'TIMEOUT': 30,
+    },
+
 }
 #SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 

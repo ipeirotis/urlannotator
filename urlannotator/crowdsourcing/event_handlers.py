@@ -5,6 +5,7 @@ from celery import task, Task, registry
 from factories import ExternalJobsFactory, VoteStorageFactory
 from urlannotator.crowdsourcing.models import (BeatTheMachineSample,
     TagasaurisJobs, SampleMapping)
+from urlannotator.main.models import Sample
 from urlannotator.crowdsourcing.tagasauris_helper import (create_btm_voting,
     samples_to_mediaobjects, make_tagapi_client, update_voting_job)
 
@@ -134,10 +135,16 @@ def btm_send_to_human(sample_id):
                 job.tagasaurisjobs.save()
 
 
+@task(ignore_result=True)
+def update_job_votes_gathered(sample_id, worker_id):
+    sample = Sample.objects.filter(id=sample_id).select_related('job')
+    sample[0].job.get_progress_votes(cache=False)
+
 FLOW_DEFINITIONS = [
     (r'^EventNewJobInitialization$', initialize_external_jobs),
     (r'^EventBTMStarted$', initialize_btm_job),
     (r'^EventBTMSendToHuman$', btm_send_to_human),
+    (r'^EventNewVoteAdded$', update_job_votes_gathered),
     # WIP: DSaS/GAL quality algorithms.
     # (r'^EventGoldSamplesDone$', initialize_quality),
 ]

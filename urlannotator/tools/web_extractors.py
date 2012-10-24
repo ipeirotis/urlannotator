@@ -131,13 +131,6 @@ def diffbot_extractor(url):
 def get_web_text(url):
     """ Using links we extract content from web.
     """
-    # # Firstly, check if Diffbot can extract the content
-    # content = diffbot_extractor(url)
-    # if not content:
-    #     log.warning(
-    #         '[TextExtract] Diffbot failed to extract %s : %s.'
-    #         'Falling back to Links' % (url, content)
-    #     )
     content = links_extractor(url)
     return content
 

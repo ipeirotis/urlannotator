@@ -43,6 +43,8 @@ DATABASES = {
     }
 }
 
+CACHES['memcache']['KEY_PREFIX'] = KEY_PREFIX
+
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 

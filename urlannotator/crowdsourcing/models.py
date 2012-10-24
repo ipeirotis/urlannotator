@@ -14,6 +14,12 @@ class WorkerQualityVoteManager(models.Manager):
             job=kwargs['sample'].job,
             worker=kwargs['worker'],
         )
+
+        send_event(
+            'EventNewVoteAdded',
+            worker_id=kwargs['worker'].id,
+            sample_id=kwargs['sample'].id,
+        )
         return self.create(**kwargs)
 
     def new_btm_vote(self, *args, **kwargs):

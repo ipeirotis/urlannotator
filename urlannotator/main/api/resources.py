@@ -1,4 +1,5 @@
 import json
+import memcache
 
 from django.conf.urls import url
 from django.conf import settings
@@ -730,7 +731,7 @@ class JobResource(ModelResource):
                 response_class=HttpNotFound,
             )
 
-        top_workers = job.get_top_workers()
+        top_workers = job.get_top_workers(cache=True)
         top_workers = [self.worker_resource.raw_detail(job_id=job.id,
             worker_id=x.id) for x in top_workers]
 
@@ -753,12 +754,20 @@ class JobResource(ModelResource):
         else:
             newest_votes = []
 
+        urls_collected = job.get_urls_collected(cache=True)
+        no_of_workers = job.get_no_of_workers()
+        progress = job.get_progress()
+        progress_urls = job.get_progress_urls(cache=True)
+        progress_votes = job.get_progress_votes(cache=True)
+        votes_gathered = job.get_votes_gathered(cache=True)
+        hours_spent = job.get_hours_spent(cache=True)
+
         response = {
             'id': job.id,
             'title': job.title,
             'description': job.description,
             'urls_to_collect': job.no_of_urls,
-            'urls_collected': job.get_urls_collected(),
+            'urls_collected': urls_collected,
             'classifier': reverse('api_classifier', kwargs={
                 'api_name': 'v1',
                 'resource_name': 'job',
@@ -769,17 +778,18 @@ class JobResource(ModelResource):
                 'resource_name': 'job',
                 'job_id': job_id,
             }),
-            'no_of_workers': job.get_no_of_workers(),
+            'no_of_workers': no_of_workers,
             'cost': job.get_cost(),
             'budget': job.budget,
-            'progress': job.get_progress(),
-            'hours_spent': job.get_hours_spent(),
+            'progress': progress,
+            'hours_spent': hours_spent,
             'top_workers': top_workers,
             'newest_votes': newest_votes,
-            'progress_urls': job.get_progress_urls(),
-            'progress_votes': job.get_progress_votes(),
-            'votes_gathered': job.get_votes_gathered(),
+            'progress_urls': progress_urls,
+            'progress_votes': progress_votes,
+            'votes_gathered': votes_gathered,
         }
+
         if job.is_own_workforce():
             additional = {
                 'sample_gathering_url': job.get_sample_gathering_url(),
