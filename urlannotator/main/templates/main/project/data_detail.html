@@ -12,10 +12,10 @@
 {% block project_content %}
   <div class="row">
     <div class="span">
-        <a href="{% url project_data_view project.id %}" class="btn">&lt; Back</a>
+        <a href="{% url project_data_view project.id %}" class="btn btn-mini btn-back">&lt; Back</a>
     </div>
     <div class="span10">
-      <h3 class="data-url"><a href="{{sample.url}}">{{sample.url}}</a></h3>
+      <h3 class="data-url">{{sample.url}}</h3>
     </div>
   </div>
   <div class="row">
@@ -31,13 +31,28 @@
         {% endif %}
         <p><a href="{{sample.url}}">Go to url</a></p>
         <p><h3>Voting stats</h3></p>
-        <span class="badge badge-info badge-yes"><i class="icon icon-ok"></i>{{sample.get_yes_votes}}</span>
-        <span class="badge badge-info badge-no"><i class="icon icon-remove"></i>{{sample.get_no_votes}}</span>
-        <span class="badge badge-info badge-broken"><i class="icon icon-minus-sign"></i>{{sample.get_broken_votes}}</span>
+        <span class="badge badge-info badge-yes">
+          <i class="icon icon-o"></i>
+          <p>{{sample.get_yes_votes}}</p>
+        </span>
+        <span class="badge badge-info badge-no">
+          <i class="icon icon-n"></i>
+          <p>{{sample.get_no_votes}}</p>
+        </span>
+        <span class="badge badge-info badge-broken">
+          <i class="icon icon-b"></i>
+          <p>{{sample.get_broken_votes}}</p>
+        </span>
 
         <p><h3>Class probability</h3></p>
-        <span class="badge badge-info badge-yes"><i class="icon icon-ok"></i>{{ sample.get_yes_probability|floatformat:0 }}%</span>
-        <span class="badge badge-info badge-no"><i class="icon icon-remove"></i>{{ sample.get_no_probability|floatformat:0 }}%</span>
+        <span class="badge badge-info badge-yes">
+          <i class="icon icon-o"></i>
+        <p>{{ sample.get_yes_probability|floatformat:0 }}%</p>
+      </span>
+        <span class="badge badge-info badge-no">
+          <i class="icon icon-n"></i>
+          <p>{{ sample.get_no_probability|floatformat:0 }}%</p>
+        </span>
       </div>
     </div>
   </div>
