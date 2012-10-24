@@ -631,3 +631,9 @@
   width: @width;
   text-overflow: ellipsis;
 }
+
+.appearance(@ap: button) {
+  appearance:@ap;
+  -moz-appearance:@ap; /* Firefox */
+  -webkit-appearance:@ap; /* Safari and Chrome */
+}
