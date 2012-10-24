@@ -46,11 +46,27 @@
 .body-data-detail .screen-wrapper {
   border: 5px solid #eee;
   padding: 5px;
-  width: 680px;
+  width: 690px;
 }
 @media (min-width: 1200px) {
   .body-data-detail .screen-wrapper {
     width: 850px;
+  }
+}
+.body-data-detail .screen-wrapper img {
+  width: 690px;
+}
+@media (min-width: 1200px) {
+  .body-data-detail .screen-wrapper img {
+    width: 100%;
+  }
+}
+.body-data-detail .detail-wrapper {
+  width: 210px;
+}
+@media (min-width: 1200px) {
+  .body-data-detail .detail-wrapper {
+    width: 270px;
   }
 }
 .body-data-detail span.badge-info {
@@ -64,7 +80,7 @@
   font-size: 14px;
   vertical-align: top;
   font-weight: normal;
-  padding: 2px 5px 0px 8px;
+  padding: 2px 0px 0px 8px;
   cursor: default;
 }
 .body-data-detail span.badge-info i {
