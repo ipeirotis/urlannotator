@@ -7,6 +7,26 @@
     text-align: right;
     padding-right: 10px;
   }
+  .popover {
+    .arrow {
+      display: none;
+      &:before,
+      &:after {
+        display: none;
+      }
+    }
+    .popover-inner {
+      .border-radius(0px);
+      padding:5px;
+      width: auto;
+      .popover-title {
+        display: none;
+      }
+      .popover-content {
+        padding:0px;
+      }
+    }
+  }
 }
 
 .body-data-detail {

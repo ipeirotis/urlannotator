@@ -20,14 +20,14 @@
       <div class="table-container-anno1">
         <h3>Data results</h3>
         <div class="table-wrapper">
-          <table class="table">
+          <table class="table fix">
             <thead>
               <tr>
-                <!-- <th style="width: 60px">Preview</th> -->
+                <th class="tiny-col">Preview</th>
                 <th class="url">URL</th>
-                <th style="width: 100px">Added on</th>
-                <th style="width: 50px">Workers</th>
-                <th style="width: 150px">Voting</th>
+                <th class="tiny-col">Added on</th>
+                <th class="tiny-col">Workers</th>
+                <th style="width: 100px">Voting</th>
                 <th style="width: 100px">Class probability</th>
               </tr>
             </thead>
@@ -35,12 +35,19 @@
               {% if data_set %}
               {% for data in data_set %}
                 <tr>
-                  <!-- <td><a href="{% url sample_thumbnail data.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail data.id 'small' %}"></a></td> -->
+                  <td class="tiny-col">
+                    <img class="pop" rel="popover" data-content="<img src='http://placehold.it/240x180'/>" width="60px" height="45px" src="http://placehold.it/60x45"/>
+                  </td>
+                  <!-- <td class="tiny-col">
+                    <a href="{% url sample_thumbnail data.id 'large' %}">
+                      <img style="width: 60px; max-height: 45px;" src="{% url sample_thumbnail data.id 'small' %}">
+                    </a>
+                  </td> -->
                   <td class="url">
                     <a href="{% url project_data_detail project.id data.id%}">{{data.url}}</a>
                   </td>
-                  <td>{{data.added_on|date:"Y-m-d H:i"}}</td>
-                  <td>{{data.get_workers|length}}</td>
+                  <td class="tiny-col">{{data.added_on|date:"Y-m-d H:i"}}</td>
+                  <td class="tiny-col">{{data.get_workers|length}}</td>
                   <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
                   <td>
                     {% if data.is_gold_sample %}
@@ -66,4 +73,13 @@
       </div>
     </div>
   </div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript">
+$(function(){
+  $('.pop').popover();
+})
+</script>
 {% endblock %}

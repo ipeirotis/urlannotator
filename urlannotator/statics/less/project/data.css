@@ -32,6 +32,26 @@
   text-align: right;
   padding-right: 10px;
 }
+.body-data .popover .arrow {
+  display: none;
+}
+.body-data .popover .arrow:before,
+.body-data .popover .arrow:after {
+  display: none;
+}
+.body-data .popover .popover-inner {
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+  padding: 5px;
+  width: auto;
+}
+.body-data .popover .popover-inner .popover-title {
+  display: none;
+}
+.body-data .popover .popover-inner .popover-content {
+  padding: 0px;
+}
 .body-data-detail table#more-information td:first-child {
   width: 140px;
   text-align: right;
