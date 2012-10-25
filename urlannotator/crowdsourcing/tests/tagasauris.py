@@ -193,7 +193,7 @@ class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
 
         send_event('EventSamplesVoting')
 
-        self.assertEqual(SampleMapping.objects.count(), 3)
+        self.assertEqual(SampleMapping.objects.count(), 5)
 
         self.assertEqual(SampleMapping.objects.all()[0].crowscourcing_type,
             SampleMapping.TAGASAURIS)
@@ -267,7 +267,7 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
             s.save()
 
     def testBTMSampleIsNoVoting(self):
-        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
+        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 5)
         self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 0)
 
         BeatTheMachineSample.objects.create_by_worker(
@@ -285,13 +285,13 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
             worker_id=12345
         )
 
-        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
+        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 5)
         self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 2)
 
         send_event('EventSamplesVoting')
 
-        # Only 3 gold samples! No BTM Samples!
-        self.assertEqual(SampleMapping.objects.count(), 3)
+        # Only 5 gold samples (3 + 2 fillers) ! No BTM Samples!
+        self.assertEqual(SampleMapping.objects.count(), 5)
 
         Sample.objects.filter(btm_sample=True).update(vote_sample=True)
 
@@ -303,4 +303,4 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
         send_event('EventSamplesVoting')
 
         # 5 - incude added BTM Samples.
-        self.assertEqual(SampleMapping.objects.count(), 5)
+        self.assertEqual(SampleMapping.objects.count(), 7)
