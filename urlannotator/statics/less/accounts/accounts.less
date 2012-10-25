@@ -52,6 +52,15 @@ header.header {
 }
 
 .body-settings {
+  .well.offset2 {
+    margin-left:200px;
+    padding-top:0px;
+  }
+  @media(min-width:1200px) {
+    .offset2 {
+      margin-left:250px;
+    }
+  }
   hr {
     margin-top:10px;
   }
@@ -63,8 +72,20 @@ header.header {
       text-decoration:none;
       color:#E0B25D;
     }
-    .accordion-toggle i {
-      display: none;
+    .accordion-toggle {
+      padding-left:0px;
+      padding-right:0px;
+      i {
+        display: none;
+      }
+      h5 {
+        color:#737373;
+        span {
+          color:#E0B25D;
+          text-decoration:underline;
+          cursor: pointer;
+        }
+      }
     }
   }
   .alert-container {
@@ -75,9 +96,5 @@ header.header {
     }
   }
   #accordion1 {
-    background-color: #eee;
-    .border-radius(6px);
-    border:1px solid #ddd;
-    padding:5px;
   }
 }

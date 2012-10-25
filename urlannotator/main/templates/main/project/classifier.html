@@ -100,8 +100,10 @@
                 <td></td>
                 <td>
                   {%csrf_token%}
-                  <!-- TODO XXX correct css styles so that the spinner is not as big as the preview images -->
-                  <img src="{{STATIC_URL}}img/spinner.gif" style="width: 16px !important; height: 16px !important; background: none !important; display: none;" id="classify-spinner"><input id="classify-button" type="submit" href="#" class="btn" value="Classify!">
+                  <button id="classify-button" type="submit" href="#" class="btn" value="Classify!">
+                    <span>Classify!</span>
+                    <img src="{{STATIC_URL}}img/spinner.gif" id="classify-spinner">
+                  </button>
                 </td>
               </tr>
             </tbody>

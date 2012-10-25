@@ -27,6 +27,12 @@
   -ms-box-sizing: border-box;
   box-sizing: border-box;
 }
+.body-classifier #classify-spinner {
+  width: 16px !important;
+  height: 16px !important;
+  background: none !important;
+  display: none;
+}
 .body-classifier table#classifier-test td:first-child {
   width: 120px;
   text-align: right;
