@@ -35,10 +35,8 @@ class SampleVotingManager(Task):
         """ New Samples since last update. We should send those to external
             voting service.
         """
-        mapped_samples = SampleMapping.objects.select_related('sample').all()
-        mapped_samples_ids = set([s.sample.id for s in mapped_samples])
         samples = Sample.objects.select_related('job').filter(
-            vote_sample=True).exclude(id__in=mapped_samples_ids)
+            vote_sample=True, samplemapping=None)
         return samples.exclude(screenshot='')
 
     def get_jobs(self, all_samples):
