@@ -43,8 +43,7 @@
                         <span class="box-header" data-bind="html: content"></span>
                         <span class="box-content" data-bind="text: title"></span>
                         <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
-                        <!-- TODO XXX change 5 min ago to pretty date display and remove this comment -->
-                        <span class="date">5 min ago</span>
+                        <span data-bind="text: time_ago" class="date"></span>
                       </div>
                     </div>
                   </div>
@@ -304,7 +303,7 @@ function updateAlerts(url){
 
     $.each(data['entries'], function(idx, val){
       box = val['box'];
-      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}));
+      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}, val['timedelta']));
       if (!(box['Image_url'] in image_cache)){
         img = new Image();
         img.src = box['Image_url'];

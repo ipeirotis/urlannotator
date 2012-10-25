@@ -1,5 +1,6 @@
 import json
-import memcache
+import datetime
+import pytz
 
 from django.conf.urls import url
 from django.conf import settings
@@ -535,8 +536,8 @@ class AlertResource(Resource):
             `id` - Integer. Alert's id.
             `type` - Integer. Alert's type.
             `job_id` - Integer. Alert's job's id.
-            `date` - String. Alert's date in format %Y-%m-%d %H:%M:%S as of
-                     datetime.strftime()
+            `timedelta` - Integer. Difference between current time and time of
+                          creation.
             `single_text` - String. Text of the alert in singular form.
             `plural_text` - String. Text of the alert in plural form.
             `box` - Dictionary. Contains data about alert's update box
@@ -553,11 +554,12 @@ class AlertResource(Resource):
                           considered as empty in that case.
                 `Job_id` - Integer. Alert's job's id.
         """
+        delta = datetime.datetime.now(pytz.utc) - log.date
         return {
             'id': log.id,
             'type': log.log_type,
             'job_id': log.job_id,
-            'date': log.date.strftime('%Y-%m-%d %H:%M:%S'),
+            'timedelta': round(delta.total_seconds()),
             'single_text': log.get_single_text(),
             'plural_text': log.get_plural_text(),
             'box': log.get_box(),

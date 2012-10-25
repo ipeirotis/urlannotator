@@ -24,13 +24,14 @@ function vote(){
 }
 
 
-function alert_view(screenshot, worker_id, worker_name, title, content, job_id){
+function alert_view(screenshot, worker_id, worker_name, title, content, job_id, delta){
   this.screenshot = screenshot;
   this.worker_id = worker_id;
   this.workerName = worker_name;
   this.title = title;
   this.content = content;
-  this.job_id = job_id
+  this.job_id = job_id;
+  this.delta = delta;
 
   this.hasWorker = ko.computed(function(){
     return this.worker_id;
@@ -42,6 +43,62 @@ function alert_view(screenshot, worker_id, worker_name, title, content, job_id){
   }, this);
   this.hasScreenshot = ko.computed(function(){
     return this.screenshot;
+  }, this);
+  this.time_ago = ko.computed(function(){
+    var elapsed = this.delta;
+    var sPerMinute = 60;
+    var sPerHour = sPerMinute * 60;
+    var sPerDay = sPerHour * 24;
+    var sPerMonth = sPerDay * 30;
+    var sPerYear = sPerDay * 365;
+
+    if (elapsed < sPerMinute) {
+      val = Math.round(elapsed);
+      if (val == 1)
+        return 'A second ago';
+      else
+        return val + ' seconds ago';
+    }
+
+    else if (elapsed < sPerHour) {
+      val = Math.round(elapsed/sPerMinute);
+      if (val == 1)
+        return 'A minute ago';
+      else
+        return val + ' minutes ago';
+    }
+
+    else if (elapsed < sPerDay ) {
+      val = Math.round(elapsed/sPerHour);
+      if (val == 1)
+        return  'An hour ago';
+      else
+        return val + ' hours ago';
+    }
+
+    else if (elapsed < sPerMonth) {
+      val = Math.round(elapsed/sPerDay);
+      if (val == 1)
+        return 'A day ago';
+      else
+        return val + ' days ago';
+    }
+
+    else if (elapsed < sPerYear) {
+      val = Math.round(elapsed/sPerMonth);
+      if (val == 1)
+        return 'A month ago';
+      else
+        return val + ' months ago';
+    }
+
+    else {
+      val = Math.round(elapsed/sPerYear);
+      if (val == 1)
+        return 'A year ago';
+      else
+        return val + ' years ago';
+    }
   }, this);
 }
 
