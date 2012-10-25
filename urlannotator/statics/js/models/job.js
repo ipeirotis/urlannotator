@@ -6,8 +6,13 @@ function worker(){
   this.name = ko.observable();
   this.hours_spent = ko.observable();
   this.votes_added = ko.observable();
-  this.earned = ko.observable()
-  this.start_time = ko.observable()
+  this.earned = ko.observable();
+  this.start_time = ko.observable();
+  this.job_id = ko.observable();
+
+  this.worker_url = ko.computed(function(){
+    return '/project/' + this.job_id() + '/workers/' + this.id()
+  }, this);
 }
 
 function vote(){
