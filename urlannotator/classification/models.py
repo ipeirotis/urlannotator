@@ -94,6 +94,8 @@ class TrainingSample(models.Model):
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=20, choices=LABEL_CHOICES)
 
+    class Meta:
+        unique_together = ['set', 'sample']
 
 class ClassifiedSampleManager(models.Manager):
     def _sanitize(self, args, kwargs):
