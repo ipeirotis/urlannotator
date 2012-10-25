@@ -71,7 +71,7 @@
                 <td></td>
                 <td>
                   <input id="radio-urls" type="radio" name="test-type" checked="checked" value="urls">URL(s)
-                  <input id="radio-texts" type="radio" name="test-type" value="texts">Text(s)
+                  <!-- <input id="radio-texts" type="radio" name="test-type" value="texts">Text(s) -->
                 </td>
               </tr>
               <tr id="input-test-urls">
@@ -100,7 +100,8 @@
                 <td></td>
                 <td>
                   {%csrf_token%}
-                  <input type="submit" href="#" class="btn" value="Classify!">
+                  <!-- TODO XXX correct css styles so that the spinner is not as big as the preview images -->
+                  <img src="{{STATIC_URL}}img/spinner.gif" style="width: 16px !important; height: 16px !important; background: none !important; display: none;" id="classify-spinner"><input id="classify-button" type="submit" href="#" class="btn" value="Classify!">
                 </td>
               </tr>
             </tbody>
@@ -226,6 +227,21 @@ function updateClassifierStats(){
 }
 
 var image_cache = {};
+function toggleClassifyButton(enabled)
+{
+  spinner = $('#classify-spinner');
+  button = $('#classify-button');
+
+  if (enabled)
+  {
+    spinner.css('display', 'none');
+    button.removeAttr('disabled');
+  } else
+  {
+    spinner.css('display', 'inline');
+    button.attr('disabled', 'disabled');
+  }
+}
 
 function updateClassifierHistory(){
   $.get("{%url api_classifier_history api_name='v1' resource_name='job' job_id=project.id%}?limit=10", function(data){
@@ -267,9 +283,10 @@ function updateClassifierHistory(){
       if (val['active'])
         new_cache[idx] = val;
     });
-    image_cache = new_cache
+    image_cache = new_cache;
 
-    history.entries(new_entries)
+    toggleClassifyButton(true);
+    history.entries(new_entries);
   })
 }
 
@@ -279,13 +296,13 @@ function submitClassify(){
   var form = document.forms['classifyForm'];
   var type = 'urls';
   csrftoken = form['csrfmiddlewaretoken'].value;
-  $.each(form['test-type'], function(idx, val){
-    if (val.checked)
-    {
-      type = val.value;
-      return false;
-    }
-  });
+  // $.each(form['test-type'], function(idx, val){
+  //   if (val.checked)
+  //   {
+  //     type = val.value;
+  //     return false;
+  //   }
+  // });
   if (type == 'urls'){
     var urls = form['test-urls'].value.replace('\r', '')
     $('#test-urls').val('');
@@ -298,6 +315,7 @@ function submitClassify(){
       }, function(){
       });
   }
+  toggleClassifyButton(false);
   return false;
 }
 
