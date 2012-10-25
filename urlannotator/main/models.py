@@ -1099,10 +1099,10 @@ class Worker(models.Model):
             r = client.provider.get_provider(self.external_id)
             return r['dev_full_name']
 
-        # if self.worker_type == WORKER_TYPE_TAGASAURIS:
-        #     tc = make_tagapi_client()
-        #     worker_info = tc.get_worker(worker_id=self.external_id)
-        #     return worker_info['name']
+        if self.worker_type == WORKER_TYPE_TAGASAURIS:
+            tc = make_tagapi_client()
+            worker_info = tc.get_worker(worker_id=self.external_id)
+            return worker_info['name']
 
         return 'Worker %d' % self.id
 
