@@ -58,6 +58,7 @@
   width: 14px;
   height: 14px;
   display: inline-block;
+  margin-top: 2px;
 }
 .body-data i.ok {
   background: url('/statics/img/ico_ok.png') no-repeat 0px 0px;
@@ -67,6 +68,14 @@
 }
 .body-data i.broken {
   background: url('/statics/img/ico_broken.png') no-repeat 0px 0px;
+}
+.body-data table.fix td.tiny-col,
+.body-data table.fix th.tiny-col {
+  width: 100px;
+}
+.body-data table.fix td.url,
+.body-data table.fix th.url {
+  width: auto;
 }
 .body-data-detail table#more-information td:first-child {
   width: 140px;

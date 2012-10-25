@@ -27,8 +27,8 @@
                 <th class="url">URL</th>
                 <th class="tiny-col">Added on</th>
                 <th class="tiny-col">Workers</th>
-                <th style="width: 100px">Voting</th>
-                <th style="width: 100px">Class probability</th>
+                <th class="tiny-col">Voting</th>
+                <th class="tiny-col">Class probability</th>
               </tr>
             </thead>
             <tbody>
@@ -48,8 +48,8 @@
                   </td>
                   <td class="tiny-col">{{data.added_on|date:"Y-m-d H:i"}}</td>
                   <td class="tiny-col">{{data.get_workers|length}}</td>
-                  <td>{{data.get_yes_votes}} <i class=" ok"></i> {{data.get_no_votes}} <i class=" no"></i> {{data.get_broken_votes}} <i class=" broken"></i></td>
-                  <td>
+                  <td class="tiny-col">{{data.get_yes_votes}} <i class=" ok"></i> {{data.get_no_votes}} <i class=" no"></i> {{data.get_broken_votes}} <i class=" broken"></i></td>
+                  <td class="tiny-col">
                     {% if data.is_gold_sample %}
                     GOLD SAMPLE
                     {% else %}
