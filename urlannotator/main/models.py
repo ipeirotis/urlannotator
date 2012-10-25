@@ -18,7 +18,8 @@ from tenclouds.django.jsonfield.fields import JSONField
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 from urlannotator.settings import imagescale2
-from urlannotator.crowdsourcing.tagasauris_helper import stop_job
+from urlannotator.crowdsourcing.tagasauris_helper import (stop_job,
+    make_tagapi_client)
 
 import logging
 log = logging.getLogger(__name__)
