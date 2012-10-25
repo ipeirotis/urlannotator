@@ -334,7 +334,7 @@ def train(set_id):
         )
 
         # Reclassify samples using new classifier
-        job.reclassify_samples()
+        # job.reclassify_samples()
 
 
 @task(ignore_result=True)
