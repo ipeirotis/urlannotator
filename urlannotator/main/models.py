@@ -201,7 +201,7 @@ class Job(models.Model):
 
         for sample in self.sample_set.all().iterator():
             if sample.is_gold_sample():
-                sample, created = TrainingSample.objects.get_or_create(
+                ts_sample, created = TrainingSample.objects.get_or_create(
                     set=ts,
                     sample=sample,
                     label=sample.goldsample.label,
@@ -210,8 +210,8 @@ class Job(models.Model):
                     log.info(
                         'Job %d: Overriden gold sample %d.' % (self.id, sample.id)
                     )
-                sample.label = sample.goldsample.label
-                sample.save()
+                ts_sample.label = sample.goldsample.label
+                ts_sample.save()
 
         send_event(
             'EventTrainingSetCompleted',
