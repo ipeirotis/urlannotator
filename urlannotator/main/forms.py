@@ -154,8 +154,11 @@ class WizardAdditionalForm(forms.Form):
 
 class BTMForm(forms.Form):
     topic = forms.CharField(required=True, label="Topic",
-            help_text="e.g. Chocolate bar chocolate cake gingerbread pudding.")
+            help_text="E.g Identify pages that contain hate speech on the web.")
     topic_desc = forms.CharField(required=True, widget=forms.Textarea,
         label="Topic description",
-        help_text='e.g. Sesame snaps suger plum dessert macaroon gummi<br/> bears gingerbread sweet roll. Marshmallow jelly beans<br/> toffee biscuit chocolate bar ice cream. Toffee souffle jelly<br/> jujubes gummies jelly beans jelly powder.')
+        help_text='E.g Find sites which advocate hostility or aggression</br>'
+        'toward individuals or groups on the basis of race,</br>'
+        'religion, gender, nationality, ethnic origni, or other</br>'
+        'involuntary characteristic.')
     no_of_urls = forms.IntegerField(min_value=1, label='Number of urls')
