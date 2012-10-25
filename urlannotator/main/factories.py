@@ -1,11 +1,12 @@
 import datetime
+import random
 
 from django.conf import settings
 from celery import group, chain
 
 from urlannotator.classification.models import TrainingSet
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.main.models import Job, Sample
+from urlannotator.main.models import Job, Sample, FillSample, LABEL_NO
 from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample,
     copy_sample_to_job)
@@ -89,15 +90,22 @@ class JobFactory(object):
         """
         job = Job.objects.get(id=job_id)
 
-        if not job.gold_samples:
-            job.set_gold_samples_done()
-        else:
-            for gold_sample in job.gold_samples:
-                Sample.objects.create_by_owner(
-                    job_id=job_id,
-                    url=gold_sample['url'],
-                    label=gold_sample['label']
-                )
+        fillers = list(FillSample.objects.all())
+        random.shuffle(fillers)
+        fillers = fillers[:min(job.no_of_urls, len(fillers))]
+        for filler in fillers:
+            job.gold_samples.append({
+                'url': filler.url,
+                'label': LABEL_NO,
+            })
+        job.save()
+
+        for gold_sample in job.gold_samples:
+            Sample.objects.create_by_owner(
+                job_id=job_id,
+                url=gold_sample['url'],
+                label=gold_sample['label']
+            )
 
     def classify_urls(self, job_id):
         """
