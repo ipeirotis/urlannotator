@@ -198,6 +198,21 @@ class Job(models.Model):
                 sample=sample,
                 label=label,
             )
+
+        for sample in self.sample_set.all().iterator():
+            if sample.is_gold_sample():
+                sample, created = TrainingSample.objects.get_or_create(
+                    set=ts,
+                    sample=sample,
+                    label=sample.goldsample.label,
+                )
+                if not created:
+                    log.info(
+                        'Job %d: Overriden gold sample %d.' % (self.id, sample.id)
+                    )
+                sample.label = sample.goldsample.label
+                sample.save()
+
         send_event(
             'EventTrainingSetCompleted',
             set_id=ts.id,
@@ -1347,3 +1362,13 @@ def create_stats(sender, instance, created, **kwargs):
         VotesStatistics.objects.create(job=instance, value=0)
 
 post_save.connect(create_stats, sender=Job)
+
+
+class FillSample(models.Model):
+    """
+        Contains a link to a webpage that will be added to a job as a negative
+        gold sample.
+
+        Amount of samples added is equal to total number of urls to find.
+    """
+    url = models.URLField(primary_key=True)

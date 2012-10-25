@@ -2,7 +2,7 @@ from django.db import IntegrityError
 
 from urlannotator.crowdsourcing.models import WorkerQualityVote
 from urlannotator.main.models import (Sample, Worker, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN, Job, WorkerJobAssociation, GoldSample)
+    LABEL_BROKEN, Job, WorkerJobAssociation)
 
 
 class VotesStorage(object):
@@ -234,12 +234,6 @@ class MajorityVoting(CrowdsourcingQualityAlgorithm):
                 LABEL_NO: 0,
                 LABEL_BROKEN: 0,
             })
-            gold = GoldSample.objects.filter(sample_id=object_id)
-
-            # Gold samples can't change their label.
-            if gold:
-                counts[gold[0].label] = 1000
-                continue
 
             if label == LABEL_YES:
                 count = counts.get(LABEL_YES, 0)

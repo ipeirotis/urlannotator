@@ -245,6 +245,21 @@ class ProcessVotesManager(Task):
                         sample=sample,
                         label=label,
                     )
+
+                for sample in Sample.objects.filter(job=job).iterator():
+                    if sample.is_gold_sample():
+                        sample, created = TrainingSample.objects.get_or_create(
+                            set=ts,
+                            sample=sample,
+                            label=sample.goldsample.label,
+                        )
+                        if not created:
+                            log.info(
+                                'ProcessVotesManager: Overriden gold sample %d.' % sample.id
+                            )
+                        sample.label = sample.goldsample.label
+                        sample.save()
+
                 send_event(
                     'EventTrainingSetCompleted',
                     set_id=ts.id,
