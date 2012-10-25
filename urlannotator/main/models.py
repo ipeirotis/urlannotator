@@ -367,7 +367,7 @@ class Job(models.Model):
         """
         performances = self.classifierperformance_set.all()
         ret = max(performances, key=(lambda x: x.date))
-        return ret.value.get('AUC', 0)
+        return round(ret.value.get('AUC', 0), 2)
 
     def get_newest_votes(self, num=3):
         """
