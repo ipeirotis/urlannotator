@@ -97,6 +97,7 @@ class TrainingSample(models.Model):
     class Meta:
         unique_together = ['set', 'sample']
 
+
 class ClassifiedSampleManager(models.Manager):
     def _sanitize(self, args, kwargs):
         """
