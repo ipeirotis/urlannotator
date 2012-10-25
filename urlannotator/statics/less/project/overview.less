@@ -92,12 +92,12 @@
             }
           }
           .box-inner {
-            float:right;
+            float:left;
             height:60px;
           }
-          .box-inner span.box-header {.overflow(150px); }
+          .box-inner span.box-header a {.overflow(150px); }
           @media(min-width: 1200px) {
-            .box-inner span.box-header { .overflow( 200px ); }
+            .box-inner span.box-header a { .overflow( 200px ); }
           }
           span.box-header {
             display: block;
@@ -107,6 +107,8 @@
               color:#0088cc;
               text-decoration: none;
               font-weight:normal;
+              white-space:nowrap;
+              float:left;
             }
           }
           span.box-content {
