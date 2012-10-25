@@ -37,7 +37,7 @@ function alert_view(screenshot, worker_id, worker_name, title, content, job_id){
   }, this);
   this.workerURL = ko.computed(function(){
     if (this.hasWorker())
-      return '/project/'+this.job_id+'/workers/'+this.worker_id+'/';
+      return '/project/'+this.job_id+'/workers/'+this.worker_id;
     return '';
   }, this);
   this.hasScreenshot = ko.computed(function(){
