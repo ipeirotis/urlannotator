@@ -40,7 +40,7 @@ form.form.form-horizontal .form-actions {
   border: 0;
   color: #0088cc;
   cursor: pointer;
-  text-decoration: underline;
+  text-decoration: none;
 }
 .btn-link:hover {
   text-decoration: underline;

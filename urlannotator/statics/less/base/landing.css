@@ -143,9 +143,13 @@ header.content .content-login .container-login span,
 header.content .content-login .container-login .btn-register {
   margin-top: 26px;
   margin-left: 10px;
+  font-size: 14;
+}
+header.content .content-login .container-login .span-or {
+  color: white;
 }
 header.content .content-login .container-login .btn-register {
-  color: #694E58;
+  color: #694e58;
   text-decoration: underline;
 }
 section.content {
@@ -177,7 +181,7 @@ section.content > .container .col-wrapper p {
   font-size: 11px;
   line-height: 16px;
   font-weight: bold;
-  color: #d4d4d4;
+  color: #333;
 }
 section.content > .container .col1 .col-container {
   background-position: -22px -17px;
@@ -207,6 +211,71 @@ section.content > .container .col4 h1 {
   section.content {
     top: -360px;
   }
+}
+section.section-middle {
+  margin-top: 55px;
+}
+section.section-middle .container {
+  border-top: 1px solid #bfbfbf;
+  border-bottom: 1px solid #bfbfbf;
+  padding: 60px 0px;
+}
+section.section-middle .container h1 {
+  font-weight: normal;
+  font-style: italic;
+  text-align: center;
+  font-size: 28px;
+  margin: 12px auto;
+  text-align: center;
+}
+section.section-bottom .container {
+  padding: 30px 0px;
+  background: url('/statics/img/u_landing_03.png') repeat 0px 0px;
+}
+section.section-bottom .container .col1,
+section.section-bottom .container .col2 {
+  float: left;
+  width: 48%;
+}
+section.section-bottom .container .col1 .ico,
+section.section-bottom .container .col2 .ico {
+  height: 100px;
+  width: 100px;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background-color: white;
+  float: left;
+  margin-left: 50px;
+}
+section.section-bottom .container .col1 .ico-desc,
+section.section-bottom .container .col2 .ico-desc {
+  margin-left: 240px;
+  margin-top: 30px;
+}
+section.section-bottom .container .col1 .ico-desc p,
+section.section-bottom .container .col2 .ico-desc p {
+  text-align: left;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 18px;
+  color: #333;
+}
+section.section-bottom .container .col1 .ico-desc p a,
+section.section-bottom .container .col2 .ico-desc p a {
+  color: #694e58;
+  text-decoration: underline;
+}
+section.section-bottom .container .col1 .ico-desc p a:hover,
+section.section-bottom .container .col2 .ico-desc p a:hover {
+  color: #704e58;
+}
+section.section-bottom .container .col1 .ico {
+  background: #ffffff url('/statics/img/u_landing_07.png') no-repeat 32px 28px;
+}
+section.section-bottom .container .col2 .ico {
+  background: #ffffff url('/statics/img/u_landing_09.png') no-repeat 28px 28px;
 }
 footer.footer {
   padding: 20px 0;

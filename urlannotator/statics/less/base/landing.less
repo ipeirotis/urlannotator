@@ -96,9 +96,13 @@ header.content {
       span, .btn-register {
         margin-top:26px;
         margin-left:10px;
+        font-size:14;
+      }
+      .span-or {
+        color:white;
       }
       .btn-register {
-        color:#694E58;
+        color:#694e58;
         text-decoration: underline;
       }
     }
@@ -137,7 +141,7 @@ section.content {
         font-size:11px;
         line-height:16px;
         font-weight:bold;
-        color:#d4d4d4;
+        color:#333;
       }
     }
     .col1 {
@@ -182,6 +186,73 @@ section.content {
     top:-360px;
   }
 }
+
+section.section-middle {
+  margin-top:55px;
+  .container {
+    border-top:1px solid #bfbfbf;
+    border-bottom:1px solid #bfbfbf;
+    padding:60px 0px;
+    h1 {
+      font-weight:normal;
+      font-style: italic;
+      text-align: center;
+      font-size:28px;
+      margin:12px auto;
+      text-align: center;
+    }
+  }
+}
+
+section.section-bottom {
+  .container {
+    padding:30px 0px;
+    background:url('/statics/img/u_landing_03.png') repeat 0px 0px;
+    .col1, .col2 {
+      float:left;
+      width:48%;
+      .ico {
+        height:100px;
+        width:100px;
+        .border-radius(50%);
+        border:2px solid #ddd;
+        background-color: white;
+        float:left;
+        margin-left:50px;
+      }
+      .ico-desc {
+        margin-left: 240px;
+        margin-top:30px;
+        p {
+          text-align: left;
+          font-style:italic;
+          font-size:14px;
+          line-height:18px;
+          color:#333;
+          a {
+            color:#694e58;
+            text-decoration: underline;
+            &:hover {
+              color:#704e58;
+            }
+          }
+        }
+      }
+    }
+    .col1 {
+      .ico {
+        background:white url('/statics/img/u_landing_07.png') no-repeat 32px 28px;
+      }
+
+    }
+    .col2 {
+      .ico {
+        background:white url('/statics/img/u_landing_09.png') no-repeat 28px 28px;
+      }
+    }
+  }
+}
+
 
 footer.content {
   > .container {
