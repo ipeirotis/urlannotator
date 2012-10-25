@@ -178,7 +178,7 @@ section.content > .container .col-wrapper h1 {
 section.content > .container .col-wrapper p {
   text-align: left;
   font-style: italic;
-  font-size: 11px;
+  font-size: 13px;
   line-height: 16px;
   font-weight: bold;
   color: #333;
@@ -258,7 +258,7 @@ section.section-bottom .container .col1 .ico-desc p,
 section.section-bottom .container .col2 .ico-desc p {
   text-align: left;
   font-style: italic;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 18px;
   color: #333;
 }
