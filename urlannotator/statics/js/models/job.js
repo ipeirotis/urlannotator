@@ -21,6 +21,7 @@ function vote(){
   this.added_on = ko.observable();
   this.label = ko.observable();
   this.sample_url = ko.observable();
+  this.date = ko.observable();
 }
 
 
