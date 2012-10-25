@@ -48,7 +48,7 @@
                   </td>
                   <td class="tiny-col">{{data.added_on|date:"Y-m-d H:i"}}</td>
                   <td class="tiny-col">{{data.get_workers|length}}</td>
-                  <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
+                  <td>{{data.get_yes_votes}} <i class=" ok"></i> {{data.get_no_votes}} <i class=" no"></i> {{data.get_broken_votes}} <i class=" broken"></i></td>
                   <td>
                     {% if data.is_gold_sample %}
                     GOLD SAMPLE

@@ -52,6 +52,22 @@
 .body-data .popover .popover-inner .popover-content {
   padding: 0px;
 }
+.body-data i.ok,
+.body-data i.no,
+.body-data i.broken {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+}
+.body-data i.ok {
+  background: url('/statics/img/ico_ok.png') no-repeat 0px 0px;
+}
+.body-data i.no {
+  background: url('/statics/img/ico_no.png') no-repeat 0px 0px;
+}
+.body-data i.broken {
+  background: url('/statics/img/ico_broken.png') no-repeat 0px 0px;
+}
 .body-data-detail table#more-information td:first-child {
   width: 140px;
   text-align: right;
