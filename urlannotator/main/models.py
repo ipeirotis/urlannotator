@@ -204,7 +204,6 @@ class Job(models.Model):
                 ts_sample, created = TrainingSample.objects.get_or_create(
                     set=ts,
                     sample=sample,
-                    label=sample.goldsample.label,
                 )
                 if not created:
                     log.info(
