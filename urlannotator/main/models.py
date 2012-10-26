@@ -9,6 +9,7 @@ from django.db.models import F, Sum
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.utils.timezone import now
+from django.utils.http import urlencode
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.cache import get_cache
@@ -849,50 +850,40 @@ class Sample(models.Model):
         algorithm.update(self.screenshot)
         return algorithm.hexdigest()
 
-    def get_thumbnail(self, width=60, height=60):
+    def get_thumbnail_url(self, width=60, height=60):
         """
-            Returns a thumbnail from sample's screenshot fit to given size.
+            Returns url which serves sample's thumbnail in given size.
         """
+        base_url = 'http://' + settings.IMAGESCALE_URL
         params = {
             'width': width,
             'height': height,
             'url': self.screenshot,
             'key': self.get_screenshot_key(),
         }
-        r = requests.get('http://' + settings.IMAGESCALE_URL, params=params)
-        return r.content
+        url = '%s/?%s' % (base_url, urlencode(params))
+        return url
 
     def get_small_thumbnail_url(self):
         """
             Returns url which serves sample's small thumbnail.
         """
-        return self.get_thumbnail_url('small')
+        return self.get_thumbnail_url(width=60, height=60)
 
-    def get_small_thumbnail(self):
-        """
-            Returns a small (60x60) thumbnail to use in samples list, etc.
-        """
-        return self.get_thumbnail(width=60, height=60)
+    def get_65x45_thumbnail_url(self):
+        return self.get_thumbnail_url(width=65, height=45)
 
-    def get_thumbnail_url(self, size):
-        """
-            Returns url which serves sample's thumbnail in given size.
+    def get_240x180_thumbnail_url(self):
+        return self.get_thumbnail_url(width=240, height=180)
 
-            :param size: one of `size`, `large`
-        """
-        return reverse('sample_thumbnail', args=[self.id, size])
+    def get_690x518_thumbnail_url(self):
+        return self.get_thumbnail_url(width=690, height=518)
 
     def get_large_thumbnail_url(self):
         """
             Returns url which serves sample's small thumbnail.
         """
-        return self.get_thumbnail_url('large')
-
-    def get_large_thumbnail(self):
-        """
-            Returns a large (300x300) thumbnail to use as screenshot's preview.
-        """
-        return self.get_thumbnail(width=300, height=300)
+        return self.get_thumbnail_url()
 
     def is_finished(self):
         """
