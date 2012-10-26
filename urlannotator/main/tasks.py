@@ -191,13 +191,21 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
     try:
         old_sample = Sample.objects.get(id=sample_id)
         job = Job.objects.get(id=job_id)
+
+        is_btm = old_sample.btm_sample
+        vote_sample = False if is_btm else True
+        training = False if is_btm else True
+
         new_sample = Sample.objects.create(
             job=job,
             url=old_sample.url,
             text=old_sample.text,
             screenshot=old_sample.screenshot,
             source_type=source_type,
-            source_val=source_val
+            source_val=source_val,
+            btm_sample=is_btm,
+            vote_sample=vote_sample,
+            training=training,
         )
 
         send_event(

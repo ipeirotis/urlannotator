@@ -34,22 +34,30 @@ class SampleFactory(object):
         samples = Sample.objects.filter(url=url)
         job = Job.objects.get(id=job_id)
 
+        is_btm = kwargs.get('btm_sample', False)
+
         # Create a new sample for the job from existing one (if job is
         # missing it). If the job has that sample, create only classified.
         if samples:
-            job_samples = samples.filter(job=job)
-            if job_samples:
-                return create_classify_sample.delay(
-                    result=(True, job_samples[0].id),
-                    label=label,
-                    *args, **kwargs
-                )
-            return (
-                copy_sample_to_job.s(samples[0].id, job.id, label=label,
-                    *args, **kwargs)
-                |
-                create_classify_sample.s(label=label, *args, **kwargs)
-            ).apply_async()
+            job_samples = samples.filter(job=job, btm_sample=is_btm)
+            if is_btm:
+                if job_samples:
+                    return job_samples[0].id
+                return copy_sample_to_job.s(samples[0].id, job.id,
+                    label=label, *args, **kwargs).apply_async()
+            else:
+                if job_samples:
+                    return create_classify_sample.delay(
+                        result=(True, job_samples[0].id),
+                        label=label,
+                        *args, **kwargs
+                    )
+                return (
+                    copy_sample_to_job.s(samples[0].id, job.id, label=label,
+                        *args, **kwargs)
+                    |
+                    create_classify_sample.s(label=label, *args, **kwargs)
+                ).apply_async()
 
         sample = Sample.objects.create(url=url, job=job)
 
