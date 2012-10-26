@@ -210,15 +210,7 @@ LOGGING = {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
-        },
-        'sentry': {
-            'level': 'WARNING',
-            'class': 'raven.contrib.django.handlers.SentryHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console', 'sentry'],
-        'level': 'WARNING'
+        }
     },
     'loggers': {
         'django.request': {
@@ -230,7 +222,7 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': True,
-        },
+        }
     }
 }
 
