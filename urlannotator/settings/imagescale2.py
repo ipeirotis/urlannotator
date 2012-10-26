@@ -2,7 +2,7 @@ import os
 
 from tenclouds.imagescale2.settings import *
 
-DEF_HOST = 'localhost'
+DEF_HOST = '0.0.0.0'
 DEF_PORT = 12345
 
 DEF_WIDTH = 100
