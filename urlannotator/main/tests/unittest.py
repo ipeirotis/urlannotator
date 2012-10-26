@@ -606,8 +606,8 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             {'test-urls': testUrl}, follow=True)
         newNum = ClassifiedSample.objects.filter(url=testUrl).count()
 
-        # classification request + training reclassify + old data
-        self.assertEqual(newNum - oldNum, 2)
+        # classification request + old data
+        self.assertEqual(newNum - oldNum, 1)
         # old data, no new sample since this is the same url
         self.assertEqual(Sample.objects.filter(job=job).count(), 1)
 
