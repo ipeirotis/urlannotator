@@ -216,6 +216,7 @@ class Job(models.Model):
         send_event(
             'EventTrainingSetCompleted',
             set_id=ts.id,
+            job_id=self.id,
         )
 
     def start_btm(self, topic, description, no_of_urls):

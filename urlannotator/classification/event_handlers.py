@@ -262,6 +262,7 @@ class ProcessVotesManager(Task):
                 send_event(
                     'EventTrainingSetCompleted',
                     set_id=ts.id,
+                    job_id=job.id,
                 )
         finally:
             p.release()
