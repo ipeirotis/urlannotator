@@ -31,7 +31,7 @@ EMAIL_HOST_USER = None
 EMAIL_HOST_PASSWORD = None
 
 # django sentry
-SENTRY_DSN = None
+SENTRY_DSN = 'http://d0cf3412cdd74976abcb9b4ebcce906c:48f0cece0ff14bf490bcfe9249f4e231@sentry.10clouds.com/9'
 INSTALLED_APPS = INSTALLED_APPS + (
     'raven.contrib.django',
 )
