@@ -11,7 +11,11 @@ JS_DEBUG = DEBUG
 _tempdir = tempfile.tempdir or '/tmp'
 ROOT_DIR = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 
-ADMINS = ()
+ADMINS = (
+  ('mickek', 'michal.klujszo@10clouds.com'),
+  ('maciej.gol', 'maciej.gol@10clouds.com'),
+  ('przemyslaw.spodymek', 'przemyslaw.spodymek@10clouds.com')
+)
 MANAGERS = ADMINS
 DATABASES = {}
 
