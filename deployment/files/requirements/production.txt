@@ -1,2 +1,3 @@
 raven
 flup
+psycopg2

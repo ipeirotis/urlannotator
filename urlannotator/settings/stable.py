@@ -9,13 +9,6 @@ PIPELINE = True
 
 SOCIAL_AUTH_RAISE_EXCEPTIONS = False
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-    }
-}
-
 KEY_PREFIX = 'stable_urlannotator'
 
 MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
@@ -83,13 +76,6 @@ LOGGING = {
     }
 }
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-    }
-}
-
 CACHES['memcache']['KEY_PREFIX'] = KEY_PREFIX
 
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
@@ -107,6 +93,15 @@ BROKER_URL = 'amqp://guest@localhost:5674/'
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
+
+DATABASES = {
+    'default': {
+    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'NAME': STABLE_DB_NAME,
+    'USER': STABLE_DB_USER,
+    'PASSWORD': STABLE_DB_PASSWORD,
+    }
+}
 
 # Tagasauris settings
 TAGASAURIS_LOGIN = 'urlannotator'
