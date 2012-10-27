@@ -1,5 +1,4 @@
 import datetime
-import requests
 import hashlib
 import urlparse
 import odesk
@@ -11,7 +10,6 @@ from django.db.models.signals import post_save
 from django.utils.timezone import now
 from django.utils.http import urlencode
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.core.cache import get_cache
 from itertools import ifilter
 from tenclouds.django.jsonfield.fields import JSONField
@@ -785,10 +783,10 @@ class Sample(models.Model):
         A sample used to classify and verify.
     """
     job = models.ForeignKey(Job)
-    url = models.URLField()
+    url = models.URLField(max_length=500)
     domain = models.CharField(max_length=100, blank=False)
     text = models.TextField()
-    screenshot = models.URLField()
+    screenshot = models.URLField(max_length=500)
     source_type = models.CharField(max_length=100, blank=False)
     source_val = models.CharField(max_length=100, blank=True, null=True)
     added_on = models.DateTimeField(auto_now_add=True)
@@ -1363,4 +1361,4 @@ class FillSample(models.Model):
 
         Amount of samples added is equal to total number of urls to find.
     """
-    url = models.URLField(primary_key=True)
+    url = models.URLField(primary_key=True, max_length=500)

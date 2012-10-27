@@ -145,7 +145,7 @@ class ClassifiedSampleCore(models.Model):
         when corresponding sample is created.
     """
     sample = models.ForeignKey(Sample, blank=True, null=True)
-    url = models.URLField()
+    url = models.URLField(max_length=500)
     job = models.ForeignKey(Job)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
     source_type = models.CharField(max_length=100, blank=False)
