@@ -222,15 +222,15 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
 class TagasaurisJobs(models.Model):
     urlannotator_job = models.OneToOneField(Job)
-    sample_gathering_key = models.CharField(max_length=25)
-    voting_key = models.CharField(max_length=25, null=True, blank=True)
-    voting_btm_key = models.CharField(max_length=25, null=True, blank=True)
-    beatthemachine_key = models.CharField(max_length=25, null=True, blank=True)
-    sample_gathering_hit = models.CharField(max_length=25, null=True,
+    sample_gathering_key = models.CharField(max_length=64)
+    voting_key = models.CharField(max_length=64, null=True, blank=True)
+    voting_btm_key = models.CharField(max_length=64, null=True, blank=True)
+    beatthemachine_key = models.CharField(max_length=64, null=True, blank=True)
+    sample_gathering_hit = models.CharField(max_length=64, null=True,
         blank=True)
-    voting_hit = models.CharField(max_length=25, null=True, blank=True)
-    voting_btm_hit = models.CharField(max_length=25, null=True, blank=True)
-    beatthemachine_hit = models.CharField(max_length=25, null=True, blank=True)
+    voting_hit = models.CharField(max_length=64, null=True, blank=True)
+    voting_btm_hit = models.CharField(max_length=64, null=True, blank=True)
+    beatthemachine_hit = models.CharField(max_length=64, null=True, blank=True)
 
     def _get_job_url(self, task):
         """ Returns URL under which Own Workforce can perform given task.
