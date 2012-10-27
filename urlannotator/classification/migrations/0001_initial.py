@@ -31,6 +31,9 @@ class Migration(SchemaMigration):
         # Deleting model 'Statistics'
         db.delete_table('classification_statistics')
 
+    depends_on = (
+        ('main', '0001_initial'),
+    )
 
     models = {
         'auth.group': {

@@ -49,11 +49,11 @@ class ClassifierPerformance(Statistics):
     objects = PerformanceManager()
 
 
-def create_stats(sender, instance, created, **kwargs):
+def create_stats(sender, instance, created, raw, **kwargs):
     """
         Creates a brand new statistics' entry for new job.
     """
-    if created:
+    if created and not raw:
         val = json.dumps({})
         ClassifierPerformance.objects.create(job=instance, value=val)
 

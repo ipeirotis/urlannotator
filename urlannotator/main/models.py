@@ -47,8 +47,8 @@ class Account(models.Model):
     worker_entry = models.OneToOneField('Worker', null=True, blank=True)
 
 
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
+def create_user_profile(sender, instance, created, raw, **kwargs):
+    if created and not raw:
         Account.objects.create(user=instance)
 
 post_save.connect(create_user_profile, sender=User)
@@ -1341,11 +1341,11 @@ class LinksStatistics(models.Model):
     objects = LinksStatManager()
 
 
-def create_stats(sender, instance, created, **kwargs):
+def create_stats(sender, instance, created, raw, **kwargs):
     """
         Creates a brand new statistics' entry for new job.
     """
-    if created:
+    if created and not raw:
         ProgressStatistics.objects.create(job=instance, value=0)
         SpentStatistics.objects.create(job=instance, value=0)
         URLStatistics.objects.create(job=instance, value=0)
