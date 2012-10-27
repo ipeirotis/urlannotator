@@ -146,8 +146,8 @@ class Job(models.Model):
     collected_urls = models.PositiveIntegerField(default=0)
     initialization_status = models.IntegerField(default=0)
     activated = models.DateTimeField(auto_now_add=True)
-    votes_storage = models.CharField(max_length=25)
-    quality_algorithm = models.CharField(max_length=25)
+    votes_storage = models.CharField(max_length=50)
+    quality_algorithm = models.CharField(max_length=50)
     btm_active = models.BooleanField(default=False)
     btm_to_gather = models.PositiveIntegerField(default=0)
 

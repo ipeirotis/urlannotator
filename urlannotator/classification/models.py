@@ -16,7 +16,7 @@ class Classifier(models.Model):
         use it.
     """
     job = models.ForeignKey(Job)
-    type = models.CharField(max_length=20)
+    type = models.CharField(max_length=50)
     parameters = JSONField(default='{}')
     main = models.BooleanField(default=True)
 

@@ -145,7 +145,7 @@ class WorkerPaymentManager(models.Manager):
 class JobPaymentSettings(models.Model):
     job = models.ForeignKey(Job)
     split_budget = JSONField(default='{}')
-    backend = models.CharField(max_length=25)
+    backend = models.CharField(max_length=50)
     main = models.BooleanField(default=True)
     backend_params = JSONField(default='{}')
 
@@ -157,7 +157,7 @@ class WorkerPayment(models.Model):
     job = models.ForeignKey(Job)
     worker = models.ForeignKey(Worker)
     amount = models.DecimalField(default=0, decimal_places=2, max_digits=10)
-    backend = models.CharField(max_length=25)
+    backend = models.CharField(max_length=50)
     status = models.PositiveIntegerField(choices=PAYMENT_STATUS_CHOICES)
     sub_status = models.CharField(max_length=50)
     job_task = models.PositiveIntegerField(choices=JOB_TASK_CHOICES)
