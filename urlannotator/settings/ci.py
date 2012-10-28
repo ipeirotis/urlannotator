@@ -8,13 +8,6 @@ from imagescale2 import *
 from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-    }
-}
-
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
@@ -80,6 +73,15 @@ BROKER_URL = 'amqp://guest@localhost:5673/'
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
+
+DATABASES = {
+    'default': {
+    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'NAME': DEVEL_DB_NAME,
+    'USER': DEVEL_DB_USER,
+    'PASSWORD': DEVEL_DB_PASSWORD,
+    }
+}
 
 # Tagasauris settings
 TAGASAURIS_LOGIN = 'urlannotator'
