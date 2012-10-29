@@ -87,9 +87,17 @@ def update_job_urls_gathered(job_id, sample_id):
     # If it was created by a worker - update top workers too.
     job.get_top_workers(cache=False)
 
+
+@task(ignore_result=True)
+def update_job_newest_votes(job_id, set_id):
+    job = Job.objects.get(id=job_id)
+    job.get_newest_votes(cache=False)
+
+
 FLOW_DEFINITIONS = [
     (r'^EventNewRawSample$', new_raw_sample_task),
     (r'^EventNewJobInitialization$', new_job_task),
     (r'^EventNewGoldSample$', new_gold_sample_task),
     (r'^EventNewSample$', update_job_urls_gathered),
+    (r'^EventTrainingSetCompleted$', update_job_newest_votes),
 ]

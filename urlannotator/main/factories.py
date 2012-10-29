@@ -164,3 +164,5 @@ class JobFactory(object):
         self.prepare_gold_samples(job.id)
         self.classify_urls(job.id)
         self.init_quality(job_id)
+
+        job.update_cache()

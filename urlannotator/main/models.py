@@ -10,12 +10,13 @@ from django.db.models.signals import post_save
 from django.utils.timezone import now
 from django.utils.http import urlencode
 from django.conf import settings
-from django.core.cache import get_cache
+from django.core.urlresolvers import reverse
 from itertools import ifilter
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
+from urlannotator.tools.utils import cached
 from urlannotator.settings import imagescale2
 from urlannotator.crowdsourcing.tagasauris_helper import (stop_job,
     make_tagapi_client)
@@ -161,9 +162,10 @@ class Job(models.Model):
         """
             Forces cache recalculation.
         """
-        self.get_hours_spent()
-        self.get_progress()
-        self.get_top_workers()
+        self.get_hours_spent(cache=False)
+        self.get_progress(cache=False)
+        self.get_top_workers(cache=False)
+        self.get_newest_votes(cache=False)
 
     def recreate_training_set(self, force=False):
         """
@@ -384,18 +386,38 @@ class Job(models.Model):
         ret = max(performances, key=(lambda x: x.date))
         return round(ret.value.get('AUC', 0), 2)
 
-    def get_newest_votes(self, num=3):
-        """
-            Returns newest correct votes in the job.
-        """
+    @cached
+    def _get_newest_votes(self, num, cache):
         from urlannotator.classification.models import (TrainingSet,
             TrainingSample)
         training_set = TrainingSet.objects.newest_for_job(job=self)
+        if not training_set:
+            return []
+
         samples = TrainingSample.objects.filter(
             set=training_set,
             label=LABEL_YES,
-        ).order_by('-id')[:num]
-        return samples
+        ).order_by('-id')[:num].iterator()
+        date = training_set.revision.strftime('%Y-%m-%d %H:%M:%S')
+        newest_votes = [{
+            'screenshot': s.sample.get_small_thumbnail_url(),
+            'url': s.sample.url,
+            'sample_url': reverse('project_data_detail', kwargs={
+                'id': self.id,
+                'data_id': s.sample.id,
+            }),
+            'label': s.label,
+            'added_on': s.sample.added_on.strftime('%Y-%m-%d %H:%M:%S'),
+            'date': date,
+        } for s in samples]
+        return newest_votes
+
+    def get_newest_votes(self, num=3, cache=False):
+        """
+            Returns newest correct votes in the job.
+        """
+        key = 'job-%d-newest_votes' % self.id
+        return self._get_newest_votes(cache_key=key, cache=cache, num=num)
 
     def is_own_workforce(self):
         return self.data_source == JOB_SOURCE_OWN_WORKFORCE
@@ -431,6 +453,14 @@ class Job(models.Model):
         send_event('EventNewJobInitialization',
             job_id=self.id)
 
+    @cached
+    def _get_hours_spent(self, cache):
+        sum_res = WorkerJobAssociation.objects.filter(job=self).\
+            aggregate(Sum('worked_hours'))
+        sum_res = sum_res['worked_hours__sum']
+        sum_res = sum_res if sum_res else 0
+        return sum_res
+
     def get_hours_spent(self, cache=False):
         """
             Returns number of hours workers have worked on this project
@@ -441,18 +471,16 @@ class Job(models.Model):
                             expired, it will be updated.
         """
         key = 'job-%d-hours-spent' % self.id
-        mc = get_cache('memcache')
-        val = mc.get(key)
-        if val is not None and cache:
-            return val
+        return self._get_hours_spent(cache_key=key, cache=cache)
 
-        sum_res = WorkerJobAssociation.objects.filter(job=self).\
-            aggregate(Sum('worked_hours'))
-        sum_res = sum_res['worked_hours__sum']
-        sum_res = sum_res if sum_res else 0
+    @cached
+    def _get_urls_collected(self, cache):
+        samples = self.sample_set.all().select_related('goldsample').iterator()
+        gold_samples = [gold['url'] for gold in self.gold_samples]
 
-        mc.set(key, sum_res, 0)
-        return sum_res
+        collected = ifilter(lambda x: not x.is_gold_sample() and not x.url in gold_samples, samples)
+        collected = sum(1 for _ in collected)
+        return collected
 
     def get_urls_collected(self, cache=False):
         """
@@ -463,19 +491,7 @@ class Job(models.Model):
                             expired, it will be updated.
         """
         key = 'job-%d-urls-collected' % self.id
-        mc = get_cache('memcache')
-        val = mc.get(key)
-        if val is not None and cache:
-            return val
-
-        samples = self.sample_set.all().select_related('goldsample').iterator()
-        gold_samples = [gold['url'] for gold in self.gold_samples]
-
-        collected = ifilter(lambda x: not x.is_gold_sample() and not x.url in gold_samples, samples)
-        collected = sum(1 for _ in collected)
-
-        mc.set(key, collected, 0)
-        return collected
+        return self._get_urls_collected(cache_key=key, cache=cache)
 
     def get_workers(self):
         """
@@ -491,7 +507,17 @@ class Job(models.Model):
         """
         return WorkerJobAssociation.objects.filter(job=self).count()
 
-    def get_top_workers(self, num=3, cache=False):
+    @cached
+    def _get_top_workers(self, num, cache):
+        workers = self.get_workers()
+        workers.sort(
+            key=lambda w: -w.get_urls_collected_count_for_job(self)
+        )
+
+        workers = workers[:num]
+        return workers
+
+    def get_top_workers(self, cache=False, num=3):
         """
             Returns `num` top of workers.
 
@@ -500,19 +526,7 @@ class Job(models.Model):
                             expired, it will be updated.
         """
         key = 'job-%d-top-workers' % self.id
-        mc = get_cache('memcache')
-        val = mc.get(key)
-        if val is not None and cache:
-            return val
-
-        workers = self.get_workers()
-        workers.sort(
-            key=lambda w: -w.get_urls_collected_count_for_job(self)
-        )
-
-        workers = workers[:num]
-        mc.set(key, workers, 0)
-        return workers
+        return self._get_top_workers(cache_key=key, cache=cache, num=3)
 
     def get_cost(self, cache=False):
         """
@@ -525,6 +539,15 @@ class Job(models.Model):
         # FIXME: Add proper billing entries?
         return self.hourly_rate * self.get_hours_spent(cache=cache)
 
+    @cached
+    def _get_votes_gathered(self, cache):
+        samples = self.sample_set.all().iterator()
+        count = 0
+        for sample in samples:
+            count += sample.workerqualityvote_set.filter(btm_vote=False).count()
+
+        return count
+
     def get_votes_gathered(self, cache=False):
         """
             Returns amount of votes gathered.
@@ -534,18 +557,7 @@ class Job(models.Model):
                             expired, it will be updated.
         """
         key = 'job-%d-votes-gathered' % self.id
-        mc = get_cache('memcache')
-        val = mc.get(key)
-        if val is not None and cache:
-            return val
-
-        samples = self.sample_set.all().iterator()
-        count = 0
-        for sample in samples:
-            count += sample.workerqualityvote_set.filter(btm_vote=False).count()
-
-        mc.set(key, count, 0)
-        return count
+        return self._get_votes_gathered(cache_key=key, cache=cache)
 
     def get_progress(self, cache=False):
         """
@@ -558,6 +570,15 @@ class Job(models.Model):
         return (self.get_progress_urls(cache=cache)
             + self.get_progress_votes(cache=cache)) / 2.0
 
+    @cached
+    def _get_progress_urls(self, cache):
+        if not self.no_of_urls:
+            return 100
+
+        div = self.no_of_urls
+        val = min((100 * self.get_urls_collected(cache=cache)) / div, 100)
+        return val
+
     def get_progress_urls(self, cache=False):
         """
             Returns actual progress of urls collecting.
@@ -567,17 +588,15 @@ class Job(models.Model):
                             expired, it will be updated.
         """
         key = 'job-%d-progress-urls' % self.id
-        mc = get_cache('memcache')
-        val = mc.get(key)
-        if val is not None and cache:
-            return val
+        return self._get_progress_urls(cache_key=key, cache=cache)
 
-        if not self.no_of_urls:
-            return 100
+    @cached
+    def _get_progress_votes(self, cache):
+        count = self.sample_set.all().count() * 3
+        got = self.get_votes_gathered(cache=cache)
 
-        div = self.no_of_urls
-        val = min((100 * self.get_urls_collected(cache=cache)) / div, 100)
-        mc.set(key, val, 0)
+        count = count or 1
+        val = min((100 * got) / count, 100)
         return val
 
     def get_progress_votes(self, cache=False):
@@ -589,18 +608,7 @@ class Job(models.Model):
                             expired, it will be updated.
         """
         key = 'job-%d-progress-votes' % self.id
-        mc = get_cache('memcache')
-        val = mc.get(key)
-        if val is not None and cache:
-            return val
-
-        count = self.sample_set.all().count() * 3
-        got = self.get_votes_gathered(cache=cache)
-
-        count = count or 1
-        val = min((100 * got) / count, 100)
-        mc.set(key, val, 0)
-        return val
+        return self._get_progress_votes(cache_key=key, cache=cache)
 
     def is_completed(self):
         return self.status == JOB_STATUS_COMPLETED
@@ -1075,10 +1083,8 @@ class Worker(models.Model):
     def can_show_to_user(self):
         return self.worker_type != WORKER_TYPE_INTERNAL
 
-    def get_name(self):
-        """
-            Returns worker's name.
-        """
+    @cached
+    def _get_name(self, cache):
         if self.worker_type == WORKER_TYPE_ODESK:
             client = odesk.Client(
                 settings.ODESK_SERVER_KEY,
@@ -1096,6 +1102,15 @@ class Worker(models.Model):
             return worker_info['name']
 
         return 'Worker %d' % self.id
+
+    def get_name(self, cache=True):
+        """
+            Returns worker's name.
+        """
+        key = 'worker-%d-name' % self.id
+        # One day cache
+        time = 60 * 60 * 24
+        return self._get_name(cache_key=key, cache=cache, cache_time=time)
 
     def get_urls_collected_count_for_job(self, job):
         """

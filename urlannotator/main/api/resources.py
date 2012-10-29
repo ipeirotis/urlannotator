@@ -737,24 +737,7 @@ class JobResource(ModelResource):
         top_workers = [self.worker_resource.raw_detail(job_id=job.id,
             worker_id=x.id) for x in top_workers]
 
-        newest_votes = job.get_newest_votes()
-        training_set = TrainingSet.objects.newest_for_job(job=job)
-        if training_set:
-            date = training_set.revision.strftime('%Y-%m-%d %H:%M:%S')
-            newest_votes = [{
-                'screenshot': s.sample.get_small_thumbnail_url(),
-                'url': s.sample.url,
-                'sample_url': reverse('project_data_detail', kwargs={
-                    'id': job_id,
-                    'data_id': s.sample.id,
-                }),
-                'label': s.label,
-                'added_on': s.sample.added_on.strftime('%Y-%m-%d %H:%M:%S'),
-                'date': date,
-            } for s in newest_votes]
-
-        else:
-            newest_votes = []
+        newest_votes = job.get_newest_votes(cache=True)
 
         urls_collected = job.get_urls_collected(cache=True)
         no_of_workers = job.get_no_of_workers()

@@ -115,3 +115,22 @@ url_correct_re = re.compile(
 
 def url_correct(url):
     return bool(url_correct_re.match(url))
+
+
+def cached(fun):
+    def wrapper(*args, **kwargs):
+        from django.core.cache import get_cache
+
+        cache_name = kwargs.pop('cache_name', 'memcache')
+        cache_key = kwargs.pop('cache_key')
+        cache_time = kwargs.pop('cache_time', 0)
+        cache = kwargs.get('cache', False)
+        mc = get_cache(cache_name)
+        val = mc.get(cache_key)
+        if val is not None and cache:
+            return val
+
+        val = fun(*args, **kwargs)
+        mc.set(cache_key, val, cache_time)
+        return val
+    return wrapper
