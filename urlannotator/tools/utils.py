@@ -123,7 +123,7 @@ def cached(fun):
 
         cache_name = kwargs.pop('cache_name', 'memcache')
         cache_key = kwargs.pop('cache_key')
-        cache_time = kwargs.pop('cache_time', 0)
+        cache_time = kwargs.pop('cache_time', 60 * 60 * 24 * 26)
         cache = kwargs.get('cache', False)
         mc = get_cache(cache_name)
         val = mc.get(cache_key)

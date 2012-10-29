@@ -741,7 +741,7 @@ class JobResource(ModelResource):
 
         urls_collected = job.get_urls_collected(cache=True)
         no_of_workers = job.get_no_of_workers()
-        progress = job.get_progress()
+        progress = job.get_progress(cache=True)
         progress_urls = job.get_progress_urls(cache=True)
         progress_votes = job.get_progress_votes(cache=True)
         votes_gathered = job.get_votes_gathered(cache=True)
@@ -753,18 +753,14 @@ class JobResource(ModelResource):
             'description': job.description,
             'urls_to_collect': job.no_of_urls,
             'urls_collected': urls_collected,
-            'classifier': reverse('api_classifier', kwargs={
-                'api_name': 'v1',
-                'resource_name': 'job',
-                'job_id': job_id,
-            }),
-            'feed': reverse('api_job_updates_feed', kwargs={
-                'api_name': 'v1',
-                'resource_name': 'job',
-                'job_id': job_id,
-            }),
+            # 'classifier': reverse('api_classifier', kwargs={
+            #     'api_name': 'v1',
+            #     'resource_name': 'job',
+            #     'job_id': job_id,
+            # }),
+            'feed': '/api/v1/job/%d/feed/?format=json' % job_id,
             'no_of_workers': no_of_workers,
-            'cost': job.get_cost(),
+            'cost': job.get_cost(cache=True),
             'budget': job.budget,
             'progress': progress,
             'hours_spent': hours_spent,

@@ -559,6 +559,11 @@ class Job(models.Model):
         key = 'job-%d-votes-gathered' % self.id
         return self._get_votes_gathered(cache_key=key, cache=cache)
 
+    @cached
+    def _get_progress(self, cache):
+        return (self.get_progress_urls(cache=cache)
+            + self.get_progress_votes(cache=cache)) / 2.0
+
     def get_progress(self, cache=False):
         """
             Returns actual progress (in percents) in the job.
@@ -567,8 +572,8 @@ class Job(models.Model):
             :param cache: - whether to use cache. If not or the cache has
                             expired, it will be updated.
         """
-        return (self.get_progress_urls(cache=cache)
-            + self.get_progress_votes(cache=cache)) / 2.0
+        key = 'job-%d-progress' % self.id
+        return self._get_progress(cache_key=key, cache=cache)
 
     @cached
     def _get_progress_urls(self, cache):
