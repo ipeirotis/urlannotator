@@ -443,7 +443,7 @@ class Job(models.Model):
         key = 'job-%d-hours-spent' % self.id
         mc = get_cache('memcache')
         val = mc.get(key)
-        if val and cache:
+        if val is not None and cache:
             return val
 
         sum_res = WorkerJobAssociation.objects.filter(job=self).\
@@ -465,7 +465,7 @@ class Job(models.Model):
         key = 'job-%d-urls-collected' % self.id
         mc = get_cache('memcache')
         val = mc.get(key)
-        if val and cache:
+        if val is not None and cache:
             return val
 
         samples = self.sample_set.all().select_related('goldsample').iterator()
@@ -502,7 +502,7 @@ class Job(models.Model):
         key = 'job-%d-top-workers' % self.id
         mc = get_cache('memcache')
         val = mc.get(key)
-        if val and cache:
+        if val is not None and cache:
             return val
 
         workers = self.get_workers()
@@ -536,7 +536,7 @@ class Job(models.Model):
         key = 'job-%d-votes-gathered' % self.id
         mc = get_cache('memcache')
         val = mc.get(key)
-        if val and cache:
+        if val is not None and cache:
             return val
 
         samples = self.sample_set.all().iterator()
@@ -569,7 +569,7 @@ class Job(models.Model):
         key = 'job-%d-progress-urls' % self.id
         mc = get_cache('memcache')
         val = mc.get(key)
-        if val and cache:
+        if val is not None and cache:
             return val
 
         if not self.no_of_urls:
@@ -591,7 +591,7 @@ class Job(models.Model):
         key = 'job-%d-progress-votes' % self.id
         mc = get_cache('memcache')
         val = mc.get(key)
-        if val and cache:
+        if val is not None and cache:
             return val
 
         count = self.sample_set.all().count() * 3
