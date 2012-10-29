@@ -124,7 +124,6 @@ log_config = {
         'Box_entry': {
             'Title': 'New Screenshot',
             'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
-            'Image_url': '%(sample_image)s',
         },
     },
     LOG_TYPE_SAMPLE_TEXT_DONE: {
@@ -135,7 +134,6 @@ log_config = {
         'Box_entry': {
             'Title': 'New Content',
             'Text': '<a href="%(sample_url)s">%(sample_url)s</a>',
-            'Image_url': '%(sample_image)s',
         },
     },
     LOG_TYPE_SAMPLE_SCREENSHOT_FAIL: {

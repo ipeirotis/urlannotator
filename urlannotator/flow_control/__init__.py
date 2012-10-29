@@ -1,4 +1,5 @@
 from celery import registry
+from django.conf import settings
 
 
 class EventSystemException(Exception):
@@ -11,5 +12,7 @@ def send_event(event_name, *args, **kwargs):
         raise EventSystemException("Illegal use of send_event. "
             "Only kwargs allowed.")
 
-    return registry.tasks[EventBusSender.name].delay(event_name, *args,
-        **kwargs)
+    return registry.tasks[EventBusSender.name].apply_async(
+        args=[event_name], kwargs=kwargs,
+        queue=settings.CELERY_REALTIME_QUEUE
+    )

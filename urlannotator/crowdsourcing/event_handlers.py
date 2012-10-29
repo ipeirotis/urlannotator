@@ -1,6 +1,7 @@
 from itertools import imap
 
 from celery import task, Task, registry
+from django.conf import settings
 
 from factories import ExternalJobsFactory, VoteStorageFactory
 from urlannotator.crowdsourcing.models import (BeatTheMachineSample,
@@ -141,9 +142,9 @@ def update_job_votes_gathered(sample_id, worker_id):
     sample[0].job.get_progress_votes(cache=False)
 
 FLOW_DEFINITIONS = [
-    (r'^EventNewJobInitialization$', initialize_external_jobs),
-    (r'^EventBTMStarted$', initialize_btm_job),
-    (r'^EventBTMSendToHuman$', btm_send_to_human),
+    (r'^EventNewJobInitialization$', initialize_external_jobs, settings.CELERY_LONGSCARCE_QUEUE),
+    (r'^EventBTMStarted$', initialize_btm_job, settings.CELERY_LONGSCARCE_QUEUE),
+    (r'^EventBTMSendToHuman$', btm_send_to_human, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventNewVoteAdded$', update_job_votes_gathered),
     # WIP: DSaS/GAL quality algorithms.
     # (r'^EventGoldSamplesDone$', initialize_quality),

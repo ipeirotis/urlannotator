@@ -3,6 +3,7 @@ import os
 import tempfile
 import sys
 from django.core.urlresolvers import reverse_lazy
+from kombu import Exchange, Queue
 
 DEBUG = not 'celery' in sys.argv
 TEMPLATE_DEBUG = DEBUG
@@ -270,6 +271,47 @@ CELERY_IMPORTS = (
 CELERYD_MAX_TASKS_PER_CHILD = 10
 CELERY_MAX_CACHED_RESULTS = 5
 
+CELERY_CREATE_MISSING_QUEUES = True
+CELERY_ROUTES = {}
+
+# Celery queues usage and designated tasks breakdown:
+# Default ('celery') - all short-timed events and flow control events.
+#                      All tasks are routed here by default.
+CELERY_DEFAULT_QUEUE = 'celery'
+
+# Real-time ('realtime-tasks') - short (!) tasks that should be handled ASAP.
+CELERY_REALTIME_QUEUE = 'realtime-tasks'
+
+# Long-scarce ('long-scarce-tasks') - tasks that take long to complete, but are
+#             not that frequently sent. Usually sent by CeleryBeat.
+#
+CELERY_LONGSCARCE_QUEUE = 'long-scarce-tasks'
+
+# Long-common ('long-common-tasks') - tasks that can take really long to
+#                                     complete and are pretty common
+#                                     in the system.
+# These have to be here because they are called without our event bus.
+CELERY_LONGCOMMON_QUEUE = 'long-common-tasks'
+long_common = (
+    ('urlannotator.main.tasks.web_content_extraction'),
+    ('urlannotator.main.tasks.web_screenshot_extraction'),
+)
+
+# Celery worker distribution (num of workers, queues):
+# 1 worker - default, realtime-tasks
+# 1 worker - realtime-tasks
+# 2 workers - long-scarce-tasks, realtime-tasks, default
+# 4 workers - long-common-tasks, realtime-tasks, default
+
+
+def register_to_queues(tasks, queue_name):
+    for task in tasks:
+        CELERY_ROUTES[task] = {
+            'queue': queue_name,
+        }
+
+register_to_queues(long_common, 'long-common-tasks')
+
 # Interval between a job monitor check. Defaults to 15 minutes.
 JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
 WORKER_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
@@ -282,36 +324,57 @@ CELERYBEAT_SCHEDULE = {
         'task': 'urlannotator.statistics.monitor_tasks.SpentMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
     },
     'url_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.URLMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
     },
     'progress_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.ProgressMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
     },
     'votes_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.VotesMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
         'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
     },
     'links_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.LinksMonitor',
         'schedule': WORKER_MONITOR_INTERVAL,
-        'kwargs': {'interval': datetime.timedelta(days=1)}
+        'kwargs': {'interval': datetime.timedelta(days=1)},
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
     },
     'send_validated_samples': {
         'task': 'urlannotator.classification.event_handlers.SampleVotingManager',
         'schedule': datetime.timedelta(seconds=3 * 60),
-        'args': []
+        'args': [],
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
     },
     'process_votes': {
         'task': 'urlannotator.classification.event_handlers.ProcessVotesManager',
         'schedule': datetime.timedelta(seconds=3 * 60),
-        'args': []
+        'args': [],
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
     },
 
 }

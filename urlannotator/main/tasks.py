@@ -22,6 +22,8 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
     if not is_proper_url(url):
         return False
 
+    sample = Sample.objects.get(id=sample_id)
+
     try:
         text = get_web_text(url)
 
@@ -29,6 +31,8 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
         send_event(
             "EventSampleContentDone",
             sample_id=sample_id,
+            sample_url=sample.url,
+            job_id=sample.job_id,
         )
     except subprocess.CalledProcessError, e:
         # Something wrong has happened to links. Couldn't find documentation on
@@ -36,6 +40,8 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
         send_event(
             'EventSampleContentFail',
             sample_id=sample_id,
+            sample_url=sample.url,
+            job_id=sample.job_id,
             error_code=e.returncode
         )
         return False
@@ -56,6 +62,7 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
     if not is_proper_url(url):
         return False
 
+    sample = Sample.objects.get(id=sample_id)
     try:
         screenshot = get_web_screenshot(url)
         Sample.objects.filter(id=sample_id).update(screenshot=screenshot)
@@ -63,11 +70,15 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
         send_event(
             "EventSampleScreenshotDone",
             sample_id=sample_id,
+            sample_url=sample.url,
+            job_id=sample.job_id,
         )
     except BaseWebkitException, e:
         send_event(
             "EventSampleScreenshotFail",
             sample_id=sample_id,
+            sample_url=sample.url,
+            job_id=sample.job_id,
             error_code=e.status_code,
         )
         return False
@@ -211,10 +222,14 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
         send_event(
             "EventSampleScreenshotDone",
             sample_id=new_sample.id,
+            sample_url=new_sample.url,
+            job_id=new_sample.job_id,
         )
         send_event(
             "EventSampleContentDone",
             sample_id=new_sample.id,
+            sample_url=new_sample.url,
+            job_id=new_sample.job_id,
         )
         # Golden sample
         if label is not None:

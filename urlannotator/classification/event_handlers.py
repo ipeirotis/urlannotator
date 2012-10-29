@@ -436,10 +436,10 @@ def update_classifier_stats(job_id, *args, **kwargs):
 
 FLOW_DEFINITIONS = [
     (r'^EventNewSample$', update_classified_sample),
-    (r'^EventSamplesVoting$', send_for_voting),
-    (r'^EventProcessVotes$', process_votes),
+    (r'^EventSamplesVoting$', send_for_voting, settings.CELERY_LONGSCARCE_QUEUE),
+    (r'^EventProcessVotes$', process_votes, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventNewClassifySample$', classify),
     (r'^EventNewBTMSample$', classify_btm),
-    (r'^EventTrainingSetCompleted$', train_on_set),
+    (r'^EventTrainingSetCompleted$', train_on_set, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventClassifierTrained$', update_classifier_stats),
 ]

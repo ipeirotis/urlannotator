@@ -4,6 +4,7 @@ import logging
 import re
 
 from celery import task, Task, group
+from django.conf import settings
 
 log = logging.getLogger('EventBus')
 
@@ -43,20 +44,31 @@ class EventBusSender(Task):
         for module in flow_modules():
             self.update_config(module.FLOW_DEFINITIONS)
 
-    def register(self, event_pattern, fun):
-        self.registered.append((re.compile(event_pattern), fun))
+    def register(self, event_pattern, fun, queue=settings.CELERY_DEFAULT_QUEUE):
+        self.registered.append((re.compile(event_pattern), fun, queue))
 
     def update_config(self, flow_definition):
-        for event_pattern, fun in flow_definition:
-            self.register(event_pattern, fun)
+        for flow_entry in flow_definition:
+            event_pattern = flow_entry[0]
+            fun = flow_entry[1]
+            queue = settings.CELERY_DEFAULT_QUEUE
+            if len(flow_entry) > 3:
+                queue = flow_entry[2]
+            self.register(event_pattern, fun, queue)
 
     def run(self, event_name, *args, **kwargs):
         log.debug('Got event: %s(%s, %s)', event_name, args, kwargs)
 
-        dispatched = [task_func.s(*args, **kwargs) for matcher, task_func
-            in self.registered if matcher.match(event_name)]
+        dispatched = {}
+        for matcher, task_func, queue in self.registered:
+            if not matcher.match(event_name):
+                continue
+
+            dispatched.setdefault(queue, [])
+            dispatched[queue].append(task_func.s(*args, **kwargs))
 
         if not dispatched:
             log.warning('Event not matched: %s !', event_name)
         else:
-            group(dispatched).apply_async()
+            for queue, disp in dispatched.iteritems():
+                group(disp).apply_async(queue=queue)

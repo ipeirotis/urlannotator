@@ -12,5 +12,9 @@
     "global_python": "/usr",
     "rabbitmq_port": 5673,
     "http_port": 8081,
-    "celery_log_level": "DEBUG"
+    "celery_log_level": "DEBUG",
+    "default_queue": "celery",
+    "realtime_queue": "realtime-tasks",
+    "longscarce_queue": "long-scarce-tasks",
+    "longcommon_queue": "long-common-tasks"
 }

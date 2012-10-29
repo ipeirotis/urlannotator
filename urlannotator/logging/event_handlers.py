@@ -1,4 +1,5 @@
 from celery import task
+from django.conf import settings
 
 from urlannotator.main.models import Job, Sample, GoldSample
 from urlannotator.classification.models import ClassifiedSample
@@ -151,65 +152,64 @@ def log_btm_sample_classified(job_id, btm_id, *args, **kwargs):
 
 
 @task(ignore_result=True)
-def log_sample_screenshot_done(sample_id, *args, **kwargs):
-    sample = Sample.objects.get(id=sample_id)
+def log_sample_screenshot_done(sample_id, sample_url, job_id, *args, **kwargs):
+    job = Job.objects.get(id=job_id)
     params = {
         'sample_id': sample_id,
-        'sample_url': sample.url,
-        'sample_image': sample.get_small_thumbnail_url(),
+        'sample_url': sample_url,
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_SAMPLE_SCREENSHOT_DONE,
-        job=sample.job,
+        job=job,
         params=params,
         *args, **kwargs
     )
 
 
 @task(ignore_result=True)
-def log_sample_text_done(sample_id, *args, **kwargs):
-    sample = Sample.objects.get(id=sample_id)
+def log_sample_text_done(sample_id, sample_url, job_id, *args, **kwargs):
+    job = Job.objects.get(id=job_id)
     params = {
         'sample_id': sample_id,
-        'sample_url': sample.url,
-        'sample_image': sample.get_small_thumbnail_url(),
+        'sample_url': sample_url,
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_SAMPLE_TEXT_DONE,
-        job=sample.job,
+        job=job,
         params=params,
         *args, **kwargs
     )
 
 
 @task(ignore_result=True)
-def log_sample_text_fail(sample_id, error_code, *args, **kwargs):
-    sample = Sample.objects.get(id=sample_id)
+def log_sample_text_fail(sample_id, error_code, sample_url, job_id,
+        *args, **kwargs):
+    job = Job.objects.get(id=job_id)
     params = {
         'sample_id': sample_id,
-        'sample_url': sample.url,
-        'sample_image': sample.get_small_thumbnail_url(),
+        'sample_url': sample_url,
         'error_code': error_code
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_SAMPLE_TEXT_FAIL,
-        job=sample.job,
+        job=job,
         params=params,
         *args, **kwargs
     )
 
 
 @task(ignore_result=True)
-def log_sample_screenshot_fail(sample_id, error_code, *args, **kwargs):
-    sample = Sample.objects.get(id=sample_id)
+def log_sample_screenshot_fail(sample_id, error_code, sample_url, job_id,
+        *args, **kwargs):
+    job = Job.objects.get(id=job_id)
     params = {
         'sample_id': sample_id,
-        'sample_url': sample.url,
+        'sample_url': sample_url,
         'error_code': error_code,
     }
     LogEntry.objects.log(
         log_type=LOG_TYPE_SAMPLE_SCREENSHOT_FAIL,
-        job=sample.job,
+        job=job,
         params=params,
         *args, **kwargs
     )
@@ -248,18 +248,18 @@ def log_classifier_critical_train_error(job_id, message, *args, **kwargs):
     )
 
 FLOW_DEFINITIONS = [
-    (r'^EventNewRawSample$', log_new_sample_start),
-    (r'^EventNewSample$', log_sample_done),
-    (r'^EventNewJobInitialization$', log_new_job),
-    (r'^EventNewGoldSample$', log_gold_sample_done),
-    (r'^EventNewJobInitializationDone$', log_new_job_done),
-    (r'^EventClassifierTrained$', log_classifier_trained),
-    (r'^EventSampleClassified$', log_sample_classified),
-    (r'^EventSampleBTM$', log_btm_sample_classified),
-    (r'^EventTrainingSetCompleted$', log_classifier_train_start),
-    (r'^EventSampleScreenshotDone$', log_sample_screenshot_done),
-    (r'^EventSampleScreenshotFail$', log_sample_screenshot_fail),
-    (r'^EventSampleContentDone$', log_sample_text_done),
-    (r'^EventClassifierTrainError$', log_classifier_train_error),
-    (r'^EventClassifierCriticalTrainError$', log_classifier_critical_train_error),
+    (r'^EventNewRawSample$', log_new_sample_start, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventNewSample$', log_sample_done, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventNewJobInitialization$', log_new_job, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventNewGoldSample$', log_gold_sample_done, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventNewJobInitializationDone$', log_new_job_done, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventClassifierTrained$', log_classifier_trained, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventSampleClassified$', log_sample_classified, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventSampleBTM$', log_btm_sample_classified, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventTrainingSetCompleted$', log_classifier_train_start, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventSampleScreenshotDone$', log_sample_screenshot_done, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventSampleScreenshotFail$', log_sample_screenshot_fail, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventSampleContentDone$', log_sample_text_done, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventClassifierTrainError$', log_classifier_train_error, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventClassifierCriticalTrainError$', log_classifier_critical_train_error, settings.CELERY_REALTIME_QUEUE),
 ]

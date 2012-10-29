@@ -76,6 +76,15 @@ except ImportError:
 
 IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 
+CELERY_ROUTES = {}
+CELERY_REALTIME_QUEUE = CELERY_DEFAULT_QUEUE
+CELERY_LONGSCARCE_QUEUE = CELERY_DEFAULT_QUEUE
+CELERY_LONGCOMMON_QUEUE = CELERY_DEFAULT_QUEUE
+
+local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
+if os.path.isfile(local_settings):
+    from local import *
+
 # Mock selenium tests, so that they are not run locally
 from django.test import LiveServerTestCase
 from urlannotator.main.tests.selenium_tests import *
@@ -101,9 +110,3 @@ mock_tests(
     prefix='Tagasauris',
     tests='urlannotator.crowdsourcing.tests',
 )
-
-TROIA_HOST = 'http://192.168.56.101:8080/GetAnotherLabel/rest'
-
-local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
-if os.path.isfile(local_settings):
-    from local import *

@@ -3,6 +3,7 @@ import mock
 from itertools import chain
 from contextlib import contextmanager
 from celery import task, registry
+from django.conf import settings
 
 from urlannotator.classification.event_handlers import train
 
@@ -16,13 +17,19 @@ class FlowControlMixin(object):
         flow = getattr(self, 'flow_definition', self.get_flow_definition())
         suppress_events = getattr(self, 'suppress_events', [])
 
-        for matcher, task_func in flow:
+        for flow_entry in flow:
+            matcher = flow_entry[0]
             if type(matcher) is str:
                 matcher = re.compile(matcher)
+
+            task_func = flow_entry[1]
+            queue = settings.CELERY_DEFAULT_QUEUE
+            if len(flow_entry) > 3:
+                queue = flow_entry[2]
             # If match any suppressed event - skip it.
             # Event is suppressed when it doesn't start any task.
             if not any([matcher.match(event) for event in suppress_events]):
-                yield (matcher, task_func)
+                yield (matcher, task_func, queue)
 
     def _pre_setup(self):
         """ Alters flow definitions. Since we are using CeleryTestSuiteRunner
