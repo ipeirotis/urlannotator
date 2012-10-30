@@ -49,12 +49,12 @@ try:
     )
 
     DEVSERVER_IGNORED_PREFIXES = ['/__debug__']
-    # INSTALLED_APPS = tuple(list(INSTALLED_APPS) + [
-    #     'devserver',
-    # ])
-    # MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
-    #     'devserver.middleware.DevServerMiddleware',
-    # ])
+    INSTALLED_APPS = tuple(list(INSTALLED_APPS) + [
+        'devserver',
+    ])
+    MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
+        'devserver.middleware.DevServerMiddleware',
+    ])
 except:
     pass
 

@@ -28,10 +28,7 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm, BTMForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_YES, LABEL_NO, LABEL_BROKEN)
-from urlannotator.statistics.stat_extraction import (extract_progress_stats,
-    extract_url_stats, extract_spent_stats, extract_performance_stats,
-    extract_votes_stats)
+    LABEL_YES, LABEL_NO)
 from urlannotator.classification.models import (ClassifierPerformance,
     ClassifiedSample, TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
@@ -575,18 +572,18 @@ def project_view(request, id):
                 proj.initialize()
 
     context = {'project': proj}
-    extract_progress_stats(proj, context)
-    extract_url_stats(proj, context)
-    extract_spent_stats(proj, context)
-    extract_performance_stats(proj, context)
-    extract_votes_stats(proj, context)
-    context['hours_spent'] = proj.get_hours_spent()
-    context['urls_collected'] = proj.get_urls_collected()
+    context.update(proj.get_progress_stats(cache=True))
+    context.update(proj.get_urls_stats(cache=True))
+    context.update(proj.get_spent_stats(cache=True))
+    context.update(proj.get_performance_stats(cache=True))
+    context.update(proj.get_votes_stats(cache=True))
+    context['hours_spent'] = proj.get_hours_spent(cache=True)
+    context['urls_collected'] = proj.get_urls_collected(cache=True)
     context['no_of_workers'] = proj.get_no_of_workers()
-    context['cost'] = proj.get_cost()
+    context['cost'] = proj.get_cost(cache=True)
     context['budget'] = proj.budget
-    context['progress_urls'] = proj.get_progress_urls()
-    context['progress_votes'] = proj.get_progress_votes()
+    context['progress_urls'] = proj.get_progress_urls(cache=True)
+    context['progress_votes'] = proj.get_progress_votes(cache=True)
 
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))

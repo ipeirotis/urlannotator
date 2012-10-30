@@ -227,3 +227,4 @@ def update_classifier_stats(classifier, job):
         job=job,
         value=json.dumps(stats)
     )
+    job.get_performance_stats(cache=False)

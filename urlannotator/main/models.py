@@ -158,6 +158,61 @@ class Job(models.Model):
             'id': self.id,
         })
 
+    @cached
+    def _get_progress_stats(self, cache):
+        from urlannotator.statistics.stat_extraction import extract_progress_stats
+        cont = {}
+        extract_progress_stats(self, cont)
+        return cont
+
+    def get_progress_stats(self, cache=True):
+        key = 'job-%d-progress-stats'
+        return self._get_progress_stats(cache_key=key, cache=cache)
+
+    @cached
+    def _get_urls_stats(self, cache):
+        from urlannotator.statistics.stat_extraction import extract_url_stats
+        cont = {}
+        extract_url_stats(self, cont)
+        return cont
+
+    def get_urls_stats(self, cache=True):
+        key = 'job-%d-urls-stats' % self.id
+        return self._get_urls_stats(cache_key=key, cache=cache)
+
+    @cached
+    def _get_spent_stats(self, cache):
+        from urlannotator.statistics.stat_extraction import extract_spent_stats
+        cont = {}
+        extract_spent_stats(self, cont)
+        return cont
+
+    def get_spent_stats(self, cache=True):
+        key = 'job-%d-spent-stats' % self.id
+        return self._get_spent_stats(cache_key=key, cache=cache)
+
+    @cached
+    def _get_performance_stats(self, cache):
+        from urlannotator.statistics.stat_extraction import extract_performance_stats
+        cont = {}
+        extract_performance_stats(self, cont)
+        return cont
+
+    def get_performance_stats(self, cache=True):
+        key = 'job-%d-performance-stats' % self.id
+        return self._get_performance_stats(cache_key=key, cache=cache)
+
+    @cached
+    def _get_votes_stats(self, cache):
+        from urlannotator.statistics.stat_extraction import extract_votes_stats
+        cont = {}
+        extract_votes_stats(self, cont)
+        return cont
+
+    def get_votes_stats(self, cache=True):
+        key = 'job-%d-votes-stats' % self.id
+        return self._get_votes_stats(cache_key=key, cache=cache)
+
     def update_cache(self):
         """
             Forces cache recalculation.
@@ -166,6 +221,11 @@ class Job(models.Model):
         self.get_progress(cache=False)
         self.get_top_workers(cache=False)
         self.get_newest_votes(cache=False)
+        self.get_votes_stats(cache=False)
+        self.get_performance_stats(cache=False)
+        self.get_spent_stats(cache=False)
+        self.get_urls_stats(cache=False)
+        self.get_progress_stats(cache=False)
 
     def recreate_training_set(self, force=False):
         """
@@ -382,8 +442,8 @@ class Job(models.Model):
             Returns classifier performance as a dict with keys 'TPR', 'TNR',
             'AUC'.
         """
-        performances = self.classifierperformance_set.all()
-        ret = max(performances, key=(lambda x: x.date))
+        performances = self.classifierperformance_set.all().order_by('-id')[:1]
+        ret = performances[0]
         return round(ret.value.get('AUC', 0), 2)
 
     @cached
@@ -482,7 +542,7 @@ class Job(models.Model):
         collected = sum(1 for _ in collected)
         return collected
 
-    def get_urls_collected(self, cache=False):
+    def get_urls_collected(self, cache=True):
         """
             Returns number of urls collected (samples without gold samples).
 
@@ -564,7 +624,7 @@ class Job(models.Model):
         return (self.get_progress_urls(cache=cache)
             + self.get_progress_votes(cache=cache)) / 2.0
 
-    def get_progress(self, cache=False):
+    def get_progress(self, cache=True):
         """
             Returns actual progress (in percents) in the job.
 
