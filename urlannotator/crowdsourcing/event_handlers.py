@@ -6,7 +6,7 @@ from django.conf import settings
 from factories import ExternalJobsFactory, VoteStorageFactory
 from urlannotator.crowdsourcing.models import (BeatTheMachineSample,
     TagasaurisJobs, SampleMapping)
-from urlannotator.main.models import Sample
+from urlannotator.main.models import Sample, Worker
 from urlannotator.crowdsourcing.tagasauris_helper import (create_btm_voting,
     samples_to_mediaobjects, make_tagapi_client, update_voting_job)
 
@@ -140,6 +140,9 @@ def btm_send_to_human(sample_id):
 def update_job_votes_gathered(sample_id, worker_id):
     sample = Sample.objects.filter(id=sample_id).select_related('job')
     sample[0].job.get_progress_votes(cache=False)
+
+    worker = Worker.objects.get(id=worker_id)
+    worker.get_votes_added_count_for_job(sample[0].job, cache=False)
 
 FLOW_DEFINITIONS = [
     (r'^EventNewJobInitialization$', initialize_external_jobs, settings.CELERY_LONGSCARCE_QUEUE),

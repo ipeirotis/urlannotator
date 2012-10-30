@@ -751,6 +751,9 @@ class SampleManager(models.Manager):
         )
         job = Job.objects.get(id=kwargs['job_id'])
 
+        # Update cache
+        worker.get_urls_collected_count_for_job(job, cache=False)
+
         WorkerJobAssociation.objects.associate(
             job=job,
             worker=worker,
@@ -1117,22 +1120,28 @@ class Worker(models.Model):
         time = 60 * 60 * 24
         return self._get_name(cache_key=key, cache=cache, cache_time=time)
 
-    def get_urls_collected_count_for_job(self, job):
+    def get_urls_collected_count_for_job(self, job, cache=False):
         """
             Returns count of urls collected by worker for given job.
         """
-        return len(self.get_urls_collected_for_job(job))
+        return len(self.get_urls_collected_for_job(job=job, cache=cache))
 
-    def get_urls_collected_for_job(self, job):
-        """
-            Returns urls collected by given worker for given job.
-        """
+    @cached
+    def _get_urls_collected_for_job(self, job, cache):
         # Importing here due to loop imports higher in the scope.
         from urlannotator.classification.models import ClassifiedSample
         return ClassifiedSample.objects.filter(
             job=job,
             source_type=worker_type_to_sample_source[self.worker_type],
             source_val=self.external_id)
+
+    def get_urls_collected_for_job(self, job, cache=False):
+        """
+            Returns urls collected by given worker for given job.
+        """
+        key = 'worker-%d-job-%d-urls-collected' % (self.id, job.id)
+        return self._get_urls_collected_for_job(job=job,
+            cache_key=key, cache=cache)
 
     def get_links_collected(self):
         """ Returns number of links collected.
@@ -1164,11 +1173,17 @@ class Worker(models.Model):
         except WorkerJobAssociation.DoesNotExist:
             return 0
 
-    def get_votes_added_count_for_job(self, job):
+    @cached
+    def _get_votes_added_count_for_job(self, job, cache):
+        return sum(1 for vote in self.get_votes_added_for_job(job))
+
+    def get_votes_added_count_for_job(self, job, cache=False):
         """
             Returns count of votes added by given worker for given job.
         """
-        return sum(1 for vote in self.get_votes_added_for_job(job))
+        key = 'worker-%d-job-%d-votes-count' % (self.id, job.id)
+        return self._get_votes_added_count_for_job(job=job,
+            cache_key=key, cache=cache)
 
     def get_votes_added_for_job(self, job):
         """
@@ -1176,7 +1191,7 @@ class Worker(models.Model):
         """
         return ifilter(
             lambda x: x.sample.job == job and x.worker == self,
-            self.workerqualityvote_set.all()
+            self.workerqualityvote_set.all().iterator()
         )
 
     def get_earned_for_job(self, job):

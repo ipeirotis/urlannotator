@@ -238,7 +238,7 @@ def _create_voting(api_client, job, mediaobjects, notify_url):
         settings.TAGASAURIS_SURVEY[task_type],
         settings.TAGASAURIS_VOTE_PRICE,
         hit_title="Verify web page urls from \"%s\"",
-        workers_per_hit=3,
+        workers_per_hit=settings.TAGASAURIS_VOTE_WORKERS_PER_HIT,
         media_per_hit=settings.TAGASAURIS_VOTE_MEDIA_PER_HIT,
         hit_instructions=settings.TAGASAURIS_VOTING_INSTRUCTION_URL)
 

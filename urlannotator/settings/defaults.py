@@ -3,7 +3,6 @@ import os
 import tempfile
 import sys
 from django.core.urlresolvers import reverse_lazy
-from kombu import Exchange, Queue
 
 DEBUG = not 'celery' in sys.argv
 TEMPLATE_DEBUG = DEBUG
@@ -428,6 +427,7 @@ TAGASAURIS_BTM_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
 TAGASAURIS_GATHER_PRICE = "0.10"
 TAGASAURIS_VOTE_PRICE = "0.06"
 TAGASAURIS_VOTE_MEDIA_PER_HIT = 10
+TAGASAURIS_VOTE_WORKERS_PER_HIT = 3
 TAGASAURIS_GATHER_INSTRUCTION_URL = \
     "https://s3.amazonaws.com/instructions.buildaclassifier.com/gatherer.task.html"
 TAGASAURIS_VOTING_INSTRUCTION_URL = \

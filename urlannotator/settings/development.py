@@ -37,8 +37,8 @@ try:
     import devserver
 
     DEVSERVER_MODULES = (
-        'devserver.modules.sql.SQLRealTimeModule',
-        'devserver.modules.sql.SQLSummaryModule',
+        # 'devserver.modules.sql.SQLRealTimeModule',
+        # 'devserver.modules.sql.SQLSummaryModule',
         'devserver.modules.profile.ProfileSummaryModule',
 
         # Modules not enabled by default
@@ -49,12 +49,12 @@ try:
     )
 
     DEVSERVER_IGNORED_PREFIXES = ['/__debug__']
-    INSTALLED_APPS = tuple(list(INSTALLED_APPS) + [
-        'devserver',
-    ])
-    MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
-        'devserver.middleware.DevServerMiddleware'
-    ])
+    # INSTALLED_APPS = tuple(list(INSTALLED_APPS) + [
+    #     'devserver',
+    # ])
+    # MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
+    #     'devserver.middleware.DevServerMiddleware',
+    # ])
 except:
     pass
 

@@ -590,12 +590,12 @@ class WorkerResource(Resource):
         start_time = worker.get_job_start_time(job)
         return {
             'id': worker.id,
-            'urls_collected': worker.get_urls_collected_count_for_job(job),
+            'urls_collected': worker.get_urls_collected_count_for_job(job, cache=True),
             'hours_spent': worker.get_hours_spent_for_job(job),
-            'votes_added': worker.get_votes_added_count_for_job(job),
+            'votes_added': worker.get_votes_added_count_for_job(job, cache=True),
             'earned': worker.get_earned_for_job(job),
             'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
-            'name': worker.get_name(),
+            'name': worker.get_name(cache=True),
         }
 
 
@@ -758,7 +758,7 @@ class JobResource(ModelResource):
             #     'resource_name': 'job',
             #     'job_id': job_id,
             # }),
-            'feed': '/api/v1/job/%d/feed/?format=json' % job_id,
+            'feed': '/api/v1/job/%d/feed/' % job_id,
             'no_of_workers': no_of_workers,
             'cost': job.get_cost(cache=True),
             'budget': job.budget,
