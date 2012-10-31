@@ -16,9 +16,7 @@
 
                 sample = new Sample({id:url, url: url});
 
-                var view = new SampleView({model: sample}).render().el;
-                this.$(".samples").append(view);
-                Samples.add(sample);
+                this.samples.add(sample);
 
                 var that = this;
                 $.post(
@@ -30,10 +28,9 @@
                             that.pollStatus(sample, data.status_url,
                                 data.request_id);
                         } else {
-                            sample.status = data.error;
+                            that.$(".sample-error").html("Rejecting url: " +
+                                url + ", reason: " + data.result);
                         }
-
-                        sample.update();
                     },
                     "json"
                 );
@@ -50,17 +47,20 @@
                     function (data) {
                         if (data.points !== undefined) {
                             sample.points = data.points;
-                            sample.description = data.description;
+                            sample.btm_status = data.btm_status;
                             that.gathered++;
 
-                            sample.update();
+                            var view = new SampleView({model: sample}
+                                ).render().el;
+                            that.$(".samples").append(view);
+
                             that.updatePoints();
 
                             if (that.gathered >= that.minSamples) {
                                 that.finishHIT();
                             }
                         } else {
-                            pollStatus(sample, status_url, request_id);
+                            that.pollStatus(sample, status_url, request_id);
                         }
                     }
                 );

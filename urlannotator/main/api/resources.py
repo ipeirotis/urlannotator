@@ -1025,6 +1025,12 @@ class BeatTheMachineResource(ModelResource):
                     response_class=HttpBadRequest)
 
         url = data.get('url')
+        sanitized_url = Sample.sanitize_url(url)
+        if not url_correct(sanitized_url):
+            return self.create_response(request, {
+                'result': 'malformed url',
+            })
+
         worker_id = data.get('worker_id')
 
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
