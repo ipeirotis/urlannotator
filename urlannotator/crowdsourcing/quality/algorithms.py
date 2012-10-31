@@ -77,6 +77,12 @@ class DBVotesStorage(VotesStorage):
         return [(w.worker_id, w.sample_id, w.label)
             for w in ids if w.sample.job_id == self.storage_id]
 
+    def get_btm_votes(self):
+        ids = WorkerQualityVote.objects.filter(btm_vote=True).select_related(
+            'sample')
+        return [(w.worker_id, w.sample_id, w.label)
+            for w in ids if w.sample.job_id == self.storage_id]
+
 
 class TroiaDBStorage(VotesStorage):
     def __init__(self, storage_id):
@@ -95,6 +101,12 @@ class TroiaDBStorage(VotesStorage):
 
     def get_all_votes(self):
         ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
+        return [(w.worker_id, w.sample_id, w.label)
+            for w in ids if w.sample.job_id == self.storage_id]
+
+    def get_btm_votes(self):
+        ids = WorkerQualityVote.objects.filter(btm_vote=True).select_related(
             'sample')
         return [(w.worker_id, w.sample_id, w.label)
             for w in ids if w.sample.job_id == self.storage_id]
@@ -226,9 +238,9 @@ class MajorityVoting(CrowdsourcingQualityAlgorithm):
 
         return assoc.data.get('correct_labels', 0) / assoc.data['all_votes']
 
-    def extract_decisions(self):
+    def _extract_decisions(self, all_votes):
         votes = {}
-        for worker_id, object_id, label in self.votes_storage.get_all_votes():
+        for worker_id, object_id, label in all_votes:
             counts = votes.get(object_id, {
                 LABEL_YES: 0,
                 LABEL_NO: 0,
@@ -256,3 +268,11 @@ class MajorityVoting(CrowdsourcingQualityAlgorithm):
         self.calculate_workers_quality(data=decisions)
 
         return decisions
+
+    def extract_decisions(self):
+        votes = self.votes_storage.get_all_votes()
+        return self._extract_decisions(votes)
+
+    def extract_btm_decisions(self):
+        votes = self.votes_storage.get_btm_votes()
+        return self._extract_decisions(votes)

@@ -6,7 +6,8 @@ from django.contrib.auth.models import User
 
 from celery import task
 
-from urlannotator.main.models import Job, Sample, LABEL_YES
+from urlannotator.main.models import (Job, Sample, LABEL_YES, LABEL_NO,
+    LABEL_BROKEN)
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_sample_gather, sample_to_mediaobject, stop_job, create_btm)
 from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
@@ -242,6 +243,114 @@ class TagasaurisJobsModelTest(ToolsMockedMixin, TestCase):
             tj.get_voting_url())
         self.assertTrue('tagasauris' in tj.get_voting_url())
         self.assertTrue('annotation' in tj.get_voting_url())
+
+
+class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
+
+    def setUp(self):
+        self.u = User.objects.create_user(username='testing', password='test')
+        self.job = Job.objects.create_active(
+            title='urlannotator_test_tagapi_client',
+            description='test_description',
+            no_of_urls=2,
+            account=self.u.get_profile(),
+            gold_samples=[
+                {'url': '10clouds.com/1', 'label': LABEL_YES},
+                {'url': '10clouds.com/2', 'label': LABEL_YES},
+                {'url': '10clouds.com/3', 'label': LABEL_YES}
+            ]
+        )
+
+        TagasaurisJobs.objects.create(urlannotator_job=self.job)
+
+        self.btm_sample = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/1',
+            label='',
+            expected_output=LABEL_YES,
+            worker_id=1234
+        )
+        # Now with sample pinned.
+        self.btm_sample = BeatTheMachineSample.objects.get(
+            id=self.btm_sample.id)
+
+    def testSampleCreation(self):
+        samples = Sample.objects.count()
+        btms = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/2',
+            label='',
+            expected_output=LABEL_YES,
+            worker_id=1234
+        )
+        self.assertEqual(samples + 1, Sample.objects.count())
+        self.assertTrue('google.com/2' in BeatTheMachineSample.objects.get(
+            id=btms.id).sample.url)
+
+    def testConfidenceCalc(self):
+        self.assertEqual(self.btm_sample.confidence_level(1.0),
+            BeatTheMachineSample.CONF_HIGH)
+        self.assertEqual(self.btm_sample.confidence_level(0.75),
+            BeatTheMachineSample.CONF_MEDIUM)
+        self.assertEqual(self.btm_sample.confidence_level(0.1),
+            BeatTheMachineSample.CONF_LOW)
+
+    def testConfidenceGet(self):
+        self.btm_sample.label_probability = {
+            LABEL_YES: 1,
+            LABEL_NO: 2,
+            LABEL_BROKEN: 3,
+        }
+
+        self.btm_sample.label = LABEL_YES
+        self.assertEqual(self.btm_sample.confidence, 1)
+
+        self.btm_sample.label = LABEL_NO
+        self.assertEqual(self.btm_sample.confidence, 2)
+
+        self.btm_sample.label = LABEL_BROKEN
+        self.assertEqual(self.btm_sample.confidence, 3)
+
+    def testCalculateStatus(self):
+        self.btm_sample.label = LABEL_YES
+        self.btm_sample.label_probability = {
+            LABEL_YES: BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01}
+        self.assertEqual(self.btm_sample.calculate_status(),
+            BeatTheMachineSample.BTM_KNOWN)
+
+        self.btm_sample.label = LABEL_YES
+        self.btm_sample.label_probability = {
+            LABEL_YES: BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01}
+        self.assertEqual(self.btm_sample.calculate_status(),
+            BeatTheMachineSample.BTM_HUMAN)
+
+        self.btm_sample.label = LABEL_NO
+        self.btm_sample.label_probability = {
+            LABEL_NO: BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01}
+        self.assertEqual(self.btm_sample.calculate_status(),
+            BeatTheMachineSample.BTM_HUMAN)
+
+        self.btm_sample.label = LABEL_NO
+        self.btm_sample.label_probability = {
+            LABEL_NO: BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01}
+        self.assertEqual(self.btm_sample.calculate_status(),
+            BeatTheMachineSample.BTM_HUMAN)
+
+    def testUpdateStatus(self):
+        self.btm_sample.label = LABEL_NO
+        self.btm_sample.label_probability = {
+            LABEL_NO: BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01,
+            LABEL_YES: BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01,
+            }
+        self.assertEqual(self.btm_sample.calculate_status(),
+            BeatTheMachineSample.BTM_HUMAN)
+
+        self.assertNotEqual(self.btm_sample.sample, None)
+        self.btm_sample.updateBTMStatus()
+
+        self.assertEqual(TagasaurisJobs.objects.count(), 1)
+        tj = TagasaurisJobs.objects.all()[0]
+        self.assertEqual(len(tj.voting_btm_key), 32)
 
 
 class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):

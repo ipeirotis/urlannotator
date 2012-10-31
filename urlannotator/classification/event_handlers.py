@@ -221,49 +221,65 @@ class ProcessVotesManager(Task):
 
                 quality_algorithm = quality_factory.create_algorithm(job)
                 decisions = quality_algorithm.extract_decisions()
-                if not decisions:
-                    continue
-
-                log.info(
-                    'ProcessVotesManager: Creating training set for job %d.' % job.id
-                )
-
-                ts = TrainingSet.objects.create(job=job)
-                for sample_id, label in decisions:
-                    if label == LABEL_BROKEN:
-                        log.info(
-                            'ProcessVotesManager: Omitted broken label of sample %d.' % sample_id
-                        )
-                        continue
-
-                    sample = Sample.objects.get(id=sample_id)
-                    if not sample.training:
-                        continue  # Skipping (BTM non trainable sample)
-
-                    TrainingSample.objects.create(
-                        set=ts,
-                        sample=sample,
-                        label=label,
+                if decisions:
+                    log.info(
+                        'ProcessVotesManager: Creating training set for job %d.' % job.id
                     )
 
-                for sample in Sample.objects.filter(job=job).iterator():
-                    if sample.is_gold_sample():
-                        ts_sample, created = TrainingSample.objects.get_or_create(
+                    ts = TrainingSet.objects.create(job=job)
+                    for sample_id, label in decisions:
+                        if label == LABEL_BROKEN:
+                            log.info(
+                                'ProcessVotesManager: Omitted broken label of sample %d.' % sample_id
+                            )
+                            continue
+
+                        sample = Sample.objects.get(id=sample_id)
+                        if not sample.training:
+                            continue  # Skipping (BTM non trainable sample)
+
+                        TrainingSample.objects.create(
                             set=ts,
                             sample=sample,
+                            label=label,
                         )
-                        if not created:
-                            log.info(
-                                'ProcessVotesManager: Overriden gold sample %d.' % sample.id
-                            )
-                        ts_sample.label = sample.goldsample.label
-                        ts_sample.save()
 
-                send_event(
-                    'EventTrainingSetCompleted',
-                    set_id=ts.id,
-                    job_id=job.id,
-                )
+                    for sample in Sample.objects.filter(job=job).iterator():
+                        if sample.is_gold_sample():
+                            ts_sample, created = TrainingSample.objects.get_or_create(
+                                set=ts,
+                                sample=sample,
+                            )
+                            if not created:
+                                log.info(
+                                    'ProcessVotesManager: Overriden gold sample %d.' % sample.id
+                                )
+                            ts_sample.label = sample.goldsample.label
+                            ts_sample.save()
+
+                    send_event(
+                        'EventTrainingSetCompleted',
+                        set_id=ts.id,
+                        job_id=job.id,
+                    )
+
+                decisions = quality_algorithm.extract_btm_decisions()
+                if decisions:
+                    log.info(
+                        'ProcessVotesManager: Processing btm decisions %d.' % job.id
+                    )
+
+                    for sample_id, label in decisions:
+                        if label == LABEL_BROKEN:
+                            log.info(
+                                'ProcessVotesManager: Omitted broken label of btm sample %d.' % sample_id
+                            )
+                            continue
+
+                        btms = BeatTheMachineSample.objects.get(
+                            sample__id=sample_id)
+                        btms.recalculate_human(label)
+
         finally:
             p.release()
 
@@ -277,18 +293,22 @@ def update_classified_sample(sample_id, *args, **kwargs):
         on match.
     """
     sample = Sample.objects.get(id=sample_id)
-    ClassifiedSample.objects.filter(job=sample.job, url=sample.url,
-        sample=None).update(sample=sample)
-    classified = ClassifiedSample.objects.filter(
-        job=sample.job,
-        url=sample.url,
-        sample=sample,
-        label=''
-    )
-    for class_sample in classified:
-        send_event("EventNewClassifySample",
-            sample_id=class_sample.id,
-            from_name='update_classified')
+    if sample.btm_sample:
+        BeatTheMachineSample.objects.filter(job=sample.job, url=sample.url,
+            sample=None).update(sample=sample)
+    else:
+        ClassifiedSample.objects.filter(job=sample.job, url=sample.url,
+            sample=None).update(sample=sample)
+        classified = ClassifiedSample.objects.filter(
+            job=sample.job,
+            url=sample.url,
+            sample=sample,
+            label=''
+        )
+        for class_sample in classified:
+            send_event("EventNewClassifySample",
+                sample_id=class_sample.id,
+                from_name='update_classified')
 
 
 def process_execute(*args, **kwargs):

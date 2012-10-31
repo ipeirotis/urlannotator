@@ -140,9 +140,6 @@ class BeatTheMachineSample(ClassifiedSampleCore):
                 send_event('EventBTMSendToHuman',
                     sample_id=self.id)
 
-    def labels_matched(self):
-        return self.expected_output.lower() == self.label.lower()
-
     def btm_status_mapping(self):
         return dict(self.BTM_STATUS)[self.btm_status]
 
@@ -196,6 +193,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
         conf_cl = self.confidence
         confidence = self.confidence_level(conf_cl)
 
+        cat_h = cat_h.lower()
         cat_cl = self.label.lower()
         expect = self.expected_output.lower()
 

@@ -16,7 +16,8 @@ from urlannotator.classification.models import (TrainingSet, Classifier,
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.classification.event_handlers import process_votes
 from urlannotator.crowdsourcing.event_handlers import initialize_external_jobs
-from urlannotator.crowdsourcing.models import WorkerQualityVote
+from urlannotator.crowdsourcing.models import (WorkerQualityVote,
+    BeatTheMachineSample)
 from urlannotator.flow_control.test import FlowControlMixin, ToolsMockedMixin
 from urlannotator.flow_control import send_event
 from urlannotator.logging.models import LogEntry
@@ -348,13 +349,22 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
             account=self.user.get_profile()
         )
         self.job.activate()
+        self.workers = [Worker.objects.create_odesk(external_id=x)
+            for x in xrange(10)]
         self.sample = Sample.objects.create(
             source_val='asd',
             job=self.job,
             url=""
         )
-        self.workers = [Worker.objects.create_odesk(external_id=x)
-            for x in xrange(10)]
+        self.btm_sample = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/1',
+            label=LABEL_NO,
+            expected_output=LABEL_YES,
+            worker_id=1,
+            sample=self.sample,
+            label_probability={LABEL_NO: 1.0}
+        )
 
     def testVotesProcess(self):
 
@@ -389,6 +399,26 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
 
         training_sample = ts.training_samples.all()[0]
         self.assertEqual(training_sample.label, LABEL_NO)
+
+    def testBTMVotesProcess(self):
+
+        def newVote(worker, label):
+            return WorkerQualityVote.objects.new_btm_vote(
+                sample=self.btm_sample.sample,
+                worker=worker,
+                label=label
+            )
+
+        newVote(self.workers[0], LABEL_YES)
+        newVote(self.workers[1], LABEL_YES)
+        newVote(self.workers[2], LABEL_YES)
+
+        ts = TrainingSet.objects.count()
+        send_event('EventProcessVotes')
+        self.assertEqual(TrainingSet.objects.count(), ts)
+        self.assertEqual(BeatTheMachineSample.objects.count(), 1)
+        self.assertEqual(BeatTheMachineSample.objects.all()[0].btm_status,
+            BeatTheMachineSample.BTM_HOLE)
 
     def tearDown(self):
         self.user.delete()
