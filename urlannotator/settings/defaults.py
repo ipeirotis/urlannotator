@@ -46,7 +46,6 @@ VOTES_STORAGE = 'TroiaVotesStorage'
 QUALITY_ALGORITHM = 'DawidSkeneAlgorithm'
 
 SITE_URL = 'devel.urlannotator.10clouds.com'
-MEMCACHE_ADDR = '127.0.0.1:11211'
 
 SOCIAL_AUTH_CREATE_USERS = False
 

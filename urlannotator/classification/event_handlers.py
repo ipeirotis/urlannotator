@@ -14,7 +14,8 @@ from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_voting, samples_to_mediaobjects, update_voting_job)
 from urlannotator.crowdsourcing.factories import quality_factory
-from urlannotator.main.models import Sample, Job, LABEL_BROKEN
+from urlannotator.main.models import (Sample, Job, LABEL_BROKEN,
+    JOB_STATUS_ACTIVE)
 from urlannotator.tools.synchronization import POSIXLock
 
 import logging
@@ -22,7 +23,7 @@ log = logging.getLogger(__name__)
 
 # Max amount of samples to update. To avoid a single job blocking whole service
 # while uploading loads of medias.
-VOTING_MAX_SAMPLES = 20
+VOTING_MAX_SAMPLES = 100
 
 
 @task(ignore_result=True)
@@ -33,11 +34,14 @@ class SampleVotingManager(Task):
 
     def get_unmapped_samples(self):
         """ New Samples since last update. We should send those to external
-            voting service.
+            voting service. Samples are sorted by job, so we can use an
+            iterator and save loads of memory.
         """
         samples = Sample.objects.select_related('job').filter(
-            vote_sample=True, samplemapping=None)
-        return samples.exclude(screenshot='')
+            vote_sample=True, samplemapping=None,
+            job__status=JOB_STATUS_ACTIVE,
+            job__tagasaurisjobs__isnull=False).exclude(screenshot='')
+        return samples.order_by('job')[:VOTING_MAX_SAMPLES].iterator()
 
     def get_jobs(self, all_samples):
         """ Auxiliary function for divide samples in job related groups and
@@ -45,19 +49,45 @@ class SampleVotingManager(Task):
             initialized or not. We assume that jobs having already mapped
             samples are initialized, otherwise - not.
         """
-        jobs = set([s.job for s in all_samples])
+        # jobs = set([s.job for s in all_samples.iterator()])
 
-        for job in jobs:
-            # Don't handle inactive (initializing/stopped/completed) jobs.
+        # for job in jobs:
+        #     # Don't handle inactive (initializing/stopped/completed) jobs.
+        #     if not job.is_active():
+        #         continue
+
+        #     try:
+        #         job_samples = [s for s in all_samples.iterator() if s.job == job][:VOTING_MAX_SAMPLES]
+        #         initialized = job.tagasaurisjobs.voting_key is not None
+        #         yield job, job_samples, initialized
+        #     except TagasaurisJobs.DoesNotExist:
+        #         log.warning("Spotted job without tagasauris link.")
+
+        job = None
+        tag_job = False
+        samples = []
+        for sample in all_samples:
+            if job != sample.job:
+                if samples:
+                    yield job, samples, tag_job
+                    samples = []
+                    tag_job = False
+
+                job = sample.job
+                try:
+                    tag_job = job.tagasaurisjobs.voting_key is not None
+                except TagasaurisJobs.DoesNotExist:
+                    log.warning("Spotted job %d without tagasauris link." % job.id)
+                    tag_job = False
+
             if not job.is_active():
                 continue
 
-            try:
-                job_samples = [s for s in all_samples if s.job == job][:VOTING_MAX_SAMPLES]
-                initialized = job.tagasaurisjobs.voting_key is not None
-                yield job, job_samples, initialized
-            except TagasaurisJobs.DoesNotExist:
-                log.warning("Spotted job without tagasauris link.")
+            samples.append(sample)
+
+        # The last job's samples
+        if samples:
+            yield job, samples, tag_job
 
     def initialize_job(self, tc, job, new_samples):
         """ Job initialization.
@@ -177,6 +207,7 @@ class SampleVotingManager(Task):
                 try:
                     if initialized:
                         self.update_job(tc, job, new_samples)
+
                     else:
                         self.initialize_job(tc, job, new_samples)
                 except Exception, e:

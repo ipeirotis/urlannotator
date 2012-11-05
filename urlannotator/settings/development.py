@@ -81,9 +81,20 @@ CELERY_REALTIME_QUEUE = CELERY_DEFAULT_QUEUE
 CELERY_LONGSCARCE_QUEUE = CELERY_DEFAULT_QUEUE
 CELERY_LONGCOMMON_QUEUE = CELERY_DEFAULT_QUEUE
 
+
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
+
+SITE_URL = 'devel.urlannotator.10clouds.com'
+TAGASAURIS_CALLBACKS = 'http://' + SITE_URL
+
+# Tagasauris needs sacrifice!
+DUMMY_URLANNOTATOR_URL =\
+    'http://' + SITE_URL + '/statics/img/favicon.png'
+
+TAGASAURIS_VOTE_MEDIA_PER_HIT = 1
+TAGASAURIS_VOTE_WORKERS_PER_HIT = 1
 
 # Mock selenium tests, so that they are not run locally
 from django.test import LiveServerTestCase

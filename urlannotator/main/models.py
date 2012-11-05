@@ -535,10 +535,10 @@ class Job(models.Model):
 
     @cached
     def _get_urls_collected(self, cache):
-        samples = self.sample_set.all().select_related('goldsample').iterator()
+        samples = self.sample_set.filter(goldsample__isnull=True).iterator()
         gold_samples = [gold['url'] for gold in self.gold_samples]
 
-        collected = ifilter(lambda x: not x.is_gold_sample() and not x.url in gold_samples, samples)
+        collected = ifilter(lambda x: not x.url in gold_samples, samples)
         collected = sum(1 for _ in collected)
         return collected
 
@@ -601,12 +601,10 @@ class Job(models.Model):
 
     @cached
     def _get_votes_gathered(self, cache):
-        samples = self.sample_set.all().iterator()
-        count = 0
-        for sample in samples:
-            count += sample.workerqualityvote_set.filter(btm_vote=False).count()
-
-        return count
+        from urlannotator.crowdsourcing.models import WorkerQualityVote
+        votes = WorkerQualityVote.objects.filter(btm_vote=False,
+            sample__job__id=self.id).count()
+        return votes
 
     def get_votes_gathered(self, cache=False):
         """
@@ -810,9 +808,6 @@ class SampleManager(models.Manager):
             worker_id=kwargs['source_val']
         )
         job = Job.objects.get(id=kwargs['job_id'])
-
-        # Update cache
-        worker.get_urls_collected_count_for_job(job, cache=False)
 
         WorkerJobAssociation.objects.associate(
             job=job,

@@ -182,6 +182,13 @@ def create_classify_sample(result, source_type, create_classified=True,
                 source_val=source_val,
             )
 
+            worker = Sample.get_worker(source_type=source_type,
+                    source_val=source_val)
+            if worker:
+                # Update cache
+                worker.get_urls_collected_count_for_job(sample.job, cache=False)
+
+
             # Sample created sucesfully - pushing event.
             send_event(
                 "EventNewClassifySample",
@@ -230,6 +237,7 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
             sample_url=new_sample.url,
             job_id=new_sample.job_id,
         )
+
         # Golden sample
         if label is not None:
             # GoldSample created sucesfully - pushing event.
