@@ -140,8 +140,15 @@ class BeatTheMachineSample(ClassifiedSampleCore):
                 send_event('EventBTMSendToHuman',
                     sample_id=self.id)
 
+    BTM_STATUS_VERBOSE = {
+        BTM_PENDING: "Sample pending.",
+        BTM_HUMAN: "Send for verification.",
+        BTM_KNOWN: "Known sample.",
+    }
+
     def btm_status_mapping(self):
-        return dict(self.BTM_STATUS)[self.btm_status]
+        return self.BTM_STATUS_VERBOSE.get(self.btm_status,
+            "Error state. It will be verified.")
 
     CONF_HIGH_TRESHOLD = 0.8
     CONF_MEDIUM_TRESHOLD = 0.5

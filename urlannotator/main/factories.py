@@ -44,7 +44,8 @@ class SampleFactory(object):
                 if job_samples:
                     return job_samples[0].id
                 return copy_sample_to_job.s(samples[0].id, job.id,
-                    label=label, *args, **kwargs).apply_async()
+                    label=label, btm_sample=True, *args, **kwargs
+                    ).apply_async()
             else:
                 if job_samples:
                     return create_classify_sample.delay(

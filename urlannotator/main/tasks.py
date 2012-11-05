@@ -198,14 +198,13 @@ def create_classify_sample(result, source_type, create_classified=True,
 
 @task()
 def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
-        *args, **kwargs):
+        btm_sample=False, *args, **kwargs):
     try:
         old_sample = Sample.objects.get(id=sample_id)
         job = Job.objects.get(id=job_id)
 
-        is_btm = old_sample.btm_sample
-        vote_sample = False if is_btm else True
-        training = False if is_btm else True
+        vote_sample = False if btm_sample else True
+        training = False if btm_sample else True
 
         new_sample = Sample.objects.create(
             job=job,
@@ -214,7 +213,7 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
             screenshot=old_sample.screenshot,
             source_type=source_type,
             source_val=source_val,
-            btm_sample=is_btm,
+            btm_sample=btm_sample,
             vote_sample=vote_sample,
             training=training,
         )
