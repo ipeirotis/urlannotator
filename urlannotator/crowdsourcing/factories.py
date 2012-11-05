@@ -36,7 +36,7 @@ class ExternalJobsFactory(object):
             description, no_of_urls)
 
         # Our link to tagasauris jobs.
-        tj = TagasaurisJobs.objects.get_or_create(urlannotator_job=job)
+        tj, _ = TagasaurisJobs.objects.get_or_create(urlannotator_job=job)
         tj.beatthemachine_key = beatthemachine_key
         tj.beatthemachine_hit = beatthemachine_hit
         tj.save()

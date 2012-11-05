@@ -232,6 +232,36 @@ class SimpleClassifierTests(ToolsMockedMixin, TestCase):
         self.assertNotEqual(sc.classify(test_sample), None)
         self.assertNotEqual(sc.classify_with_info(test_sample), None)
 
+    def testSimpleBtmClassifier(self):
+        sc_id = classifier_factory.initialize_classifier(
+            job_id=self.job.id,
+            classifier_name='SimpleClassifier',
+        )
+        sc = classifier_factory.create_classifier_from_id(sc_id)
+
+        training_set = TrainingSet.objects.newest_for_job(self.job)
+
+        sc.train(set_id=training_set.id)
+
+        sample = Sample.objects.create(
+            source_val='asd',
+            job=self.job,
+            url="google.com/1"
+        )
+        btm_sample = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/1',
+            label=LABEL_NO,
+            expected_output=LABEL_YES,
+            worker_id=1,
+            sample=sample,
+            label_probability={LABEL_NO: 1.0}
+        )
+
+        # Classifier already trained
+        self.assertNotEqual(sc.classify(btm_sample), None)
+        self.assertNotEqual(sc.classify_with_info(btm_sample), None)
+
 
 class TrainingSetManagerTests(ToolsMockedMixin, TestCase):
 

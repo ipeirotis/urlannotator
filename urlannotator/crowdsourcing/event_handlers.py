@@ -89,7 +89,7 @@ def btm_send_to_human(sample_id):
         for sample, mediaobject in mediaobjects.items():
             SampleMapping(
                 sample=sample,
-                externalid=mediaobject['id'],
+                external_id=mediaobject['id'],
                 crowscourcing_type=SampleMapping.TAGASAURIS,
             ).save()
         log.info(

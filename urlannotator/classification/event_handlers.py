@@ -416,6 +416,9 @@ def classify_btm(sample_id, from_name='', *args, **kwargs):
     """
         Classifies given samples
     """
+    log.info(
+        '[BTMClassification] Got sample %d for classification.' % sample_id
+    )
     btm_sample = BeatTheMachineSample.objects.get(id=sample_id)
     if btm_sample.label:
         return
