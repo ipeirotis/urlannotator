@@ -88,6 +88,10 @@ if os.path.isfile(local_settings):
 
 SITE_URL = 'devel.urlannotator.10clouds.com'
 TAGASAURIS_CALLBACKS = 'http://' + SITE_URL
+TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/add/tagasauris/%s/'
+TAGASAURIS_BTM_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
+    '/api/v1/vote/btm/tagasauris/%s/'
 
 # Tagasauris needs sacrifice!
 DUMMY_URLANNOTATOR_URL =\
