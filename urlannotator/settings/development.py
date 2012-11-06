@@ -87,15 +87,6 @@ if os.path.isfile(local_settings):
     from local import *
 
 SITE_URL = 'devel.urlannotator.10clouds.com'
-TAGASAURIS_CALLBACKS = 'http://' + SITE_URL
-TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
-    '/api/v1/vote/add/tagasauris/%s/'
-TAGASAURIS_BTM_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
-    '/api/v1/vote/btm/tagasauris/%s/'
-
-# Tagasauris needs sacrifice!
-DUMMY_URLANNOTATOR_URL =\
-    'http://' + SITE_URL + '/statics/img/favicon.png'
 
 TAGASAURIS_VOTE_MEDIA_PER_HIT = 1
 TAGASAURIS_VOTE_WORKERS_PER_HIT = 1

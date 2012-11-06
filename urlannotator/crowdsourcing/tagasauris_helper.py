@@ -7,9 +7,24 @@ from django.conf import settings
 
 from tagapi.api import TagasaurisClient
 from tagapi.error import TagasaurisApiException, TagasaurisApiMaxRetries
+from urlannotator.tools.utils import setting
 
 import logging
 log = logging.getLogger(__name__)
+
+TAGASAURIS_CALLBACKS = setting('TAGASAURIS_CALLBACKS',
+    'http://' + settings.SITE_URL)
+TAGASAURIS_VOTING_CALLBACK = setting('TAGASAURIS_VOTING_CALLBACK',
+    TAGASAURIS_CALLBACKS + '/api/v1/vote/add/tagasauris/%s/')
+TAGASAURIS_BTM_VOTING_CALLBACK = setting('TAGASAURIS_BTM_VOTING_CALLBACK',
+    TAGASAURIS_CALLBACKS + '/api/v1/vote/btm/tagasauris/%s/')
+
+# Tagasauris needs sacrifice!
+DUMMY_URLANNOTATOR_URL = setting('DUMMY_URLANNOTATOR_URL',
+    'http://' + settings.SITE_URL + '/statics/img/favicon.png')
+
+TAGASAURIS_HIT_SOCIAL_URL = setting('TAGASAURIS_HIT_SOCIAL_URL',
+    settings.TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s')
 
 
 def make_tagapi_client():
@@ -124,7 +139,7 @@ def create_sample_gather(api_client, job):
         hit_title="Gather web page urls for \"%s\"",
         workers_per_hit=workers_per_hit)
 
-    baseurl = settings.TAGASAURIS_CALLBACKS
+    baseurl = TAGASAURIS_CALLBACKS
     templates = baseurl + "/statics/js/templates/tagasauris/"
     kwargs["workflow"].update({
         settings.TAGASAURIS_FORM[task_type]: {
@@ -151,7 +166,7 @@ def create_sample_gather(api_client, job):
         },
     })
 
-    url = settings.DUMMY_URLANNOTATOR_URL
+    url = DUMMY_URLANNOTATOR_URL
     kwargs.update({"dummy_media":
         [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})
 
@@ -186,7 +201,7 @@ def create_btm(api_client, job, topic, description, no_of_urls):
         description=description)
 
     samples_per_job = 5
-    baseurl = settings.TAGASAURIS_CALLBACKS
+    baseurl = TAGASAURIS_CALLBACKS
     templates = baseurl + "/statics/js/templates/tagasauris/"
     kwargs["workflow"].update({
         settings.TAGASAURIS_FORM[task_type]: {
@@ -213,7 +228,7 @@ def create_btm(api_client, job, topic, description, no_of_urls):
     })
 
     # TODO: check how may btm should be running?
-    url = settings.DUMMY_URLANNOTATOR_URL
+    url = DUMMY_URLANNOTATOR_URL
     kwargs.update({"dummy_media":
         [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})
 
@@ -259,12 +274,12 @@ def _create_voting(api_client, job, mediaobjects, notify_url):
 
 def create_voting(api_client, job, mediaobjects):
     return _create_voting(api_client, job, mediaobjects,
-        notify_url=settings.TAGASAURIS_VOTING_CALLBACK % job.id)
+        notify_url=TAGASAURIS_VOTING_CALLBACK % job.id)
 
 
 def create_btm_voting(api_client, job, mediaobjects):
     return _create_voting(api_client, job, mediaobjects,
-        notify_url=settings.TAGASAURIS_BTM_VOTING_CALLBACK % job.id)
+        notify_url=TAGASAURIS_BTM_VOTING_CALLBACK % job.id)
 
 
 def update_voting_job(api_client, mediaobjects, ext_id):

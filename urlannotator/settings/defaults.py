@@ -390,7 +390,6 @@ TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'  # Mind updating XS_SHARING_*
 TAGASAURIS_USE_SANDBOX = True
 
-TAGASAURIS_HIT_SOCIAL_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 TAGASAURIS_HIT_SANDBOX_URL = "https://workersandbox.mturk.com/mturk/preview?groupId=%s"
 TAGASAURIS_HIT_MTURK_URL = "https://mturk.com/mturk/preview?groupId=%s"
 
@@ -417,12 +416,6 @@ TAGASAURIS_FORM = {
     TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'Form_1',
 }
 
-TAGASAURIS_CALLBACKS = 'http://' + SITE_URL
-TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
-    '/api/v1/vote/add/tagasauris/%s/'
-TAGASAURIS_BTM_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
-    '/api/v1/vote/btm/tagasauris/%s/'
-
 TAGASAURIS_GATHER_PRICE = "0.10"
 TAGASAURIS_VOTE_PRICE = "0.06"
 TAGASAURIS_VOTE_MEDIA_PER_HIT = 10
@@ -432,11 +425,7 @@ TAGASAURIS_GATHER_INSTRUCTION_URL = \
 TAGASAURIS_VOTING_INSTRUCTION_URL = \
     "https://s3.amazonaws.com/instructions.buildaclassifier.com/voting.task.html"
 
-# Tagasauris needs sacrifice!
-DUMMY_URLANNOTATOR_URL =\
-    'http://' + SITE_URL + '/statics/img/favicon.png'
-
-# Tagasauris will ask for some infro via xhr ($.post() etc). It is different
+# Tagasauris will ask for some info via xhr ($.post() etc). It is different
 # domain so we need to allow it explicit.
 XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
 XS_SHARING_ALLOWED_METHODS = ['POST', 'GET']
