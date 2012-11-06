@@ -1,81 +1,62 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'workers' %}
+{% endblock %}
+
+{% block body-class %}body-{{project.get_status|lower}} body-worker{% endblock %}
 
 {% block workers_active %}active{% endblock %}
 {% block project_content %}
-  <div class="row-fluid">
-    <div class="span2">
-      <a href="{% url project_workers_view project.id%}">&lt; Back</a>
+  <div class="row">
+    <div class="span">
+      <ul class="pager">
+        <li><a href="{% url project_workers_view project.id%}">&lt; Back</a></li>
+      </ul>
     </div>
-    <div class="span8">&nbsp;</div>
-    <div class="span2" style="text-align:right;">
+    <!--<div class="pull-right">
       <a href="#" class="btn">End contract</a>
+    </div>-->
+  </div>
+  <div class="row">
+    <div class="table-container-anno3 span12">
+      <h3>{{worker.name}}</h3>
+      <div class="table-wrapper">
+        <div class="span2 infobox">
+          <h3>{{worker.urls_collected}}</h3>
+          URLs collected
+        </div>
+        <div class="span2 infobox">
+          <h3>{{worker.votes_added}}</h3>
+          Votes
+        </div>
+        <div class="span2 infobox">
+          <h3>{{worker.earned}}</h3>
+          Money earned (USD)
+        </div>
+      </div>
     </div>
   </div>
-  <div class="row-fluid">
-    <h5>Worker name</h5>
-    <h3>{{worker.name}}&nbsp;</h3>
-  </div>
-  <div class="row-fluid">
-    <div class="span2 infobox">
-      <h3>{{worker.urls_collected}}</h3>
-      URLs collected
-    </div>
-    <div class="span2 infobox">
-      <h3>{{worker.votes_added}}</h3>
-      Votes
-    </div>
-    <div class="span2 infobox">
-      <h3>{{worker.hours_spent}}</h3>
-      Hours spent
-    </div>
-    <div class="span2 infobox">
-      <h3>{{worker.quality}}</h3>
-      Quality
-    </div>
-    <div class="span2 infobox">
-      <h3>{{worker.earned}}</h3>
-      Money earned (USD)
-    </div>
-  </div>
-  <div class="row-fluid">
-    <hr>
-  </div>
-  <div class="row-fluid">
-    <div class="span3">
+  <div class="row">
+    <div class="table-container-anno1 span6">
       <h3>Statistics</h3>
-      <div id="urlGraph"></div>
+      <div class="table-wrapper">
+        <table id="more-information">
+          <thead></thead>
+          <tbody>
+            <tr><td>Work since</td><td>{{worker.work_started}}</td></tr>
+            <tr><td>Projects worked on</td><td>
+            {% autoescape off %}
+            {{ worker.projects|join:', '}}
+            {% endautoescape %}
+            </td></tr>
+            <!--<tr><td>Status</td><td>{{worker.status}}</td></tr>-->
+          </tbody>
+        </table>
+        <div id="urlGraph"></div>
+      </div>
     </div>
-    <div class="span9">
-      <h3>More information</h3>
-      <table id="more-information">
-        <thead></thead>
-        <tbody>
-          <tr><td>Work since</td><td>{{worker.work_started}}</td></tr>
-          <tr><td>Projects worked on</td><td>
-          {% autoescape off %}
-          {{ worker.projects|join:', '}}
-          {% endautoescape %}
-          </td></tr>
-          <tr><td>Status</td><td>{{worker.status}}</td></tr>
-        </tbody>
-      </table>
-    </div>
   </div>
-  <div class="row-fluid">
-    <hr>
-  </div>
-  <div class="row-fluid">
-    Other content
-  </div>
-{% endblock %}
-
-{% block css %}
-{{ block.super }}
-<style type="text/css">
-table#more-information td:first-child {
-  width: 140px;
-  text-align: right;
-  padding-right: 10px;
-}
-</style>
 {% endblock %}

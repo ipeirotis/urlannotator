@@ -33,6 +33,7 @@ class StatsMonitor(object):
 
         if new_stats:
             self.model_cls.objects.bulk_create(new_stats)
+            self.after_handle(obj_set)
 
     def get_value(self, obj):
         """ Gets specific statistic.
@@ -41,6 +42,11 @@ class StatsMonitor(object):
 
     def get_latest(self, obj):
         """ Gets latest statistic entry.
+        """
+        return None
+
+    def after_handle(self, obj_set):
+        """ Handle fired after new stats are created.
         """
         return None
 
@@ -57,8 +63,7 @@ class StatsMonitor(object):
     def run(self, interval=datetime.timedelta(hours=1), *args, **kwargs):
         """
             Scans all active objects for the ones that require stats
-            recomputation. Does it in an infinite loop, after
-            settings.*_MONITOR_INTERVAL seconds from previous loop.
+            recomputation.
         """
         objects = self.get_objects()
         to_handle = []

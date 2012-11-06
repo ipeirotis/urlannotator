@@ -30,7 +30,7 @@
         {% endblock %}
 
     </head>
-    <body class="{% block body-class %}{% endblock %}">
+    <body class="{% block body-class %}body-hit{% endblock %}">
         <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6.
            chromium.org/developers/how-tos/chrome-frame-getting-started -->
         <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
@@ -45,10 +45,13 @@
               </a>
               <a class="brand" href="{% url index %}"></a>
               <div class="nav-collapse">
+                  <ul class="nav pull-left nav-links">
+                    <li>aa</li>
+                  </ul>
                   <ul class="nav pull-right userNav">
                     <li class="new-project">
                       <a href="http://www.tagasauris.com">
-                        Powered by tagasauris
+                        Powered by
                         <img class="img-tag" src="http://productozauris.tagasauris.com/statics//img/logo.png" alt="http://productozauris.tagasauris.com/statics//img/logo.png" />
                       </a>
                     </li>
@@ -61,6 +64,7 @@
                 <div class="row">
                   <div class="span12">
                     {% block header %}
+                    <h3>And the butique</h3>
                     {% endblock %}
                   </div>
                 </div>
@@ -85,8 +89,76 @@
               </div>
             {% endif %}
           {% endblock %}
-          <div id="alert-box" class=""> </div>
+          <div id="alert-box" class="">
+            <!-- remove code from here -->
+              <div id="action-'+id+'" class="alert action fade in">
+                <button data-dismiss="alert" class="close" type="button">×</button>
+                <div class="">Howdy</div>
+              </div>
+            <!-- remove code to here -->
+
+          </div>
           {% block main %}
+            <div class="row">
+              <div class="span6">
+                <p class="justify">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc sit amet tellus at est cursus fermentum vel non quam. Suspendisse erat turpis, tristique vitae volutpat ut, ultrices at tortor. Cum sociis natoque penatibus et magnis dis.</p>
+                <p class="justify">Nulla luctus condimentum condimentum. Nulla facilisi. Praesent posuere molestie elit non vehicula. Ut ornare pulvinar nulla eu ultricies. Aliquam euismod malesuada nisl, nec ultrices elit egestas id. Nam consectetur magna sed libero lacinia eget pretium erat iaculis. Praesent elementum gravida felis ac lacinia.</p>
+              </div>
+              <div class="span6">
+                <div class="stats popover top">
+                  <ul class="pull-right state unstyled">
+                    <li class="completed"></li>
+                    <li class="completed"></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                  </ul>
+                  <h3>Add your URL</h3>
+                  <div class="arrow"></div>
+                </div>
+                <table class="table fix table-url">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>URL gathered</th>
+                      <th><div class="span">Actions</div></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td><a href="#">www.google.pl</a></td>
+                      <td>
+                        <div class="span">
+                          <button class="btn btn-mini">Remove</button>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td><a href="#">www.google.pl</a></td>
+                      <td>
+                        <div class="span">
+                          <button class="btn btn-mini">Remove</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tbody>
+                    <tr>
+                      <td></td>
+                      <td>
+                        <form class="form-inline">
+                          <input type="text" placeholder="Add your url"/>
+                          <button class="btn">Add</button>
+                        </form>
+                      </td>
+                      <td><button class="btn btn-success">Submit</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           {% endblock %}
         </div>
       </div>

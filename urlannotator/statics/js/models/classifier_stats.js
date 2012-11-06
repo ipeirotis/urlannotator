@@ -13,20 +13,20 @@ function classifier_stats(){
     if (div == 0){
       div = 1
     }
-    return 100 * this.yesCount() / div;
+    return Math.round(100 * this.yesCount() / div, 2);
   }, this);
   this.noPerc = ko.computed(function() {
     div = this.allCount();
     if (div == 0){
       div = 1
     }
-    return 100 * this.noCount() / div;
+    return Math.round(100 * this.noCount() / div, 2);
   }, this);
   this.brokenPerc = ko.computed(function() {
     div = this.allCount();
     if (div == 0){
       div = 1
     }
-    return 100 * this.brokenCount() / div;
+    return Math.round(100 * this.brokenCount() / div, 2);
   }, this);
 }

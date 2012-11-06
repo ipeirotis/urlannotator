@@ -1,14 +1,16 @@
 import datetime
+import random
 
 from django.conf import settings
 from celery import group, chain
 
 from urlannotator.classification.models import TrainingSet
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.main.models import Job, Sample
+from urlannotator.main.models import Job, Sample, FillSample, LABEL_NO
 from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample,
     copy_sample_to_job)
+from urlannotator.tools.utils import setting
 
 import logging
 log = logging.getLogger(__name__)
@@ -32,22 +34,31 @@ class SampleFactory(object):
         samples = Sample.objects.filter(url=url)
         job = Job.objects.get(id=job_id)
 
+        is_btm = kwargs.get('btm_sample', False)
+
         # Create a new sample for the job from existing one (if job is
         # missing it). If the job has that sample, create only classified.
         if samples:
-            job_samples = samples.filter(job=job)
-            if job_samples:
-                return create_classify_sample.delay(
-                    result=(True, job_samples[0].id),
-                    label=label,
-                    *args, **kwargs
-                )
-            return (
-                copy_sample_to_job.s(samples[0].id, job.id, label=label,
-                    *args, **kwargs)
-                |
-                create_classify_sample.s(label=label, *args, **kwargs)
-            ).apply_async()
+            job_samples = samples.filter(job=job, btm_sample=is_btm)
+            if is_btm:
+                if job_samples:
+                    return job_samples[0].id
+                return copy_sample_to_job.s(samples[0].id, job.id,
+                    label=label, btm_sample=True, *args, **kwargs
+                    ).apply_async()
+            else:
+                if job_samples:
+                    return create_classify_sample.delay(
+                        result=(True, job_samples[0].id),
+                        label=label,
+                        *args, **kwargs
+                    )
+                return (
+                    copy_sample_to_job.s(samples[0].id, job.id, label=label,
+                        *args, **kwargs)
+                    |
+                    create_classify_sample.s(label=label, *args, **kwargs)
+                ).apply_async()
 
         sample = Sample.objects.create(url=url, job=job)
 
@@ -88,15 +99,22 @@ class JobFactory(object):
         """
         job = Job.objects.get(id=job_id)
 
-        if not job.gold_samples:
-            job.set_gold_samples_done()
-        else:
-            for gold_sample in job.gold_samples:
-                Sample.objects.create_by_owner(
-                    job_id=job_id,
-                    url=gold_sample['url'],
-                    label=gold_sample['label']
-                )
+        fillers = list(FillSample.objects.all())
+        random.shuffle(fillers)
+        fillers = fillers[:min(job.no_of_urls, len(fillers))]
+        for filler in fillers:
+            job.gold_samples.append({
+                'url': filler.url,
+                'label': LABEL_NO,
+            })
+        job.save()
+
+        for gold_sample in job.gold_samples:
+            Sample.objects.create_by_owner(
+                job_id=job_id,
+                url=gold_sample['url'],
+                label=gold_sample['label']
+            )
 
     def classify_urls(self, job_id):
         """
@@ -122,9 +140,17 @@ class JobFactory(object):
         """
             Creates classifier entry with type equal to JOB_DEFAULT_CLASSIFIER.
         """
+        classifier_prefix = '%s-' % setting('SITE_URL', '127.0.0.1')
         classifier_factory.initialize_classifier(
-            job.id,
-            settings.JOB_DEFAULT_CLASSIFIER
+            job_id=job.id,
+            classifier_name=settings.JOB_DEFAULT_CLASSIFIER,
+            prefix=classifier_prefix,
+        )
+
+    def init_quality(self, job_id):
+        Job.objects.filter(id=job_id).update(
+            votes_storage=settings.VOTES_STORAGE,
+            quality_algorithm=settings.QUALITY_ALGORITHM,
         )
 
     def initialize_job(self, job_id, *args, **kwargs):
@@ -138,3 +164,6 @@ class JobFactory(object):
         self.create_classifier(job)
         self.prepare_gold_samples(job.id)
         self.classify_urls(job.id)
+        self.init_quality(job_id)
+
+        job.update_cache()

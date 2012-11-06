@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import (Job, Sample, Worker, LABEL_NO, LABEL_YES,
+from urlannotator.main.models import (Job, Sample, LABEL_NO, LABEL_YES,
     LABEL_BROKEN)
 from urlannotator.flow_control.test import ToolsMockedMixin
 from urlannotator.crowdsourcing.models import (SampleMapping,
@@ -22,7 +22,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
     def testVerifyFromTagasauris(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
             same_domain_allowed=2,
             no_of_urls=10,
         )
@@ -100,7 +100,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
     def testVerifyFromTagasaurisLimit(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
             same_domain_allowed=20,
             no_of_urls=2,
         )
@@ -181,7 +181,7 @@ class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
     def testVerifyFromTagasaurisErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
             same_domain_allowed=2,
             no_of_urls=10,
         )
@@ -265,7 +265,7 @@ class TagasaurisVoteResourceTests(ToolsMockedMixin, TestCase):
     def testAddFromTagasaurisErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
 
         data = {}
@@ -278,7 +278,7 @@ class TagasaurisVoteResourceTests(ToolsMockedMixin, TestCase):
     def testAddFromTagasauris(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
 
         sample = Sample.objects.all()[0]
@@ -323,7 +323,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
     def testAddBTMErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
 
         data = {}
@@ -350,13 +350,12 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
     def testAddBTM(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_NO}]),
         )
 
         worker_id = '1234'
         data = {
             'url': 'google.com',
-            'label': 'yes',
             'worker_id': worker_id
         }
 
@@ -374,21 +373,22 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         # Because of eager celery we can check this:
         btm_sample = BeatTheMachineSample.objects.all()[0]
         self.assertEqual(resp_dict['request_id'], btm_sample.id)
-        self.assertEqual(btm_sample.worker.external_id, worker_id)
-        self.assertEqual(btm_sample.expected_output, btm_sample.label)
+        self.assertEqual(btm_sample.source_val, worker_id)
+
+        # Not sure if I should test it here
+        # self.assertEqual(btm_sample.expected_output, btm_sample.label)
 
     def testStatusBTMErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
-        worker, created = Worker.objects.get_or_create_tagasauris(1234)
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
             job=job,
             url='google.com',
             label='',
             expected_output=LABEL_YES,
-            worker=worker
+            worker_id=123
         )
 
         data = {
@@ -412,15 +412,14 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
     def testStatusBTM(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}]),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
-        worker, created = Worker.objects.get_or_create_tagasauris(1234)
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
             job=job,
             url='google.com',
             label='',
             expected_output=LABEL_YES,
-            worker=worker
+            worker_id=124
         )
 
         data = {
@@ -434,6 +433,5 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         resp_dict = json.loads(resp.content)
 
         self.assertTrue('status' in resp_dict.keys())
-        self.assertTrue('labels_matched' in resp_dict.keys())
-
-        self.assertEqual(resp_dict['labels_matched'], True)
+        self.assertTrue('points' in resp_dict.keys())
+        self.assertTrue('btm_status' in resp_dict.keys())

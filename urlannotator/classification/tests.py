@@ -16,7 +16,8 @@ from urlannotator.classification.models import (TrainingSet, Classifier,
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.classification.event_handlers import process_votes
 from urlannotator.crowdsourcing.event_handlers import initialize_external_jobs
-from urlannotator.crowdsourcing.models import WorkerQualityVote
+from urlannotator.crowdsourcing.models import (WorkerQualityVote,
+    BeatTheMachineSample)
 from urlannotator.flow_control.test import FlowControlMixin, ToolsMockedMixin
 from urlannotator.flow_control import send_event
 from urlannotator.logging.models import LogEntry
@@ -32,7 +33,7 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.train_data = [
             Sample(job=self.job, source_type='',
@@ -48,7 +49,7 @@ class Classifier247Tests(ToolsMockedMixin, TestCase):
             Sample(job=self.job, source_type='',
                 text='Green tan with true fox')
         ]
-        self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
+        self.labels = [LABEL_YES, LABEL_YES, LABEL_NO, LABEL_NO, LABEL_NO, LABEL_NO]
         self.classified = []
         for idx, sample in enumerate(self.train_data):
             self.classified.append(ClassifiedSample.objects.create(
@@ -175,7 +176,7 @@ class SimpleClassifierTests(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.job = Job.objects.all()[0]
 
@@ -193,7 +194,7 @@ class SimpleClassifierTests(ToolsMockedMixin, TestCase):
             Sample(job=self.job, source_type='',
                 text='Green tan with true fox')
         ]
-        self.labels = ['Yes', 'Yes', 'No', 'No', 'No', 'No']
+        self.labels = [LABEL_YES, LABEL_YES, LABEL_NO, LABEL_NO, LABEL_NO, LABEL_NO]
         self.classified = []
         for idx, sample in enumerate(self.train_data):
             self.classified.append(ClassifiedSample.objects.create(
@@ -231,6 +232,36 @@ class SimpleClassifierTests(ToolsMockedMixin, TestCase):
         self.assertNotEqual(sc.classify(test_sample), None)
         self.assertNotEqual(sc.classify_with_info(test_sample), None)
 
+    def testSimpleBtmClassifier(self):
+        sc_id = classifier_factory.initialize_classifier(
+            job_id=self.job.id,
+            classifier_name='SimpleClassifier',
+        )
+        sc = classifier_factory.create_classifier_from_id(sc_id)
+
+        training_set = TrainingSet.objects.newest_for_job(self.job)
+
+        sc.train(set_id=training_set.id)
+
+        sample = Sample.objects.create(
+            source_val='asd',
+            job=self.job,
+            url="google.com/1"
+        )
+        btm_sample = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/1',
+            label=LABEL_NO,
+            expected_output=LABEL_YES,
+            worker_id=1,
+            sample=sample,
+            label_probability={LABEL_NO: 1.0}
+        )
+
+        # Classifier already trained
+        self.assertNotEqual(sc.classify(btm_sample), None)
+        self.assertNotEqual(sc.classify_with_info(btm_sample), None)
+
 
 class TrainingSetManagerTests(ToolsMockedMixin, TestCase):
 
@@ -242,7 +273,7 @@ class TrainingSetManagerTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         ts = TrainingSet(job=job)
         ts.save()
@@ -256,7 +287,7 @@ class ClassifierPerformanceTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}],
         )
 
         self.assertTrue(ClassifierPerformance.objects.latest_for_job(job))
@@ -270,7 +301,7 @@ class ClassifiedSampleTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}],
         )
         with self.assertRaises(KeyError):
             ClassifiedSample.objects.create_by_owner(job=job)
@@ -293,12 +324,12 @@ class ClassifierFactoryTests(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
     def testClassifierFactory(self):
         job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}],
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}],
         )
         factory = classifier_factory.create_classifier(job.id)
         self.assertEqual(factory.__class__, Classifier247)
@@ -325,7 +356,7 @@ class LongTrainingTest(FlowControlMixin, TransactionTestCase):
     def testLongTraining(self):
         job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
         time.sleep(2)
 
         # Refresh our job object
@@ -348,13 +379,22 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
             account=self.user.get_profile()
         )
         self.job.activate()
+        self.workers = [Worker.objects.create_odesk(external_id=x)
+            for x in xrange(10)]
         self.sample = Sample.objects.create(
             source_val='asd',
             job=self.job,
             url=""
         )
-        self.workers = [Worker.objects.create_odesk(external_id=x)
-            for x in xrange(10)]
+        self.btm_sample = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/1',
+            label=LABEL_NO,
+            expected_output=LABEL_YES,
+            worker_id=1,
+            sample=self.sample,
+            label_probability={LABEL_NO: 1.0}
+        )
 
     def testVotesProcess(self):
 
@@ -390,6 +430,26 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
         training_sample = ts.training_samples.all()[0]
         self.assertEqual(training_sample.label, LABEL_NO)
 
+    def testBTMVotesProcess(self):
+
+        def newVote(worker, label):
+            return WorkerQualityVote.objects.new_btm_vote(
+                sample=self.btm_sample.sample,
+                worker=worker,
+                label=label
+            )
+
+        newVote(self.workers[0], LABEL_YES)
+        newVote(self.workers[1], LABEL_YES)
+        newVote(self.workers[2], LABEL_YES)
+
+        ts = TrainingSet.objects.count()
+        send_event('EventProcessVotes')
+        self.assertEqual(TrainingSet.objects.count(), ts)
+        self.assertEqual(BeatTheMachineSample.objects.count(), 1)
+        self.assertEqual(BeatTheMachineSample.objects.all()[0].btm_status,
+            BeatTheMachineSample.BTM_HOLE)
+
     def tearDown(self):
         self.user.delete()
         for w in self.workers:
@@ -406,13 +466,13 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
             'analyze': {
                 'modelDescription': {
                     'confusionMatrix': {
-                        'Yes': {
-                            'Yes': 1,
-                            'No': 0,
+                        LABEL_YES: {
+                            LABEL_YES: 1,
+                            LABEL_NO: 0,
                         },
-                        'No': {
-                            'Yes': 0,
-                            'No': 1,
+                        LABEL_NO: {
+                            LABEL_YES: 0,
+                            LABEL_NO: 1,
                         }
                     }
                 }
@@ -468,7 +528,7 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         classifier = classifier_factory.create_classifier(job.id)
         classifier.analyze()
@@ -490,14 +550,14 @@ class GooglePredictionTests(ToolsMockedMixin, TestCase):
         classifier.train(set_id=train_set.id, turn_off=True)
         job.set_classifier_trained()
 
-        results['predict'] = {'outputLabel': 'Yes', 'outputMulti': [{'label': 'Yes', 'score': 1},{'label': 'No', 'score': 0}]}
+        results['predict'] = {'outputLabel': LABEL_YES, 'outputMulti': [{'label': LABEL_YES, 'score': 1},{'label': LABEL_NO, 'score': 0}]}
         cs = ClassifiedSample.objects.create_by_owner(
             job=job,
             url='http://google.com',
         )
         # Refresh the Classified Sample
         cs = ClassifiedSample.objects.get(id=cs.id)
-        self.assertEqual(classifier.classify(sample=cs), 'Yes')
+        self.assertEqual(classifier.classify(sample=cs), LABEL_YES)
         self.assertEqual(classifier.classify_with_info(sample=cs), results['predict'])
 
         # What if we remove the classfier's id?!?!

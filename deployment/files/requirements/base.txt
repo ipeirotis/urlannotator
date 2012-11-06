@@ -5,7 +5,6 @@ django-pipeline>=1.2
 ipdb
 ipython
 django-social-auth
-#python-odesk
 bootstrap
 docutils
 validictory
@@ -23,3 +22,5 @@ posix-ipc
 Pillow==1.7.7
 futures
 django_jenkins
+-e git+git@github.com:10clouds/Troia-Python-Client.git#egg=troia_client
+pytz

@@ -14,3 +14,4 @@ celerybeat-schedule
 reports/
 simple-classifiers/
 test*.csv
+.jira-url

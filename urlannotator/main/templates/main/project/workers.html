@@ -1,41 +1,51 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'workers' %}
+{% endblock %}
+
+{% block body-class %}body-{{project.get_status|lower}} body-workers{% endblock %}
 
 {% block workers_active %}active{% endblock %}
 {% block project_content %}
-  <div class="row-fluid">
-    <h2>Workers</h2>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Worker name</th>
-          <th style="width: 100px">Quality</th>
-          <th style="width: 100px">Votes added</th>
-          <th style="width: 100px">URLs collected</th>
-          <th style="width: 100px">Hours spent</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for worker in workers %}
-          <tr>
-            <td><a href="{% url project_worker_view project.id worker.id%}">{{worker.name}}</a></td>
-            <td>{{worker.quality}}</td>
-            <td>{{worker.votes_added}}</td>
-            <td>{{worker.urls_collected}}</td>
-            <td>{{worker.hours_spent}}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="row">
+    <div class="span3">
+      <p><h3>Workers</h3></p>
+    </div>
   </div>
-{% endblock %}
-
-{% block css %}
-{{ block.super }}
-<style type="text/css">
-table#more-information td:first-child {
-  width: 140px;
-  text-align: right;
-  padding-right: 10px;
-}
-</style>
+  <div class="row">
+    <div class="span12">
+      <div class="table-container-anno1">
+        <h3>Workers stats</h3>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Worker name</th>
+                <th style="width: 100px">Votes added</th>
+                <th style="width: 100px">URLs collected</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if workers %}
+              {% for worker in workers %}
+                <tr>
+                  <td><a href="{% url project_worker_view project.id worker.id%}">{{worker.name}}</a></td>
+                  <td>{{worker.votes_added}}</td>
+                  <td>{{worker.urls_collected}}</td>
+                </tr>
+              {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="4">No data</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 {% endblock %}

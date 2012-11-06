@@ -1,14 +1,14 @@
 {
     "settings_name": "stable",
     "instance": "stable",
-    "domain": "urlannotator.10clouds.com",
+    "domain": "buildaclassifier.com",
     "db_name": "database.sqlite3.db",
     "db_user": "",
     "db_password": "",
     "db_port": "",
     "pip_cache": "/tmp/urlannotator_stable_pip",
     "pip_requirements": [
-        "base.txt", "devel.txt", "production.txt"
+        "base.txt", "production.txt"
     ],
     "system_requirements": [
         "system_requirements.txt"
@@ -21,8 +21,12 @@
         "supervisord.conf", "project.conf", "supervisor-services.conf", "services.conf"
     ],
     "nginx_sites_enabled": [
-        "urlannotator"
+        "urlannotator-stable"
     ],
+    "nginx_files": ["nginx.urlannotator.conf", "sites-available/urlannotator-stable"],
     "branch": "master",
-    "locals_path": "files/django/local.py"
+    "locals_path": "files/django/local.py",
+    "rabbitmq_port": 5674,
+    "http_port": 8084,
+    "celery_log_level": "INFO"
 }

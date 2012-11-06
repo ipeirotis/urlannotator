@@ -19,7 +19,7 @@ PIPELINE_CSS = {
     },
     'urlannotator-responsive': {
         'source_filenames': (
-            'less/responsive.less',
+            'less/base/responsive.less',
         ),
         'output_filename': 'css/urlannotator-responsive.css',
         'extra_context': {
@@ -28,7 +28,7 @@ PIPELINE_CSS = {
     },
     'base': {
         'source_filenames': (
-            'less/base.less',
+            'less/base/base.less',
         ),
         'output_filename': 'css/base.css',
         'extra_context': {
@@ -37,7 +37,7 @@ PIPELINE_CSS = {
     },
     'wizard': {
         'source_filenames': (
-            'less/wizard.less',
+            'less/base/wizard.less',
         ),
         'output_filename': 'css/wizard.css',
         'extra_context': {
@@ -46,16 +46,63 @@ PIPELINE_CSS = {
     },
     'project': {
         'source_filenames': (
-            'less/project.less',
+            'less/project/project.less',
         ),
         'output_filename': 'css/project.css',
         'extra_context': {
             'rel': 'stylesheet/less',
         },
     },
+    'overview': {
+        'source_filenames': (
+            'less/project/overview.less',
+        ),
+        'output_filename': 'css/overview.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
+    'workers': {
+        'source_filenames': (
+            'less/project/workers.less',
+        ),
+        'output_filename': 'css/workers.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
+    'data': {
+        'source_filenames': (
+            'less/project/data.less',
+        ),
+        'output_filename': 'css/data.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
+    'classifier': {
+        'source_filenames': (
+            'less/project/classifier.less',
+        ),
+        'output_filename': 'css/classifier.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
+    'btm': {
+        'source_filenames': (
+            'less/project/btm.less',
+        ),
+        'output_filename': 'css/btm.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
+
+
     'docs': {
         'source_filenames': (
-            'less/docs.less',
+            'less/accounts/docs.less',
         ),
         'output_filename': 'css/docs.css',
         'extra_context': {
@@ -64,7 +111,7 @@ PIPELINE_CSS = {
     },
     'accounts': {
         'source_filenames': (
-            'less/accounts.less',
+            'less/accounts/accounts.less',
         ),
         'output_filename': 'css/accounts.css',
         'extra_context': {
@@ -73,7 +120,7 @@ PIPELINE_CSS = {
     },
     'landing': {
         'source_filenames': (
-            'less/landing.less',
+            'less/base/landing.less',
         ),
         'output_filename': 'css/landing.css',
         'extra_context': {
@@ -82,7 +129,7 @@ PIPELINE_CSS = {
     },
     'hit': {
         'source_filenames': (
-            'less/hit.less',
+            'less/base/hit.less',
         ),
         'output_filename': 'css/hit.css',
         'extra_context': {

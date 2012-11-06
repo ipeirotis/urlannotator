@@ -2,7 +2,7 @@ from celery import task, registry, Task
 
 from urlannotator.statistics.monitors import JobMonitor, WorkerMonitor
 from urlannotator.main.models import (ProgressStatistics, SpentStatistics,
-    URLStatistics, LinksStatistics)
+    URLStatistics, LinksStatistics, VotesStatistics)
 
 
 @task(ignore_result=True)
@@ -19,6 +19,10 @@ class ProgressMonitor(JobMonitor, Task):
 
     def get_value(self, job):
         return job.get_progress()
+
+    def after_handle(self, obj_set):
+        for job, latest in obj_set:
+            job.get_progress_stats(cache=False)
 
 progress_monitor = registry.tasks[ProgressMonitor.name]
 
@@ -38,6 +42,11 @@ class SpentMonitor(JobMonitor, Task):
     def get_value(self, job):
         return job.budget
 
+    def after_handle(self, obj_set):
+        for job, latest in obj_set:
+            job.get_spent_stats(cache=False)
+
+
 spent_monitor = registry.tasks[SpentMonitor.name]
 
 
@@ -55,6 +64,11 @@ class URLMonitor(JobMonitor, Task):
 
     def get_value(self, job):
         return job.get_urls_collected()
+
+    def after_handle(self, obj_set):
+        for job, latest in obj_set:
+            job.get_urls_stats(cache=False)
+
 
 url_monitor = registry.tasks[URLMonitor.name]
 
@@ -75,3 +89,26 @@ class LinksMonitor(WorkerMonitor, Task):
         return worker.get_links_collected()
 
 links_monitor = registry.tasks[LinksMonitor.name]
+
+
+@task(ignore_result=True)
+class VotesMonitor(JobMonitor, Task):
+    def __init__(self, *args, **kwargs):
+        self.model_cls = VotesStatistics
+        # Warning: Don't use super(self.__class__, ~~ deeper in inheritance -
+        # it will cause infinite loop! It's used here because @task decorator
+        # manipulates the class itself.
+        super(self.__class__, self).__init__(
+            cls=VotesStatistics,
+            *args, **kwargs
+        )
+
+    def get_value(self, job):
+        return job.get_votes_gathered()
+
+    def after_handle(self, obj_set):
+        for job, latest in obj_set:
+            job.get_votes_stats(cache=False)
+
+
+votes_monitor = registry.tasks[VotesMonitor.name]

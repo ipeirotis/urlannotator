@@ -8,7 +8,7 @@
     {% compressed_css 'project' %}
 {% endblock %}
 
-{% block body-class %}body-{{project.get_status|lower}}{% endblock %}
+{% block body-class %}body-{{project.get_status|lower}} body-project{% endblock %}
 
 {% block header %}
   {% if project.is_draft %}
@@ -18,11 +18,12 @@
       <input type="submit" name="submit" value="Settings" class="btn ">
     </form>
   {% else %}
-      <div class="pull-right">
-        <a class="btn " href="#">Export data</a>
-        <a class="btn " data-toggle="modal" href="#closeProjectModal">Close project</a>
+
+      <div class="pull-right btn-group">
+        <a href="{% url project_classifier_data project.id %}" class="btn">Export Training Data</a>
+        <!--<a class="btn " data-toggle="modal" href="#closeProjectModal">Close project</a>
         <a class="btn " href="#">Settings</a>
-        <a class="btn " data-toggle="modal" href="#workface">Own workforce</a>
+        <a class="btn " data-toggle="modal" href="#workface">Own workforce</a>-->
       </div>
   {% endif %}
   <h2>{{project.title}} </h2><span class="badge badge-{{project.get_status|lower}}">{{project.get_status|lower}}</span>
@@ -51,13 +52,14 @@
             {% csrf_token %}
             <input type="hidden" name="id" value="{{project.id}}">
             <input type="submit" name="submit" value="Close project" class="btn btn-primary">
-            <button class="btn" data-dismiss="modal" href="#">Close</button>
+            <button class="btn" data-dismiss="modal" href="#">Cancel</button>
         </form>
     </div>
 </div>
 <div id="workface" class="modal hide">
     <div class="modal-body">
         {% block workface_block %}
+          {% include 'main/project/own_workforce_links.html' %}
         {% endblock %}
     </div>
     <div class="modal-footer">

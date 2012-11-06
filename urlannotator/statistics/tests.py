@@ -4,12 +4,12 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 
 from urlannotator.main.models import (Job, SpentStatistics, URLStatistics,
-    ProgressStatistics)
+    ProgressStatistics, LABEL_YES, LABEL_NO, VotesStatistics)
 from urlannotator.statistics.monitor_tasks import (spent_monitor, url_monitor,
-    progress_monitor)
+    progress_monitor, votes_monitor)
 from urlannotator.statistics.stat_extraction import (extract_progress_stats,
     extract_url_stats, extract_spent_stats, extract_performance_stats,
-    update_classifier_stats)
+    update_classifier_stats, extract_votes_stats)
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.classification.models import ClassifierPerformance
 from urlannotator.flow_control.test import ToolsMockedMixin
@@ -24,10 +24,10 @@ class testJobMonitors(ToolsMockedMixin, TestCase):
             account=self.u.get_profile(),
             no_of_urls=30,
             gold_samples=[
-                {'url':'google.com', 'label':'Yes'},
-                {'url':'wikipedia.org', 'label':'Yes'},
-                {'url':'http://www.dec.ny.gov/animals/9358.html', 'label':'Yes'},
-                {'url':'http://www.enchantedlearning.com/subjects/mammals/raccoon/Raccoonprintout.shtml', 'label':'Yes'},
+                {'url':'google.com', 'label':LABEL_YES},
+                {'url':'wikipedia.org', 'label':LABEL_YES},
+                {'url':'http://www.dec.ny.gov/animals/9358.html', 'label':LABEL_YES},
+                {'url':'http://www.enchantedlearning.com/subjects/mammals/raccoon/Raccoonprintout.shtml', 'label':LABEL_YES},
             ]
         )
 
@@ -36,6 +36,7 @@ class testJobMonitors(ToolsMockedMixin, TestCase):
             (SpentStatistics, spent_monitor),
             (URLStatistics, url_monitor),
             (ProgressStatistics, progress_monitor),
+            (VotesStatistics, votes_monitor)
         ]
         for cls, mon in monitor_list:
             self.assertEqual(cls.objects.filter(job=self.job).count(), 1)
@@ -52,10 +53,10 @@ class testStatExtraction(ToolsMockedMixin, TestCase):
             account=self.u.get_profile(),
             no_of_urls=30,
             gold_samples=[
-                {'url':'google.com', 'label':'Yes'},
-                {'url':'wikipedia.org', 'label':'Yes'},
-                {'url':'http://www.dec.ny.gov/animals/9358.html', 'label':'Yes'},
-                {'url':'http://www.enchantedlearning.com/subjects/mammals/raccoon/Raccoonprintout.shtml', 'label':'Yes'},
+                {'url':'google.com', 'label':LABEL_YES},
+                {'url':'wikipedia.org', 'label':LABEL_YES},
+                {'url':'http://www.dec.ny.gov/animals/9358.html', 'label':LABEL_YES},
+                {'url':'http://www.enchantedlearning.com/subjects/mammals/raccoon/Raccoonprintout.shtml', 'label':LABEL_YES},
             ]
         )
         self.job.activate()
@@ -70,6 +71,7 @@ class testStatExtraction(ToolsMockedMixin, TestCase):
             (extract_spent_stats, 'spent_stats'),
             (extract_url_stats, 'url_stats'),
             (extract_progress_stats, 'progress_stats'),
+            (extract_votes_stats, 'votes_stats'),
         ]
         for ex in extractors:
             ex[0](self.job, context)
@@ -81,13 +83,13 @@ class testStatExtraction(ToolsMockedMixin, TestCase):
         new_analyze = lambda: {
             'modelDescription': {
                 'confusionMatrix': {
-                    'Yes': {
-                        'Yes': 5.0,
-                        'No': 3.0,
+                    LABEL_YES: {
+                        LABEL_YES: 5.0,
+                        LABEL_NO: 3.0,
                     },
-                    'No': {
-                        'Yes': 2.0,
-                        'No': 7.0,
+                    LABEL_NO: {
+                        LABEL_YES: 2.0,
+                        LABEL_NO: 7.0,
                     }
                 }
             }

@@ -1,0 +1,115 @@
+.clearfix {
+  *zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  /* Make inputs at least the height of their button counterpart */
+
+  /* Makes inputs behave like true block-level elements */
+
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.container-register p,
+.container-login p,
+.container-reset p {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.controls input[type=checkbox] {
+  float: left;
+}
+.controls label {
+  float: left;
+  margin-left: 10px;
+  margin-top: 1px;
+}
+.form-actions {
+  background: transparent;
+  border-top: 0px none;
+  margin-top: 0px;
+  padding-top: 0px;
+}
+.form-horizontal .controls {
+  margin-left: 158px;
+}
+header.header {
+  display: none;
+}
+.body-login .alert-container,
+.body-register .alert-container,
+.body-reset .alert-container {
+  margin-top: -54px;
+}
+.body-login .alert-container .alert,
+.body-register .alert-container .alert,
+.body-reset .alert-container .alert {
+  padding-right: 25px;
+  margin-left: 200px;
+}
+@media (min-width: 1200px) {
+  .body-login .alert-container .alert,
+  .body-register .alert-container .alert,
+  .body-reset .alert-container .alert {
+    margin-left: 260px;
+  }
+}
+.body-settings .well.offset2 {
+  margin-left: 200px;
+  padding-top: 0px;
+}
+@media (min-width: 1200px) {
+  .body-settings .offset2 {
+    margin-left: 250px;
+  }
+}
+.body-settings hr {
+  margin-top: 10px;
+}
+.body-settings .accordion-group {
+  border: 0px none;
+}
+.body-settings .accordion-heading a,
+.body-settings .accordion-heading a:hover {
+  text-decoration: none;
+  color: #E0B25D;
+}
+.body-settings .accordion-heading .accordion-toggle {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+.body-settings .accordion-heading .accordion-toggle i {
+  display: none;
+}
+.body-settings .accordion-heading .accordion-toggle h5 {
+  color: #737373;
+}
+.body-settings .accordion-heading .accordion-toggle h5 span {
+  color: #E0B25D;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.body-settings .alert-container {
+  position: absolute;
+  margin-top: -17px;
+}
+.body-settings .alert-container .alert {
+  margin-bottom: 6px;
+}

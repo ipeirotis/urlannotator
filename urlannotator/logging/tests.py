@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import Job
+from urlannotator.main.models import Job, LABEL_YES
 from urlannotator.logging.models import LogEntry
 from urlannotator.logging.settings import (LOG_TYPE_NEW_SAMPLE_DONE,
     LOG_TYPE_JOB_INIT_START)
@@ -14,7 +14,7 @@ class LoggingTest(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
     def test_visibility(self):
         # Read user-visible logs.

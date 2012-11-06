@@ -2,7 +2,7 @@ from celery import task, Task, registry
 from factories import SampleFactory, JobFactory
 
 from urlannotator.classification.models import TrainingSample, TrainingSet
-from urlannotator.main.models import GoldSample
+from urlannotator.main.models import GoldSample, LABEL_BROKEN, Job
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 
@@ -51,12 +51,13 @@ class GoldSamplesMonitor(Task):
         if not job.is_training_set_created():
             registry.tasks[GoldSamplesMonitor.name].retry(countdown=30)
 
-        training_set = TrainingSet.objects.newest_for_job(job)
-        TrainingSample.objects.create(
-            set=training_set,
-            sample=gold_sample.sample,
-            label=gold_sample.label
-        )
+        if gold_sample.label != LABEL_BROKEN:
+            training_set = TrainingSet.objects.newest_for_job(job)
+            TrainingSample.objects.create(
+                set=training_set,
+                sample=gold_sample.sample,
+                label=gold_sample.label
+            )
 
         lock_key = 'TrainingSampleLock-%d' % job.id
         # Send training set completed event. Used here as we are certain no
@@ -76,8 +77,27 @@ class GoldSamplesMonitor(Task):
 
 new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]
 
+
+@task(ignore_result=True)
+def update_job_urls_gathered(job_id, sample_id):
+    job = Job.objects.get(id=job_id)
+
+    # A sample has been created.
+    job.get_progress_urls(cache=False)
+    # If it was created by a worker - update top workers too.
+    job.get_top_workers(cache=False)
+
+
+@task(ignore_result=True)
+def update_job_newest_votes(job_id, set_id):
+    job = Job.objects.get(id=job_id)
+    job.get_newest_votes(cache=False)
+
+
 FLOW_DEFINITIONS = [
     (r'^EventNewRawSample$', new_raw_sample_task),
     (r'^EventNewJobInitialization$', new_job_task),
     (r'^EventNewGoldSample$', new_gold_sample_task),
+    (r'^EventNewSample$', update_job_urls_gathered),
+    (r'^EventTrainingSetCompleted$', update_job_newest_votes),
 ]

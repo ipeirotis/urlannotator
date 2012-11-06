@@ -22,6 +22,8 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
     if not is_proper_url(url):
         return False
 
+    sample = Sample.objects.get(id=sample_id)
+
     try:
         text = get_web_text(url)
 
@@ -29,6 +31,8 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
         send_event(
             "EventSampleContentDone",
             sample_id=sample_id,
+            sample_url=sample.url,
+            job_id=sample.job_id,
         )
     except subprocess.CalledProcessError, e:
         # Something wrong has happened to links. Couldn't find documentation on
@@ -36,6 +40,8 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
         send_event(
             'EventSampleContentFail',
             sample_id=sample_id,
+            sample_url=sample.url,
+            job_id=sample.job_id,
             error_code=e.returncode
         )
         return False
@@ -56,6 +62,7 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
     if not is_proper_url(url):
         return False
 
+    sample = Sample.objects.get(id=sample_id)
     try:
         screenshot = get_web_screenshot(url)
         Sample.objects.filter(id=sample_id).update(screenshot=screenshot)
@@ -63,11 +70,15 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
         send_event(
             "EventSampleScreenshotDone",
             sample_id=sample_id,
+            sample_url=sample.url,
+            job_id=sample.job_id,
         )
     except BaseWebkitException, e:
         send_event(
             "EventSampleScreenshotFail",
             sample_id=sample_id,
+            sample_url=sample.url,
+            job_id=sample.job_id,
             error_code=e.status_code,
         )
         return False
@@ -81,7 +92,7 @@ def web_screenshot_extraction(sample_id, url=None, *args, **kwargs):
 @task()
 def create_sample(extraction_result, sample_id, job_id, url,
         source_type, source_val='', domain='', label=None, silent=False,
-        *args, **kwargs):
+        vote_sample=True, btm_sample=False, training=True, *args, **kwargs):
     """
     If error while capturing web propagate it. Finally deletes TemporarySample.
     extraction_result should be [True, True] - otherwise chaining failed.
@@ -98,6 +109,9 @@ def create_sample(extraction_result, sample_id, job_id, url,
             source_type=source_type,
             source_val=source_val,
             domain=domain,
+            vote_sample=vote_sample,
+            btm_sample=btm_sample,
+            training=training,
         )
         sample = Sample.objects.get(id=sample_id)
 
@@ -168,6 +182,13 @@ def create_classify_sample(result, source_type, create_classified=True,
                 source_val=source_val,
             )
 
+            worker = Sample.get_worker(source_type=source_type,
+                    source_val=source_val)
+            if worker:
+                # Update cache
+                worker.get_urls_collected_count_for_job(sample.job, cache=False)
+
+
             # Sample created sucesfully - pushing event.
             send_event(
                 "EventNewClassifySample",
@@ -184,27 +205,39 @@ def create_classify_sample(result, source_type, create_classified=True,
 
 @task()
 def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
-        *args, **kwargs):
+        btm_sample=False, *args, **kwargs):
     try:
         old_sample = Sample.objects.get(id=sample_id)
         job = Job.objects.get(id=job_id)
+
+        vote_sample = False if btm_sample else True
+        training = False if btm_sample else True
+
         new_sample = Sample.objects.create(
             job=job,
             url=old_sample.url,
             text=old_sample.text,
             screenshot=old_sample.screenshot,
             source_type=source_type,
-            source_val=source_val
+            source_val=source_val,
+            btm_sample=btm_sample,
+            vote_sample=vote_sample,
+            training=training,
         )
 
         send_event(
             "EventSampleScreenshotDone",
             sample_id=new_sample.id,
+            sample_url=new_sample.url,
+            job_id=new_sample.job_id,
         )
         send_event(
             "EventSampleContentDone",
             sample_id=new_sample.id,
+            sample_url=new_sample.url,
+            job_id=new_sample.job_id,
         )
+
         # Golden sample
         if label is not None:
             # GoldSample created sucesfully - pushing event.

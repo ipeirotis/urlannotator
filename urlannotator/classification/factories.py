@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 
 from urlannotator.classification.models import Classifier
-from urlannotator.main.models import Job
+from urlannotator.main.models import Job, LABEL_YES, LABEL_NO, LABEL_BROKEN
 from urlannotator.classification.classifiers import (SimpleClassifier,
     GooglePredictionClassifier, Classifier247)
 
@@ -73,7 +73,7 @@ classifier_inits = {
 def SimpleClassifer_ctor(job, entry, *args, **kwargs):
     classifier = SimpleClassifier(
         job.description,
-        ['Yes', 'No'],
+        [LABEL_YES, LABEL_NO, LABEL_BROKEN],
     )
     classifier.model = entry.parameters['model']
     classifier.id = entry.id
@@ -84,7 +84,7 @@ def SimpleClassifer_ctor(job, entry, *args, **kwargs):
 def GooglePredictionClassifer_ctor(job, entry, *args, **kwargs):
     classifier = GooglePredictionClassifier(
         job.description,
-        ['Yes', 'No'],
+        [LABEL_YES, LABEL_NO, LABEL_BROKEN],
     )
     params = entry.parameters
     classifier.model = params['model']

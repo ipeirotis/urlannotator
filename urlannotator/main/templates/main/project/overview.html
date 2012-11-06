@@ -1,11 +1,21 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
 
-{% block body-class %}body-overview{% endblock %}
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'overview' %}
+{% endblock %}
+
+{% block body-class %}{{ block.super }} body-overview{% endblock %}
 {% block overview_active %}active{% endblock %}
 {% block project_content %}
+ <div class="row">
+    <div class="span3">
+      <p><h3>Overview</h3></p>
+    </div>
+  </div>
 </div> <!-- end of container main -->
 <div class="content content-accordion">
-
     <div class="accordion" id="accordion2">
       <div class="accordion-group">
         <div class="accordion-heading">
@@ -33,6 +43,7 @@
                         <span class="box-header" data-bind="text: title"></span>
                         <span class="box-content" data-bind="html: content"></span>
                         <span data-bind="visible: hasWorker">by <a data-bind="attr: {href: workerURL}, text: workerName"></a></span>
+                        <span data-bind="text: time_ago" class="date"></span>
                       </div>
                     </div>
                   </div>
@@ -43,35 +54,48 @@
         </div>
       </div>
     </div>
-
 </div>
 <div class="container container-main2" role="main">
   <div class="row">
-    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-      <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
-      <span>URLs collected</span>
+    <div class="table-container-anno3 span12">
+      <h3>Basic informations</h3>
+      <div class="table-wrapper table-infoboxes">
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: urls_collected">{{urls_collected}}</h3>
+          <span>URLs collected</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: votes_gathered">{{votes_gathered}}</h3>
+          <span>Votes gathered</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: no_of_workers">{{no_of_workers}}</h3>
+          <span>Number of workers</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3 data-bind="text: budget">{{budget}}</h3>
+          <span>Budget (USD)</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3><span data-bind="text: progress_urls">{{progress_urls}}</span>%</h3>
+          <span>Collecting urls progress</span>
+        </div>
+        <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
+          <h3><span data-bind="text: progress_votes">{{progress_votes}}</span>%</h3>
+          <span>Collecting votes progress</span>
+        </div>
+        {% if not project.is_draft %}
+        <div class="row">
+          <div class="span4 chart-container" id="votesGraph">
+          </div>
+          <div class="span4 chart-container" id="urlGraph">
+          </div>
+          <div class="span4 chart-container" id="performanceGraph">
+          </div>
+        </div>
+        {% endif %}
+      </div>
     </div>
-    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-      <h3 data-bind="text: hours_spent">{{hours_spent}}</h3>
-      <span>Hours spend</span>
-    </div>
-    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-      <h3 data-bind="text: no_of_workers">{{no_of_workers}}</h3>
-      <span>Number of workers</span>
-    </div>
-    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-      <h3 data-bind="text: cost">{{cost}}</h3>
-      <span>Cost (USD)</span>
-    </div>
-    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-      <h3 data-bind="text: budget">{{budget}}</h3>
-      <span>Budget (USD)</span>
-    </div>
-    <div class="span2 infobox{% if project.is_draft%} infobox-disabled{%endif%}">
-      <h3><span data-bind="text: progress">{{progress}}</span>%</h3>
-      <span>Progress</span>
-    </div>
-    <hr>
   </div>
 
   {% if project.is_draft %}
@@ -83,38 +107,62 @@
     </div>
   {% else %}
     <div class="row">
-      <div class="span3 chart-container" id="progressGraph">
+      <div class="span6 ">
+        <div class="table-container-anno1 newest-corrected">
+          <h3>Newest Correct Voted Data</h3>
+          <div class="table-wrapper">
+            <table class="table fix">
+              <thead>
+                <tr>
+                  <th class="preview">URL</th>
+                  <th class="url"></th>
+                  <th class="tiny-col">Added on</th>
+                </tr>
+              </thead>
+              <tbody data-bind="foreach: newest_votes">
+                <tr>
+                  <td class="preview">
+                    <a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a>
+                  </td>
+                  <td class="url"><a data-bind="attr: {href: sample_url}, text: url"></a></td>
+                  <td class="tiny-col" data-bind="text: date"></td>
+                </tr>
+              </tbody>
+              <tbody data-bind="ifnot: has_newest_votes">
+                <tr>
+                  <td colspan="3">No data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="span3 chart-container" id="spentGraph">
-      </div>
-      <div class="span3 chart-container" id="urlGraph">
-      </div>
-      <div class="span3 chart-container" id="performanceGraph">
-      </div>
-    </div>
-    <div class="row">
       <div class="span6">
-        <h3>Newest Correct Voted Data</h3>
-        <table class="table">
-          <thead>
-            <tr><th>Preview</th><th>URL</th><th>Added on</th></tr>
-          </thead>
-          <tbody data-bind="foreach: newest_votes">
-            <tr><td><a data-bind="attr: {href: screenshot}"><img data-bind="attr: {src: screenshot}"></a></td><td data-bind="text: url"></td><td data-bind="text: added_on"></td></tr>
-          </tbody>
-        </table>
-        <hr>
-      </div>
-      <div class="span6">
-        <h3>Top workers</h3>
-        <table class="table">
-          <thead>
-            <tr><th>Worker name</th><th>Links collected</th><th>Hours Spent</th></tr>
-          </thead>
-          <tbody data-bind="foreach: top_workers">
-            <tr><td data-bind="text: name"></td><td data-bind="text: urls_collected"></td><td data-bind="text: hours_spent"></td></tr>
-          </tbody>
-        </table>
+        <div class="table-container-anno1">
+          <h3>Top workers</h3>
+          <div class="table-wrapper">
+            <table class="table fix">
+              <thead>
+                <tr>
+                  <th>Worker name</th>
+                  <th class="tiny-col">Urls collected</th>
+                  <th class="tiny-col">Votes added</th>
+                </tr>
+              </thead>
+              <tbody data-bind="foreach: top_workers">
+                <tr>
+                  <td><a href="#" data-bind="attr: {href: worker_url}, text: name"></a></td>
+                  <td class="tiny-col" data-bind="text: urls_collected"></td>
+                  <td class="tiny-col" data-bind="text: votes_added"></td></tr>
+              </tbody>
+              <tbody data-bind="ifnot: has_top_workers">
+                <tr>
+                  <td colspan="3">No data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   {% endif%}
@@ -137,22 +185,20 @@
 <script type="text/javascript">
 
 var progressGraph;
-var spentGraph;
 var urlGraph;
 var performanceGraph;
-var progressColor = '#3a4354';
-var spentColor = '#855759';
+var votesColor = '#3a4354';
 var urlColor = '#c79155';
 var performanceColor = '#e0b25d';
 $(document).ready(function() {
-  progressGraph = new Highcharts.Chart({
+  votesGraph = new Highcharts.Chart({
      chart: {
-        renderTo: 'progressGraph',
+        renderTo: 'votesGraph',
         zoomType: 'x',
         type: 'line'
      },
      title: {
-        text: 'Progress per hour'
+        text: 'Votes per hour'
      },
      xAxis: {
         type: 'datetime',
@@ -164,41 +210,14 @@ $(document).ready(function() {
           text: ''
         },
         min: 0,
-        showFirstLabel: false
+        showFirstLabel: false,
+        allowDecimals: false,
      },
      series: [{
         showInLegend: false,
-        name: 'Progress',
-        color: progressColor,
-        data: [{{progress_stats|safe}}]
-     }]
-  });
-  spentGraph = new Highcharts.Chart({
-     chart: {
-        renderTo: 'spentGraph',
-        zoomType: 'x',
-        type: 'line'
-     },
-     title: {
-        text: 'Spent per hour'
-     },
-     xAxis: {
-        type: 'datetime',
-        maxZoom: 1 * 3600 * 1000, // an hour
-     },
-     yAxis: {
-        title: {
-          text: ''
-        },
-        min: 0,
-        showEmpty: false,
-        showFirstLabel: false
-     },
-     series: [{
-        showInLegend: false,
-        name: 'Spent',
-        color: spentColor,
-        data: [{{spent_stats|safe}}]
+        name: 'Votes',
+        color: votesColor,
+        data: [{{votes_stats|safe}}]
      }]
   });
   urlGraph = new Highcharts.Chart({
@@ -219,7 +238,8 @@ $(document).ready(function() {
           text: ''
         },
         min: 0,
-        showFirstLabel: false
+        showFirstLabel: false,
+        allowDecimals: false,
      },
      series: [{
         showInLegend: false,
@@ -246,6 +266,7 @@ $(document).ready(function() {
           text: ''
         },
         min: 0,
+        max: 100,
         showFirstLabel: false
      },
      series: [{
@@ -282,7 +303,7 @@ function updateAlerts(url){
 
     $.each(data['entries'], function(idx, val){
       box = val['box'];
-      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}));
+      new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}, val['timedelta']));
       if (!(box['Image_url'] in image_cache)){
         img = new Image();
         img.src = box['Image_url'];
@@ -316,6 +337,7 @@ function updateTopWorkers(workers){
     new_worker.votes_added(val['votes_added']);
     new_worker.earned(val['earned']);
     new_worker.start_time(val['start_time']);
+    new_worker.job_id({{project.id}});
     new_workers.push(new_worker);
   });
   job.top_workers(new_workers);
@@ -328,7 +350,9 @@ function updateNewestVotes(votes){
     new_vote.screenshot(val['screenshot']);
     new_vote.url(val['url']);
     new_vote.added_on(val['added_on']);
+    new_vote.date(val['date']);
     new_vote.label(val['label'])
+    new_vote.sample_url(val['sample_url'])
     new_votes.push(new_vote);
   });
   job.newest_votes(new_votes);
@@ -344,6 +368,9 @@ function updateJob(){
     job.no_of_workers(data['no_of_workers']);
     job.gather_url(data['sample_gathering_url']);
     job.voting_url(data['sample_voting_url']);
+    job.progress_urls(data['progress_urls']);
+    job.progress_votes(data['progress_votes']);
+    job.votes_gathered(data['votes_gathered']);
     updateAlerts(data['feed']);
     updateTopWorkers(data['top_workers']);
     updateNewestVotes(data['newest_votes']);

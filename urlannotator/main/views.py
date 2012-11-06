@@ -26,11 +26,9 @@ from oauth2client.client import OAuth2WebServerFlow
 
 from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
-    GeneralEmailUserForm, GeneralUserForm)
+    GeneralEmailUserForm, GeneralUserForm, BTMForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_YES, LABEL_NO, LABEL_BROKEN)
-from urlannotator.statistics.stat_extraction import (extract_progress_stats,
-    extract_url_stats, extract_spent_stats, extract_performance_stats)
+    LABEL_YES, LABEL_NO)
 from urlannotator.classification.models import (ClassifierPerformance,
     ClassifiedSample, TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
@@ -100,13 +98,18 @@ def updates_box_view(request, job_id):
     return HttpResponse(json.dumps(res))
 
 
-def sample_thumbnail(request, id, thumb_type='small'):
+def sample_thumbnail(request, id, thumb_type=None, width=0, height=0):
     try:
         sample = Sample.objects.get(id=id)
     except Sample.DoesNotExist:
         raise Http404
 
-    if thumb_type == 'small':
+    if thumb_type is None and width and height:
+        return HttpResponse(
+            sample.get_thumbnail(width=width, height=height),
+            content_type='image/png'
+        )
+    elif thumb_type == 'small':
         return HttpResponse(
             sample.get_small_thumbnail(),
             content_type='image/png'
@@ -152,10 +155,13 @@ def register_view(request):
             cont = Context({'key': key, 'site': settings.SITE_URL})
             send_mail(subjectTemplate.render(cont).replace('\n', ''),
                 bodyTemplate.render(cont), 'URL Annotator', [user.email])
-            request.session['success'] = ('Thanks for registering. '
+            context = {'success': ('Thanks for registering. '
                 'An activation email has been sent '
-                'to %s with further instructions.') % user.email
-            return redirect('index')
+                'to %s with further instructions.') % user.email,
+                'login_view': True,
+                'form':UserLoginForm()}
+            return render(request, 'main/login.html',
+                RequestContext(request, context))
 
         return render(request, 'main/register.html',
             RequestContext(request, context))
@@ -167,7 +173,6 @@ def register_service(request, service):
 
 
 def odesk_register(request):
-    request.session['registration'] = 'odesk'
     return redirect('odesk_login')
 
 
@@ -178,28 +183,31 @@ def logout_view(request):
 
 def activation_view(request, key):
     prof_id = key.rsplit('-', 1)
+    context = {}
     if len(prof_id) != 2:
         context = {'error': 'Wrong activation key.'}
-        return render(request, 'main/index.html',
+        return render(request, 'main/login.html',
             RequestContext(request, context))
 
     try:
         prof = Account.objects.get(id=int(prof_id[1]))
     except Account.DoesNotExist:
         context = {'error': 'Wrong activation key.'}
-        return render(request, 'main/index.html',
+        return render(request, 'main/login.html',
             RequestContext(request, context))
 
     if prof.activation_key != key:
         context = {'error': 'Wrong activation key.'}
-        return render(request, 'main/index.html',
+        return render(request, 'main/login.html',
             RequestContext(request, context))
     prof.user.is_active = True
     prof.user.save()
     prof.activation_key = 'activated'
     prof.save()
-    request.session['success'] = 'Your account has been activated.'
-    return redirect('index')
+    context = { 'success': 'Your account has been activated.',
+                'form':UserLoginForm()}
+    return render(request, 'main/login.html',
+        RequestContext(request, context))
 
 
 @csrf_protect
@@ -329,7 +337,7 @@ def project_wizard(request):
     else:
         topic_form = WizardTopicForm(request.POST)
         attr_form = WizardAttributesForm(odeskLogged, request.POST)
-        addt_form = WizardAdditionalForm(request.POST)
+        addt_form = WizardAdditionalForm(request.POST, request.FILES)
         is_draft = request.POST['submit'] == 'draft'
 
         context = {'topic_form': topic_form,
@@ -428,11 +436,16 @@ def odesk_complete(request):
         settings.ODESK_CLIENT_SECRET
     )
     auth, user = client.auth.get_token(request.GET['frob'])
-    # FIXME: Add proper ciphertext support when its ready. Replace uid with
-    #        the ciphertext to use as an identifier.
-    #        Refer to OANNOTATOR-221
-    # cipher = client.getciphertext()
-    cipher = user['uid']
+    client = odesk.Client(
+        settings.ODESK_CLIENT_ID,
+        settings.ODESK_CLIENT_SECRET,
+        auth,
+    )
+    info = client.auth.my_info()
+    url = info['info']['profile_url']
+    # Extract the ciphertext from the profile url. This should be provided by
+    # API, no?
+    cipher = url.rsplit('/', 1)[1]
 
     if request.user.is_authenticated():
         if request.user.get_profile().odesk_uid == '':
@@ -452,12 +465,6 @@ def odesk_complete(request):
             login(request, u)
             return redirect('index')
         except Account.DoesNotExist:
-            if not 'registration' in request.session:
-                request.session['error'] = ("Account for that social media "
-                    "doesn't exist. Please register first.")
-                return redirect('index')
-            request.session.pop('registration')
-
             u = User.objects.create_user(email=user['mail'],
                 username=' '.join(['odesk', cipher]), password='1')
             profile = u.get_profile()
@@ -565,16 +572,18 @@ def project_view(request, id):
                 proj.initialize()
 
     context = {'project': proj}
-    extract_progress_stats(proj, context)
-    extract_url_stats(proj, context)
-    extract_spent_stats(proj, context)
-    extract_performance_stats(proj, context)
-    context['hours_spent'] = proj.get_hours_spent()
-    context['urls_collected'] = proj.get_urls_collected()
+    context.update(proj.get_progress_stats(cache=True))
+    context.update(proj.get_urls_stats(cache=True))
+    context.update(proj.get_spent_stats(cache=True))
+    context.update(proj.get_performance_stats(cache=True))
+    context.update(proj.get_votes_stats(cache=True))
+    context['hours_spent'] = proj.get_hours_spent(cache=True)
+    context['urls_collected'] = proj.get_urls_collected(cache=True)
     context['no_of_workers'] = proj.get_no_of_workers()
-    context['cost'] = proj.get_cost()
+    context['cost'] = proj.get_cost(cache=True)
     context['budget'] = proj.budget
-    context['progress'] = proj.get_progress()
+    context['progress_urls'] = proj.get_progress_urls(cache=True)
+    context['progress_votes'] = proj.get_progress_votes(cache=True)
 
     return render(request, 'main/project/overview.html',
         RequestContext(request, context))
@@ -598,10 +607,10 @@ def project_workers_view(request, id):
     for worker in job.get_workers():
         workers.append({
             'id': worker.id,
-            'name': worker.get_name,
+            'name': worker.get_name(cache=True),
             'quality': worker.get_estimated_quality_for_job(job),
-            'votes_added': worker.get_votes_added_count_for_job(job),
-            'urls_collected': worker.get_urls_collected_count_for_job(job),
+            'votes_added': worker.get_votes_added_count_for_job(job, cache=True),
+            'urls_collected': worker.get_urls_collected_count_for_job(job, cache=True),
             'hours_spent': worker.get_hours_spent_for_job(job)
         })
     context['workers'] = workers
@@ -650,6 +659,7 @@ def project_worker_view(request, id, worker_id):
 def project_debug(request, id, debug):
     try:
         proj = Job.objects.get(id=id)
+
     except Job.DoesNotExist:
         request.session['error'] = "Such project doesn't exist."
         return redirect('index')
@@ -677,19 +687,35 @@ def project_debug(request, id, debug):
 @login_required
 def project_btm_view(request, id):
     try:
-        proj = Job.objects.get(id=id)
+        job = Job.objects.get(id=id)
     except Job.DoesNotExist:
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    if (proj.account != request.user.get_profile()
+    if (job.account != request.user.get_profile()
             and not request.user.is_superuser):
         request.session['error'] = 'The project does not exist.'
         return redirect('index')
 
-    context = {'project': proj}
-    return render(request, 'main/project/btm_view.html',
-        RequestContext(request, context))
+    context = {'project': job}
+    if job.is_btm_active():
+        context['pending_samples'] = job.get_btm_pending_samples()
+        return render(request, 'main/project/btm_view.html',
+            RequestContext(request, context))
+    else:
+        context['form'] = BTMForm()
+        if request.method == 'POST':
+            form = BTMForm(request.POST)
+            if form.is_valid():
+                job.start_btm(
+                    topic=form.cleaned_data['topic'],
+                    description=form.cleaned_data['topic_desc'],
+                    no_of_urls=form.cleaned_data['no_of_urls'],
+                )
+                return redirect('project_btm_view', id=id)
+            context['form'] = form
+        return render(request, 'main/project/btm.html',
+            RequestContext(request, context))
 
 
 @login_required
@@ -707,8 +733,8 @@ def project_data_view(request, id):
 
     context = {
         'project': job,
-        'data_set': (sample for sample in Sample.objects.filter(job=job)
-            if sample.is_finished()),
+        'data_set': (sample for sample in Sample.objects.filter(job=job,
+            btm_sample=False) if sample.is_finished()),
     }
 
     return render(request, 'main/project/data.html',
@@ -784,18 +810,25 @@ def project_classifier_view(request, id):
                 classified_samples.append(cs.id)
             request.session['classified-samples'] = classified_samples
         return redirect('project_classifier_view', id)
-    samples = ClassifiedSample.objects.filter(job=job).exclude(label='')
-    yes_labels = samples.filter(label=LABEL_YES)
-    yes_perc = int(yes_labels.count() * 100 / (samples.count() or 1))
-    no_labels = samples.filter(label=LABEL_NO)
-    no_perc = int(no_labels.count() * 100 / (samples.count() or 1))
-    broken_labels = samples.filter(label=LABEL_BROKEN)
-    broken_perc = int(broken_labels.count() * 100 / (samples.count() or 1))
+    yes_labels = []
+    no_labels = []
+
+    for sample in job.sample_set.all().iterator():
+        label = sample.get_classified_label()
+        if label == LABEL_YES:
+            yes_labels.append(sample)
+        elif label == LABEL_NO:
+            no_labels.append(sample)
+
+    yc = len(yes_labels)
+    nc = len(no_labels)
+    yes_perc = int(yc * 100 / ((yc + nc) or 1))
+    no_perc = int(nc * 100 / ((yc + nc) or 1))
     context['classifier_stats'] = {
-        'count': samples.count(),
-        'yes_labels': {'val': yes_labels.count(), 'perc': yes_perc},
-        'no_labels': {'val': no_labels.count(), 'perc': no_perc},
-        'broken_labels': {'val': broken_labels.count(), 'perc': broken_perc}}
+        'count': yc + nc,
+        'yes_labels': {'val': yc, 'perc': yes_perc},
+        'no_labels': {'val': nc, 'perc': no_perc},
+        'broken_labels': {'val': 0, 'perc': 0}}
 
     context['performance_TPR'] = []
     context['performance_TNR'] = []

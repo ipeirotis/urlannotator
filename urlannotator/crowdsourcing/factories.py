@@ -1,9 +1,12 @@
-from urlannotator.crowdsourcing.tagasauris_helper import create_tagasauris_job
+from urlannotator.crowdsourcing.tagasauris_helper import (create_tagasauris_job,
+    make_tagapi_client, create_btm)
 from urlannotator.crowdsourcing.odesk_helper import create_odesk_job
 from urlannotator.crowdsourcing.quality.algorithms import (MajorityVoting,
     DBVotesStorage)
 from urlannotator.main.models import (Job, JOB_SOURCE_ODESK_FREE,
     JOB_SOURCE_ODESK_PAID, JOB_SOURCE_OWN_WORKFORCE)
+from urlannotator.crowdsourcing.models import TagasaurisJobs
+from urlannotator.crowdsourcing.troia_helper import init_troia
 
 import logging
 log = logging.getLogger(__name__)
@@ -52,6 +55,38 @@ class ExternalJobsFactory(object):
 
         initializer = self.get_initializer(job=job)
         initializer(job=job)
+
+    def initialize_btm(self, job_id, topic, description, no_of_urls):
+        job = Job.objects.get(id=job_id)
+
+        c = make_tagapi_client()
+
+        beatthemachine_key, beatthemachine_hit = create_btm(c, job, topic,
+            description, no_of_urls)
+
+        # Our link to tagasauris jobs.
+        tj, _ = TagasaurisJobs.objects.get_or_create(urlannotator_job=job)
+        tj.beatthemachine_key = beatthemachine_key
+        tj.beatthemachine_hit = beatthemachine_hit
+        tj.save()
+
+
+class VoteStorageFactory(object):
+    """
+        Initializes votes' storage for new jobs.
+    """
+    initializers = {
+        'TroiaVotesStorage': init_troia,
+    }
+
+    def _default_initializer(self, job):
+        pass
+
+    def init_storage(self, job_id):
+        job = Job.objects.get(id=job_id)
+        storage = job.votes_storage
+        init = self.initializers.get(storage, self._default_initializer)
+        init(job=job)
 
 
 class QualityAlgorithmFactory(object):

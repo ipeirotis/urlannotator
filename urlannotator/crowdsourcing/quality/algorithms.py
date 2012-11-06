@@ -17,6 +17,19 @@ class VotesStorage(object):
             Should ignore repeated votes. Returns True on success.
         '''
 
+    def add_gold_vote(self, object_id, label):
+        '''
+            Adds gold vote. Returns True on success.
+        '''
+
+    def add_gold_votes(self, votes):
+        '''
+            Votes is a list of 2-tuples (object_id, label).
+            Adds gold votes. Returns True on success.
+        '''
+        for object_id, label in votes:
+            self.add_vote(object_id=object_id, label=label)
+
     def add_votes(self, votes):
         ''' Default implementation.
 
@@ -46,18 +59,55 @@ class DBVotesStorage(VotesStorage):
                 sample=sample,
                 label=label,
             )
+            return True
         except IntegrityError:
             # Skip duplicates
-            pass
+            return False
 
     def reset(self):
         super(DBVotesStorage, self).reset()
-        ids = WorkerQualityVote.objects.all().select_related('sample')
+        ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
         ids = [w.id for w in ids if w.sample.job_id == self.storage_id]
         WorkerQualityVote.objects.filter(id__in=ids).delete()
 
     def get_all_votes(self):
-        ids = WorkerQualityVote.objects.all().select_related('sample')
+        ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
+        return [(w.worker_id, w.sample_id, w.label)
+            for w in ids if w.sample.job_id == self.storage_id]
+
+    def get_btm_votes(self):
+        ids = WorkerQualityVote.objects.filter(btm_vote=True).select_related(
+            'sample')
+        return [(w.worker_id, w.sample_id, w.label)
+            for w in ids if w.sample.job_id == self.storage_id]
+
+
+class TroiaDBStorage(VotesStorage):
+    def __init__(self, storage_id):
+        super(TroiaDBStorage, self).__init__(storage_id=storage_id)
+        self.tc = TroiaClient(settings.TROIA_HOST, None)
+
+    def add_vote(self, worker_id, object_id, label):
+        pass
+
+    def reset(self):
+        super(DBVotesStorage, self).reset()
+        ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
+        ids = [w.id for w in ids if w.sample.job_id == self.storage_id]
+        WorkerQualityVote.objects.filter(id__in=ids).delete()
+
+    def get_all_votes(self):
+        ids = WorkerQualityVote.objects.filter(btm_vote=False).select_related(
+            'sample')
+        return [(w.worker_id, w.sample_id, w.label)
+            for w in ids if w.sample.job_id == self.storage_id]
+
+    def get_btm_votes(self):
+        ids = WorkerQualityVote.objects.filter(btm_vote=True).select_related(
+            'sample')
         return [(w.worker_id, w.sample_id, w.label)
             for w in ids if w.sample.job_id == self.storage_id]
 
@@ -165,10 +215,10 @@ class CrowdsourcingQualityAlgorithm(object):
                     job_id=sample.job_id,
                     worker_id=vote.worker_id,
                 )
-                assoc.data['all_votes'] = assoc.data.get('all_votes', 0) + 1
+                assoc.data['all_votes'] = assoc.data.get('all_votes', 0.0) + 1.0
                 if vote.label == correct_label:
-                    correct = assoc.data.get('correct_labels', 0)
-                    assoc.data['correct_labels'] = correct + 1
+                    correct = assoc.data.get('correct_labels', 0.0)
+                    assoc.data['correct_labels'] = correct + 1.0
                 assoc.save()
                 assoc_set.add(assoc.id)
 
@@ -184,18 +234,19 @@ class MajorityVoting(CrowdsourcingQualityAlgorithm):
 
     def calculate_quality(self, assoc):
         if not assoc.data['all_votes']:
-            return 0
+            return 0.0
 
-        return assoc.data.get('correct_labels', 0) / assoc.data['all_votes']
+        return assoc.data.get('correct_labels', 0.0) / assoc.data['all_votes']
 
-    def extract_decisions(self):
+    def _extract_decisions(self, all_votes):
         votes = {}
-        for worker_id, object_id, label in self.votes_storage.get_all_votes():
+        for worker_id, object_id, label in all_votes:
             counts = votes.get(object_id, {
                 LABEL_YES: 0,
                 LABEL_NO: 0,
                 LABEL_BROKEN: 0,
             })
+
             if label == LABEL_YES:
                 count = counts.get(LABEL_YES, 0)
                 counts[LABEL_YES] = count + 1
@@ -207,9 +258,21 @@ class MajorityVoting(CrowdsourcingQualityAlgorithm):
                 counts[LABEL_BROKEN] = count + 1
 
             votes[object_id] = counts
+            WorkerQualityVote.objects.filter(
+                worker=worker_id,
+                sample=object_id,
+            ).update(is_new=False)
 
         decisions = [(el, max(val.iteritems(), key=lambda x: x[1])[0])
             for el, val in votes.iteritems()]
         self.calculate_workers_quality(data=decisions)
 
         return decisions
+
+    def extract_decisions(self):
+        votes = self.votes_storage.get_all_votes()
+        return self._extract_decisions(votes)
+
+    def extract_btm_decisions(self):
+        votes = self.votes_storage.get_btm_votes()
+        return self._extract_decisions(votes)

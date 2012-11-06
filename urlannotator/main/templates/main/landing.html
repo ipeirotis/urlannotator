@@ -13,7 +13,7 @@
            More info: h5bp.com/i/378 -->
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-        <title>{% block title %}Url Annotator{% endblock %}</title>
+        <title>{% block title %}Build a classifier{% endblock %}</title>
         <meta name="description" content="">
         <meta name="author" content="">
 
@@ -33,59 +33,88 @@
            chromium.org/developers/how-tos/chrome-frame-getting-started -->
         <!--[if lt IE 7]><p class=chromeframe>Your browser is <em>ancient!</em> <a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to experience this site.</p><![endif]-->
 
+        <div class="wrapper">
+            <header class="content">
+                <!-- content for left column(gray) and right column(orange) -->
+                <div class="content content-columns">
+                    <div class="col-left"> </div>
+                    <div class="col-right"> </div>
+                </div>
 
-        <header class="content">
-            <!-- content for left column(gray) and right column(orange) -->
-            <div class="content content-columns">
-                <div class="col-left"> </div>
-                <div class="col-right"> </div>
-            </div>
+                <!-- content for centered colors - gradient -->
+                <div class="content content-colors">
+                    <div class="container container-colors"> </div>
+                </div>
 
-            <!-- content for centered colors - gradient -->
-            <div class="content content-colors">
-                <div class="container container-colors"> </div>
-            </div>
+                <!-- content for stripped overlay -->
+                <div class="content content-stripped"> </div>
 
-            <!-- content for stripped overlay -->
-            <div class="content content-stripped"> </div>
-
-            <!-- container for brand and login -->
-            <div class="content content-login">
-                <div class="container container-login">
-                    <div class="pull-right">
-                        <a href="{% url login %}" class="span btn  btn-login">Log in</a> 
-                        <span class="span">or</span>
-                        <a href="{% url register %}" class="span btn-register">Register</a>
+                <!-- container for brand and login -->
+                <div class="content content-login">
+                    <div class="container container-login">
+                        <div class="pull-right">
+                            <a href="{% url login %}" class="span btn  btn-login">Log in</a>
+                            <span class="span span-or">or</span>
+                            <a href="{% url register %}" class="span btn-register">Register</a>
+                        </div>
+                        <a class="brand pull-left" href="{% url index %}"></a>
                     </div>
-                    <a class="brand pull-left" href="{% url index %}"></a>
                 </div>
-            </div>
-        </header>
-        <div class="clearfix auxiliary-clearfix"></div>
-        <section class="content">
-            <div class="container">
-                <div class="col-wrapper col1">
-                    <div class="col-container"></div>
-                    <h1>PLAN</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
+            </header>
+            <div class="clearfix auxiliary-clearfix"></div>
+            <section class="content section-top">
+                <div class="container">
+                    <div class="col-wrapper col1">
+                        <div class="col-container"></div>
+                        <h1>PLAN</h1>
+                        <p>Create human-readable guidelines for the topic that you are interested in detecting on the web.</p>
+                    </div>
+                    <div class="col-wrapper col2">
+                        <div class="col-container"></div>
+                        <h1>DECIDE</h1>
+                        <p>How many pages you want to collect as training data, how much do you want to pay per page, and how much to pay for vetting.</p>
+                    </div>
+                    <div class="col-wrapper col3">
+                        <div class="col-container"></div>
+                        <h1>WAIT</h1>
+                        <p>The crowdsourced workers are collecting and vetting the data, and a classifier is being up trained.</p>
+                    </div>
+                    <div class="col-wrapper col4">
+                        <div class="col-container"></div>
+                        <h1>USE</h1>
+                        <p>The classifier is ready to be used, and the workrers are now busy trying to find cases that break the classifier, in order to improve it further.</p>
+                    </div>
                 </div>
-                <div class="col-wrapper col2">
-                    <div class="col-container"></div>
-                    <h1>CREATE</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
+            </section>
+            <section class="content section-middle">
+                <div class="container">
+                    <div class="row">
+                        <div class="span12">
+                            <h1>Build a Classifier is currently in beta version</h1>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-wrapper col3">
-                    <div class="col-container"></div>
-                    <h1>WAIT</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
+            </section>
+            <section class="content section-bottom">
+                <div class="container">
+                    <div class="row">
+                            <div class=" col1 span">
+                                <div class="ico"> </div>
+                                <div class="ico-desc">
+                                    <p>If you want to gain better understanding how it work please read <a href="{% url readme_view %}">documentation</a>.</p>
+                                </div>
+                            </div>
+                            <div class=" col2 span">
+                                <div class="ico"> </div>
+                                <div class="ico-desc">
+                                    <p>If you want to help us pease provide your feedback - <a href="#">contact</a>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-wrapper col4">
-                    <div class="col-container"></div>
-                    <h1>USE</h1>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec leo felis, adipiscing vel molestie posuere, sagittis vitae leo. Nam mattis cursus orci, sed convallis velit mollis ac.</p>
-                </div>
-            </div>
-        </section>
+            </section>
+        </div>
 
         <footer class="footer">
           <div class="container container-footer">

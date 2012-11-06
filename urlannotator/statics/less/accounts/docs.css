@@ -1,0 +1,102 @@
+.clearfix {
+  *zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  /* Make inputs at least the height of their button counterpart */
+
+  /* Makes inputs behave like true block-level elements */
+
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+div#docs {
+  font-family: helvetica, arial, freesans, clean, sans-serif;
+  color: #333;
+  background-color: #fff;
+  border: none;
+  line-height: 1.5;
+  text-align: left;
+}
+div#docs pre {
+  background-color: #eee;
+  padding: 10px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  overflow: auto;
+}
+div#docs code {
+  background-color: #eee;
+  padding: 1px 3px;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+}
+div#docs li p {
+  margin: 0.3em;
+}
+div#docs li {
+  list-style-type: disc;
+}
+div#docs a:link,
+div#docs a:visited {
+  color: #D7A65A;
+  text-decoration: none;
+}
+div#docs a:hover {
+  color: #D7A65A;
+  text-decoration: underline;
+  text-shadow: none;
+}
+div#docs h1 {
+  color: #999;
+  font-weight: bold;
+}
+div#docs h2 {
+  border-bottom: 1px dotted #aaa;
+  margin-bottom: 1em;
+  color: #333;
+}
+div#docs h3 {
+  color: #666;
+}
+div#docs .shadow {
+  -webkit-box-shadow: 0 5px 15px #000000;
+  -moz-box-shadow: 0 5px 15px #000000;
+  box-shadow: 0 5px 15px #000000;
+}
+div#docs blockquote,
+div#docs blockquote p {
+  color: #777777;
+  font-size: 95% !important;
+}
+div#table-of-contents {
+  width: 300px;
+  float: left;
+}
+div#url-annotator {
+  width: 620px;
+  float: left;
+  margin-left: 20px;
+}
+div#docs a {
+  color: #3a4354;
+}

@@ -1,0 +1,196 @@
+.clearfix {
+  *zoom: 1;
+}
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
+.clearfix:after {
+  clear: both;
+}
+.hide-text {
+  overflow: hidden;
+  text-indent: 100%;
+  white-space: nowrap;
+}
+.input-block-level {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  /* Make inputs at least the height of their button counterpart */
+
+  /* Makes inputs behave like true block-level elements */
+
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.chart-container {
+  height: 200px;
+}
+#performanceGraph {
+  height: 235px;
+}
+.body-draft div.navbar .bottom-bar {
+  background-color: #e0b25d;
+  background-image: none;
+}
+.body-initializing div.navbar .bottom-bar {
+  background-color: #ffe2ac;
+  background-image: none;
+}
+.body-active div.navbar .bottom-bar {
+  background-color: #8cc04a;
+  background-image: none;
+}
+.body-stopped div.navbar .bottom-bar {
+  background-color: #855759;
+  background-image: none;
+}
+.body-completed div.navbar .bottom-bar {
+  background-color: #3a4354;
+  background-image: none;
+}
+div.alert {
+  padding-bottom: 37px;
+}
+div.alert form {
+  margin-bottom: 0px;
+}
+div.status-draft {
+  background-color: #e0b25d;
+  border: 1px solid #d89e32;
+}
+div.status-initializing {
+  background-color: #ffe2ac;
+  border: 1px solid #ffd079;
+}
+div.status-active {
+  background-color: #8cc04a;
+  border: 1px solid #729f38;
+}
+div.status-stopped {
+  background-color: #855759;
+  border: 1px solid #664344;
+}
+div.status-completed {
+  background-color: #3a4354;
+  border: 1px solid #252b36;
+}
+div.infobox {
+  -webkit-box-shadow: inset 0px 0px 2px 2px #f8f8f8;
+  -moz-box-shadow: inset 0px 0px 2px 2px #f8f8f8;
+  box-shadow: inset 0px 0px 2px 2px #f8f8f8;
+  padding: 15px 0px;
+  background-color: #fafafa;
+  text-align: center;
+  border: 1px solid transparent;
+  margin-bottom: 10px;
+  margin-left: 12px;
+}
+@media (max-width: 979px) and (min-width: 768px) {
+  div.infobox {
+    height: 63px;
+  }
+}
+@media (min-width: 1200px) {
+  div.infobox {
+    margin-left: 20px;
+  }
+}
+div.infobox h3 {
+  color: #8CC04A;
+  font-size: 30px;
+  line-height: 34px;
+}
+.table-infoboxes {
+  height: 90px;
+  padding: 20px 0px 15px 0px!important;
+}
+div.infobox-disabled {
+  background-color: #F7F7F9;
+  color: gray;
+}
+div.infobox-disabled h3 {
+  color: #DBA442!important;
+}
+span.badge.badge-draft {
+  background-color: #e0b25d;
+}
+span.badge.badge-initializing {
+  background-color: #ffe2ac;
+}
+span.badge.badge-active {
+  background-color: #8cc04a;
+}
+span.badge.badge-stopped {
+  background-color: #855759;
+}
+span.badge.badge-completed {
+  background-color: #3a4354;
+}
+table#btm-statistics td:nth-of-type(2) {
+  width: 100px;
+  text-align: right;
+}
+.nav.nav-tabs {
+  margin-bottom: 5px;
+}
+.nav.nav-tabs li a {
+  text-decoration: underline;
+  color: #d0a271;
+}
+.nav.nav-tabs li.active a {
+  text-decoration: none;
+  color: #333;
+}
+.span3-updates {
+  float: right!important;
+}
+.newest-corrected td.url {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.container-main {
+  padding-bottom: 60px;
+}
+.body-project .container-main {
+  padding-bottom: 80px;
+}
+#classifier-history td {
+  height: 60px;
+}
+#classifier-history .td-url a span {
+  display: block;
+  overflow: hidden;
+  width: 190px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (min-width: 1200px) {
+  #classifier-history .td-url a span {
+    overflow: hidden;
+    width: 300px;
+    text-overflow: ellipsis;
+  }
+}
+td.url,
+th.url {
+  overflow: hidden;
+  width: 200px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+td.url a,
+th.url a {
+  white-space: nowrap;
+}
+td.preview,
+th.preview {
+  width: 54px;
+}
+table.fix {
+  table-layout: fixed;
+}

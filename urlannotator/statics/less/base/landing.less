@@ -1,0 +1,274 @@
+@import '../bootstrap/variables.less';
+@import '../bootstrap/mixins.less';
+
+body{
+   min-width:950px; /* suppose you want minimun width of 1000px */
+   width: auto !important;  /* Firefox will set width as auto */
+   width:950px;             /* As IE ignores !important it will set width as 1000px; */
+}
+
+
+html, body {
+  height: 100%;
+  min-height:100%;
+}
+
+html, body {
+  min-width:1000px;
+}
+
+.wrapper {
+  min-height:100%;
+  margin-bottom:-79px;
+}
+
+
+@media(max-width: 979px) {
+  header, footer.footer {
+    margin-right:-60px!important;
+  }
+}
+
+@media(min-width:979px) and (max-width:1000px) {
+  header, footer.footer {
+    margin-right:-20px!important;
+  }
+}
+
+header.content {
+  height:185px;
+  .content-columns {
+    .col-left {
+      height:185px;
+      background-color: #3a4354;
+      float:left;
+      width:50%;
+      &:after {
+        clear:both;
+      }
+    }
+    .col-right {
+      float:right;
+      height:185px;
+      background-color:#e0b25d;
+      width:50%;
+      &:after {
+        clear:both;
+      }
+    }
+  }
+
+  .content-colors {
+    position: relative;
+    top:0px;
+    .container-colors {
+      background: transparent url('/statics/img/url_anno_landing_bg.png') repeat-y 0px 0px;
+      height:185px;
+    }
+  }
+
+  .content-stripped {
+    position: relative;
+    top:-185px;
+    background: transparent url('/statics/img/url_anno_landing_strips.png') repeat 0px 0px;
+    height:185px;
+    width:100%;
+  }
+
+  .content-login {
+    position: relative;
+    top:-370px;
+    height:185px;
+    width:100%;
+    .container-login {
+      .brand {
+        margin: 12px 0px;
+        background:url('/statics/img/url_anno_nav_logo.png') no-repeat center center;
+        width:223px;
+        height:47px;
+      }
+      .btn-login {
+        margin-top:20px;
+        .buttonBackground(#825659, #5C4957);
+        color:white;
+        text-shadow:none;
+      }
+      span, .btn-register {
+        margin-top:26px;
+        margin-left:10px;
+        font-size:14;
+      }
+      .span-or {
+        color:white;
+      }
+      .btn-register {
+        color:#694e58;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.auxiliary-clearfix {
+
+}
+
+section.content {
+  position: relative;
+  top:-100px;
+  > .container {
+    .col-wrapper {
+      width:24.9%;
+      float:left;
+      * {
+        width:224px;
+        margin:auto;
+      }
+      .col-container {
+        height:224px;
+        background: transparent url('/statics/img/url_anno_landing_circles.png') no-repeat 0px -17px;
+      }
+      h1 {
+        font-weight:normal;
+        font-style: italic;
+        text-align: center;
+        font-size:28px;
+        margin:12px auto;
+      }
+      p {
+        text-align: left;
+        font-style:italic;
+        font-size:13px;
+        line-height:16px;
+        font-weight:bold;
+        color:#333;
+      }
+    }
+    .col1 {
+      .col-container {
+        background-position: -22px -17px;
+      }
+      h1 {
+        color:#3B4455;
+      }
+    }
+    .col2 {
+      .col-container {
+        background-position: -262px -17px;
+      }
+      h1 {
+        color:#855759;
+      }
+    }
+    .col3 {
+      .col-container {
+        background-position: -502px -17px;
+      }
+      h1 {
+        color:#C59054;
+      }
+    }
+    .col4 {
+      .col-container {
+        background-position: -742px -17px;
+      }
+      h1 {
+        color:#E0B25D;
+      }
+    }
+  }
+}
+
+
+
+@-moz-document url-prefix() {
+  section.content {
+    top:-360px;
+  }
+}
+
+section.section-middle {
+  margin-top:55px;
+  .container {
+    border-top:1px solid #bfbfbf;
+    border-bottom:1px solid #bfbfbf;
+    padding:60px 0px;
+    h1 {
+      font-weight:normal;
+      font-style: italic;
+      text-align: center;
+      font-size:28px;
+      margin:12px auto;
+      text-align: center;
+    }
+  }
+}
+
+section.section-bottom {
+  .container {
+    padding:30px 0px;
+    background:url('/statics/img/u_landing_03.png') repeat 0px 0px;
+    .col1, .col2 {
+      float:left;
+      width:48%;
+      .ico {
+        height:100px;
+        width:100px;
+        .border-radius(50%);
+        border:2px solid #ddd;
+        background-color: white;
+        float:left;
+        margin-left:50px;
+      }
+      .ico-desc {
+        margin-left: 240px;
+        margin-top:30px;
+        p {
+          text-align: left;
+          font-style:italic;
+          font-size:13px;
+          line-height:18px;
+          color:#333;
+          a {
+            color:#694e58;
+            text-decoration: underline;
+            &:hover {
+              color:#704e58;
+            }
+          }
+        }
+      }
+    }
+    .col1 {
+      .ico {
+        background:white url('/statics/img/u_landing_07.png') no-repeat 32px 28px;
+      }
+
+    }
+    .col2 {
+      .ico {
+        background:white url('/statics/img/u_landing_09.png') no-repeat 28px 28px;
+      }
+    }
+  }
+}
+
+
+footer.content {
+  > .container {
+
+  }
+}
+
+
+
+footer.footer {
+  padding: 20px 0;
+  border-top: 1px solid #e5e5e5;
+  background-color: #f5f5f5;
+
+  margin: 20px 0 0 0;
+  color: #075b8d;
+  height: 18px;
+}
+

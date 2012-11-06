@@ -7,6 +7,25 @@ from django.conf import settings
 
 from tagapi.api import TagasaurisClient
 from urlannotator.crowdsourcing.models import TagasaurisJobs
+from tagapi.error import TagasaurisApiException, TagasaurisApiMaxRetries
+from urlannotator.tools.utils import setting
+
+import logging
+log = logging.getLogger(__name__)
+
+TAGASAURIS_CALLBACKS = setting('TAGASAURIS_CALLBACKS',
+    'http://' + settings.SITE_URL)
+TAGASAURIS_VOTING_CALLBACK = setting('TAGASAURIS_VOTING_CALLBACK',
+    TAGASAURIS_CALLBACKS + '/api/v1/vote/add/tagasauris/%s/')
+TAGASAURIS_BTM_VOTING_CALLBACK = setting('TAGASAURIS_BTM_VOTING_CALLBACK',
+    TAGASAURIS_CALLBACKS + '/api/v1/vote/btm/tagasauris/%s/')
+
+# Tagasauris needs sacrifice!
+DUMMY_URLANNOTATOR_URL = setting('DUMMY_URLANNOTATOR_URL',
+    'http://' + settings.SITE_URL + '/statics/img/favicon.png')
+
+TAGASAURIS_HIT_SOCIAL_URL = setting('TAGASAURIS_HIT_SOCIAL_URL',
+    settings.TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s')
 
 
 def make_tagapi_client():
@@ -18,7 +37,7 @@ def make_external_id():
     return hashlib.md5(str(uuid.uuid4())).hexdigest()
 
 
-def sample_to_mediaobject(sample):
+def sample_to_mediaobject(sample, caption=""):
     ext_id = make_external_id()
 
     return {
@@ -26,13 +45,21 @@ def sample_to_mediaobject(sample):
         'title': ext_id,
         'mimetype': "image/png",
         'url': sample.screenshot,
+        "attributes": {
+            "caption": caption,
+        }
     }
 
 
-def samples_to_mediaobjects(samples):
+def samples_to_mediaobjects(samples, caption=""):
     mediaobjects = {}
     for sample in samples:
-        mediaobjects.update({sample: sample_to_mediaobject(sample)})
+        if not sample.screenshot:
+            log.critical(
+                'samples_to_mediaobjects: sample %d has no url, '
+                'skipping.' % sample.id)
+            continue
+        mediaobjects.update({sample: sample_to_mediaobject(sample, caption)})
 
     return mediaobjects
 
@@ -63,13 +90,22 @@ def create_tagasauris_job(job):
     )
 
 
-def workflow_definition(ext_id, job, task_type, survey_id):
+def workflow_definition(ext_id, job, task_type, survey_id, price,
+        hit_title="%s", workers_per_hit=1, media_per_hit=1,
+        hit_instructions=None, topic=None, description=None):
+
+    if hit_instructions is None:
+        hit_instructions = job.description if description is None else description
+
+    topic = job.title if topic is None else topic
+    description = job.description if description is None else description
+
     return {
         "id": ext_id,
-        "title": job.title,
+        "title": topic,
         "task": {
             "id": task_type,
-            "instruction": job.description,
+            "instruction": description,
             "paid": "0.0",
             "keywords": ""
         },
@@ -77,16 +113,25 @@ def workflow_definition(ext_id, job, task_type, survey_id):
             survey_id: {
                 "config": {
                     "hit_type": settings.TAGASAURIS_HIT_TYPE,
-                    "hit_title": "Gather samples for \"%s\"" % job.title,
-                    # "workers_per_hit": "1",
-                    # "price": "0.08",
+                    "hit_title": hit_title % topic,
+                    "workers_per_hit": workers_per_hit,
+                    "price": price,
                     # "job_external_id": "yes",
                     # "hit_description": "Gather samples",
-                    "hit_instructions": job.description,
-                    # "media_per_hit": "1",
+                    "hit_instructions": hit_instructions,
+                    "media_per_hit": media_per_hit,
                 }
             },
-        }
+        },
+        "mturk_config": {
+            "qualifications": [
+                {
+                    "compare_to": "60",
+                    "type": "hit_approval_rate",
+                    "comparator": "greater_or_equal_to"
+                }
+            ],
+        },
     }
 
 
@@ -95,22 +140,35 @@ def create_sample_gather(api_client, job):
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = make_external_id()
 
+    # Compute split of tasks per mediaobjects and workers.
+    samples_goal_multiplication = 1.2
+    samples_per_job = 5
+    gather_goal = math.ceil(job.no_of_urls * samples_goal_multiplication /
+        samples_per_job)
+    split = math.ceil(math.sqrt(gather_goal))
+    workers_per_hit = split
+    total_mediaobjects = split
+
     # Tagasauris Job is created with dummy media object (soo ugly...).
     # Before job creation we must configure Tagasauris account and
     # workflows. Account must have disabled billings & workflows need
     # to have "external" flag set.
 
     kwargs = workflow_definition(ext_id, job, task_type,
-        settings.TAGASAURIS_SURVEY[task_type])
+        settings.TAGASAURIS_SURVEY[task_type],
+        settings.TAGASAURIS_GATHER_PRICE,
+        hit_title="Gather web page urls for \"%s\"",
+        workers_per_hit=workers_per_hit)
 
-    samples_per_job = 5
-    baseurl = settings.TAGASAURIS_CALLBACKS
+    baseurl = TAGASAURIS_CALLBACKS
     templates = baseurl + "/statics/js/templates/tagasauris/"
     kwargs["workflow"].update({
         settings.TAGASAURIS_FORM[task_type]: {
             "config": {
+                "instruction_url": settings.TAGASAURIS_GATHER_INSTRUCTION_URL,
                 "external_app": json.dumps({
                     "external_js": [
+                        baseurl + "/statics/js/tagasauris/core.js",
                         baseurl + "/statics/js/tagasauris/samplegather.js"
                     ],
                     "external_css": [],
@@ -129,15 +187,14 @@ def create_sample_gather(api_client, job):
         },
     })
 
-    total_mediaobjects = math.ceil(float(job.no_of_urls) / samples_per_job)
-    url = settings.DUMMY_URLANNOTATOR_URL
+    url = DUMMY_URLANNOTATOR_URL
     kwargs.update({"dummy_media":
-        [("dummy", url) for no in xrange(int(total_mediaobjects))]})
+        [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})
 
     return _create_job(api_client, ext_id, kwargs)
 
 
-def create_btm(api_client, job):
+def create_btm(api_client, job, topic, description, no_of_urls):
     task_type = settings.TAGASAURIS_SAMPLE_GATHERER_WORKFLOW
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = make_external_id()
@@ -147,17 +204,32 @@ def create_btm(api_client, job):
     # workflows. Account must have disabled billings & workflows need
     # to have "external" flag set.
 
+    # Compute split of tasks per mediaobjects and workers.
+    samples_goal_multiplication = 1.2
+    samples_per_job = 5
+    gather_goal = math.ceil(no_of_urls * samples_goal_multiplication /
+        samples_per_job)
+    split = math.ceil(math.sqrt(gather_goal))
+    workers_per_hit = split
+    total_mediaobjects = split
+
     kwargs = workflow_definition(ext_id, job, task_type,
-        settings.TAGASAURIS_SURVEY[task_type])
+        settings.TAGASAURIS_SURVEY[task_type],
+        settings.TAGASAURIS_GATHER_PRICE,
+        hit_title="Beat the Machine for \"%s\"",
+        workers_per_hit=workers_per_hit,
+        topic=topic,
+        description=description)
 
     samples_per_job = 5
-    baseurl = settings.TAGASAURIS_CALLBACKS
+    baseurl = TAGASAURIS_CALLBACKS
     templates = baseurl + "/statics/js/templates/tagasauris/"
     kwargs["workflow"].update({
         settings.TAGASAURIS_FORM[task_type]: {
             "config": {
                 "external_app": json.dumps({
                     "external_js": [
+                        baseurl + "/statics/js/tagasauris/core.js",
                         baseurl + "/statics/js/tagasauris/btm.js"
                     ],
                     "external_css": [],
@@ -168,8 +240,8 @@ def create_btm(api_client, job):
                         "min_samples": samples_per_job,
                     },
                     "external_templates": {
-                        "samplegather": templates + "btm.ejs",
-                        "sample": templates + "btm_sample.ejs"
+                        "btm": templates + "btm.ejs",
+                        "btm_sample": templates + "btm_sample.ejs"
                     }
                 })
             }
@@ -177,16 +249,18 @@ def create_btm(api_client, job):
     })
 
     # TODO: check how may btm should be running?
-    total_mediaobjects = 5
-    url = settings.DUMMY_URLANNOTATOR_URL
+    url = DUMMY_URLANNOTATOR_URL
     kwargs.update({"dummy_media":
-        [("dummy", url) for no in xrange(int(total_mediaobjects))]})
+        [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})
 
     return _create_job(api_client, ext_id, kwargs)
 
 
-def create_voting(api_client, job, mediaobjects):
+def _create_voting(api_client, job, mediaobjects, notify_url):
     task_type = settings.TAGASAURIS_VOTING_WORKFLOW
+    log.debug(
+        'TagasaurisHelper: Creating voting job for %s (%d).' % (job.title, job.id)
+    )
 
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = make_external_id()
@@ -197,21 +271,18 @@ def create_voting(api_client, job, mediaobjects):
     # to have "external" flag set.
 
     kwargs = workflow_definition(ext_id, job, task_type,
-        settings.TAGASAURIS_SURVEY[task_type])
+        settings.TAGASAURIS_SURVEY[task_type],
+        settings.TAGASAURIS_VOTE_PRICE,
+        hit_title="Verify web page urls from \"%s\"",
+        workers_per_hit=settings.TAGASAURIS_VOTE_WORKERS_PER_HIT,
+        media_per_hit=settings.TAGASAURIS_VOTE_MEDIA_PER_HIT,
+        hit_instructions=settings.TAGASAURIS_VOTING_INSTRUCTION_URL)
 
     # Setting callback for notify mechanical task.
     kwargs["workflow"].update({
-        # NOTE: Here we can modify number of workers/media per hit but
-        # i dont see use of it now.
-        # settings.TAGASAURIS_SURVEY[task_type]: {
-        #     "config": {
-        #         "workers_per_hit": 1,
-        #         "media_per_hit": 1,
-        #     }
-        # },
         settings.TAGASAURIS_NOTIFY[task_type]: {
             "config": {
-                "notify_url": settings.TAGASAURIS_VOTING_CALLBACK % job.id
+                "notify_url": notify_url
             }
         },
     })
@@ -222,20 +293,58 @@ def create_voting(api_client, job, mediaobjects):
     return _create_job(api_client, ext_id, kwargs)
 
 
+def create_voting(api_client, job, mediaobjects):
+    return _create_voting(api_client, job, mediaobjects,
+        notify_url=TAGASAURIS_VOTING_CALLBACK % job.id)
+
+
+def create_btm_voting(api_client, job, mediaobjects):
+    return _create_voting(api_client, job, mediaobjects,
+        notify_url=TAGASAURIS_BTM_VOTING_CALLBACK % job.id)
+
+
+def update_voting_job(api_client, mediaobjects, ext_id):
+    try:
+        res = api_client.mediaobject_send(mediaobjects)
+        api_client.wait_for_complete(res)
+
+        api_client.job_add_media(
+            external_ids=[mo['id'] for mo in mediaobjects],
+            external_id=ext_id
+        )
+        return True
+    except TagasaurisApiException, e:
+        log.exception('Failed to update Tagasauris voting job: %s, %s' % (e, e.response))
+        return False
+    except Exception, e:
+        log.exception('Failed to update Tagasauris voting job: %s' % e)
+        return False
+
+
 def _create_job(api_client, ext_id, kwargs):
     result = api_client.create_job(**kwargs)
 
-    # media_import_key = result[0]
-    job_creation_key = result[1]
-    api_client.wait_for_complete(job_creation_key)
+    try:
+        # media_import_key = result[0]
+        job_creation_key = result[1]
+        api_client.wait_for_complete(job_creation_key)
+        result = api_client.get_job(external_id=ext_id)
+        if settings.TAGASAURIS_HIT_TYPE == settings.TAGASAURIS_MTURK:
+            hit_type = 'mturk_group_id'
+        else:
+            hit_type = 'external_id'
 
-    result = api_client.get_job(external_id=ext_id)
-
-    if settings.TAGASAURIS_HIT_TYPE == settings.TAGASAURIS_MTURK:
-        hit_type = 'mturk_group_id'
-    else:
-        hit_type = 'external_id'
-
-    hit = result['hits'][0][hit_type] if result['hits'] else None
-
-    return ext_id, hit
+        hit = result['hits'][0][hit_type] if result['hits'] else None
+        return ext_id, hit
+    except TagasaurisApiMaxRetries, e:
+        log.exception('Failed to obtain Tagasauris hit: %s, %s' % (e, e.response))
+        # Failed to wait for job's completion - return no id and retry later.
+        return None, None
+    except TagasaurisApiException, e:
+        log.exception('Failed to obtain Tagasauris hit: %s, %s' % (e, e.response))
+        # Failed to get info about Tagasauris job - return None as hit
+        return ext_id, None
+    except Exception, e:
+        log.exception('Failed to obtain Tagasauris hit: %s' % e)
+        # Failed to get info about Tagasauris job - return None as hit
+        return ext_id, None

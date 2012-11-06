@@ -1,6 +1,7 @@
 import re
 import urllib2
 import json
+import os
 
 from django.test import TestCase
 from django.test.client import Client
@@ -12,7 +13,7 @@ from tastypie.exceptions import ImmediateHttpResponse
 from social_auth.models import UserSocialAuth
 
 from urlannotator.main.models import (Account, Job, Worker, Sample, GoldSample,
-    WorkerJobAssociation)
+    WorkerJobAssociation, LABEL_YES)
 from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
@@ -29,7 +30,7 @@ class SampleFactoryTest(TestCase):
         with ToolsMocked():
             self.job = Job.objects.create_active(
                 account=self.u.get_profile(),
-                gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+                gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
     def testSimpleSample(self):
         test_url = 'http://google.com'
@@ -84,7 +85,7 @@ class DomainCreationTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         url = 'http://google.com/123'
@@ -106,7 +107,7 @@ class JobFactoryTest(ToolsMockedMixin, TestCase):
         # Nothing new added.
         self.assertEqual(Sample.objects.all().count(), 0)
 
-        gold_samples = [{'url': 'google.com', 'label': 'Yes'}]
+        gold_samples = [{'url': 'google.com', 'label': LABEL_YES}]
         Job.objects.create_active(
             account=self.u.get_profile(),
             gold_samples=json.dumps(gold_samples)
@@ -364,133 +365,168 @@ class ProjectTests(ToolsMockedMixin, TestCase):
 
         self.assertTrue('wizard_alert' in resp.context)
 
-        # Invalid option - odesk chosen, account not connected
-        odesk_sources = ['0', '2']
-        error_text = 'You have to be connected to Odesk to use this option.'
-        for source in odesk_sources:
-            data = {'topic': 'Test',
-                    'topic_desc': 'Test desc',
-                    'data_source': source,
-                    'project_type': '0',
-                    'no_of_urls': '0',
-                    'hourly_rate': '1.0',
-                    'budget': '1.0',
-                    'same_domain': '0',
-                    'submit': 'draft'}
+        with open('test_golds.csv', 'wb') as f:
+            f.write('"http://google.com",No\n')
+            f.write('"http://google.com/1",No\n')
+            f.write('"http://google.com/2",No\n')
+            f.write('"http://google.com/5",No\n')
+            f.write('"http://google.com/3",Yes\n')
+            f.write('"http://google.com/4",No\n')
+            f.flush()
 
-            resp = self.c.post(reverse('project_wizard'), data, follow=True)
-            self.assertFormError(resp, 'attributes_form', None, error_text)
-
-        prof = self.u.get_profile()
-        prof.odesk_uid = 'test'
-        prof.save()
-
-        # Odesk is associated
-        resp = self.c.get(reverse('project_wizard'), follow=True)
-
-        self.assertFalse('wizard_alert' in resp.context)
-
-        # Check project creation
-
-        # Odesk free project type
-        # Missing data source values, get defaults
-        for submit in ['draft', 'active']:
-            data = {'topic': 'Test',
-                    'topic_desc': 'Test desc',
-                    'data_source': '0',
-                    'same_domain': '0',
-                    'submit': submit}
-
-            resp = self.c.post(reverse('project_wizard'), data, follow=True)
-            self.assertTemplateUsed(resp, 'main/project/overview.html')
-
-        # Selected project type, missing values, get defaults
-        for submit in ['draft', 'active']:
-            data = {'topic': 'Test',
-                    'topic_desc': 'Test desc',
-                    'data_source': '0',
-                    'project_type': '0',
-                    'same_domain': '0',
-                    'submit': submit}
-
-            resp = self.c.post(reverse('project_wizard'), data, follow=True)
-            self.assertTemplateUsed(resp, 'main/project/overview.html')
-
-        # Missing one of values from project type
-        for submit in ['draft', 'active']:
-            data = {'topic': 'Test',
-                    'topic_desc': 'Test desc',
-                    'data_source': '0',
-                    'project_type': '0',
-                    'same_domain': '0',
-                    'submit': submit}
-
-            resp = self.c.post(reverse('project_wizard'), data, follow=True)
-            self.assertTemplateUsed(resp, 'main/project/overview.html')
-
-        for submit in ['draft', 'active']:
-            data = {'topic': 'Test',
-                    'topic_desc': 'Test desc',
-                    'data_source': '0',
-                    'project_type': '1',
-                    'same_domain': '0',
-                    'submit': submit}
-
-            resp = self.c.post(reverse('project_wizard'), data, follow=True)
-            self.assertTemplateUsed(resp, 'main/project/overview.html')
-
-        # Full values provided
-        for source in ['0', '1', '2']:
-            for submit in ['draft', 'active']:
+        with open('test_golds.csv', 'rb') as f:
+            # Invalid option - odesk chosen, account not connected
+            odesk_sources = ['0', '2']
+            error_text = 'You have to be connected to Odesk to use this option.'
+            for source in odesk_sources:
                 data = {'topic': 'Test',
                         'topic_desc': 'Test desc',
                         'data_source': source,
+                        'file_gold_urls': f,
                         'project_type': '0',
-                        'no_of_urls': '0',
+                        'no_of_urls': '1',
                         'hourly_rate': '1.0',
                         'budget': '1.0',
+                        'same_domain': '0',
+                        'file_gold_urls': f,
+                        'submit': 'draft'}
+
+                resp = self.c.post(reverse('project_wizard'), data, follow=True)
+                f.seek(0)
+                self.assertFormError(resp, 'attributes_form', None, error_text)
+
+            prof = self.u.get_profile()
+            prof.odesk_uid = 'test'
+            prof.save()
+
+            # Odesk is associated
+            resp = self.c.get(reverse('project_wizard'), follow=True)
+
+            self.assertFalse('wizard_alert' in resp.context)
+
+            # Check project creation
+
+            # Odesk free project type
+            # Missing data source values, get defaults
+            for submit in ['draft', 'active']:
+                data = {'topic': 'Test',
+                        'topic_desc': 'Test desc',
+                        'data_source': '0',
+                        'no_of_urls': '1',
+                        'file_gold_urls': f,
                         'same_domain': '0',
                         'submit': submit}
 
                 resp = self.c.post(reverse('project_wizard'), data, follow=True)
+                f.seek(0)
                 self.assertTemplateUsed(resp, 'main/project/overview.html')
 
-        # Check project topic and description
-        data = {'topic_desc': 'Test desc',
-                'data_source': '1',
-                'project_type': '0',
-                'no_of_urls': '0',
-                'hourly_rate': '1.0',
-                'budget': '1.0',
-                'same_domain': '0',
-                'submit': 'draft'}
+            # Selected project type, missing values, get defaults
+            for submit in ['draft', 'active']:
+                data = {'topic': 'Test',
+                        'topic_desc': 'Test desc',
+                        'data_source': '0',
+                        'project_type': '0',
+                        'no_of_urls': '1',
+                        'file_gold_urls': f,
+                        'same_domain': '0',
+                        'submit': submit}
 
-        resp = self.c.post(reverse('project_wizard'), data, follow=True)
-        self.assertFormError(resp, 'topic_form', 'topic',
-                             'Please input project topic.')
+                resp = self.c.post(reverse('project_wizard'), data, follow=True)
+                f.seek(0)
+                self.assertTemplateUsed(resp, 'main/project/overview.html')
 
-        data = {'topic': 'Test',
-                'data_source': '1',
-                'project_type': '0',
-                'no_of_urls': '0',
-                'hourly_rate': '1.0',
-                'budget': '1.0',
-                'same_domain': '0',
-                'submit': 'draft'}
+            # Missing one of values from project type
+            for submit in ['draft', 'active']:
+                data = {'topic': 'Test',
+                        'topic_desc': 'Test desc',
+                        'data_source': '0',
+                        'project_type': '0',
+                        'no_of_urls': '1',
+                        'file_gold_urls': f,
+                        'same_domain': '0',
+                        'submit': submit}
 
-        resp = self.c.post(reverse('project_wizard'), data, follow=True)
-        self.assertFormError(resp, 'topic_form', 'topic_desc',
-                             'Please input project topic description.')
+                resp = self.c.post(reverse('project_wizard'), data, follow=True)
+                f.seek(0)
+                self.assertTemplateUsed(resp, 'main/project/overview.html')
 
-        data = {'topic': 'Test',
-                'topic_desc': 'a',
-                'data_source': '1',
-                'project_type': '0',
-                'same_domain': '0',
-                'submit': 'active'}
+            for submit in ['draft', 'active']:
+                data = {'topic': 'Test',
+                        'topic_desc': 'Test desc',
+                        'data_source': '0',
+                        'no_of_urls': '1',
+                        'project_type': '1',
+                        'file_gold_urls': f,
+                        'same_domain': '0',
+                        'submit': submit}
 
-        resp = self.c.post(reverse('project_wizard'), data, follow=True)
-        self.assertEqual(resp.status_code, 200)
+                resp = self.c.post(reverse('project_wizard'), data, follow=True)
+                f.seek(0)
+                self.assertTemplateUsed(resp, 'main/project/overview.html')
+
+            # Full values provided
+            for source in ['0', '1', '2']:
+                for submit in ['draft', 'active']:
+                    data = {'topic': 'Test',
+                            'topic_desc': 'Test desc',
+                            'data_source': source,
+                            'project_type': '0',
+                            'no_of_urls': '1',
+                            'hourly_rate': '1.0',
+                            'budget': '1.0',
+                            'file_gold_urls': f,
+                            'same_domain': '0',
+                            'submit': submit}
+
+                    resp = self.c.post(reverse('project_wizard'), data, follow=True)
+                    f.seek(0)
+                    self.assertTemplateUsed(resp, 'main/project/overview.html')
+
+            # Check project topic and description
+            data = {'topic_desc': 'Test desc',
+                    'data_source': '1',
+                    'project_type': '0',
+                    'no_of_urls': '1',
+                    'hourly_rate': '1.0',
+                    'budget': '1.0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'draft'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertFormError(resp, 'topic_form', 'topic',
+                                 'Please input project topic.')
+
+            data = {'topic': 'Test',
+                    'data_source': '1',
+                    'project_type': '0',
+                    'no_of_urls': '1',
+                    'hourly_rate': '1.0',
+                    'budget': '1.0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'draft'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertFormError(resp, 'topic_form', 'topic_desc',
+                                 'Please input project topic description.')
+
+            data = {'topic': 'Test',
+                    'topic_desc': 'a',
+                    'data_source': '1',
+                    'no_of_urls': '1',
+                    'project_type': '0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'active'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertEqual(resp.status_code, 200)
+        os.unlink('test_golds.csv')
 
     def testOverview(self):
         Job.objects.create_active(
@@ -527,26 +563,32 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             title='test',
             description='test',
             account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         self.assertTrue(GoldSample.objects.filter(label='').count() == 0)
 
         testUrl = 'http://google.com'
+
+        oldNum = ClassifiedSample.objects.filter(url=testUrl).count()
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
 
+        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
+
         # Classification request
-        self.assertEqual(ClassifiedSample.objects.all().count(), 1)
+        self.assertEqual(newNum - oldNum, 1)
         # New sample (new sample shares url with gold sample)
         self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
             1)
 
+        oldNum = newNum
         self.c.post(reverse('project_classifier_view', args=[1]),
             {'test-urls': testUrl}, follow=True)
+        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
 
         # classification request + old data
-        self.assertEqual(ClassifiedSample.objects.all().count(), 2)
+        self.assertEqual(newNum - oldNum, 1)
         # old data + new sample
         self.assertEqual(Sample.objects.filter(job=job).count(),
             1)
@@ -556,14 +598,16 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             title='test',
             description='test',
             account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
+        oldNum = newNum
         self.c.post(reverse('project_classifier_view', args=[job.id]),
             {'test-urls': testUrl}, follow=True)
+        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
 
         # classification request + old data
-        self.assertEqual(ClassifiedSample.objects.all().count(), 3)
+        self.assertEqual(newNum - oldNum, 1)
         # old data, no new sample since this is the same url
         self.assertEqual(Sample.objects.filter(job=job).count(), 1)
 
@@ -572,7 +616,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             title='test',
             description='test',
             account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
         resp = self.c.get(
             reverse('project_workers_view', args=[job.id]),
@@ -600,7 +644,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             title='test',
             description='test',
             account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
         resp = self.c.get(
             reverse('project_data_view', args=[job.id]),
@@ -644,7 +688,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
@@ -702,7 +746,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         job = Job.objects.create_active(
             account=u.get_profile(),
             data_source=0,
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         resp = self.c.get('%sjob/%d/?format=json' % (self.api_url, job.id),
@@ -732,7 +776,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.c.login(username='testing', password='test')
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/classifier/'),
@@ -868,7 +912,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.c.login(username='testing', password='test')
         Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         log = LogEntry.objects.all()[:1][0]
@@ -876,7 +920,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.assertEqual(res['id'], log.id)
         self.assertEqual(res['type'], log.log_type)
         self.assertEqual(res['job_id'], log.job_id)
-        self.assertEqual(res['date'], log.date.strftime('%Y-%m-%d %H:%M:%S'))
+        # self.assertEqual(res['date'], log.date.strftime('%Y-%m-%d %H:%M:%S'))
         self.assertEqual(res['single_text'], log.get_single_text())
         self.assertEqual(res['plural_text'], log.get_plural_text())
         self.assertEqual(res['box'], log.get_box())
@@ -885,7 +929,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.c.login(username='testing', password='test')
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         cs = ClassifiedSample.objects.create(job=job)
@@ -918,7 +962,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.c.login(username='testing', password='test')
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         Sample.objects.create_by_worker(
@@ -964,7 +1008,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         resp = self.c.get('%sadmin/updates/?format=json' % (self.api_url))
@@ -1009,7 +1053,7 @@ class TestAdmin(ToolsMockedMixin, TestCase):
         u = User.objects.create_user(username='test3', password='1')
         j = Job.objects.create_active(
             account=u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': 'Yes'}])
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
 
         r = c.get(reverse('admin_index'), follow=True)

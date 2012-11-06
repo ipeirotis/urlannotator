@@ -1,105 +1,146 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'classifier' %}
+{% endblock %}
+
+{% block body-class %}{{ block.super }} body-classifier{% endblock %}
 
 {% block classifier_active %}active{% endblock %}
 {% block project_content %}
   <div class="row">
-    <div class="span12" style="text-align:right">
-      <a href="{% url project_classifier_data project.id %}" class="btn pull-right">Export Training Ready Data</a>
+    <div class="span12">
+      <p><h3>Classifier</h3></p>
     </div>
+  </div>
+  <div class="row">
     <div class="span6">
-      <div id="classification-results">
-        <h4>Classification Results</h4>
-        <table class="table">
-          <thead>
-            <tr>
-              <th style="width: 60px;">Preview</th>
-              <th>URL</th>
-              <th style="width: 50px;">Class</th>
-              <th style="width: 130px;">Calculated Class Probability</th>
-            </tr>
-          </thead>
-          <tbody id="classifier-history" data-bind="foreach: entries">
-            <tr>
-              <td>
-                <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}"><img data-bind="visible: screenshot, attr: {src: screenshot}" style="width: 60px; height: 60px;"></a>
-              </td>
-              <td>
-                <a data-bind="attr: {href: url, title: url}"><span data-bind="text: url">&nbsp;</span></a>
-              </td>
-              <td>
-                <span data-bind="text: getLabel">&nbsp;</span>
-              </td>
-              <td>
-                <span data-bind="text: getProbability">&nbsp;</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div id="classification-results"  class="table-container-anno1">
+        <h3>Classification Results</h3>
+        <div class="table-wrapper">
+          <table class="table fix" id="classifier-history">
+            <thead>
+              <tr>
+                <th style="width: 60px;">Preview</th>
+                <th>URL</th>
+                <th style="width: 50px;">Class</th>
+                <th style="width: 90px;">Calculated Class Probability</th>
+              </tr>
+            </thead>
+            <tbody data-bind="foreach: entries">
+              <tr>
+                <td>
+                  <a data-bind="visible: hasScreenshot, attr: {href: screenshot, title: screenshot}">
+                    <img data-bind="visible: screenshot, attr: {src: screenshot}">
+                  </a>
+                </td>
+                <td class="td-url">
+                  <a data-bind="attr: {href: sample_url, title: url}">
+                    <span data-bind="text: url">&nbsp;</span>
+                  </a>
+                </td>
+                <td>
+                  <span data-bind="text: getLabel">&nbsp;</span>
+                </td>
+                <td>
+                  <span data-bind="text: getProbability">&nbsp;</span>
+                </td>
+              </tr>
+            </tbody>
+            <tbody data-bind="ifnot: has_entries">
+                <tr>
+                  <td colspan="4">No data</td>
+                </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     <div class="span6">
-      <h4>Test classifier</h4>
-      To test the classifier you can input either URLs or text.
-      <form name="classifyForm" method="POST" action="" onsubmit="return submitClassify();">
-      <table id="classifier-test">
-        <tbody>
-          <tr>
-            <td></td>
-            <td>
-              <input id="radio-urls" type="radio" name="test-type" checked="checked" value="urls">URL(s)
-              <input id="radio-texts" type="radio" name="test-type" value="texts">Text(s)
-            </td>
-          </tr>
-          <tr id="input-test-urls">
-            <td>
-              Input test URL(s):
-            </td>
-            <td>
-              <textarea id='test-urls' name="test-urls" cols="40" rows="5" placeholder="URLs"></textarea>
-            </td>
-          </tr>
-          <tr class="input-test-texts" style="display:none;">
-            <td>
-              Input Text:
-            </td>
-            <td>
-              <textarea name="test-texts" cols="40" rows="5"></textarea>
-            </td>
-          </tr>
-          <tr class="input-test-texts" style="display:none;">
-            <td></td>
-            <td>
-              <button id="new-text-button" href="#" class="btn" style="width: 100%">+</button>
-            </td>
-          </tr>
-          <tr>
-            <td></td>
-            <td>
-              {%csrf_token%}
-              <input type="submit" href="#" class="btn" value="Classify!">
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </form>
-    </div>
-    <div class="span6 offset6">
-      <h4>Classifier performance</h4>
-      <div class="row" id="performanceGraph">
-        Graph
+
+      <div class="table-container-anno3">
+        <h3>Test classifier</h3>
+        <div class="table-wrapper">
+          To test the classifier you can input either URLs or text.
+          <form name="classifyForm" method="POST" action="" onsubmit="return submitClassify();">
+          <table id="classifier-test">
+            <tbody>
+              <tr>
+                <td></td>
+                <td>
+                  <input id="radio-urls" type="radio" name="test-type" checked="checked" value="urls">URL(s)
+                  <!-- <input id="radio-texts" type="radio" name="test-type" value="texts">Text(s) -->
+                </td>
+              </tr>
+              <tr id="input-test-urls">
+                <td>
+                  Input test URL(s):
+                </td>
+                <td>
+                  <textarea id='test-urls' name="test-urls" cols="40" rows="5" placeholder="URLs"></textarea>
+                </td>
+              </tr>
+              <tr class="input-test-texts" style="display:none;">
+                <td>
+                  Input Text:
+                </td>
+                <td>
+                  <textarea name="test-texts" cols="40" rows="5"></textarea>
+                </td>
+              </tr>
+              <tr class="input-test-texts" style="display:none;">
+                <td></td>
+                <td>
+                  <button id="new-text-button" href="#" class="btn" style="width: 100%">+</button>
+                </td>
+              </tr>
+              <tr>
+                <td></td>
+                <td>
+                  {%csrf_token%}
+                  <button id="classify-button" type="submit" href="#" class="btn" value="Classify!">
+                    <span>Classify ! </span>
+                    <img src="{{STATIC_URL}}img/spinner.gif" id="classify-spinner">
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          </form>
+        </div>
       </div>
     </div>
-    <div class="span6 offset6">
-      <h4>Classifier statistics</h4>
-      <table class="table" id="classifier-stats">
-        <thead></thead>
-        <tbody>
-          <tr><td>URLs collected</td><td data-bind="text: allCount">{{classifier_stats.count}}</td><td>-</td></tr>
-          <tr><td>yes class records</td><td data-bind="text: yesCount">{{classifier_stats.yes_labels.val}}</td><td><span data-bind="text: yesPerc">{{classifier_stats.yes_labels.perc}}</span>%</td></tr>
-          <tr><td>no class records</td><td data-bind="text: noCount">{{classifier_stats.no_labels.val}}</td><td><span data-bind="text: noPerc">{{classifier_stats.no_labels.perc}}</span>%</td></tr>
-          <tr><td>broken class records</td><td data-bind="text: brokenCount">{{classifier_stats.broken_labels.val}}</td><td><span data-bind="text: brokenPerc">{{classifier_stats.broken_labels.perc}}</span>%</td></tr>
-        </tbody>
-      </table>
+    <div class="span6 Pull-Right">
+      <div class="table-container-anno1">
+        <h3>Classifier statistics</h3>
+        <div class="table-wrapper">
+          <table class="table fix" id="classifier-stats">
+            <thead></thead>
+            <tbody>
+              <tr>
+                <td>URLs collected</td>
+                <td data-bind="text: allCount">{{classifier_stats.count}}</td>
+                <td>-</td>
+              </tr>
+              <tr>
+                <td>yes class records</td>
+                <td data-bind="text: yesCount">{{classifier_stats.yes_labels.val}}</td>
+                <td><span data-bind="text: yesPerc">{{classifier_stats.yes_labels.perc|floatformat:1}}</span>%</td>
+              </tr>
+              <tr>
+                <td>no class records</td>
+                <td data-bind="text: noCount">{{classifier_stats.no_labels.val}}</td>
+                <td><span data-bind="text: noPerc">{{classifier_stats.no_labels.perc|floatformat:1}}</span>%</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="" id="performanceGraph">
+            Graph
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -148,7 +189,7 @@ $(document).ready(function() {
               text: 'Performance'
             },
             min: 0,
-            max: 1,
+            max: 100,
             showFirstLabel: false
          },
          series: [{
@@ -188,6 +229,21 @@ function updateClassifierStats(){
 }
 
 var image_cache = {};
+function toggleClassifyButton(enabled)
+{
+  spinner = $('#classify-spinner');
+  button = $('#classify-button');
+
+  if (enabled)
+  {
+    spinner.css('display', 'none');
+    button.removeAttr('disabled');
+  } else
+  {
+    spinner.css('display', 'inline');
+    button.attr('disabled', 'disabled');
+  }
+}
 
 function updateClassifierHistory(){
   $.get("{%url api_classifier_history api_name='v1' resource_name='job' job_id=project.id%}?limit=10", function(data){
@@ -199,7 +255,18 @@ function updateClassifierHistory(){
 
     for (en in data['entries']){
       el = data['entries'][en]
-      new_entries.push(new classifier_history_entry(el['screenshot'], el['url'], el['label'], el['label_probability']['Yes'], el['label_probability']['No'], 0, el['finished']));
+      new_entries.push(
+        new classifier_history_entry(
+          el['screenshot'],
+          el['url'],
+          el['label'],
+          Math.round(el['label_probability']['Yes']),
+          Math.round(el['label_probability']['No']),
+          Math.round(el['label_probability']['Broken']),
+          el['finished'],
+          el['sample_url']
+        )
+      );
 
       if (!(el['id'] in image_cache)){
         img = new Image();
@@ -218,9 +285,10 @@ function updateClassifierHistory(){
       if (val['active'])
         new_cache[idx] = val;
     });
-    image_cache = new_cache
+    image_cache = new_cache;
 
-    history.entries(new_entries)
+    toggleClassifyButton(true);
+    history.entries(new_entries);
   })
 }
 
@@ -230,13 +298,13 @@ function submitClassify(){
   var form = document.forms['classifyForm'];
   var type = 'urls';
   csrftoken = form['csrfmiddlewaretoken'].value;
-  $.each(form['test-type'], function(idx, val){
-    if (val.checked)
-    {
-      type = val.value;
-      return false;
-    }
-  });
+  // $.each(form['test-type'], function(idx, val){
+  //   if (val.checked)
+  //   {
+  //     type = val.value;
+  //     return false;
+  //   }
+  // });
   if (type == 'urls'){
     var urls = form['test-urls'].value.replace('\r', '')
     $('#test-urls').val('');
@@ -249,6 +317,7 @@ function submitClassify(){
       }, function(){
       });
   }
+  toggleClassifyButton(false);
   return false;
 }
 
@@ -263,19 +332,3 @@ $(document).ready(function(){
 </script>
 {% endblock %}
 
-{% block css %}
-{{ block.super }}
-<style type="text/css">
-table#classifier-test td:first-child{
-    width: 120px;
-    text-align: right;
-    vertical-align: top;
-    padding-right: 10px;
-}
-
-#classifier-history td{
-  height: 60px;
-}
-
-</style>
-{% endblock %}

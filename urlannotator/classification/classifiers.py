@@ -18,7 +18,10 @@ from urlannotator.classification.models import (Classifier as ClassifierModel,
 from urlannotator.tools.synchronization import RWSynchronize247
 from urlannotator.statistics.stat_extraction import update_classifier_stats
 from urlannotator.flow_control import send_event
-from urlannotator.main.models import Job
+from urlannotator.main.models import Job, LABEL_YES, LABEL_NO, LABEL_BROKEN
+
+import logging
+log = logging.getLogger(__name__)
 
 # Classifier training statuses breakdown:
 # CLASS_TRAIN_STATUS_DONE - training has been completed.
@@ -27,9 +30,6 @@ from urlannotator.main.models import Job
 CLASS_TRAIN_STATUS_DONE = 'DONE'
 CLASS_TRAIN_STATUS_RUNNING = 'RUNNING'
 CLASS_TRAIN_STATUS_ERROR = 'ERROR'
-
-YES_LABEL = 'Yes'
-NO_LABEL = 'No'
 
 
 class ClassifierTrainingError(Exception):
@@ -114,10 +114,8 @@ class Classifier247(Classifier):
         entry.save()
 
     def analyze(self):
-        self.sync247.reader_lock()
         writer, reader = self.update_self()
         res = reader.analyze()
-        self.sync247.reader_release()
         return res
 
     def train_lock(self, func, turn_off=True, *args, **kwargs):
@@ -125,7 +123,6 @@ class Classifier247(Classifier):
         Locks the classifier during training.
         """
         self.sync247.modified_lock()
-
         try:
 
             entry = ClassifierModel.objects.get(id=self.id)
@@ -240,7 +237,6 @@ class Classifier247(Classifier):
         Locks the classifier during classifying.
         """
         self.sync247.reader_lock()
-
         try:
             res = func(*args, **kwargs)
 
@@ -323,13 +319,20 @@ class SimpleClassifier(Classifier):
         res = {
             'modelDescription': {
                 'confusionMatrix': {
-                    YES_LABEL: {
-                        YES_LABEL: 1,
-                        NO_LABEL: 0,
+                    LABEL_YES: {
+                        LABEL_YES: 1,
+                        LABEL_NO: 0,
+                        LABEL_BROKEN: 0,
                     },
-                    NO_LABEL: {
-                        YES_LABEL: 0,
-                        NO_LABEL: 1,
+                    LABEL_NO: {
+                        LABEL_YES: 0,
+                        LABEL_NO: 1,
+                        LABEL_BROKEN: 0,
+                    },
+                    LABEL_BROKEN: {
+                        LABEL_YES: 0,
+                        LABEL_NO: 0,
+                        LABEL_BROKEN: 1,
                     }
                 }
             }
@@ -375,9 +378,18 @@ class SimpleClassifier(Classifier):
         if os.path.exists(self.get_file_name()):
             with open(self.get_file_name(), 'rb') as f:
                 self.classifier = pickle.load(f)
+        else:
+            log.warning('No classifier %s.' % self.get_file_name())
 
     def get_train_status(self):
         return CLASS_TRAIN_STATUS_DONE
+
+    def get_default_probabilities(self):
+        return {
+            LABEL_YES: 0.0,
+            LABEL_NO: 0.0,
+            LABEL_BROKEN: 0.0,
+        }
 
     def classify(self, class_sample):
         """
@@ -396,7 +408,7 @@ class SimpleClassifier(Classifier):
 
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {YES_LABEL: 0.0, NO_LABEL: 0.0}
+        label_probability = self.get_default_probabilities()
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
 
@@ -420,7 +432,7 @@ class SimpleClassifier(Classifier):
 
         class_sample.training_set = training_set
         class_sample.label = label
-        label_probability = {YES_LABEL: 0.0, NO_LABEL: 0.0}
+        label_probability = self.get_default_probabilities()
         class_sample.label_probability = json.dumps(label_probability)
         class_sample.save()
 
@@ -484,13 +496,20 @@ class GooglePredictionClassifier(Classifier):
             return {
                 'modelDescription': {
                     'confusionMatrix': {
-                        YES_LABEL: {
-                            YES_LABEL: 1,
-                            NO_LABEL: 0,
+                        LABEL_YES: {
+                            LABEL_YES: 1,
+                            LABEL_NO: 0,
+                            LABEL_BROKEN: 0,
                         },
-                        NO_LABEL: {
-                            YES_LABEL: 0,
-                            NO_LABEL: 1,
+                        LABEL_NO: {
+                            LABEL_YES: 0,
+                            LABEL_NO: 1,
+                            LABEL_BROKEN: 0,
+                        },
+                        LABEL_BROKEN: {
+                            LABEL_YES: 0,
+                            LABEL_NO: 0,
+                            LABEL_BROKEN: 1,
                         }
                     }
                 }
@@ -525,9 +544,9 @@ class GooglePredictionClassifier(Classifier):
 
         # Upload file to gs
         gs_upload_file(file_out)
-        return file_name
+        return file_out
 
-    def train(self, samples=[], turn_off=True, set_id=0 ):
+    def train(self, samples=[], turn_off=True, set_id=0):
         """
             Trains classifier on gives samples' set. If sample has no label,
             it's checked for being a GoldSample. Required model
@@ -573,18 +592,34 @@ class GooglePredictionClassifier(Classifier):
         if self.model is None:
             return None
 
-        body = {'input': {'csvInstance': [sample.text]}}
-        result = self.papi.predict(body=body, id=self.model).execute()
+        try:
+            body = {'input': {'csvInstance': [sample.text]}}
+            result = self.papi.predict(body=body, id=self.model).execute()
 
-        label_probability = {}
-        for score in result['outputMulti']:
-            probability = round(score['score'], 3)
-            label_probability[score['label'].capitalize()] = probability
+            label_probability = self.get_default_probabilities()
+            for score in result['outputMulti']:
+                probability = round(score['score'], 3)
+                label_probability[score['label'].capitalize()] = probability
 
+            return {
+                'label': result['outputLabel'],
+                'labels_probability': label_probability,
+                'result': result,
+            }
+        except Exception:
+            log.exception(
+                '[GooglePrediction] Error while classifying sample %d' % sample.id
+            )
+            return None
+
+    def get_default_probabilities(self):
+        """
+            Returns default label probabilities, in case an exception happens.
+        """
         return {
-            'label': result['outputLabel'],
-            'labels_probability': label_probability,
-            'result': result,
+            LABEL_YES: 0.0,
+            LABEL_NO: 0.0,
+            LABEL_BROKEN: 0.0,
         }
 
     def classify(self, sample):
@@ -611,4 +646,6 @@ class GooglePredictionClassifier(Classifier):
             sample.save()
             return result['result']
         else:
+            sample.label_probability = json.dumps(self.get_default_probabilities())
+            sample.save()
             return None

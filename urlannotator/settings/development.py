@@ -20,11 +20,8 @@ DATABASES = {
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'SimpleClassifier'
 
-
 CELERY_RESULT_BACKEND = 'amqp://'
 BROKER_URL = 'amqp://'
-
-SITE_URL = '127.0.0.1:8000'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
@@ -40,8 +37,8 @@ try:
     import devserver
 
     DEVSERVER_MODULES = (
-        'devserver.modules.sql.SQLRealTimeModule',
-        'devserver.modules.sql.SQLSummaryModule',
+        # 'devserver.modules.sql.SQLRealTimeModule',
+        # 'devserver.modules.sql.SQLSummaryModule',
         'devserver.modules.profile.ProfileSummaryModule',
 
         # Modules not enabled by default
@@ -56,7 +53,7 @@ try:
         'devserver',
     ])
     MIDDLEWARE_CLASSES = tuple(list(MIDDLEWARE_CLASSES) + [
-        'devserver.middleware.DevServerMiddleware'
+        'devserver.middleware.DevServerMiddleware',
     ])
 except:
     pass
@@ -78,6 +75,21 @@ except ImportError:
     pass
 
 IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
+
+CELERY_ROUTES = {}
+CELERY_REALTIME_QUEUE = CELERY_DEFAULT_QUEUE
+CELERY_LONGSCARCE_QUEUE = CELERY_DEFAULT_QUEUE
+CELERY_LONGCOMMON_QUEUE = CELERY_DEFAULT_QUEUE
+
+
+local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
+if os.path.isfile(local_settings):
+    from local import *
+
+SITE_URL = 'devel.urlannotator.10clouds.com'
+
+TAGASAURIS_VOTE_MEDIA_PER_HIT = 1
+TAGASAURIS_VOTE_WORKERS_PER_HIT = 1
 
 # Mock selenium tests, so that they are not run locally
 from django.test import LiveServerTestCase
@@ -104,7 +116,3 @@ mock_tests(
     prefix='Tagasauris',
     tests='urlannotator.crowdsourcing.tests',
 )
-
-local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
-if os.path.isfile(local_settings):
-    from local import *

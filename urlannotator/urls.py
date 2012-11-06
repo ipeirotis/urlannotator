@@ -59,6 +59,8 @@ urlpatterns = patterns('urlannotator',
         'main.views.project_classifier_view', name='project_classifier_view'),
     url(r'^sample/(?P<id>\d+)/(?P<thumb_type>(small|large))$',
         'main.views.sample_thumbnail', name='sample_thumbnail'),
+    url(r'^sample/(?P<id>\d+)/(?P<width>(65|240|690))x(?P<height>(45|180|518))$',
+        'main.views.sample_thumbnail', name='sample_thumbnail'),
     url(r'^project/(?P<id>\d+)/classifier/data$',
         'main.views.project_classifier_data', name='project_classifier_data'),
 

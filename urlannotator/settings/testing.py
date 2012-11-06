@@ -1,6 +1,4 @@
 import os
-import mock
-import sys
 
 from defaults import *
 # Import everything from imagescale2, but rename DEF_PORT
@@ -20,7 +18,6 @@ DATABASES = {
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'SimpleClassifier'
 
-
 CELERY_RESULT_BACKEND = 'amqp://'
 BROKER_URL = 'amqp://'
 
@@ -35,6 +32,9 @@ JENKINS_TASKS = (
     'django_jenkins.tasks.django_tests',
     'django_jenkins.tasks.with_local_celery',
 )
+
+# Don't use memcache in testing
+CACHES['memcache']['BACKEND'] = 'django.core.cache.backends.dummy.DummyCache'
 
 try:
     import devserver
@@ -94,10 +94,6 @@ TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 
 TAGASAURIS_HIT_TYPE = TAGASAURIS_SOCIAL
-
-TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
-TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
-    '/api/v1/vote/add/tagasauris/%s/'
 
 XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
 XS_SHARING_ALLOWED_METHODS = ['POST', 'GET']

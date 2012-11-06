@@ -1,12 +1,13 @@
 import json
-import urlparse
 
 from tenclouds.django.jsonfield.fields import JSONField
 from django.db import models
 from django.db.models.signals import post_save
 
-from urlannotator.main.models import Job, Sample, LABEL_CHOICES
+from urlannotator.main.models import (Job, Sample, LABEL_CHOICES,
+    LABEL_YES, LABEL_NO, LABEL_BROKEN, SAMPLE_SOURCE_OWNER)
 from urlannotator.flow_control import send_event
+from urlannotator.tools.utils import sanitize_url
 
 
 class Classifier(models.Model):
@@ -15,8 +16,8 @@ class Classifier(models.Model):
         use it.
     """
     job = models.ForeignKey(Job)
-    type = models.CharField(max_length=20)
-    parameters = JSONField()
+    type = models.CharField(max_length=50)
+    parameters = JSONField(default='{}')
     main = models.BooleanField(default=True)
 
 
@@ -43,16 +44,16 @@ class ClassifierPerformance(Statistics):
     """
     job = models.ForeignKey(Job)
     date = models.DateTimeField(auto_now_add=True)
-    value = JSONField()
+    value = JSONField(default='{}')
 
     objects = PerformanceManager()
 
 
-def create_stats(sender, instance, created, **kwargs):
+def create_stats(sender, instance, created, raw, **kwargs):
     """
         Creates a brand new statistics' entry for new job.
     """
-    if created:
+    if created and not raw:
         val = json.dumps({})
         ClassifierPerformance.objects.create(job=instance, value=val)
 
@@ -93,9 +94,8 @@ class TrainingSample(models.Model):
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=20, choices=LABEL_CHOICES)
 
-# Classified sample source_type breakdown:
-# owner - classify request from job owner. Source_val is irrelevant.
-CLASS_SAMPLE_SOURCE_OWNER = 'owner'
+    class Meta:
+        unique_together = ['set', 'sample']
 
 
 class ClassifiedSampleManager(models.Manager):
@@ -103,14 +103,11 @@ class ClassifiedSampleManager(models.Manager):
         """
             Sanitizes information passed by users.
         """
-        url = kwargs['url']
-        result = urlparse.urlsplit(url)
-        if not result.scheme:
-            kwargs['url'] = 'http://%s' % url
+        kwargs['url'] = sanitize_url(kwargs['url'])
 
     def create_by_owner(self, *args, **kwargs):
         self._sanitize(args, kwargs)
-        kwargs['source_type'] = CLASS_SAMPLE_SOURCE_OWNER
+        kwargs['source_type'] = SAMPLE_SOURCE_OWNER
         kwargs['source_val'] = ''
         try:
             kwargs['sample'] = Sample.objects.get(
@@ -142,20 +139,25 @@ CLASSIFIED_SAMPLE_SUCCESS = 'SUCCESS'
 CLASSIFIED_SAMPLE_PENDING = 'PENDING'
 
 
-class ClassifiedSample(models.Model):
+class ClassifiedSampleCore(models.Model):
     """
         A sample classification request was made for. The sample field is set
         when corresponding sample is created.
     """
     sample = models.ForeignKey(Sample, blank=True, null=True)
-    url = models.URLField()
+    url = models.URLField(max_length=500)
     job = models.ForeignKey(Job)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES, blank=False)
     source_type = models.CharField(max_length=100, blank=False)
     source_val = models.CharField(max_length=100, blank=True, null=True)
-    label_probability = JSONField()
+    label_probability = JSONField(default=json.dumps({
+        LABEL_YES: 0.0,
+        LABEL_NO: 0.0,
+        LABEL_BROKEN: 0.0,
+    }))
 
-    objects = ClassifiedSampleManager()
+    class Meta:
+        abstract = True
 
     def get_status(self):
         '''
@@ -179,3 +181,32 @@ class ClassifiedSample(models.Model):
             source_type=self.source_type,
             source_val=self.source_val,
         )
+
+    def reclassify(self, force=False):
+        """
+            Reclassifies current sample. If `force` is True, then the sample is
+            reclassified even if previous classification was successful.
+            Returns True on success.
+
+            This call is asynchronous.
+        """
+        if self.is_pending() or force:
+            send_event(
+                'EventNewClassifySample',
+                sample_id=self.id,
+            )
+            return True
+        return False
+
+    def get_yes_probability(self):
+        return self.label_probability.get(LABEL_YES, 0.0) * 100
+
+    def get_no_probability(self):
+        return self.label_probability.get(LABEL_NO, 0.0) * 100
+
+    def get_broken_probability(self):
+        return self.label_probability.get(LABEL_BROKEN, 0.0) * 100
+
+
+class ClassifiedSample(ClassifiedSampleCore):
+    objects = ClassifiedSampleManager()

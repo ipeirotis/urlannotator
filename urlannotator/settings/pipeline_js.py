@@ -2,8 +2,7 @@ PIPELINE_JS = {
     'core': {
         'source_filenames': (
             'js/jquery-1.7.2.js',
-            'js/ejs.js',
-            'js/view.js',
+            'js/ejs.min.js',
             'js/underscore.js',
             'js/json2.js',
             'js/backbone.js',

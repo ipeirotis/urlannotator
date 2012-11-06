@@ -1,43 +1,86 @@
 {% extends 'main/project/project_base.html' %}
+{% load compressed %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'data' %}
+{% endblock %}
+
+{% block body-class %}{{ block.super }} body-data{% endblock %}
 
 {% block data_active %}active{%endblock%}
 {% block project_content %}
-  <div class="row-fluid">
-    <h2>Data</h2>
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width: 60px">Preview</th>
-          <th>URL</th>
-          <th style="width: 100px">Added on</th>
-          <th style="width: 100px">Workers</th>
-          <th style="width: 150px">Voting</th>
-          <th style="width: 100px">Class probability</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for data in data_set %}
-          <tr>
-            <td><a href="{% url sample_thumbnail data.id 'large' %}"><img style="width: 60px; max-height: 60px;" src="{% url sample_thumbnail data.id 'small' %}"></a></td>
-            <td><a href="{% url project_data_detail project.id data.id%}">{{data.url}}</a></td>
-            <td>{{data.added_on|date:"Y-m-d H:i"}}</td>
-            <td>{{data.get_workers|length}}</td>
-            <td>{{data.get_yes_votes}} YES {{data.get_no_votes}} NO {{data.get_broken_votes}} BROKEN</td>
-            <td>{{data.get_yes_probability}}% {{data.get_no_probability}}%</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="row">
+    <div class="span3">
+      <p><h3>Data</h3></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="span12">
+      <div class="table-container-anno1">
+        <h3>Data results</h3>
+        <div class="table-wrapper">
+          <table class="table fix">
+            <thead>
+              <tr>
+                <th class="tiny-col">Preview</th>
+                <th class="url">URL</th>
+                <th class="tiny-col">Added on</th>
+                <th class="tiny-col">Workers</th>
+                <th class="tiny-col">Voting</th>
+                <th class="tiny-col">Class probability</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if data_set %}
+              {% for data in data_set %}
+                <tr>
+                  <!-- <td class="tiny-col">
+                    <img class="pop" rel="popover" data-content="<img src='http://placehold.it/240x180'/>" width="60px" height="45px" src="http://placehold.it/60x45"/>
+                  </td> -->
+                  <!-- TODO XX Replace following column with the one above? -->
+                  <td class="tiny-col">
+                    <a href="{{ data.get_large_thumbnail_url }}">
+                      <img style="width: 60px; max-height: 45px;" src="{{ data.get_small_thumbnail_url }}">
+                    </a>
+                  </td>
+                  <td class="url">
+                    <a href="{% url project_data_detail project.id data.id%}">{{data.url}}</a>
+                  </td>
+                  <td class="tiny-col">{{data.added_on|date:"Y-m-d H:i"}}</td>
+                  <td class="tiny-col">{{data.get_workers|length}}</td>
+                  <td class="tiny-col">{{data.get_yes_votes}} <i class=" ok"></i> {{data.get_no_votes}} <i class=" no"></i> {{data.get_broken_votes}} <i class=" broken"></i></td>
+                  <td class="tiny-col">
+                    {% if data.is_gold_sample %}
+                    GOLD SAMPLE
+                    {% else %}
+                    {% if data.is_classified %}
+                    {{data.get_yes_probability}}% {{data.get_no_probability}}%
+                    {% else %}
+                    Not classifed yet
+                    {% endif %}
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="6">No data</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 {% endblock %}
 
-{% block css %}
+{% block javascript %}
 {{ block.super }}
-<style type="text/css">
-table#more-information td:first-child {
-  width: 140px;
-  text-align: right;
-  padding-right: 10px;
-}
-</style>
+<script type="text/javascript">
+$(function(){
+  $('.pop').popover();
+})
+</script>
 {% endblock %}

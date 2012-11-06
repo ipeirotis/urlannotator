@@ -14,7 +14,7 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.workers = [Worker.objects.create_tagasauris(external_id=x)
             for x in xrange(20)]
@@ -115,14 +115,15 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
         self.assertEqual(LABEL_NO, mv.extract_decisions()[0][1])
 
     def testQualityComputing(self):
+        worker = Worker.objects.create_tagasauris(external_id=20)
         Sample.objects.create_by_worker(
             url="http://google.com",
-            source_val=self.workers[0].id,
+            source_val=worker.id,
             job_id=self.job.id,
         )
         Sample.objects.create_by_worker(
             url="http://google.com/2",
-            source_val=self.workers[1].id,
+            source_val=worker.id,
             job_id=self.job.id,
         )
         sample1 = Sample.objects.get(job=self.job, url='http://google.com')
@@ -155,17 +156,17 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
             if res == 0:
                 self.assertEqual(
                     worker.get_estimated_quality_for_job(self.job),
-                    1,
+                    1.0,
                 )
             elif res == 1:
                 self.assertEqual(
                     worker.get_estimated_quality_for_job(self.job),
-                    1,
+                    1.0,
                 )
             elif res == 2:
                 self.assertEqual(
                     worker.get_estimated_quality_for_job(self.job),
-                    0,
+                    0.0,
                 )
         # Check if different votes processing properly clean themselves.
         mv.reset()
@@ -217,7 +218,7 @@ class ChainedVotesStorageTests(ToolsMockedMixin, TestCase):
 
         self.job = Job.objects.create_active(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
         self.workers = [Worker.objects.create_tagasauris(external_id=x)
             for x in xrange(20)]

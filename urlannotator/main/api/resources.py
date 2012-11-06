@@ -1,4 +1,6 @@
 import json
+import datetime
+import pytz
 
 from django.conf.urls import url
 from django.conf import settings
@@ -18,6 +20,7 @@ from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.crowdsourcing.models import (SampleMapping,
     WorkerQualityVote, BeatTheMachineSample)
 from urlannotator.logging.models import LogEntry
+from urlannotator.tools.utils import url_correct
 
 import logging
 log = logging.getLogger(__name__)
@@ -261,23 +264,36 @@ class ClassifiedSampleResource(Resource):
             `sample_url` - String. URL you can query connected sample from.
             'finished' - Boolean. Whether the sample's classification has
                          finished.
+            `sample_url` - String. URL pointing to sample's data view.
         """
         class_sample = ClassifiedSample.objects.get(id=class_id)
         screenshot = ''
         if class_sample.sample:
             screenshot = class_sample.sample.get_small_thumbnail_url()
-        for label in class_sample.label_probability:
-            class_sample.label_probability[label] *= 100
 
-        return {
+        label_probability = {
+            LABEL_YES: class_sample.get_yes_probability(),
+            LABEL_NO: class_sample.get_no_probability(),
+            LABEL_BROKEN: class_sample.get_broken_probability(),
+        }
+
+        data = {
             'id': class_sample.id,
             'screenshot': screenshot,
             'url': class_sample.url,
             'job_id': class_sample.job_id,
-            'label_probability': class_sample.label_probability,
+            'label_probability': label_probability,
             'label': class_sample.label,
             'finished': class_sample.is_successful(),
         }
+
+        if class_sample.sample:
+            data['sample_url'] = reverse('project_data_detail', kwargs={
+                'id': class_sample.job_id,
+                'data_id': class_sample.sample.id,
+            })
+
+        return data
 
 
 class ClassifierResource(Resource):
@@ -296,11 +312,16 @@ class ClassifierResource(Resource):
         job_id = kwargs.get('job_id', 0)
         job = Job.objects.get(id=job_id)
 
-        # QuerySets are executed lazily
-        yes_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_YES)
-        no_labels = ClassifiedSample.objects.filter(job=job, label=LABEL_NO)
-        broken_labels = ClassifiedSample.objects.filter(job=job,
-            label=LABEL_BROKEN)
+        yes_labels = []
+        no_labels = []
+        broken_labels = []
+
+        for sample in job.sample_set.all().iterator():
+            label = sample.get_classified_label()
+            if label == LABEL_YES:
+                yes_labels.append(sample)
+            elif label == LABEL_NO:
+                no_labels.append(sample)
 
         return self.create_response(
             request, {
@@ -321,9 +342,9 @@ class ClassifierResource(Resource):
                         'api_name': 'v1',
                     }
                 ),
-                'yes_count': yes_labels.count(),
-                'no_count': no_labels.count(),
-                'broken_count': broken_labels.count(),
+                'yes_count': len(yes_labels),
+                'no_count': len(no_labels),
+                'broken_count': len(broken_labels),
             }
         )
 
@@ -515,8 +536,8 @@ class AlertResource(Resource):
             `id` - Integer. Alert's id.
             `type` - Integer. Alert's type.
             `job_id` - Integer. Alert's job's id.
-            `date` - String. Alert's date in format %Y-%m-%d %H:%M:%S as of
-                     datetime.strftime()
+            `timedelta` - Integer. Difference between current time and time of
+                          creation.
             `single_text` - String. Text of the alert in singular form.
             `plural_text` - String. Text of the alert in plural form.
             `box` - Dictionary. Contains data about alert's update box
@@ -533,11 +554,12 @@ class AlertResource(Resource):
                           considered as empty in that case.
                 `Job_id` - Integer. Alert's job's id.
         """
+        delta = datetime.datetime.now(pytz.utc) - log.date
         return {
             'id': log.id,
             'type': log.log_type,
             'job_id': log.job_id,
-            'date': log.date.strftime('%Y-%m-%d %H:%M:%S'),
+            'timedelta': round(delta.total_seconds()),
             'single_text': log.get_single_text(),
             'plural_text': log.get_plural_text(),
             'box': log.get_box(),
@@ -568,12 +590,12 @@ class WorkerResource(Resource):
         start_time = worker.get_job_start_time(job)
         return {
             'id': worker.id,
-            'urls_collected': worker.get_urls_collected_count_for_job(job),
+            'urls_collected': worker.get_urls_collected_count_for_job(job, cache=True),
             'hours_spent': worker.get_hours_spent_for_job(job),
-            'votes_added': worker.get_votes_added_count_for_job(job),
+            'votes_added': worker.get_votes_added_count_for_job(job, cache=True),
             'earned': worker.get_earned_for_job(job),
             'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
-            'name': worker.get_name(),
+            'name': worker.get_name(cache=True),
         }
 
 
@@ -622,6 +644,9 @@ class JobResource(ModelResource):
                 r'worker/(?P<worker_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('worker'),
                 name='api_job_worker'),
+            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/btm/'
+                % self._meta.resource_name,
+                self.wrap_view('btm'), name='api_job_btm'),
         ]
 
     def worker(self, request, **kwargs):
@@ -641,6 +666,34 @@ class JobResource(ModelResource):
                 job_id=job_id,
                 worker_id=worker_id,
             )
+        )
+
+    def btm(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self._check_job(request, **kwargs)
+        job_id = kwargs.get('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong parameters.'},
+                response_class=HttpNotFound,
+            )
+
+        samples = request.POST.get('samples', '[]')
+        samples = json.loads(samples)
+
+        for sample in samples:
+            sample_id = sanitize_positive_int(sample)
+            # TODO: sample_id -> sample
+            job.add_btm_verified_sample(sample_id)
+
+        return self.create_response(
+            request,
+            {'status': 'ok'},
         )
 
     def get_detail(self, request, **kwargs):
@@ -680,49 +733,44 @@ class JobResource(ModelResource):
                 response_class=HttpNotFound,
             )
 
-        top_workers = job.get_top_workers()
+        top_workers = job.get_top_workers(cache=True)
         top_workers = [self.worker_resource.raw_detail(job_id=job.id,
             worker_id=x.id) for x in top_workers]
 
-        newest_votes = job.get_newest_votes()
-        training_set = TrainingSet.objects.newest_for_job(job=job)
-        if training_set:
-            date = training_set.revision.strftime('%Y-%m-%d %H:%M:%S')
-            newest_votes = [{
-                'screenshot': s.sample.get_small_thumbnail_url(),
-                'url': s.sample.url,
-                'label': s.label,
-                'added_on': s.sample.added_on.strftime('%Y-%m-%d %H:%M:%S'),
-                'date': date,
-            } for s in newest_votes]
+        newest_votes = job.get_newest_votes(cache=True)
 
-        else:
-            newest_votes = []
+        urls_collected = job.get_urls_collected(cache=True)
+        no_of_workers = job.get_no_of_workers()
+        progress = job.get_progress(cache=True)
+        progress_urls = job.get_progress_urls(cache=True)
+        progress_votes = job.get_progress_votes(cache=True)
+        votes_gathered = job.get_votes_gathered(cache=True)
+        hours_spent = job.get_hours_spent(cache=True)
 
         response = {
             'id': job.id,
             'title': job.title,
             'description': job.description,
             'urls_to_collect': job.no_of_urls,
-            'urls_collected': job.get_urls_collected(),
-            'classifier': reverse('api_classifier', kwargs={
-                'api_name': 'v1',
-                'resource_name': 'job',
-                'job_id': job_id,
-            }),
-            'feed': reverse('api_job_updates_feed', kwargs={
-                'api_name': 'v1',
-                'resource_name': 'job',
-                'job_id': job_id,
-            }),
-            'no_of_workers': job.get_no_of_workers(),
-            'cost': job.get_cost(),
+            'urls_collected': urls_collected,
+            # 'classifier': reverse('api_classifier', kwargs={
+            #     'api_name': 'v1',
+            #     'resource_name': 'job',
+            #     'job_id': job_id,
+            # }),
+            'feed': '/api/v1/job/%d/feed/' % job_id,
+            'no_of_workers': no_of_workers,
+            'cost': job.get_cost(cache=True),
             'budget': job.budget,
-            'progress': job.get_progress(),
-            'hours_spent': job.get_hours_spent(),
+            'progress': progress,
+            'hours_spent': hours_spent,
             'top_workers': top_workers,
             'newest_votes': newest_votes,
+            'progress_urls': progress_urls,
+            'progress_votes': progress_votes,
+            'votes_gathered': votes_gathered,
         }
+
         if job.is_own_workforce():
             additional = {
                 'sample_gathering_url': job.get_sample_gathering_url(),
@@ -902,9 +950,13 @@ class SampleResource(ModelResource):
                 'result': ''
             })
 
-        if Sample.objects.filter(url=Sample.sanitize_url(url),
+        sanitized_url = Sample.sanitize_url(url)
+        if not url_correct(sanitized_url):
+            result = 'malformed url'
+
+        elif Sample.objects.filter(url=sanitized_url,
                 job=job).count() == 0:
-            domain = Sample.objects._domain(Sample.sanitize_url(url))
+            domain = Sample.objects._domain(sanitized_url)
             if Sample.objects.filter(domain=domain, job=job
                     ).count() >= job.same_domain_allowed:
                 result = 'domain duplicate'
@@ -917,6 +969,7 @@ class SampleResource(ModelResource):
                 res.get()
                 collected += 1
                 result = 'added'
+
         else:
             result = 'duplicate'
 
@@ -964,7 +1017,7 @@ class BeatTheMachineResource(ModelResource):
                 {'error': 'Malformed request json.'},
                 response_class=HttpBadRequest)
 
-        required = ['url', 'label', 'worker_id']
+        required = ['url', 'worker_id']
         for req in required:
             if req not in data:
                 return self.create_response(request,
@@ -972,16 +1025,20 @@ class BeatTheMachineResource(ModelResource):
                     response_class=HttpBadRequest)
 
         url = data.get('url')
-        label = sanitize_label(data.get('label'))
+        sanitized_url = Sample.sanitize_url(url)
+        if not url_correct(sanitized_url):
+            return self.create_response(request, {
+                'result': 'malformed url',
+            })
+
         worker_id = data.get('worker_id')
-        worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
 
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
             job=job,
             url=url,
             label='',
-            expected_output=label,
-            worker=worker
+            expected_output=LABEL_YES,
+            worker_id=worker_id
         )
 
         return self.create_response(
@@ -1047,7 +1104,8 @@ class BeatTheMachineResource(ModelResource):
         status = classified_sample.get_status()
         resp['status'] = status
         if classified_sample.is_successful():
-            resp['labels_matched'] = classified_sample.labels_matched()
+            resp['points'] = classified_sample.points
+            resp['btm_status'] = classified_sample.btm_status_mapping()
 
         return self.create_response(request, resp)
 
@@ -1068,9 +1126,13 @@ class VoteResource(ModelResource):
                 '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('add_from_tagasauris'),
                 name='sample_add_from_tagasauris'),
+            url(r'^(?P<resource_name>%s)/btm/tagasauris/'
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('btm_from_tagasauris'),
+                name='sample_btm_from_tagasauris'),
         ]
 
-    def add_from_tagasauris(self, request, **kwargs):
+    def _add_from_tagasauris(self, request, vote_constructor, **kwargs):
         """
             Initiates classification on passed url using classifier
             associated with job. Returns task id on success.
@@ -1091,10 +1153,17 @@ class VoteResource(ModelResource):
             worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
 
             for mediaobject_id, answers in mediaobjects.iteritems():
-                sample = SampleMapping.objects.get(
-                    external_id=mediaobject_id,
-                    crowscourcing_type=SampleMapping.TAGASAURIS
-                ).sample
+                try:
+                    sample = SampleMapping.objects.get(
+                        external_id=mediaobject_id,
+                        crowscourcing_type=SampleMapping.TAGASAURIS
+                    ).sample
+                except Exception, e:
+                    log.exception(
+                        "AddVote: Exception caught when adding votes: "
+                        "input %s, err %s" % (request.raw_post_data, e)
+                    )
+                    continue
 
                 for answer in answers:
                     if answer['tag'] in ['yes', 'no', 'broken']:
@@ -1107,10 +1176,29 @@ class VoteResource(ModelResource):
                             label = LABEL_NO
 
                         if label is not None:
-                            WorkerQualityVote.objects.new_vote(
+                            vote_constructor(
                                 worker=worker,
                                 sample=sample,
                                 label=label
                             )
-
         return self.create_response(request, {})
+
+    def add_from_tagasauris(self, request, **kwargs):
+        """
+            Initiates classification on passed url using classifier
+            associated with job. Returns task id on success.
+        """
+
+        return self._add_from_tagasauris(request,
+            vote_constructor=WorkerQualityVote.objects.new_vote,
+            **kwargs)
+
+    def btm_from_tagasauris(self, request, **kwargs):
+        """
+            Initiates classification on passed url using classifier
+            associated with job. Returns task id on success.
+        """
+
+        return self._add_from_tagasauris(request,
+            vote_constructor=WorkerQualityVote.objects.new_btm_vote,
+            **kwargs)

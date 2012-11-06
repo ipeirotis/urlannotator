@@ -8,18 +8,11 @@ from imagescale2 import *
 from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-    }
-}
-
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
-SITE_URL = 'urlannotator.10clouds.com'
-IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
+SITE_URL = 'devel.urlannotator.10clouds.com'
+IMAGESCALE_URL = '%s:%d' % (SITE_URL, IMAGESCALE_DEF_PORT)
 
 EMAIL_BACKEND = 'urlannotator.main.backends.email.EmailBackend'
 
@@ -81,13 +74,23 @@ local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
 
+DATABASES = {
+    'default': {
+    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+    'NAME': DEVEL_DB_NAME,
+    'USER': DEVEL_DB_USER,
+    'PASSWORD': DEVEL_DB_PASSWORD,
+    }
+}
+
 # Tagasauris settings
 TAGASAURIS_LOGIN = 'urlannotator'
 TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'
-TAGASAURIS_HIT_URL = TAGASAURIS_HIT_SANDBOX_URL
+TAGASAURIS_USE_SANDBOX = True
 
 TAGASAURIS_HIT_TYPE = TAGASAURIS_MTURK
+TAGASAURIS_HIT_URL = TAGASAURIS_HIT_MTURK_URL
 
 # TODO: This is ugly... any ideas how to change this?
 TAGASAURIS_NOTIFY = {
@@ -95,6 +98,8 @@ TAGASAURIS_NOTIFY = {
     TAGASAURIS_SAMPLE_GATHERER_WORKFLOW: 'NotifyTask_2',
 }
 
-TAGASAURIS_CALLBACKS = 'http://urlannotator.10clouds.com'
-TAGASAURIS_VOTING_CALLBACK = TAGASAURIS_CALLBACKS +\
-    '/api/v1/vote/add/tagasauris/%s/'
+TAGASAURIS_VOTE_MEDIA_PER_HIT = 1
+TAGASAURIS_VOTE_WORKERS_PER_HIT = 1
+XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
+
+SOCIAL_AUTH_RAISE_EXCEPTIONS = False

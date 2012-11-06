@@ -1,0 +1,213 @@
+@import '../bootstrap/variables.less';
+@import '../bootstrap/mixins.less';
+
+// please use 2 space tabulation
+
+
+@draft : #E0B25D;
+@initializing : #ffe2ac;
+@active : #8CC04A;
+@stopped : #855759;
+@completed : #3a4354;
+
+@text-color: #D0A271;
+
+// too short to place in separated file
+
+.chart-container {
+  height:200px;
+}
+#performanceGraph {
+  height:235px;// 35px - chart legend
+}
+
+.body-draft {
+  div.navbar .bottom-bar {
+    background-color: @draft;
+    background-image: none;
+  }
+
+}
+
+.body-initializing {
+  div.navbar .bottom-bar {
+    background-color: @initializing;
+    background-image: none;
+  }
+
+}
+
+.body-active {
+  div.navbar .bottom-bar {
+    background-color: @active;
+    background-image: none;
+  }
+
+}
+
+.body-stopped {
+  div.navbar .bottom-bar {
+    background-color: @stopped;
+    background-image: none;
+  }
+
+}
+
+.body-completed {
+  div.navbar .bottom-bar {
+    background-color: @completed;
+    background-image: none;
+  }
+
+}
+
+div.alert {
+  padding-bottom:37px;
+  form {
+    margin-bottom:0px;
+  }
+}
+
+div.status-draft {
+  background-color: @draft;
+  border:1px solid darken(@draft, 10%);
+}
+div.status-initializing {
+  background-color:@initializing;
+  border:1px solid darken(@initializing, 10%);
+}
+div.status-active {
+  background-color: @active;
+  border:1px solid darken(@active, 10%);
+}
+div.status-stopped {
+  background-color: @stopped;
+  border:1px solid darken(@stopped, 10%);
+}
+div.status-completed {
+  background-color: @completed;
+  border:1px solid darken(@completed, 10%);
+}
+
+div.infobox {
+  .box-shadow(inset 0px 0px 2px 2px #f8f8f8);
+  padding:15px 0px;
+  background-color: #fafafa;
+  text-align: center;
+  border: 1px solid transparent;
+  margin-bottom:10px;
+  @media (max-width: 979px) and (min-width: 768px) {
+    height:63px;
+  }
+  margin-left:12px;
+  @media (min-width: 1200px) {
+    margin-left:20px;
+  }
+
+  h3 {
+    color:#8CC04A;
+    font-size:30px;
+    line-height:34px;
+  }
+}
+
+.table-infoboxes {
+  height:90px;
+  padding:20px 0px 15px 0px!important;
+}
+
+div.infobox-disabled {
+  background-color: #F7F7F9;
+  color: gray;
+  h3 {
+    color:#DBA442!important;
+  }
+}
+
+span.badge {
+  &.badge-draft {
+    background-color:@draft;
+  }
+  &.badge-initializing {
+    background-color:@initializing;
+  }
+  &.badge-active {
+    background-color:@active;
+  }
+  &.badge-stopped {
+    background-color:@stopped;
+  }
+  &.badge-completed {
+    background-color:@completed;
+  }
+}
+
+
+table#btm-statistics td:nth-of-type(2){
+    width: 100px;
+    text-align: right;
+}
+
+.nav.nav-tabs {
+  margin-bottom:5px;
+  li a {
+    text-decoration: underline;
+    color:@text-color;
+  }
+  li.active a {
+    text-decoration: none;
+    color:#333;
+  }
+}
+
+.span3-updates {
+  float:right!important;
+}
+
+
+.newest-corrected td.url {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.container-main {
+  padding-bottom:60px;
+}
+
+.body-project .container-main {
+  padding-bottom:80px;
+}
+
+// Classifier
+
+#classifier-history td {
+  height: 60px;
+}
+
+#classifier-history .td-url a span{
+  display: block;
+  .overflow(190px);
+  white-space: nowrap;
+  @media (min-width: 1200px) {
+    .overflow(300px);
+  }
+
+}
+
+td.url,
+th.url {
+  .overflow(200px);
+  white-space: nowrap;
+  a {
+    white-space: nowrap;
+  }
+}
+
+td.preview,
+th.preview {
+  width:54px;
+}
+
+table.fix {
+  table-layout:fixed;
+}

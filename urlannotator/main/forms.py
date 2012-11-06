@@ -89,7 +89,7 @@ class WizardAttributesForm(forms.Form):
     project_type = forms.ChoiceField(JOB_TYPE_CHOICES, required=False,
         label="Project type")
     no_of_urls = forms.IntegerField(required=False,
-        label="No. of URLs to collect")
+        label="No. of URLs to collect", min_value=1)
     hourly_rate = forms.DecimalField(required=False, decimal_places=2,
         max_digits=10, label="Hourly rate (US$)")
     budget = forms.DecimalField(required=False, decimal_places=2,
@@ -139,9 +139,26 @@ class WizardAttributesForm(forms.Form):
 class WizardAdditionalForm(forms.Form):
     """ Form representing project wizard's additional fields
     """
+    additional_gold_info = "Lorem ipsum dolor sit amet."
+    additional_classify_info = "Consectetur adipiscing elit. Integer ac."
+    icon = "<i title='%s' class='icon-info-sign pop'></i>"
+    gold_help_text = icon % additional_gold_info
+    classify_help_text = icon % additional_classify_info
     same_domain = forms.IntegerField(
         label="No. of allowed multiple URLs from the same domain")
-    file_gold_urls = forms.FileField(required=False,
-        label="Upload gold, (preclassified) urls", help_text="(i)")
+    file_gold_urls = forms.FileField(required=True,
+        label="Upload gold, (preclassified) urls", help_text=gold_help_text)
     file_classify_urls = forms.FileField(required=False,
-        label="Upload additional non classified URLs", help_text="(i)")
+        label="Upload additional non classified URLs", help_text=classify_help_text)
+
+
+class BTMForm(forms.Form):
+    topic = forms.CharField(required=True, label="Topic",
+            help_text="E.g Identify pages that contain hate speech on the web.")
+    topic_desc = forms.CharField(required=True, widget=forms.Textarea,
+        label="Topic description",
+        help_text='E.g Find sites which advocate hostility or aggression</br>'
+        'toward individuals or groups on the basis of race,</br>'
+        'religion, gender, nationality, ethnic origni, or other</br>'
+        'involuntary characteristic.')
+    no_of_urls = forms.IntegerField(min_value=1, label='Number of urls')

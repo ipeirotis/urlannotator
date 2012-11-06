@@ -1,0 +1,73 @@
+@import '../bootstrap/variables.less';
+@import '../bootstrap/mixins.less';
+
+
+.img-tag {
+  height:36px;
+}
+
+div.navbar {
+  .brand {
+    border-right: 1px solid #916769;
+  }
+  .navbar-inner {
+    background:url('/statics/img/url_hit_header_navbar.png') repeat-x 0px 0px;
+    .container {
+      div.nav-collapse {
+        ul.nav-links {
+          li {
+            padding: 20px 5px;
+            font-size: 16px;
+            color: white;
+            font-style: italic;
+          }
+        }
+        ul.userNav {
+          li.new-project a {
+            margin-top: 7px;
+            font-style:italic;
+          }
+          li.new-project a:before {
+            &:before {content:none;}
+          }
+        }
+      }
+    }
+  }
+}
+
+div.stats {
+  display: block!important;
+  position: static;
+  h3 {
+    border-bottom:1px solid #ccc;
+    padding-bottom:10px;
+    font-weight:normal;
+    color:#3A4354;
+  }
+  .arrow {
+    #popoverArrow > .top();
+    position: relative;
+    width: 0;
+    height: 0;
+    bottom: 5px!important;
+    left:20%!important;
+  }
+}
+
+ul.state {
+  margin-top:6px;
+  li {
+    .border-radius(3px);
+    border:1px solid #D2D2D2;
+    width: 34px;
+    height: 14px;
+    float:left;
+    margin-left:10px;
+  }
+  li.completed {
+    border-color:#479047;
+    background-color:#24AC24;
+    background:url('/statics/img/url_hit_state_completed.png') repeat-x 0px 0px;
+  }
+}

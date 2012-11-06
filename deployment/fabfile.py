@@ -48,7 +48,7 @@ def prepare_global_env():
     """Ensure global settings - one time only."""
     prep_apt_get()
     install_system_requirements()
-    setup_ssh()
+    # setup_ssh()
     setup_virtualenv()
     nginx.provision()
 
@@ -350,11 +350,19 @@ def reload_services():
 
 
 @task
-def deploy_ci():
+def deploy_devel():
     env.user = 'urlannotator'
     env.host_string = 'ci.10clouds.com'
     env.forward_agent = True
     deploy(conf_file="target_defs/testing.json", prompt=False)
+
+
+@task
+def deploy_stable():
+    env.user = 'urlannotator'
+    env.host_string = 'ci.10clouds.com'
+    env.forward_agent = True
+    deploy(conf_file="target_defs/stable.json", prompt=False)
 
 
 @task
