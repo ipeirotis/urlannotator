@@ -100,7 +100,6 @@ hardcoded_mocks = [
     ('urlannotator.main.factories.web_screenshot_extraction', mocked_task),
     ('urlannotator.classification.event_handlers.process_execute', eager_train),
     ('urlannotator.crowdsourcing.event_handlers.ExternalJobsFactory.initialize_job', mock.Mock()),
-    ('urlannotator.main.models.odesk.Client', mock.MagicMock()),
 ]
 
 

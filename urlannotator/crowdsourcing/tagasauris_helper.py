@@ -6,7 +6,6 @@ import math
 from django.conf import settings
 
 from tagapi.api import TagasaurisClient
-from urlannotator.crowdsourcing.models import TagasaurisJobs
 from tagapi.error import TagasaurisApiException, TagasaurisApiMaxRetries
 from urlannotator.tools.utils import setting
 
@@ -74,6 +73,7 @@ def create_tagasauris_job(job):
     """
         Initializes Tagasauris job for given our job.
     """
+    from urlannotator.crowdsourcing.models import TagasaurisJobs
     # TODO: Need to add backoff on Tagasauris job creation fail.
     # TODO: we can run it in tasks with proper polling/callback with info
     # of job creation status.

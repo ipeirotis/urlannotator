@@ -1149,30 +1149,11 @@ class Worker(models.Model):
     def can_show_to_user(self):
         return self.worker_type != WORKER_TYPE_INTERNAL
 
-<<<<<<< HEAD
-    def get_name(self):
-        """
-            Returns worker's name.
-        """
-        # Importing here due to possible loop imports
+    @cached
+    def _get_name(self, cache):
         from urlannotator.crowdsourcing.odesk_helper import get_worker_name
         if self.worker_type == WORKER_TYPE_ODESK:
             return get_worker_name(ciphertext=self.external_id)
-        return 'Temp Name %d' % self.id
-=======
-    @cached
-    def _get_name(self, cache):
-        if self.worker_type == WORKER_TYPE_ODESK:
-            client = odesk.Client(
-                settings.ODESK_SERVER_KEY,
-                settings.ODESK_SERVER_SECRET,
-                oauth_access_token=settings.ODESK_SERVER_TOKEN_KEY,
-                oauth_access_token_secret=settings.ODESK_SERVER_TOKEN_SECRET,
-                auth='oauth',
-            )
-            r = client.provider.get_provider(self.external_id)
-            return r['dev_full_name']
->>>>>>> master
 
         if self.worker_type == WORKER_TYPE_TAGASAURIS:
             tc = make_tagapi_client()
