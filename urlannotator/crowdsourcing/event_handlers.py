@@ -5,8 +5,8 @@ from django.conf import settings
 
 from factories import ExternalJobsFactory, VoteStorageFactory
 from urlannotator.crowdsourcing.models import (BeatTheMachineSample,
-    TagasaurisJobs, SampleMapping)
-from urlannotator.main.models import Sample, Worker
+    TagasaurisJobs, SampleMapping, WorkerQualityVote)
+from urlannotator.main.models import Sample, Worker, LABEL_YES
 from urlannotator.crowdsourcing.tagasauris_helper import (create_btm_voting,
     samples_to_mediaobjects, make_tagapi_client, update_voting_job)
 
@@ -147,11 +147,26 @@ def update_job_votes_gathered(sample_id, worker_id):
     # Update top workers
     sample[0].job.get_top_workers()
 
+
+@task(ignore_result=True)
+def vote_on_new_sample(sample_id, job_id):
+    '''
+        Creates a LABEL_YES vote on the brand-new sample by the sample sender.
+    '''
+    sample = Sample.objects.get(id=sample_id)
+    worker = sample.get_source_worker()
+    if not worker:
+        return
+
+    WorkerQualityVote.objects.new_vote(worker=worker, sample=sample,
+        label=LABEL_YES)
+
 FLOW_DEFINITIONS = [
     (r'^EventNewJobInitialization$', initialize_external_jobs, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMStarted$', initialize_btm_job, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMSendToHuman$', btm_send_to_human, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventNewVoteAdded$', update_job_votes_gathered),
+    (r'^EventNewSample$', vote_on_new_sample),
     # WIP: DSaS/GAL quality algorithms.
     # (r'^EventGoldSamplesDone$', initialize_quality),
 ]

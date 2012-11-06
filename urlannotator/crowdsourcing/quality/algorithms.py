@@ -215,10 +215,10 @@ class CrowdsourcingQualityAlgorithm(object):
                     job_id=sample.job_id,
                     worker_id=vote.worker_id,
                 )
-                assoc.data['all_votes'] = assoc.data.get('all_votes', 0) + 1
+                assoc.data['all_votes'] = assoc.data.get('all_votes', 0.0) + 1.0
                 if vote.label == correct_label:
-                    correct = assoc.data.get('correct_labels', 0)
-                    assoc.data['correct_labels'] = correct + 1
+                    correct = assoc.data.get('correct_labels', 0.0)
+                    assoc.data['correct_labels'] = correct + 1.0
                 assoc.save()
                 assoc_set.add(assoc.id)
 
@@ -234,9 +234,9 @@ class MajorityVoting(CrowdsourcingQualityAlgorithm):
 
     def calculate_quality(self, assoc):
         if not assoc.data['all_votes']:
-            return 0
+            return 0.0
 
-        return assoc.data.get('correct_labels', 0) / assoc.data['all_votes']
+        return assoc.data.get('correct_labels', 0.0) / assoc.data['all_votes']
 
     def _extract_decisions(self, all_votes):
         votes = {}

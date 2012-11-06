@@ -607,10 +607,10 @@ def project_workers_view(request, id):
     for worker in job.get_workers():
         workers.append({
             'id': worker.id,
-            'name': worker.get_name,
+            'name': worker.get_name(cache=True),
             'quality': worker.get_estimated_quality_for_job(job),
-            'votes_added': worker.get_votes_added_count_for_job(job),
-            'urls_collected': worker.get_urls_collected_count_for_job(job),
+            'votes_added': worker.get_votes_added_count_for_job(job, cache=True),
+            'urls_collected': worker.get_urls_collected_count_for_job(job, cache=True),
             'hours_spent': worker.get_hours_spent_for_job(job)
         })
     context['workers'] = workers
