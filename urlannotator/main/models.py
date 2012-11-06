@@ -1161,8 +1161,13 @@ class Worker(models.Model):
 
         if self.worker_type == WORKER_TYPE_TAGASAURIS:
             tc = make_tagapi_client()
-            worker_info = tc.get_worker(worker_id=self.external_id)
-            return worker_info['name']
+            try:
+                worker_info = tc.get_worker(worker_id=self.external_id)
+                return worker_info['name']
+            except:
+                log.exception(
+                    'Exception while getting worker %d\'s name. Using default.' % self.id
+                )
 
         return 'Worker %d' % self.id
 
