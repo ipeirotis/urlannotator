@@ -1031,6 +1031,12 @@ class BeatTheMachineResource(ModelResource):
                 'result': 'malformed url',
             })
 
+        if BeatTheMachineSample.objects.filter(job=job, url=sanitized_url
+                ).count() != 0:
+            return self.create_response(request, {
+                'result': 'duplicated url',
+            })
+
         worker_id = data.get('worker_id')
 
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
