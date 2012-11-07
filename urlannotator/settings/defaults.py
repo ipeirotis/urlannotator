@@ -427,5 +427,6 @@ TAGASAURIS_VOTING_INSTRUCTION_URL = \
 
 # Tagasauris will ask for some info via xhr ($.post() etc). It is different
 # domain so we need to allow it explicit.
+XS_ON_NGINX = True
 XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
 XS_SHARING_ALLOWED_METHODS = ['POST', 'GET']
