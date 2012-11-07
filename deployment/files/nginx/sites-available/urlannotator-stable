@@ -48,7 +48,7 @@ server {
                 fastcgi_pass_header Authorization;
                 fastcgi_intercept_errors off;
 
-                add_header 'Access-Control-Allow-Origin' 'http://stable.tagasauris.com http://devel.tagasauris.com';
+                add_header 'Access-Control-Allow-Origin' 'http://stable.tagasauris.com';
                 add_header 'Access-Control-Allow-Methods' 'GET,POST';
         }
 
