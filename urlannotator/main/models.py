@@ -301,14 +301,17 @@ class Job(models.Model):
             Returns a string representing job's BTM status.
         """
         # TODO: Fill this out
+
         return '---'
 
     def get_btm_verified_samples(self):
         """
             Returns list of samples verified by BTM to be added to training set.
         """
-        # TODO: Proper query that returns a list of Sample objects.
-        return []
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+
+        btms = BeatTheMachineSample.objects.get_btm_verified(job_id=self.id)
+        return [b.sample for b in btms]
 
     def get_btm_pending_samples(self):
         """
@@ -348,8 +351,15 @@ class Job(models.Model):
             Should add a BTM-verified sample to the job so it can be included
             in new training sets.
         """
-        # TODO: Fill this out.
-        return None
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+
+        btms = BeatTheMachineSample.objects.get_btm_verified(job_id=self.id)
+        samples = [b.sample for b in btms]
+        for sample in samples:
+            sample.training = True
+            sample.save()
+
+        return samples
 
     def is_btm_finished(self):
         return (self.is_btm_active()
@@ -362,11 +372,13 @@ class Job(models.Model):
         return self.btm_to_gather
 
     def get_btm_gathered(self):
-        # TODO: Fill this. Should return a list of samples so that
-        #       get_btm_gathered|length == number of samples that count towards
-        #       BTM progress.
-        #       Refer to OANNOTATOR-55
-        return []
+        """
+            Return a list of samples so that
+            get_btm_gathered|length == number of samples that count towards
+            BTM progress.
+        """
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+        return BeatTheMachineSample.objects.get_all_btm(self.id)
 
     def get_btm_progress(self):
         to_gather = self.get_btm_to_gather() or 1

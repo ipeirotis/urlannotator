@@ -79,6 +79,13 @@ class BeatTheMachineSampleManager(models.Manager):
 
         return btm_sample
 
+    def get_btm_verified(self, job_id):
+        return self.select_related("sample").filter(job__id=job_id,
+            btm_status__gt=3, sample__training=False)
+
+    def get_all_btm(self, job_id):
+        return self.filter(job__id=job_id)
+
 
 class BeatTheMachineSample(ClassifiedSampleCore):
     # BTM status and description/points mapping
