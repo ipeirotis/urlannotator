@@ -7,6 +7,9 @@ from urlannotator.classification.models import ClassifiedSampleCore
 from urlannotator.flow_control import send_event
 from urlannotator.tools.utils import sanitize_url
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class WorkerQualityVoteManager(models.Manager):
     def new_vote(self, *args, **kwargs):
@@ -63,7 +66,7 @@ class BeatTheMachineSampleManager(models.Manager):
         btm_sample = self.create(**kwargs)
         # If sample exists, step immediately to classification
         if 'sample' in kwargs:
-            send_event('EventNewBTMSample',
+            send_event('EventNewClassifyBTMSample',
                 sample_id=btm_sample.id)
         else:
             Sample.objects.create_by_btm(
@@ -126,7 +129,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
     @property
     def confidence(self):
-        return self.label_probability[self.label]
+        try:
+            return self.label_probability[self.label]
+        except KeyError:
+            return self.label_probability[self.label.capitalize()]
 
     def updateBTMStatus(self, save=True):
         status = self.calculate_status()
@@ -147,8 +153,13 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     }
 
     def btm_status_mapping(self):
-        return self.BTM_STATUS_VERBOSE.get(self.btm_status,
-            "Error state. It will be verified.")
+        try:
+            return self.BTM_STATUS_VERBOSE.get(self.btm_status)
+        except KeyError:
+            log.exception(
+                "BTM Sample with errorous state. BTMSample id: %s" % self.id
+            )
+            return "Error state. It will be verified."
 
     CONF_HIGH_TRESHOLD = 0.8
     CONF_MEDIUM_TRESHOLD = 0.5

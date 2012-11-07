@@ -43,8 +43,9 @@ class SampleFactory(object):
             if is_btm:
                 if job_samples:
                     return job_samples[0].id
+                kwargs['btm_sample'] = True
                 return copy_sample_to_job.s(samples[0].id, job.id,
-                    label=label, btm_sample=True, *args, **kwargs
+                    label=label, *args, **kwargs
                     ).apply_async()
             else:
                 if job_samples:
