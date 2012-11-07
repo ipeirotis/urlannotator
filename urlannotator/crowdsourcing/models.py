@@ -3,7 +3,8 @@ from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER)
-from urlannotator.classification.models import ClassifiedSampleCore
+from urlannotator.classification.models import (ClassifiedSampleCore,
+    CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
 from urlannotator.tools.utils import sanitize_url
 
@@ -234,6 +235,14 @@ class BeatTheMachineSample(ClassifiedSampleCore):
                 self.btm_status = self.BTM_NOT_X
 
         self.save()
+
+    def get_status(self):
+        '''
+            Returns current classification status.
+        '''
+        if self.sample and self.label and self.btm_status != self.BTM_PENDING:
+            return CLASSIFIED_SAMPLE_SUCCESS
+        return CLASSIFIED_SAMPLE_PENDING
 
 
 class TagasaurisJobs(models.Model):
