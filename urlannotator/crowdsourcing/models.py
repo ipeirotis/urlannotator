@@ -24,7 +24,20 @@ class WorkerQualityVoteManager(models.Manager):
             worker_id=kwargs['worker'].id,
             sample_id=kwargs['sample'].id,
         )
-        return self.create(**kwargs)
+        try:
+            vote, new = self.get_or_create(**kwargs)
+            if new:
+                log.warning(
+                    'Tried to add duplicate vote by worker %d'
+                    % kwargs['worker'].id
+                )
+            return vote
+        except:
+            log.exception(
+                'Exception while adding vote by worker %d.'
+                % kwargs['worker'].id
+            )
+            return None
 
     def new_btm_vote(self, *args, **kwargs):
         WorkerJobAssociation.objects.associate(
@@ -32,7 +45,20 @@ class WorkerQualityVoteManager(models.Manager):
             worker=kwargs['worker'],
         )
         kwargs['btm_vote'] = True
-        return self.create(**kwargs)
+        try:
+            vote, new = self.get_or_create(**kwargs)
+            if new:
+                log.warning(
+                    'Tried to add duplicate BTM vote by worker %d'
+                    % kwargs['worker'].id
+                )
+            return vote
+        except:
+            log.exception(
+                'Exception while adding BTM vote by worker %d.'
+                % kwargs['worker'].id
+            )
+            return None
 
 
 class WorkerQualityVote(models.Model):
