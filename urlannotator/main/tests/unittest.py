@@ -745,17 +745,8 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
-            data_source=0,
             gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
         )
-
-        resp = self.c.get('%sjob/%d/?format=json' % (self.api_url, job.id),
-            follow=True)
-
-        # We are not logged in, can't see the job. Unauthorized
-        array = json.loads(resp.content)
-        self.assertNotIn('sample_gathering_url', array)
-        self.assertNotIn('sample_voting_url', array)
 
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
             follow=True)

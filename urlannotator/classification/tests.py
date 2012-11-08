@@ -15,7 +15,7 @@ from urlannotator.classification.models import (TrainingSet, Classifier,
     ClassifiedSample, ClassifierPerformance)
 from urlannotator.classification.factories import classifier_factory
 from urlannotator.classification.event_handlers import process_votes
-from urlannotator.crowdsourcing.event_handlers import initialize_external_jobs
+from urlannotator.crowdsourcing.event_handlers import initialize_external_job
 from urlannotator.crowdsourcing.models import (WorkerQualityVote,
     BeatTheMachineSample)
 from urlannotator.flow_control.test import FlowControlMixin, ToolsMockedMixin
@@ -351,7 +351,7 @@ class LongTrainingTest(FlowControlMixin, TransactionTestCase):
 
     def get_flow_definition(self):
         old = super(LongTrainingTest, self).get_flow_definition()
-        return [entry for entry in old if entry[1] != initialize_external_jobs]
+        return [entry for entry in old if entry[1] != initialize_external_job]
 
     def testLongTraining(self):
         job = Job.objects.create_active(

@@ -4,7 +4,7 @@ import json
 import math
 
 from django.conf import settings
-
+from itertools import imap
 from tagapi.api import TagasaurisClient
 from tagapi.error import TagasaurisApiException, TagasaurisApiMaxRetries
 from urlannotator.tools.utils import setting
@@ -81,6 +81,9 @@ def init_tagasauris_job(job):
         job=job,
         api_client=make_tagapi_client(),
     )
+
+    if not sample_gathering_key:
+        return False
 
     # Our link to tagasauris jobs.
     TagasaurisJobs.objects.create(
@@ -298,9 +301,90 @@ def create_voting(api_client, job, mediaobjects):
         notify_url=TAGASAURIS_VOTING_CALLBACK % job.id)
 
 
+def create_btm_voting_with_samples(api_client, job, samples):
+    from urlannotator.crowdsourcing.models import SampleMapping
+    mediaobjects = samples_to_mediaobjects(samples, caption=job.description)
+
+    # Objects to send.
+    mo_values = mediaobjects.values()
+
+    # Creating new job  with mediaobjects
+    voting_btm_key, voting_btm_hit = create_btm_voting(api_client,
+        job, mo_values)
+
+    # Job creation failed (maximum retries exceeded or other error)
+    if not voting_btm_key:
+        return False
+
+    job.tagasaurisjobs.update(voting_btm_key=voting_btm_key)
+
+    # ALWAYS add mediaobject mappings assuming Tagasauris will handle them
+    # TODO: possibly check mediaobject status?
+    for sample, mediaobject in mediaobjects.items():
+        SampleMapping(
+            sample=sample,
+            external_id=mediaobject['id'],
+            crowscourcing_type=SampleMapping.TAGASAURIS,
+        ).save()
+    log.info(
+        'EventBTMSendToHuman: BTM SampleMappings created for job %d.' % job.id
+    )
+
+    if voting_btm_hit is not None:
+        job.tagasaurisjobs.update(voting_btm_hit=voting_btm_hit)
+
+    return True
+
+
+def update_voting_with_samples(api_client, job, samples):
+    from urlannotator.crowdsourcing.models import SampleMapping
+    # Creates sample to mediaobject mapping
+    mediaobjects = samples_to_mediaobjects(samples,
+        caption=job.description)
+
+    for sample, mediaobject in mediaobjects.items():
+        SampleMapping(
+            sample=sample,
+            external_id=mediaobject['id'],
+            crowscourcing_type=SampleMapping.TAGASAURIS,
+        ).save()
+
+    # New objects
+    mediaobjects = mediaobjects.values()
+
+    res = update_voting_job(api_client, mediaobjects,
+        job.tagasaurisjobs.voting_btm_key)
+
+    # If updating was failed - delete created. Why not create them here?
+    # Because someone might have completed a HIT in the mean time, and we
+    # would lose that info.
+    if not res:
+        SampleMapping.objects.filter(
+            sample__in=imap(lambda x: x.sample, mediaobjects.items())
+        ).delete()
+
+    # In case if tagasauris job was created without screenshots earlier.
+    if job.tagasaurisjobs.voting_btm_hit is None:
+        result = api_client.get_job(external_id=job.tagasaurisjobs.voting_btm_key)
+        voting_btm_hit = result['hits'][0] if result['hits'] else None
+        if voting_btm_hit is not None:
+            job.tagasaurisjobs.update(voting_btm_hit=voting_btm_hit)
+
+
 def create_btm_voting(api_client, job, mediaobjects):
     return _create_voting(api_client, job, mediaobjects,
         notify_url=TAGASAURIS_BTM_VOTING_CALLBACK % job.id)
+
+
+def get_hit(api_client, job_ext_id):
+    result = api_client.get_job(external_id=job_ext_id)
+    if settings.TAGASAURIS_HIT_TYPE == settings.TAGASAURIS_MTURK:
+        hit_type = 'mturk_group_id'
+    else:
+        hit_type = 'external_id'
+
+    hit = result['hits'][0][hit_type] if result['hits'] else None
+    return hit
 
 
 def update_voting_job(api_client, mediaobjects, ext_id):
@@ -328,13 +412,7 @@ def _create_job(api_client, ext_id, kwargs):
         # media_import_key = result[0]
         job_creation_key = result[1]
         api_client.wait_for_complete(job_creation_key)
-        result = api_client.get_job(external_id=ext_id)
-        if settings.TAGASAURIS_HIT_TYPE == settings.TAGASAURIS_MTURK:
-            hit_type = 'mturk_group_id'
-        else:
-            hit_type = 'external_id'
-
-        hit = result['hits'][0][hit_type] if result['hits'] else None
+        hit = get_hit(api_client, ext_id)
         return ext_id, hit
     except TagasaurisApiMaxRetries, e:
         log.exception('Failed to obtain Tagasauris hit: %s, %s' % (e, e.response))

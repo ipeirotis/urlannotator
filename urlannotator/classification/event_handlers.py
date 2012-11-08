@@ -234,8 +234,23 @@ class SampleGatheringMonitor(Task):
     def run(*args, **kwargs):
         jobs = Job.objects.select_related('tagasaurisjobs').filter(
             status=JOB_STATUS_ACTIVE,
-            tagasaurisjobs__isnull=False).iterator()
+            tagasaurisjobs__isnull=False,
+            tagasaurisjobs__sample_gathering_hit='').iterator()
+        client = make_tagapi_client()
+
         for job in jobs:
+            old_hit = job.tagasaurisjobs.sample_gathering_hit
+            new_hit = get_hit(client, job.tagasaurisjobs.sample_gathering_key)
+            if old_hit != new_hit:
+                send_event(
+                    'EventSampleGathertingHITChanged',
+                    job_id=job.id,
+                    old_hit=old_hit,
+                    new_hit=new_hit,
+                )
+            TagasaurisJobs.objects.filter(urlannotator_job=job).update(
+                sample_gathering_hit=new_hit
+            )
 
 
 @task(ignore_result=True)
