@@ -1,6 +1,6 @@
-from urlannotator.crowdsourcing.tagasauris_helper import (create_tagasauris_job,
+from urlannotator.crowdsourcing.tagasauris_helper import (init_tagasauris_job,
     make_tagapi_client, create_btm)
-from urlannotator.crowdsourcing.odesk_helper import create_odesk_job
+from urlannotator.crowdsourcing.odesk_helper import init_odesk_job
 from urlannotator.crowdsourcing.quality.algorithms import (MajorityVoting,
     DBVotesStorage)
 from urlannotator.main.models import (Job, JOB_SOURCE_ODESK_FREE,
@@ -18,22 +18,6 @@ def unsupported_job(job, *args, **kwargs):
     )
 
 
-def odesk_initializer(job, *args, **kwargs):
-    create_tagasauris_job(job=job)
-    create_odesk_job(job=job)
-
-
-def own_workforce_initializer(job, *args, **kwargs):
-    create_tagasauris_job(job=job)
-
-
-job_initializers = {
-    JOB_SOURCE_OWN_WORKFORCE: own_workforce_initializer,
-    JOB_SOURCE_ODESK_PAID: odesk_initializer,
-    JOB_SOURCE_ODESK_FREE: odesk_initializer,
-}
-
-
 class ExternalJobsFactory(object):
     """
         Handles initialization of external jobs tied to new job's data source.
@@ -44,8 +28,20 @@ class ExternalJobsFactory(object):
         job being created.
     """
 
-    def get_initializer(self, job):
-        return job_initializers.get(job.data_source, unsupported_job)
+    sample_gather_initializers = {
+        JOB_SOURCE_OWN_WORKFORCE: init_tagasauris_job,
+        JOB_SOURCE_ODESK_PAID: init_odesk_job,
+        JOB_SOURCE_ODESK_FREE: init_odesk_job,
+    }
+
+    # btm_initializers = {
+    #     JOB_SOURCE_OWN_WORKFORCE: own_workforce_btm,
+    #     JOB_SOURCE_ODESK_PAID: odesk_btm,
+    #     JOB_SOURCE_ODESK_FREE: odesk_btm,
+    # }
+
+    def get_sample_gather(self, job):
+        return self.sample_gather_initializers.get(job.data_source, unsupported_job)
 
     def initialize_job(self, job_id, *args, **kwargs):
         """
@@ -53,7 +49,7 @@ class ExternalJobsFactory(object):
         """
         job = Job.objects.get(id=job_id)
 
-        initializer = self.get_initializer(job=job)
+        initializer = self.get_sample_gather(job=job)
         initializer(job=job)
 
     def initialize_btm(self, job_id, topic, description, no_of_urls):

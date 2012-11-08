@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
-    WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER)
+    WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, JOB_STATUS_ACTIVE)
 from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
@@ -294,9 +294,100 @@ class SampleMapping(models.Model):
         choices=CROWDSOURCING_CHOICES)
 
 
-class OdeskJob(models.Model):
+class OdeskMetaJobManager(models.Manager):
+    def create_sample_gather(self, *args, **kwargs):
+        log.debug('[oDesk] Creating sample gathering %s.' % kwargs)
+        return self.create(
+            job_type=OdeskMetaJob.ODESK_META_SAMPLE_GATHER,
+            *args, **kwargs
+        )
+
+    def get_active_meta(self, job_type):
+        all_active = self.filter(
+            job__status=JOB_STATUS_ACTIVE,
+            job_type=job_type
+        ).annotate(
+            models.Count('odeskjob')
+        ).filter(
+            odeskjob__count=models.F('to_create')
+        )
+        return all_active.iterator()
+
+    def get_active_sample_gathering(self):
+        return self.get_active_meta(
+            job_type=OdeskMetaJob.ODESK_META_SAMPLE_GATHER
+        )
+
+    def get_active_voting(self):
+        return self.get_active_meta(
+            job_type=OdeskMetaJob.ODESK_META_VOTING
+        )
+
+    def get_active_btm(self):
+        return self.get_active_meta(
+            job_type=OdeskMetaJob.ODESK_META_BTM
+        )
+
+
+class OdeskMetaJob(models.Model):
+    # ODESK_META_* entries are used to gather workers. For each gathered worker
+    # there will be a separate job created and an offert sent to that worker.
+    ODESK_META_SAMPLE_GATHER = 'META_SAMPLEGATHER'
+    ODESK_META_VOTING = 'META_VOTING'
+    ODESK_META_BTM = 'META_BTM'
+    ODESK_JOB_TYPES = (
+        (ODESK_META_SAMPLE_GATHER, 'Sample gathering worker gatherer'),
+        (ODESK_META_VOTING, 'Sample voting worker gathering'),
+        (ODESK_META_BTM, 'Beat The Machine worker gather'),
+    )
     job = models.ForeignKey(Job)
     reference = models.CharField(max_length=64, primary_key=True)
+    job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
+    to_create = models.PositiveIntegerField(default=0)
+
+    objects = OdeskMetaJobManager()
+
+
+class OdeskJobManager(models.Manager):
+    def create_sample_gather(self, *args, **kwargs):
+        log.debug(
+            '[oDesk] Creating sample gathering for worker %s %s.'
+            % (kwargs['worker_id'], kwargs)
+        )
+        worker, _ = Worker.objects.get_or_create_odesk(
+            worker_id=kwargs['worker_id']
+        )
+        # We are not creating a job reference now
+        return self.create(
+            job_type=OdeskJob.ODESK_WORKER_SAMPLE_GATHER,
+            worker=worker,
+            *args, **kwargs
+        )
+
+    def accept_sample_gather(self, reference):
+        log.debug(
+            '[oDesk] Accepting sample gathering for reference %s.'
+            % reference
+        )
+        self.filter(reference=reference).update(accepted=True)
+
+
+class OdeskJob(models.Model):
+    ODESK_WORKER_SAMPLE_GATHER = 'WORKER_SAMPLE_GATHER'
+    ODESK_WORKER_VOTING = 'WORKER_VOTING'
+    ODESK_WORKER_BTM = 'WORKER_BTM'
+    ODESK_JOB_TYPES = (
+        (ODESK_WORKER_SAMPLE_GATHER, 'Worker sample gathering'),
+        (ODESK_WORKER_VOTING, 'Worker sample voting'),
+        (ODESK_WORKER_SAMPLE_GATHER, 'Worker beat the machine task')
+    )
+    job = models.ForeignKey(Job)
+    reference = models.CharField(max_length=64, primary_key=True)
+    job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
+    worker = models.ForeignKey(Worker)
+    accepted = models.BooleanField(default=False)
+
+    objects = OdeskJobManager()
 
 
 class TroiaJob(models.Model):

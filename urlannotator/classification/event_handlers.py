@@ -12,7 +12,7 @@ from urlannotator.classification.factories import classifier_factory
 from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
     BeatTheMachineSample)
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_voting, samples_to_mediaobjects, update_voting_job)
+    create_voting, samples_to_mediaobjects, update_voting_job, get_hit)
 from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.main.models import (Sample, Job, LABEL_BROKEN,
     JOB_STATUS_ACTIVE)
@@ -224,6 +224,18 @@ class SampleVotingManager(Task):
 
 
 send_for_voting = registry.tasks[SampleVotingManager.name]
+
+
+@task(ignore_result=True)
+class SampleGatheringMonitor(Task):
+    """
+        Checks jobs' sample gathering job for HIT changes.
+    """
+    def run(*args, **kwargs):
+        jobs = Job.objects.select_related('tagasaurisjobs').filter(
+            status=JOB_STATUS_ACTIVE,
+            tagasaurisjobs__isnull=False).iterator()
+        for job in jobs:
 
 
 @task(ignore_result=True)

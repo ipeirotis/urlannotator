@@ -5,10 +5,11 @@ from django.conf import settings
 
 from factories import ExternalJobsFactory, VoteStorageFactory
 from urlannotator.crowdsourcing.models import (BeatTheMachineSample,
-    TagasaurisJobs, SampleMapping, WorkerQualityVote)
+    TagasaurisJobs, SampleMapping, WorkerQualityVote, OdeskMetaJob)
 from urlannotator.main.models import Sample, Worker, LABEL_YES
 from urlannotator.crowdsourcing.tagasauris_helper import (create_btm_voting,
     samples_to_mediaobjects, make_tagapi_client, update_voting_job)
+from urlannotator.crowdsourcing.odesk_helper import check_odesk_job
 
 import logging
 log = logging.getLogger(__name__)
@@ -161,12 +162,45 @@ def vote_on_new_sample(sample_id, job_id):
     WorkerQualityVote.objects.new_vote(worker=worker, sample=sample,
         label=LABEL_YES)
 
+
+@task(ignore_result=True)
+class OdeskJobMonitor(Task):
+    def check_jobs(self, odesk_jobs):
+        if not odesk_jobs:
+            return
+
+        for odesk_job in odesk_jobs:
+            check_odesk_job(odesk_job)
+
+    def check_sample_gathering(self):
+        odesk_jobs = OdeskMetaJob.objects.get_active_sample_gathering()
+        log.debug('[oDesk] Checking sample_gathering: %s' % odesk_jobs)
+        self.check_jobs(odesk_jobs)
+
+    def check_voting(self):
+        odesk_jobs = OdeskMetaJob.objects.get_active_voting()
+        log.debug('[oDesk] Checking voting: %s' % odesk_jobs)
+        self.check_jobs(odesk_jobs)
+
+    def check_btm(self):
+        odesk_jobs = OdeskMetaJob.objects.get_active_btm()
+        log.debug('[oDesk] Checking btm: %s' % odesk_jobs)
+        self.check_jobs(odesk_jobs)
+
+    def run(self, *args, **kwargs):
+        self.check_sample_gathering()
+        self.check_voting()
+        self.check_btm()
+
+odesk_job_monitor = registry.tasks[OdeskJobMonitor.name]
+
 FLOW_DEFINITIONS = [
     (r'^EventNewJobInitialization$', initialize_external_jobs, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMStarted$', initialize_btm_job, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMSendToHuman$', btm_send_to_human, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventNewVoteAdded$', update_job_votes_gathered),
     (r'^EventNewSample$', vote_on_new_sample),
+    (r'^EventOdeskJobMonitor$', odesk_job_monitor),
     # WIP: DSaS/GAL quality algorithms.
     # (r'^EventGoldSamplesDone$', initialize_quality),
 ]

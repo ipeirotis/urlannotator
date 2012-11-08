@@ -69,9 +69,9 @@ def stop_job(external_id):
     tc.wait_for_complete(res['task_id'])
 
 
-def create_tagasauris_job(job):
+def init_tagasauris_job(job):
     """
-        Initializes Tagasauris job for given our job.
+        Initializes Tagasauris sample_gathering job for given our job.
     """
     from urlannotator.crowdsourcing.models import TagasaurisJobs
     # TODO: Need to add backoff on Tagasauris job creation fail.

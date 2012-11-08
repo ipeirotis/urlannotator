@@ -1132,6 +1132,12 @@ class WorkerManager(models.Manager):
             external_id=worker_id,
         )
 
+    def get_or_create_odesk(self, worker_id):
+        return self.get_or_create(
+            worker_type=WORKER_TYPE_ODESK,
+            external_id=worker_id,
+        )
+
     def get_or_create_tagasauris(self, worker_id):
         """
             Gets or creates Tagasauris worker with given id.
