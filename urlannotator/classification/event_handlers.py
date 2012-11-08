@@ -324,22 +324,40 @@ def update_classified_sample(sample_id, *args, **kwargs):
         on match.
     """
     sample = Sample.objects.get(id=sample_id)
-    if sample.btm_sample:
-        BeatTheMachineSample.objects.filter(job=sample.job, url=sample.url,
-            sample=None).update(sample=sample)
-    else:
-        ClassifiedSample.objects.filter(job=sample.job, url=sample.url,
-            sample=None).update(sample=sample)
-        classified = ClassifiedSample.objects.filter(
-            job=sample.job,
-            url=sample.url,
-            sample=sample,
-            label=''
-        )
-        for class_sample in classified:
-            send_event("EventNewClassifySample",
-                sample_id=class_sample.id,
-                from_name='update_classified')
+
+    ClassifiedSample.objects.filter(job=sample.job, url=sample.url,
+        sample=None).update(sample=sample)
+    classified = ClassifiedSample.objects.filter(
+        job=sample.job,
+        url=sample.url,
+        sample=sample,
+        label=''
+    )
+    for class_sample in classified:
+        send_event("EventNewClassifySample",
+            sample_id=class_sample.id,
+            from_name='update_classified')
+
+
+@task(ignore_result=True)
+def update_btm_sample(sample_id, *args, **kwargs):
+    """
+        Monitors sample creation and updates classify requests with this sample
+        on match.
+    """
+    sample = Sample.objects.get(id=sample_id)
+    BeatTheMachineSample.objects.filter(job=sample.job, url=sample.url,
+        sample=None).update(sample=sample)
+    btms = BeatTheMachineSample.objects.filter(
+        job=sample.job,
+        url=sample.url,
+        sample=sample,
+        label=''
+    )
+    for btm_sample in btms:
+        send_event("EventNewClassifyBTMSample",
+            sample_id=btm_sample.id,
+            from_name='update_classified')
 
 
 def process_execute(*args, **kwargs):
@@ -490,10 +508,11 @@ def update_classifier_stats(job_id, *args, **kwargs):
 
 FLOW_DEFINITIONS = [
     (r'^EventNewSample$', update_classified_sample),
+    (r'^EventNewBTMSample$', update_btm_sample),
     (r'^EventSamplesVoting$', send_for_voting, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventProcessVotes$', process_votes, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventNewClassifySample$', classify),
-    (r'^EventNewBTMSample$', classify_btm),
+    (r'^EventNewClassifyBTMSample$', classify_btm),
     (r'^EventTrainingSetCompleted$', train_on_set, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventClassifierTrained$', update_classifier_stats),
 ]

@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 memcache_client = memcache.Client(['127.0.0.1:11211'], debug=0)
 
 
-_posix_sem_prefix = setting('SITE_URL', 'testing')
+_posix_sem_prefix = setting('POSIX_PREFIX', setting('SITE_URL', 'testing'))
 
 
 class _POSIXSemProxy(object):

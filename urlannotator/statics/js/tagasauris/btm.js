@@ -48,6 +48,7 @@
                         if (data.points !== undefined) {
                             sample.points = data.points;
                             sample.btm_status = data.btm_status;
+                            sample.label_probability = data.label_probability;
                             that.gathered++;
 
                             var view = new SampleView({model: sample}

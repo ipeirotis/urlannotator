@@ -22,6 +22,7 @@ CELERY_RESULT_BACKEND = 'amqp://'
 BROKER_URL = 'amqp://'
 
 SITE_URL = 'devel.urlannotator.10clouds.com'
+POSIX_PREFIX = 'testing'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 

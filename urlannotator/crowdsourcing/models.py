@@ -3,9 +3,13 @@ from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER)
-from urlannotator.classification.models import ClassifiedSampleCore
+from urlannotator.classification.models import (ClassifiedSampleCore,
+    CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
 from urlannotator.tools.utils import sanitize_url
+
+import logging
+log = logging.getLogger(__name__)
 
 
 class WorkerQualityVoteManager(models.Manager):
@@ -63,7 +67,7 @@ class BeatTheMachineSampleManager(models.Manager):
         btm_sample = self.create(**kwargs)
         # If sample exists, step immediately to classification
         if 'sample' in kwargs:
-            send_event('EventNewBTMSample',
+            send_event('EventNewClassifyBTMSample',
                 sample_id=btm_sample.id)
         else:
             Sample.objects.create_by_btm(
@@ -74,6 +78,13 @@ class BeatTheMachineSampleManager(models.Manager):
             )
 
         return btm_sample
+
+    def get_btm_verified(self, job_id):
+        return self.select_related("sample").filter(job__id=job_id,
+            btm_status__gt=3, sample__training=False)
+
+    def get_all_btm(self, job_id):
+        return self.filter(job__id=job_id)
 
 
 class BeatTheMachineSample(ClassifiedSampleCore):
@@ -126,7 +137,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
     @property
     def confidence(self):
-        return self.label_probability[self.label]
+        try:
+            return self.label_probability[self.label]
+        except KeyError:
+            return self.label_probability[self.label.capitalize()]
 
     def updateBTMStatus(self, save=True):
         status = self.calculate_status()
@@ -147,8 +161,13 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     }
 
     def btm_status_mapping(self):
-        return self.BTM_STATUS_VERBOSE.get(self.btm_status,
-            "Error state. It will be verified.")
+        try:
+            return self.BTM_STATUS_VERBOSE.get(self.btm_status)
+        except KeyError:
+            log.exception(
+                "BTM Sample with errorous state. BTMSample id: %s" % self.id
+            )
+            return "Error state. It will be verified."
 
     CONF_HIGH_TRESHOLD = 0.8
     CONF_MEDIUM_TRESHOLD = 0.5
@@ -223,6 +242,14 @@ class BeatTheMachineSample(ClassifiedSampleCore):
                 self.btm_status = self.BTM_NOT_X
 
         self.save()
+
+    def get_status(self):
+        '''
+            Returns current classification status.
+        '''
+        if self.sample and self.label and self.btm_status != self.BTM_PENDING:
+            return CLASSIFIED_SAMPLE_SUCCESS
+        return CLASSIFIED_SAMPLE_PENDING
 
 
 class TagasaurisJobs(models.Model):

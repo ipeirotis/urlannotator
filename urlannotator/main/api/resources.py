@@ -1031,6 +1031,12 @@ class BeatTheMachineResource(ModelResource):
                 'result': 'malformed url',
             })
 
+        if BeatTheMachineSample.objects.filter(job=job, url=sanitized_url
+                ).count() != 0:
+            return self.create_response(request, {
+                'result': 'duplicated url',
+            })
+
         worker_id = data.get('worker_id')
 
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
@@ -1106,6 +1112,7 @@ class BeatTheMachineResource(ModelResource):
         if classified_sample.is_successful():
             resp['points'] = classified_sample.points
             resp['btm_status'] = classified_sample.btm_status_mapping()
+            resp['label_probability'] = classified_sample.label_probability
 
         return self.create_response(request, resp)
 

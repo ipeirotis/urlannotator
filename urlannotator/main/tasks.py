@@ -49,7 +49,7 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
         current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
 
-    return True
+    return text != ''
 
 
 @task()
@@ -134,7 +134,7 @@ def create_sample(extraction_result, sample_id, job_id, url,
             else:
                 # Sample created sucesfully - pushing event.
                 send_event(
-                    "EventNewSample",
+                    "EventNewBTMSample" if btm_sample else "EventNewSample",
                     job_id=job.id,
                     sample_id=sample_id,
                 )
@@ -158,7 +158,7 @@ def create_classify_sample(result, source_type, create_classified=True,
 
     # If extraction failed - return
     if not extraction_result:
-        return
+        return False
     sample_id = result[1]
 
     # Don't classify already classified samples
@@ -187,7 +187,6 @@ def create_classify_sample(result, source_type, create_classified=True,
             if worker:
                 # Update cache
                 worker.get_urls_collected_count_for_job(sample.job, cache=False)
-
 
             # Sample created sucesfully - pushing event.
             send_event(
@@ -256,7 +255,7 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
         else:
             # Sample created sucesfully - pushing event.
             send_event(
-                "EventNewSample",
+                "EventNewBTMSample" if btm_sample else "EventNewSample",
                 job_id=job.id,
                 sample_id=new_sample.id,
             )
