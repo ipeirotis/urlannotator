@@ -145,7 +145,7 @@ def update_job_votes_gathered(sample_id, worker_id):
     worker.get_votes_added_count_for_job(sample[0].job, cache=False)
 
     # Update top workers
-    sample[0].job.get_top_workers()
+    sample[0].job.get_top_workers(cache=False)
 
 
 @task(ignore_result=True)
