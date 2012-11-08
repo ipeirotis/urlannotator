@@ -1074,6 +1074,11 @@ class Sample(models.Model):
         except:
             return False
 
+    def get_label(self):
+        if self.is_gold_sample():
+            return self.goldsample.label
+        return self.get_classified_label()
+
     @classmethod
     def sanitize_url(cls, url):
         kwargs = {'url': url}

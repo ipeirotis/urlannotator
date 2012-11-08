@@ -49,7 +49,7 @@ def web_content_extraction(sample_id, url=None, *args, **kwargs):
         current.retry(exc=e, countdown=min(60 * 2 ** current.request.retries,
             60 * 60 * 24))
 
-    return True
+    return text != ''
 
 
 @task()
@@ -158,7 +158,7 @@ def create_classify_sample(result, source_type, create_classified=True,
 
     # If extraction failed - return
     if not extraction_result:
-        return
+        return False
     sample_id = result[1]
 
     # Don't classify already classified samples

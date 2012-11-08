@@ -51,8 +51,51 @@
   table.fix th.url {
     width:auto;
   }
+  span.badge-info {
+    .border-radius(3px);
+    display: inline-block;
+    width:15px;
+    margin-bottom:4px;
+    line-height:16px;
+    font-size:15px;
+    vertical-align: top;
+    font-weight:normal;
+    padding:0px 2px 4px 2px;
+    cursor: default;
+    i {
+      width: 15px;
+      height:15px;
+      display: block;
+      float:left;
+      &.icon-o {
+        background: url('/statics/img/url_data_ok.png') no-repeat 0px 3px;
+      }
+      &.icon-n {
+        background: url('/statics/img/url_data_no.png') no-repeat 0px 3px;
+      }
+      &.icon-b {
+        background: url('/statics/img/url_data_broken.png') no-repeat 0px 2px;
+      }
+    }
+    p {
+      width:100%;
+      text-align: center;
+      float:left;
+      display:block;
+      width:66px;
+      margin-bottom:4px;
+    }
+    &.badge-yes {
+      background-color:#1FA134;
+    }
+    &.badge-no {
+      background-color:#E6363E;
+    }
+    &.badge-broken {
+      background-color:#855759;
+    }
+    }
 }
-
 .body-data-detail {
   table#more-information td:first-child {
     width: 140px;
