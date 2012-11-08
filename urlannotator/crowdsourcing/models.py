@@ -25,7 +25,13 @@ class WorkerQualityVoteManager(models.Manager):
             sample_id=kwargs['sample'].id,
         )
         try:
-            return self.create(**kwargs)
+            vote, new = self.get_or_create(**kwargs)
+            if new:
+                log.warning(
+                    'Tried to add duplicate vote by worker %d'
+                    % kwargs['worker'].id
+                )
+            return vote
         except:
             log.exception(
                 'Exception while adding vote by worker %d.'
@@ -40,7 +46,13 @@ class WorkerQualityVoteManager(models.Manager):
         )
         kwargs['btm_vote'] = True
         try:
-            return self.create(**kwargs)
+            vote, new = self.get_or_create(**kwargs)
+            if new:
+                log.warning(
+                    'Tried to add duplicate BTM vote by worker %d'
+                    % kwargs['worker'].id
+                )
+            return vote
         except:
             log.exception(
                 'Exception while adding BTM vote by worker %d.'
