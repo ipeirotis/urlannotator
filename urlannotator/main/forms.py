@@ -141,9 +141,14 @@ class WizardAdditionalForm(forms.Form):
     """
     additional_gold_info = "Lorem ipsum dolor sit amet."
     additional_classify_info = "Consectetur adipiscing elit. Integer ac."
+    filler_samples_info = ("Includes gold samples labeled as No in number"
+        "equal to number of urls to gather.")
     icon = "<i title='%s' class='icon-info-sign pop'></i>"
     gold_help_text = icon % additional_gold_info
     classify_help_text = icon % additional_classify_info
+    filler_samples_help_text = icon % filler_samples_info
+    add_filler_samples = forms.BooleanField(required=False, initial=False,
+        label='Additional gold samples', help_text=filler_samples_help_text)
     same_domain = forms.IntegerField(
         label="No. of allowed multiple URLs from the same domain")
     file_gold_urls = forms.FileField(required=True,

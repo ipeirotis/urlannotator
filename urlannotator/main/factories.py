@@ -100,15 +100,16 @@ class JobFactory(object):
         """
         job = Job.objects.get(id=job_id)
 
-        fillers = list(FillSample.objects.all())
-        random.shuffle(fillers)
-        fillers = fillers[:min(job.no_of_urls, len(fillers))]
-        for filler in fillers:
-            job.gold_samples.append({
-                'url': filler.url,
-                'label': LABEL_NO,
-            })
-        job.save()
+        if job.add_filler_samples:
+            fillers = list(FillSample.objects.all())
+            random.shuffle(fillers)
+            fillers = fillers[:min(job.no_of_urls, len(fillers))]
+            for filler in fillers:
+                job.gold_samples.append({
+                    'url': filler.url,
+                    'label': LABEL_NO,
+                })
+            job.save()
 
         for gold_sample in job.gold_samples:
             Sample.objects.create_by_owner(
