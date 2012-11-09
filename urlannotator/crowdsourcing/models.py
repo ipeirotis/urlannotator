@@ -162,6 +162,15 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
     objects = BeatTheMachineSampleManager()
 
+    def get_min_max_points(self):
+        vals = self.BTM_POINTS.values()
+        minp, maxp = min(vals), max(vals)
+
+        if self.btm_status != BeatTheMachineSample.BTM_HUMAN:
+            maxp = self.points
+
+        return minp, maxp
+
     def get_label_prob(self, label):
         try:
             return self.label_probability[label.lower()]

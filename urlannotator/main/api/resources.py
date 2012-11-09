@@ -1110,6 +1110,9 @@ class BeatTheMachineResource(ModelResource):
         status = classified_sample.get_status()
         resp['status'] = status
         if classified_sample.is_successful():
+            min_p, max_p = classified_sample.get_min_max_points()
+            resp['min_points'] = min_p
+            resp['max_points'] = max_p
             resp['points'] = classified_sample.points
             resp['btm_status'] = classified_sample.btm_status_mapping()
             resp['label_probability'] = classified_sample.fixed_probability
