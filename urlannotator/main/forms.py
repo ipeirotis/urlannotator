@@ -139,9 +139,11 @@ class WizardAttributesForm(forms.Form):
 class WizardAdditionalForm(forms.Form):
     """ Form representing project wizard's additional fields
     """
-    additional_gold_info = "Lorem ipsum dolor sit amet."
-    additional_classify_info = "Consectetur adipiscing elit. Integer ac."
-    filler_samples_info = ("Includes gold samples labeled as No in number"
+    additional_gold_info = ("Entries in the file should be in format "
+        "\"url\",Yes/No per line.<br/>E.g. \"http://google.com\",Yes.")
+    additional_classify_info = ("Entries should be in format \"url\" per line."
+        "<br/>E.g. \"http://google.com\".")
+    filler_samples_info = ("Includes gold samples labeled as 'No' in number "
         "equal to number of urls to gather.")
     icon = "<i title='%s' class='icon-info-sign pop'></i>"
     gold_help_text = icon % additional_gold_info
