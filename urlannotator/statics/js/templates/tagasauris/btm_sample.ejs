@@ -8,5 +8,5 @@
 
 |
 
-Yes: <%= label_probability.Yes * 100%>%
-No: <%= label_probability.No * 100%>%
+Yes: <%= (label_probability.Yes * 100).toFixed(2) %>%
+No: <%= (label_probability.No * 100).toFixed(2) %>%

@@ -1112,7 +1112,7 @@ class BeatTheMachineResource(ModelResource):
         if classified_sample.is_successful():
             resp['points'] = classified_sample.points
             resp['btm_status'] = classified_sample.btm_status_mapping()
-            resp['label_probability'] = classified_sample.label_probability
+            resp['label_probability'] = classified_sample.fixed_probability
 
         return self.create_response(request, resp)
 
