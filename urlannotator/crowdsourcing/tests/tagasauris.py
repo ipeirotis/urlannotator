@@ -194,7 +194,7 @@ class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
 
         send_event('EventSamplesVoting')
 
-        self.assertEqual(SampleMapping.objects.count(), 5)
+        self.assertEqual(SampleMapping.objects.count(), 3)
 
         self.assertEqual(SampleMapping.objects.all()[0].crowscourcing_type,
             SampleMapping.TAGASAURIS)
@@ -387,7 +387,7 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
             s.save()
 
     def testBTMSampleIsNoVoting(self):
-        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 5)
+        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
         self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 0)
 
         BeatTheMachineSample.objects.create_by_worker(
