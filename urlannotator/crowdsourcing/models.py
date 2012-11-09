@@ -193,6 +193,12 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
     @property
     def confidence(self):
+        if self.label.lower() == LABEL_BROKEN.lower():
+            log.warning(
+                "BTM sample %s confidence 0.0 due to broken label." % self.id
+            )
+            return 0
+
         try:
             return self.fixed_probability[self.label]
         except KeyError:

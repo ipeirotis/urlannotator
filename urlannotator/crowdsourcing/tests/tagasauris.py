@@ -297,50 +297,61 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
 
     def testConfidenceGet(self):
         self.btm_sample.label_probability = {
-            LABEL_YES: 1,
-            LABEL_NO: 2,
-            LABEL_BROKEN: 3,
+            LABEL_YES: 0.1,
+            LABEL_NO: 0.4,
+            LABEL_BROKEN: 0.5,
         }
 
         self.btm_sample.label = LABEL_YES
-        self.assertEqual(self.btm_sample.confidence, 1)
+        self.assertEqual(self.btm_sample.confidence, 0.2)
 
         self.btm_sample.label = LABEL_NO
-        self.assertEqual(self.btm_sample.confidence, 2)
+        self.assertEqual(self.btm_sample.confidence, 0.8)
 
         self.btm_sample.label = LABEL_BROKEN
-        self.assertEqual(self.btm_sample.confidence, 3)
+        self.assertEqual(self.btm_sample.confidence, 0.0)
 
     def testCalculateStatus(self):
         self.btm_sample.label = LABEL_YES
+        lab_yes_prob = BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01
         self.btm_sample.label_probability = {
-            LABEL_YES: BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01}
+            LABEL_YES: lab_yes_prob,
+            LABEL_NO: 1.0 - lab_yes_prob,
+        }
         self.assertEqual(self.btm_sample.calculate_status(),
             BeatTheMachineSample.BTM_KNOWN)
 
         self.btm_sample.label = LABEL_YES
+        lab_yes_prob = BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01
         self.btm_sample.label_probability = {
-            LABEL_YES: BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01}
+            LABEL_YES: lab_yes_prob,
+            LABEL_NO: 1.0 - lab_yes_prob,
+        }
         self.assertEqual(self.btm_sample.calculate_status(),
             BeatTheMachineSample.BTM_HUMAN)
 
         self.btm_sample.label = LABEL_NO
+        lab_no_prob = BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01
         self.btm_sample.label_probability = {
-            LABEL_NO: BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01}
+            LABEL_YES: 1.0 - lab_no_prob,
+            LABEL_NO: lab_no_prob}
         self.assertEqual(self.btm_sample.calculate_status(),
             BeatTheMachineSample.BTM_HUMAN)
 
         self.btm_sample.label = LABEL_NO
+        lab_no_prob = BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01
         self.btm_sample.label_probability = {
-            LABEL_NO: BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01}
+            LABEL_YES: 1.0 - lab_no_prob,
+            LABEL_NO: lab_no_prob}
         self.assertEqual(self.btm_sample.calculate_status(),
             BeatTheMachineSample.BTM_HUMAN)
 
     def testUpdateStatus(self):
         self.btm_sample.label = LABEL_NO
+        no_prob = BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01
         self.btm_sample.label_probability = {
-            LABEL_NO: BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01,
-            LABEL_YES: BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01,
+            LABEL_NO: no_prob,
+            LABEL_YES: 1.0 - no_prob,
             }
         self.assertEqual(self.btm_sample.calculate_status(),
             BeatTheMachineSample.BTM_HUMAN)
