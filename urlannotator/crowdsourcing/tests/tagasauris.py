@@ -410,8 +410,8 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
 
         send_event('EventSamplesVoting')
 
-        # Only 5 gold samples (3 + 2 fillers) ! No BTM Samples!
-        self.assertEqual(SampleMapping.objects.count(), 5)
+        # Only 5 gold samples 3! No BTM Samples!
+        self.assertEqual(SampleMapping.objects.count(), 3)
 
         Sample.objects.filter(btm_sample=True).update(vote_sample=True)
 
@@ -423,4 +423,4 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
         send_event('EventSamplesVoting')
 
         # 5 - incude added BTM Samples.
-        self.assertEqual(SampleMapping.objects.count(), 7)
+        self.assertEqual(SampleMapping.objects.count(), 5)
