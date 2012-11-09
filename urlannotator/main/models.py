@@ -34,6 +34,26 @@ LABEL_CHOICES = (
 )
 
 
+def make_label(to_check):
+    '''
+        Transforms the `to_check` string into a valid label used by the system.
+        Returns a valid label if transform succeeded. None otherwise.
+    '''
+    try:
+        to_check = to_check.capitalize()
+        if to_check == LABEL_BROKEN.capitalize():
+            return LABEL_BROKEN
+
+        if to_check == LABEL_YES.capitalize():
+            return LABEL_YES
+
+        if to_check == LABEL_NO.capitalize():
+            return LABEL_NO
+    except:
+        log.exception('Label transformation failed for argument %s.' % to_check)
+    return None
+
+
 class Account(models.Model):
     """
         Model representing additional user data. Used as user profile.
