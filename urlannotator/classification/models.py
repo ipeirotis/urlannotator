@@ -155,6 +155,7 @@ class ClassifiedSampleCore(models.Model):
         LABEL_NO: 0.0,
         LABEL_BROKEN: 0.0,
     }))
+    added_on = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         abstract = True
