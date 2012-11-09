@@ -405,7 +405,7 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
             worker_id=12345
         )
 
-        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 5)
+        self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
         self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 2)
 
         send_event('EventSamplesVoting')
