@@ -1,9 +1,13 @@
 # Contains job handlers that are responsible for job source-specific actions
 # regarding sample gathering, voting and BTM.
 # They are gathered in this single place for easier modification later on.
+from itertools import imap
+
 from urlannotator.crowdsourcing.tagasauris_helper import (
     create_btm_voting_with_samples, make_tagapi_client,
-    update_voting_with_samples, init_tagasauris_job)
+    update_voting_with_samples, init_tagasauris_job, create_voting,
+    update_voting_job)
+from urlannotator.crowdsourcing.models import SampleMapping
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
     JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID)
 
@@ -88,6 +92,83 @@ class OwnWorkforceHandler(CrowdsourcingJobHandler):
     '''
     def init_job(self, **kwargs):
         init_tagasauris_job(self.job)
+
+    def init_voting(self, tc, job, mediaobjects):
+        # Objects to send.
+        mo_values = mediaobjects.values()
+
+        voting_key, voting_hit = create_voting(tc, job, mo_values)
+
+        # Job creation failed (maximum retries exceeded or other error)
+        if not voting_key:
+            log.info(
+                'OwnWorkforceHandler: Failed to create voting job for job %d'
+                % job.id
+            )
+            return False
+
+        job.tagasaurisjobs.voting_key = voting_key
+        if voting_hit:
+            job.tagasaurisjobs.voting_hit = voting_hit
+        job.tagasaurisjobs.save()
+
+        log.info(
+            'OwnWorkforceHandler: Voting job created. '
+            'Creating SampleMapping for job %d.' % job.id
+        )
+        for sample, mediaobject in mediaobjects.items():
+            SampleMapping(
+                sample=sample,
+                external_id=mediaobject['id'],
+                crowscourcing_type=SampleMapping.TAGASAURIS,
+            ).save()
+
+    def update_voting(self, tc, job, mediaobjects):
+        for sample, mediaobject in mediaobjects.items():
+            SampleMapping(
+                sample=sample,
+                external_id=mediaobject['id'],
+                crowscourcing_type=SampleMapping.TAGASAURIS,
+            ).save()
+
+        # New objects
+        mediaobjects = mediaobjects.values()
+
+        log.info(
+            'OwnWorkforceHandler: SampleMappings done for job %d.'
+            ' Sending and adding.' % job.id
+        )
+
+        res = update_voting_job(tc, mediaobjects, job.tagasaurisjobs.voting_key)
+
+        # If updating was failed - delete created. Why not create them here?
+        # Because someone might have completed a HIT in the mean time, and we
+        # would lose that info.
+        if not res:
+            SampleMapping.objects.filter(
+                sample__in=imap(lambda x: x.sample, mediaobjects.items())
+            ).delete()
+
+        # In case if tagasauris job was created without screenshots earlier.
+        try:
+            if job.tagasaurisjobs.voting_hit is None:
+                result = tc.get_job(external_id=job.tagasaurisjobs.voting_key)
+                if not result:
+                    log.info(
+                        'OwnWorkforceHandler: Missing voting hit for job %d'
+                        % job.id
+                    )
+                    return True
+                voting_hit = result['hits'][0] if result['hits'] else None
+                if voting_hit is not None:
+                    job.tagasaurisjobs.voting_hit = voting_hit
+                    job.tagasaurisjobs.save()
+        except:
+            log.exception(
+                'OwnWorkforceHandler: Exception while updating voting hit '
+                'for job %d' % job.id)
+            return False
+        return True
 
     def update_btm(self, btm_samples, **kwargs):
         tc = make_tagapi_client()

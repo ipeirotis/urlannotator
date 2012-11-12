@@ -14,6 +14,7 @@ from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_voting, samples_to_mediaobjects, update_voting_job, get_hit)
 from urlannotator.crowdsourcing.factories import quality_factory
+from urlannotator.crowdsourcing.job_handlers import get_job_handler
 from urlannotator.main.models import (Sample, Job, LABEL_BROKEN,
     JOB_STATUS_ACTIVE)
 from urlannotator.tools.synchronization import singleton
@@ -82,89 +83,28 @@ class SampleVotingManager(Task):
         # Creates sample to mediaobject mapping
         mediaobjects = samples_to_mediaobjects(new_samples,
             caption=job.description)
-        log.info(
-            'SampleVotingManager: Mapped mediaobjects dict for job %d.' % job.id
-        )
-
-        # Objects to send.
-        mo_values = mediaobjects.values()
 
         # Creating new job  with mediaobjects
         log.info(
             'SampleVotingManager: Creating voting job for job %d.' % job.id
         )
-        voting_key, voting_hit = create_voting(tc, job, mo_values)
 
-        # Job creation failed (maximum retries exceeded or other error)
-        if not voting_key:
-            return
-
-        tag_jobs = TagasaurisJobs.objects.get(urlannotator_job=job)
-        tag_jobs.voting_key = voting_key
-
-        # ALWAYS add mediaobject mappings assuming Tagasauris will handle them
-        # TODO: possibly check mediaobject status?
-        log.info(
-            'SampleVotingManager: Voting job created. '
-            'Creating SampleMapping for job %d.' % job.id
-        )
-        for sample, mediaobject in mediaobjects.items():
-            SampleMapping(
-                sample=sample,
-                external_id=mediaobject['id'],
-                crowscourcing_type=SampleMapping.TAGASAURIS,
-            ).save()
-        log.info(
-            'SampleVotingManager: SampleMapping created for job %d.' % job.id
-        )
-
-        if voting_hit is not None:
-            tag_jobs.voting_hit = voting_hit
-
-        tag_jobs.save()
+        handler = get_job_handler(job)
+        handler.init_voting(tc, job, mediaobjects)
 
     def update_job(self, tc, job, new_samples):
         """ Updating existing job.
         """
-
         # Creates sample to mediaobject mapping
         mediaobjects = samples_to_mediaobjects(new_samples,
             caption=job.description)
         log.info(
-            'SampleVotingManager: Mapped mediaobjects dict for job %d. Creating SampleMappings.' % job.id
+            'SampleVotingManager: Mapped mediaobjects dict for job %d. '
+            'Creating SampleMappings.' % job.id
         )
 
-        for sample, mediaobject in mediaobjects.items():
-            SampleMapping(
-                sample=sample,
-                external_id=mediaobject['id'],
-                crowscourcing_type=SampleMapping.TAGASAURIS,
-            ).save()
-
-        # New objects
-        mediaobjects = mediaobjects.values()
-
-        log.info(
-            'SampleVotingManager: SampleMappings done for job %d. Sending and adding.' % job.id
-        )
-
-        res = update_voting_job(tc, mediaobjects, job.tagasaurisjobs.voting_key)
-
-        # If updating was failed - delete created. Why not create them here?
-        # Because someone might have completed a HIT in the mean time, and we
-        # would lose that info.
-        if not res:
-            SampleMapping.objects.filter(
-                sample__in=imap(lambda x: x.sample, mediaobjects.items())
-            ).delete()
-
-        # In case if tagasauris job was created without screenshots earlier.
-        if job.tagasaurisjobs.voting_hit is None:
-            result = tc.get_job(external_id=job.tagasaurisjobs.voting_key)
-            voting_hit = result['hits'][0] if result['hits'] else None
-            if voting_hit is not None:
-                job.tagasaurisjobs.voting_hit = voting_hit
-                job.tagasaurisjobs.save()
+        handler = get_job_handler(job)
+        handler.update_voting(tc, job, mediaobjects)
 
     @singleton(name='voting-manager')
     def run(self, *args, **kwargs):

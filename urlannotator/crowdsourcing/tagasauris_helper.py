@@ -151,7 +151,6 @@ def create_sample_gather(api_client, job):
     split = math.ceil(math.sqrt(gather_goal))
     workers_per_hit = split
     total_mediaobjects = split
-    print split
 
     # Tagasauris Job is created with dummy media object (soo ugly...).
     # Before job creation we must configure Tagasauris account and
@@ -407,23 +406,23 @@ def update_voting_job(api_client, mediaobjects, ext_id):
 
 
 def _create_job(api_client, ext_id, kwargs):
-    result = api_client.create_job(**kwargs)
-
     try:
+        result = api_client.create_job(**kwargs)
+
         # media_import_key = result[0]
         job_creation_key = result[1]
         api_client.wait_for_complete(job_creation_key)
         hit = get_hit(api_client, ext_id)
         return ext_id, hit
     except TagasaurisApiMaxRetries, e:
-        log.exception('Failed to obtain Tagasauris hit: %s, %s' % (e, e.response))
+        log.exception('Error while creating job: %s, %s' % (e, e.response))
         # Failed to wait for job's completion - return no id and retry later.
         return None, None
     except TagasaurisApiException, e:
-        log.exception('Failed to obtain Tagasauris hit: %s, %s' % (e, e.response))
+        log.exception('Error while creating job: %s, %s' % (e, e.response))
         # Failed to get info about Tagasauris job - return None as hit
         return ext_id, None
     except Exception, e:
-        log.exception('Failed to obtain Tagasauris hit: %s' % e)
+        log.exception('Error while creating job: %s' % e)
         # Failed to get info about Tagasauris job - return None as hit
         return ext_id, None

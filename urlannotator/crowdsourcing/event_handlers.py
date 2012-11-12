@@ -115,7 +115,7 @@ class OdeskJobMonitor(Task):
 odesk_job_monitor = registry.tasks[OdeskJobMonitor.name]
 
 FLOW_DEFINITIONS = [
-    (r'^EventNewJobInitialization$', initialize_external_job, settings.CELERY_LONGSCARCE_QUEUE),
+    (r'^EventNewJobInitializationDone$', initialize_external_job, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMStarted$', initialize_btm_job, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMSendToHuman$', btm_send_to_human, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventNewVoteAdded$', update_job_votes_gathered),
