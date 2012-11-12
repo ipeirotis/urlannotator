@@ -131,7 +131,6 @@ class OwnWorkforceHandler(CrowdsourcingJobHandler):
         samples = (btm.sample for btm in btm_samples)
 
         tag_jobs = self.job.tagasaurisjobs
-        print tag_jobs.voting_btm_key
         # Job has no BTM key - create a new job
         if not tag_jobs.voting_btm_key:
             # Creates sample to mediaobject mapping
