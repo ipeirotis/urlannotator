@@ -80,6 +80,7 @@ except ImportError:
 
 IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 
+LOGGING['loggers'] = {}
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):

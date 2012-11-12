@@ -374,6 +374,14 @@ CELERYBEAT_SCHEDULE = {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
     },
+    'samplegather_hit': {
+        'task': 'urlannotator.classification.event_handlers.SampleGatheringMonitor',
+        'schedule': datetime.timedelta(seconds=3 * 60),
+        'args': [],
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
+    },
 
 }
 

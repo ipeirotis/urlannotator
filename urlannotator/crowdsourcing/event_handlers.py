@@ -54,6 +54,7 @@ def btm_send_to_human(sample_id, **kwargs):
     btm = BeatTheMachineSample.objects.get(id=sample_id)
     job = btm.job
     handler = get_job_handler(job)
+    print 'updating btm'
     handler.update_btm(sample=[btm], **kwargs)
 
 

@@ -76,36 +76,6 @@ class SampleVotingManager(Task):
         if samples:
             yield job, samples, tag_job
 
-    def initialize_job(self, tc, job, new_samples):
-        """ Job initialization.
-        """
-
-        # Creates sample to mediaobject mapping
-        mediaobjects = samples_to_mediaobjects(new_samples,
-            caption=job.description)
-
-        # Creating new job  with mediaobjects
-        log.info(
-            'SampleVotingManager: Creating voting job for job %d.' % job.id
-        )
-
-        handler = get_job_handler(job)
-        handler.init_voting(tc, job, mediaobjects)
-
-    def update_job(self, tc, job, new_samples):
-        """ Updating existing job.
-        """
-        # Creates sample to mediaobject mapping
-        mediaobjects = samples_to_mediaobjects(new_samples,
-            caption=job.description)
-        log.info(
-            'SampleVotingManager: Mapped mediaobjects dict for job %d. '
-            'Creating SampleMappings.' % job.id
-        )
-
-        handler = get_job_handler(job)
-        handler.update_voting(tc, job, mediaobjects)
-
     @singleton(name='voting-manager')
     def run(self, *args, **kwargs):
         """ Main task function.
@@ -118,11 +88,11 @@ class SampleVotingManager(Task):
             log.info('SampleVotingManager: Gathered samples and jobs.')
             for job, new_samples, initialized in jobs:
                 try:
+                    handler = get_job_handler(job)
                     if initialized:
-                        self.update_job(tc, job, new_samples)
-
+                        handler.update_voting(tc, new_samples)
                     else:
-                        self.initialize_job(tc, job, new_samples)
+                        handler.init_voting(tc, new_samples)
                 except Exception, e:
                     log.warning(
                         'SampleVotingManager: Error in job %d: %s.' % (job.id, e)
@@ -137,31 +107,59 @@ class SampleVotingManager(Task):
 send_for_voting = registry.tasks[SampleVotingManager.name]
 
 
-@task(ignore_result=True)
-class SampleGatheringMonitor(Task):
-    """
-        Checks jobs' sample gathering job for HIT changes.
-    """
-    def run(*args, **kwargs):
+class HITMonitor(object):
+    def run(self, *args, **kwargs):
+        kw = {'tagasaurisjobs__%s' % self.hit_name: None}
         jobs = Job.objects.select_related('tagasaurisjobs').filter(
             status=JOB_STATUS_ACTIVE,
-            tagasaurisjobs__isnull=False,
-            tagasaurisjobs__sample_gathering_hit='').iterator()
+            tagasaurisjobs__isnull=False, **kw).iterator()
         client = make_tagapi_client()
 
         for job in jobs:
-            old_hit = job.tagasaurisjobs.sample_gathering_hit
-            new_hit = get_hit(client, job.tagasaurisjobs.sample_gathering_key)
-            if old_hit != new_hit:
-                send_event(
-                    'EventSampleGathertingHITChanged',
-                    job_id=job.id,
-                    old_hit=old_hit,
-                    new_hit=new_hit,
-                )
+            old_hit = getattr(job.tagasaurisjobs, self.hit_name)
+            new_hit = get_hit(client, getattr(job.tagasaurisjobs, self.key_name))
+
+            if not new_hit or old_hit == new_hit:
+                continue
+
+            kw = {self.hit_name: new_hit}
             TagasaurisJobs.objects.filter(urlannotator_job=job).update(
-                sample_gathering_hit=new_hit
+                **kw
             )
+            send_event(
+                self.event_name,
+                job_id=job.id,
+                old_hit=old_hit,
+                new_hit=new_hit,
+            )
+
+
+@task(ignore_result=True)
+class SampleGatheringHITMonitor(HITMonitor, Task):
+    """
+        Checks jobs' sample gathering job for HIT changes.
+    """
+    hit_name = 'sample_gathering_hit'
+    key_name = 'sample_gathering_key'
+    event_name = 'EventSampleGathertingHITChanged'
+
+    @singleton(name='samplegather-hit')
+    def run(self, *args, **kwargs):
+        super(self.__class__, self).run(*args, **kwargs)
+
+
+@task(ignore_result=True)
+class VotingHITMonitor(HITMonitor, Task):
+    """
+        Checks jobs' sample gathering job for HIT changes.
+    """
+    hit_name = 'voting_hit'
+    key_name = 'voting_key'
+    event_name = 'EventVotingHITChanged'
+
+    @singleton(name='voting-hit')
+    def run(self, *args, **kwargs):
+        super(self.__class__, self).run(*args, **kwargs)
 
 
 @task(ignore_result=True)

@@ -296,12 +296,26 @@ def _create_voting(api_client, job, mediaobjects, notify_url):
     return _create_job(api_client, ext_id, kwargs)
 
 
-def create_voting(api_client, job, mediaobjects):
-    return _create_voting(api_client, job, mediaobjects,
+def create_voting_job(api_client, job, samples):
+    log.info('Tagasauris: Creating voting job for job %d' % job.id)
+    res = create_voting(api_client, job, samples, 'voting',
         notify_url=TAGASAURIS_VOTING_CALLBACK % job.id)
+    if res:
+        log.info('Tagasauris: Voting job created for job %d' % job.id)
+    return res
 
 
-def create_btm_voting_with_samples(api_client, job, samples):
+def create_btm_voting_job(api_client, job, samples):
+    log.info('Tagasauris: Creating BTM voting job for job %d' % job.id)
+    res = create_voting(api_client, job, samples, 'voting_btm',
+        notify_url=TAGASAURIS_BTM_VOTING_CALLBACK % job.id)
+    if res:
+        log.info('Tagasauris: BTM voting job created for job %d' % job.id)
+    return res
+
+
+def create_voting(api_client, job, samples, field_name,
+    notify_url):
     from urlannotator.crowdsourcing.models import SampleMapping
     mediaobjects = samples_to_mediaobjects(samples, caption=job.description)
 
@@ -309,14 +323,17 @@ def create_btm_voting_with_samples(api_client, job, samples):
     mo_values = mediaobjects.values()
 
     # Creating new job  with mediaobjects
-    voting_btm_key, voting_btm_hit = create_btm_voting(api_client,
-        job, mo_values)
+    key, hit = _create_voting(api_client, job, mo_values,
+        notify_url=notify_url)
 
     # Job creation failed (maximum retries exceeded or other error)
-    if not voting_btm_key:
+    if not key:
         return False
 
-    job.tagasaurisjobs.update(voting_btm_key=voting_btm_key)
+    setattr(job.tagasaurisjobs, '%s_key' % field_name, key)
+    if hit is not None:
+        setattr(job.tagasaurisjobs, '%s_hit' % field_name, hit)
+    job.tagasaurisjobs.save()
 
     # ALWAYS add mediaobject mappings assuming Tagasauris will handle them
     # TODO: possibly check mediaobject status?
@@ -326,17 +343,27 @@ def create_btm_voting_with_samples(api_client, job, samples):
             external_id=mediaobject['id'],
             crowscourcing_type=SampleMapping.TAGASAURIS,
         ).save()
-    log.info(
-        'EventBTMSendToHuman: BTM SampleMappings created for job %d.' % job.id
-    )
-
-    if voting_btm_hit is not None:
-        job.tagasaurisjobs.update(voting_btm_hit=voting_btm_hit)
 
     return True
 
 
-def update_voting_with_samples(api_client, job, samples):
+def update_voting(api_client, job, samples):
+    log.info('Tagasauris: Updating voting job for job %d' % job.id)
+    res = _update_voting(api_client, job, samples, 'voting')
+    if res:
+        log.info('Tagasauris: Updated voting job for job %d' % job.id)
+    return res
+
+
+def update_btm(api_client, job, samples):
+    log.info('Tagasauris: Updating voting job for job %d' % job.id)
+    res = _update_voting(api_client, job, samples, 'voting_btm')
+    if res:
+        log.info('Tagasauris: Updated voting job for job %d' % job.id)
+    return res
+
+
+def _update_voting(api_client, job, samples, field_name):
     from urlannotator.crowdsourcing.models import SampleMapping
     # Creates sample to mediaobject mapping
     mediaobjects = samples_to_mediaobjects(samples,
@@ -352,8 +379,10 @@ def update_voting_with_samples(api_client, job, samples):
     # New objects
     mediaobjects = mediaobjects.values()
 
-    res = update_voting_job(api_client, mediaobjects,
-        job.tagasaurisjobs.voting_btm_key)
+    key = getattr(job.tagasaurisjobs, '%s_key' % field_name)
+    hit = getattr(job.tagasaurisjobs, '%s_hit' % field_name)
+
+    res = update_voting_job(api_client, mediaobjects, key)
 
     # If updating was failed - delete created. Why not create them here?
     # Because someone might have completed a HIT in the mean time, and we
@@ -364,27 +393,37 @@ def update_voting_with_samples(api_client, job, samples):
         ).delete()
 
     # In case if tagasauris job was created without screenshots earlier.
-    if job.tagasaurisjobs.voting_btm_hit is None:
-        result = api_client.get_job(external_id=job.tagasaurisjobs.voting_btm_key)
-        voting_btm_hit = result['hits'][0] if result['hits'] else None
-        if voting_btm_hit is not None:
-            job.tagasaurisjobs.update(voting_btm_hit=voting_btm_hit)
-
-
-def create_btm_voting(api_client, job, mediaobjects):
-    return _create_voting(api_client, job, mediaobjects,
-        notify_url=TAGASAURIS_BTM_VOTING_CALLBACK % job.id)
+    if hit is None:
+        result = api_client.get_job(external_id=key)
+        if not result:
+            return True
+        try:
+            hit = result['hits'][0] if result['hits'] else None
+            if hit is not None:
+                setattr(job.tagasaurisjobs, '%s_hit' % field_name, hit)
+                job.tagasaurisjobs.save()
+        except:
+            log.exception(
+                'Tagasauris: Error while getting voting hit for job' % job.id
+            )
+            return True
 
 
 def get_hit(api_client, job_ext_id):
-    result = api_client.get_job(external_id=job_ext_id)
-    if settings.TAGASAURIS_HIT_TYPE == settings.TAGASAURIS_MTURK:
-        hit_type = 'mturk_group_id'
-    else:
-        hit_type = 'external_id'
+    try:
+        result = api_client.get_job(external_id=job_ext_id)
+        if settings.TAGASAURIS_HIT_TYPE == settings.TAGASAURIS_MTURK:
+            hit_type = 'mturk_group_id'
+        else:
+            hit_type = 'external_id'
 
-    hit = result['hits'][0][hit_type] if result['hits'] else None
-    return hit
+        hit = result['hits'][0][hit_type] if result['hits'] else None
+        return hit
+    except:
+        log.exception(
+            'Error while getting hit for job %s' % job_ext_id
+        )
+        return None
 
 
 def update_voting_job(api_client, mediaobjects, ext_id):
