@@ -22,11 +22,18 @@ class _POSIXSemProxy(object):
     """
     def __init__(self, name):
         self.name = name
-        self.semaphore = posix_ipc.Semaphore(
-            name='/%s-%s' % (_posix_sem_prefix, name),
-            flags=posix_ipc.O_CREAT,
-            initial_value=1,
-        )
+        lock_name = '/%s-%s' % (_posix_sem_prefix, name)
+        try:
+            self.semaphore = posix_ipc.Semaphore(
+                name=lock_name,
+                flags=posix_ipc.O_CREAT,
+                initial_value=1,
+            )
+        except posix_ipc.PermissionsError:
+            log.exception(
+                "Tried to create a lock that is already owned by another user: %s"
+                % lock_name
+            )
 
     def acquire(self):
         self.semaphore.acquire()

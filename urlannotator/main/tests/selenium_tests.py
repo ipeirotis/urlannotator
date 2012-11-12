@@ -6,6 +6,23 @@ from selenium.webdriver.firefox.webdriver import WebDriver
 from selenium.common import exceptions
 
 
+def login(driver, url):
+    u = User.objects.create_user(username='test@10clouds.com',
+            email='test@10clouds.com', password='test')
+    p = u.get_profile()
+    p.email_registered = True
+    p.activation_key = 'actived'
+    p.save()
+    u.is_active = True
+    u.save()
+    driver.get(url)
+    driver.find_element_by_id("id_email").clear()
+    driver.find_element_by_id("id_email").send_keys("test@10clouds.com")
+    driver.find_element_by_id("id_password").clear()
+    driver.find_element_by_id("id_password").send_keys("test")
+    driver.find_element_by_css_selector("button.btn.btn-primary").click()
+
+
 class RegistrationSeleniumTests(LiveServerTestCase):
     @classmethod
     def setUpClass(cls):
@@ -32,8 +49,7 @@ class RegistrationSeleniumTests(LiveServerTestCase):
         self.assertIn('odesk.com', self.selenium.current_url)
 
     def test_logInAndOut(self):
-        self.selenium.get('%s%s'
-                          % (self.live_server_url, reverse('debug_login')))
+        login(self.selenium, self.live_server_url + "/login/")
         alert = self.selenium.find_element_by_class_name('alert-success')
         self.assertTrue(alert)
 
@@ -41,25 +57,6 @@ class RegistrationSeleniumTests(LiveServerTestCase):
                           % (self.live_server_url, reverse('logout')))
         el = self.selenium.find_element_by_class_name("btn-login")
         self.assertTrue(el)
-
-
-class DebugSeleniumTests(LiveServerTestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.selenium = WebDriver()
-        super(DebugSeleniumTests, cls).setUpClass()
-
-    @classmethod
-    def tearDownClass(cls):
-        super(DebugSeleniumTests, cls).tearDownClass()
-        cls.selenium.quit()
-
-    def test_login(self):
-        self.selenium.get('%s%s'
-                          % (self.live_server_url, reverse('debug_login')))
-        self.assertTrue(User.objects.all())
-        alert = self.selenium.find_element_by_class_name('alert-success')
-        self.assertTrue(alert)
 
 
 class ProjectWizardSeleniumTests(LiveServerTestCase):
@@ -88,8 +85,7 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
             self.assertNotEqual(e.value_of_css_property('display'), 'none')
 
     def test_formLayout(self):
-        self.selenium.get('%s%s'
-                          % (self.live_server_url, reverse('debug_login')))
+        login(self.selenium, self.live_server_url + "/login/")
         self.selenium.get('%s%s'
                           % (self.live_server_url, reverse('project_wizard')))
 
@@ -197,8 +193,7 @@ class DashboardSeleniumTests(LiveServerTestCase):
         with self.assertRaises(exceptions.NoSuchElementException):
             self.selenium.find_element_by_id('nothing-to-display')
 
-        self.selenium.get('%s%s'
-                          % (self.live_server_url, reverse('debug_login')))
+        login(self.selenium, self.live_server_url + "/login/")
         self.selenium.find_element_by_id('nothing-to-display')
 
 
@@ -214,8 +209,7 @@ class SettingsSeleniumTests(LiveServerTestCase):
         cls.selenium.quit()
 
     def test_formLayout(self):
-        self.selenium.get('%s%s'
-                          % (self.live_server_url, reverse('debug_login')))
+        login(self.selenium, self.live_server_url + "/login/")
         self.selenium.get('%s%s' % (self.live_server_url, reverse('settings')))
         self.assertTrue(self.selenium.find_element_by_id('id_full_name'))
         self.assertTrue(self.selenium.find_element_by_id('id_email'))
