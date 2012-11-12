@@ -16,7 +16,7 @@ from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
 from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.main.models import (Sample, Job, LABEL_BROKEN,
     JOB_STATUS_ACTIVE)
-from urlannotator.tools.synchronization import POSIXLock
+from urlannotator.tools.synchronization import singleton
 
 import logging
 log = logging.getLogger(__name__)
@@ -49,20 +49,6 @@ class SampleVotingManager(Task):
             initialized or not. We assume that jobs having already mapped
             samples are initialized, otherwise - not.
         """
-        # jobs = set([s.job for s in all_samples.iterator()])
-
-        # for job in jobs:
-        #     # Don't handle inactive (initializing/stopped/completed) jobs.
-        #     if not job.is_active():
-        #         continue
-
-        #     try:
-        #         job_samples = [s for s in all_samples.iterator() if s.job == job][:VOTING_MAX_SAMPLES]
-        #         initialized = job.tagasaurisjobs.voting_key is not None
-        #         yield job, job_samples, initialized
-        #     except TagasaurisJobs.DoesNotExist:
-        #         log.warning("Spotted job without tagasauris link.")
-
         job = None
         tag_job = False
         samples = []
@@ -180,23 +166,10 @@ class SampleVotingManager(Task):
                 job.tagasaurisjobs.voting_hit = voting_hit
                 job.tagasaurisjobs.save()
 
+    @singleton(name='voting-manager')
     def run(self, *args, **kwargs):
         """ Main task function.
         """
-        mutex_name = settings.SITE_URL + '-voting-mutex'
-        voting_lock = settings.SITE_URL + '-voting-lock'
-        p = POSIXLock(name=voting_lock)
-        with POSIXLock(name=mutex_name):
-            if not p.lock.semaphore.value:
-                # Lock is taken, voting manager in progress
-                log.warning(
-                    'SampleVotingManager: Processing already in progress'
-                )
-                return
-            else:
-                # value != 0
-                p.acquire()
-
         try:
             unmapped_samples = self.get_unmapped_samples()
             jobs = self.get_jobs(unmapped_samples)
@@ -219,8 +192,6 @@ class SampleVotingManager(Task):
             log.critical(
                 'SampleVotingManager: exception while all jobs: %s.' % e
             )
-        finally:
-            p.release()
 
 
 send_for_voting = registry.tasks[SampleVotingManager.name]
@@ -228,91 +199,75 @@ send_for_voting = registry.tasks[SampleVotingManager.name]
 
 @task(ignore_result=True)
 class ProcessVotesManager(Task):
+    @singleton(name='process-votes')
     def run(*args, **kwargs):
-        mutex_name = settings.SITE_URL + '-process-votes-mutex'
-        voting_lock = settings.SITE_URL + '-process-votes-lock'
-        p = POSIXLock(name=voting_lock)
-        with POSIXLock(name=mutex_name):
-            if not p.lock.semaphore.value:
-                # Lock is taken, voting manager in progress
-                log.warning(
-                    'ProcessVotesManager: Processing already in progress'
+        active_jobs = Job.objects.get_active()
+
+        for job in active_jobs:
+            if not job.has_new_votes():
+                continue
+
+            quality_algorithm = quality_factory.create_algorithm(job)
+            decisions = quality_algorithm.extract_decisions()
+            if decisions:
+                log.info(
+                    'ProcessVotesManager: Creating training set for job %d.' % job.id
                 )
-                return
-            else:
-                # value != 0
-                p.acquire()
 
-        try:
-            active_jobs = Job.objects.get_active()
+                ts = TrainingSet.objects.create(job=job)
+                for sample_id, label in decisions:
+                    if label == LABEL_BROKEN:
+                        log.info(
+                            'ProcessVotesManager: Omitted broken label of sample %d.' % sample_id
+                        )
+                        continue
 
-            for job in active_jobs:
-                if not job.has_new_votes():
-                    continue
+                    sample = Sample.objects.get(id=sample_id)
+                    if not sample.training:
+                        continue  # Skipping (BTM non trainable sample)
 
-                quality_algorithm = quality_factory.create_algorithm(job)
-                decisions = quality_algorithm.extract_decisions()
-                if decisions:
-                    log.info(
-                        'ProcessVotesManager: Creating training set for job %d.' % job.id
+                    TrainingSample.objects.create(
+                        set=ts,
+                        sample=sample,
+                        label=label,
                     )
 
-                    ts = TrainingSet.objects.create(job=job)
-                    for sample_id, label in decisions:
-                        if label == LABEL_BROKEN:
-                            log.info(
-                                'ProcessVotesManager: Omitted broken label of sample %d.' % sample_id
-                            )
-                            continue
-
-                        sample = Sample.objects.get(id=sample_id)
-                        if not sample.training:
-                            continue  # Skipping (BTM non trainable sample)
-
-                        TrainingSample.objects.create(
+                for sample in Sample.objects.filter(job=job).iterator():
+                    if sample.is_gold_sample():
+                        ts_sample, created = TrainingSample.objects.get_or_create(
                             set=ts,
                             sample=sample,
-                            label=label,
                         )
-
-                    for sample in Sample.objects.filter(job=job).iterator():
-                        if sample.is_gold_sample():
-                            ts_sample, created = TrainingSample.objects.get_or_create(
-                                set=ts,
-                                sample=sample,
-                            )
-                            if not created:
-                                log.info(
-                                    'ProcessVotesManager: Overriden gold sample %d.' % sample.id
-                                )
-                            ts_sample.label = sample.goldsample.label
-                            ts_sample.save()
-
-                    send_event(
-                        'EventTrainingSetCompleted',
-                        set_id=ts.id,
-                        job_id=job.id,
-                    )
-
-                decisions = quality_algorithm.extract_btm_decisions()
-                if decisions:
-                    log.info(
-                        'ProcessVotesManager: Processing btm decisions %d.' % job.id
-                    )
-
-                    for sample_id, label in decisions:
-                        if label == LABEL_BROKEN:
+                        if not created:
                             log.info(
-                                'ProcessVotesManager: Omitted broken label of btm sample %d.' % sample_id
+                                'ProcessVotesManager: Overriden gold sample %d.' % sample.id
                             )
-                            continue
+                        ts_sample.label = sample.goldsample.label
+                        ts_sample.save()
 
-                        btms = BeatTheMachineSample.objects.get(
-                            sample__id=sample_id)
-                        btms.recalculate_human(label)
+                send_event(
+                    'EventTrainingSetCompleted',
+                    set_id=ts.id,
+                    job_id=job.id,
+                )
 
-        finally:
-            p.release()
+            decisions = quality_algorithm.extract_btm_decisions()
+            if decisions:
+                log.info(
+                    'ProcessVotesManager: Processing btm decisions %d.' % job.id
+                )
+
+                for sample_id, label in decisions:
+                    if label == LABEL_BROKEN:
+                        log.info(
+                            'ProcessVotesManager: Omitted broken label of btm sample %d.' % sample_id
+                        )
+                        continue
+
+                    btms = BeatTheMachineSample.objects.get(
+                        sample__id=sample_id)
+                    btms.recalculate_human(label)
+
 
 process_votes = registry.tasks[ProcessVotesManager.name]
 
