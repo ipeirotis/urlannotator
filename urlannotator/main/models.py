@@ -33,6 +33,26 @@ LABEL_CHOICES = (
 )
 
 
+def make_label(to_check):
+    '''
+        Transforms the `to_check` string into a valid label used by the system.
+        Returns a valid label if transform succeeded. None otherwise.
+    '''
+    try:
+        to_check = to_check.capitalize()
+        if to_check == LABEL_BROKEN.capitalize():
+            return LABEL_BROKEN
+
+        if to_check == LABEL_YES.capitalize():
+            return LABEL_YES
+
+        if to_check == LABEL_NO.capitalize():
+            return LABEL_NO
+    except:
+        log.exception('Label transformation failed for argument %s.' % to_check)
+    return None
+
+
 class Account(models.Model):
     """
         Model representing additional user data. Used as user profile.
@@ -126,11 +146,11 @@ class Job(models.Model):
         of gathering, verifying and classifying samples.
     """
     account = models.ForeignKey(Account)
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=100, default='test')
     description = models.TextField()
     status = models.IntegerField(default=0, choices=JOB_STATUS_CHOICES)
     progress = models.IntegerField(default=0)
-    no_of_urls = models.PositiveIntegerField(default=0)
+    no_of_urls = models.PositiveIntegerField(default=1)
     data_source = models.IntegerField(default=1,
         choices=JOB_DATA_SOURCE_CHOICES)
     project_type = models.IntegerField(default=0, choices=JOB_TYPE_CHOICES)
@@ -148,6 +168,7 @@ class Job(models.Model):
     quality_algorithm = models.CharField(max_length=50)
     btm_active = models.BooleanField(default=False)
     btm_to_gather = models.PositiveIntegerField(default=0)
+    add_filler_samples = models.BooleanField(default=False)
 
     objects = JobManager()
 
@@ -317,33 +338,31 @@ class Job(models.Model):
             Returns a list of samples that need to be added to the job by the
             owner.
         """
-        # TODO: Proper query
-        return [{
-                'id': 0,
-                'get_type': 'test',
-                'url': 'test',
-                'added_on': datetime.datetime.now(),
-                'get_yes_probability': 100,
-                'get_no_probability': 100,
-                'get_broken_probability': 100,
-                'get_yes_votes': 10,
-                'get_no_votes': 10,
-                'get_broken_votes': 10,
-                'label': 'yes',
-            }, {
-                'id': 1,
-                'get_type': 'test',
-                'url': 'test2',
-                'added_on': datetime.datetime.now(),
-                'get_yes_probability': 100,
-                'get_no_probability': 100,
-                'get_broken_probability': 100,
-                'get_yes_votes': 10,
-                'get_no_votes': 10,
-                'get_broken_votes': 10,
-                'label': 'no',
-            }
-        ]
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+        btms = BeatTheMachineSample.objects.filter(job=self)
+
+        def parse_btms(btms):
+            for btm in btms:
+                if btm.sample is None:
+                    continue
+
+                votes = btm.sample.workerqualityvote_set
+
+                yield {
+                    'id': 0,
+                    'get_type': '?',
+                    'url': btm.url,
+                    'added_on': btm.added_on,
+                    'get_yes_probability': btm.label_probability[LABEL_YES],
+                    'get_no_probability': btm.label_probability[LABEL_NO],
+                    'get_broken_probability': btm.label_probability[LABEL_BROKEN],
+                    'get_yes_votes': votes.filter(label=LABEL_YES).count(),
+                    'get_no_votes': votes.filter(label=LABEL_NO).count(),
+                    'get_broken_votes': votes.filter(label=LABEL_BROKEN).count(),
+                    'label': btm.label,
+                }
+
+        return list(parse_btms(btms))
 
     def add_btm_verified_sample(self, sample):
         """

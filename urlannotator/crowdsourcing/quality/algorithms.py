@@ -2,7 +2,7 @@ from django.db import IntegrityError
 
 from urlannotator.crowdsourcing.models import WorkerQualityVote
 from urlannotator.main.models import (Sample, Worker, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN, Job, WorkerJobAssociation)
+    LABEL_BROKEN, Job, WorkerJobAssociation, make_label)
 
 
 class VotesStorage(object):
@@ -247,15 +247,12 @@ class MajorityVoting(CrowdsourcingQualityAlgorithm):
                 LABEL_BROKEN: 0,
             })
 
-            if label == LABEL_YES:
-                count = counts.get(LABEL_YES, 0)
-                counts[LABEL_YES] = count + 1
-            elif label == LABEL_NO:
-                count = counts.get(LABEL_NO, 0)
-                counts[LABEL_NO] = count + 1
-            elif label == LABEL_BROKEN:
-                count = counts.get(LABEL_BROKEN, 0)
-                counts[LABEL_BROKEN] = count + 1
+            label = make_label(label)
+            if not label:
+                log.warning('[MajorityVoting] Got unrecognized sample %s' % label)
+                continue
+            count = counts.get(label, 0)
+            counts[label] = count + 1
 
             votes[object_id] = counts
             WorkerQualityVote.objects.filter(

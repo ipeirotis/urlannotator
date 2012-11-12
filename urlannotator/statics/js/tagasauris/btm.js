@@ -18,6 +18,8 @@
 
                 this.samples.add(sample);
 
+                $(".spinner").show();
+
                 var that = this;
                 $.post(
                     this.coreUrl + '/api/v1/btm/add/tagasauris/' +
@@ -30,6 +32,7 @@
                         } else {
                             that.$(".sample-error").html("Rejecting url: " +
                                 url + ", reason: " + data.result);
+                            $(".spinner").hide();
                         }
                     },
                     "json"
@@ -47,6 +50,8 @@
                     function (data) {
                         if (data.points !== undefined) {
                             sample.points = data.points;
+                            sample.max_points = data.max_points;
+                            sample.min_points = data.min_points;
                             sample.btm_status = data.btm_status;
                             sample.label_probability = data.label_probability;
                             that.gathered++;
@@ -56,10 +61,13 @@
                             that.$(".samples").append(view);
 
                             that.updatePoints();
+                            that.renderPartial();
 
                             if (that.gathered >= that.minSamples) {
                                 that.finishHIT();
                             }
+
+                            $(".spinner").hide();
                         } else {
                             that.pollStatus(sample, status_url, request_id);
                         }
@@ -71,13 +79,25 @@
         getPoints: function () {
             var points = 0;
             this.samples.each(function (sample) {
-                points += sample.points;
+                if (sample.points !== undefined) {
+                    points += sample.points;
+                }
+            });
+            return points;
+        },
+
+        getMaxPoints: function () {
+            var points = 0;
+            this.samples.each(function (sample) {
+                if (sample.points !== undefined) {
+                    points += sample.max_points;
+                }
             });
             return points;
         },
 
         updatePoints: function () {
-            var points = this.getPoints();
+            var points = this.getMaxPoints();
             this.$(".sample-points").html(points);
         }
 

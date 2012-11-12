@@ -22,11 +22,18 @@ class _POSIXSemProxy(object):
     """
     def __init__(self, name):
         self.name = name
-        self.semaphore = posix_ipc.Semaphore(
-            name='/%s-%s' % (_posix_sem_prefix, name),
-            flags=posix_ipc.O_CREAT,
-            initial_value=1,
-        )
+        lock_name = '/%s-%s' % (_posix_sem_prefix, name)
+        try:
+            self.semaphore = posix_ipc.Semaphore(
+                name=lock_name,
+                flags=posix_ipc.O_CREAT,
+                initial_value=1,
+            )
+        except posix_ipc.PermissionsError:
+            log.exception(
+                "Tried to create a lock that is already owned by another user: %s"
+                % lock_name
+            )
 
     def acquire(self):
         self.semaphore.acquire()
@@ -149,6 +156,44 @@ class POSIXLock(object):
 
     def __exit__(self, value, *args, **kwargs):
         self.release()
+
+
+def singleton(name=None, return_value=None):
+    """
+        Decorator that ensures that the decorated function is called once at
+        a time. If the function is already being processed somewhere else, the
+        current function returns with specified `return_value`.
+
+        :param name: - Name of the lock. If not provided, value of
+                       function.__name__ is used instead.
+        :param return_value: - Return value in case of locked semaphore.
+                               Defaults to None.
+    """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            func_name = name or func.__name__
+            mutex_name = '%s-mutex-lock' % func_name
+            func_lock_name = '%s-func-lock' % func_name
+            p = POSIXLock(name=func_lock_name)
+
+            with POSIXLock(name=mutex_name):
+                if not p.lock.semaphore.value:
+                    # Lock is taken, function in progress
+                    log.warning(
+                        '%s: Processing already in progress' % func_name
+                    )
+                    return return_value
+                else:
+                    # value != 0
+                    p.acquire()
+
+            try:
+                return func(*args, **kwargs)
+            finally:
+                p.release()
+
+        return wrapper
+    return decorator
 
 
 class POSIXLightSwitch(object):

@@ -2,7 +2,8 @@ from django.db import models
 from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
-    WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, JOB_STATUS_ACTIVE)
+    WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, LABEL_YES, LABEL_NO,
+    LABEL_BROKEN)
 from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
@@ -161,12 +162,56 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
     objects = BeatTheMachineSampleManager()
 
+    def get_min_max_points(self):
+        vals = self.BTM_POINTS.values()
+        minp, maxp = min(vals), max(vals)
+
+        if self.btm_status != BeatTheMachineSample.BTM_HUMAN:
+            maxp = self.points
+
+        return minp, maxp
+
+    def get_label_prob(self, label):
+        try:
+            return self.label_probability[label.lower()]
+        except KeyError:
+            return self.label_probability.get(label.capitalize(), 0.0)
+
+    @property
+    def fixed_probability(self):
+        """
+            Scales label_probability on values 'Yes' and 'No' (ommitin 'Broken')
+        """
+
+        yes_prob = self.get_label_prob(LABEL_YES)
+        no_prob = self.get_label_prob(LABEL_NO)
+        total = yes_prob + no_prob
+
+        if total == 0:
+            log.warning("Label probability for BTM sample %s is broken" %
+                self.id)
+            return self.label_probability
+
+        yes_prob = yes_prob / total
+        no_prob = 1.0 - yes_prob
+
+        return {
+            LABEL_YES: yes_prob,
+            LABEL_NO: no_prob,
+        }
+
     @property
     def confidence(self):
+        if self.label.lower() == LABEL_BROKEN.lower():
+            log.warning(
+                "BTM sample %s confidence 0.0 due to broken label." % self.id
+            )
+            return 0
+
         try:
-            return self.label_probability[self.label]
+            return self.fixed_probability[self.label]
         except KeyError:
-            return self.label_probability[self.label.capitalize()]
+            return self.fixed_probability[self.label.capitalize()]
 
     def updateBTMStatus(self, save=True):
         status = self.calculate_status()
@@ -188,7 +233,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
     def btm_status_mapping(self):
         try:
-            return self.BTM_STATUS_VERBOSE.get(self.btm_status)
+            return self.BTM_STATUS_VERBOSE[self.btm_status]
         except KeyError:
             log.exception(
                 "BTM Sample with errorous state. BTMSample id: %s" % self.id
@@ -222,6 +267,9 @@ class BeatTheMachineSample(ClassifiedSampleCore):
         confidence = self.confidence_level(conf_cl)
 
         cat_cl = self.label.lower()
+        if cat_cl == LABEL_BROKEN.lower():
+            return self.BTM_NO_STATUS
+
         expect = self.expected_output.lower()
 
         if cat_cl == expect and confidence == self.CONF_HIGH:
@@ -247,6 +295,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
         cat_h = cat_h.lower()
         cat_cl = self.label.lower()
+
+        if cat_cl == LABEL_BROKEN.lower() or cat_h == LABEL_BROKEN.lower():
+            return self.BTM_NO_STATUS
+
         expect = self.expected_output.lower()
 
         if cat_cl == expect and confidence == self.CONF_MEDIUM:

@@ -93,13 +93,12 @@ def eager_train(kwargs, *args, **kwds):
 # .factories`.
 # What does that mean? If you import the element from a brand new place, it
 # WON'T be mocked.
-# Examples of function mocking are the first 3 mocks on the list below.
-# Example of class method mocking is the 4th mock on the list below.
+# Examples of function mocking are on the list below.
 hardcoded_mocks = [
     ('urlannotator.main.factories.web_content_extraction', mocked_task),
     ('urlannotator.main.factories.web_screenshot_extraction', mocked_task),
     ('urlannotator.classification.event_handlers.process_execute', eager_train),
-    ('urlannotator.crowdsourcing.job_handlers.get_job_handler', mock.MagicMock(return_value=mock.Mock())),
+    ('urlannotator.crowdsourcing.event_handlers.get_job_handler', mock.MagicMock(return_value=mock.Mock())),
 ]
 
 

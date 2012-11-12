@@ -18,7 +18,8 @@ from urlannotator.classification.models import (Classifier as ClassifierModel,
 from urlannotator.tools.synchronization import RWSynchronize247
 from urlannotator.statistics.stat_extraction import update_classifier_stats
 from urlannotator.flow_control import send_event
-from urlannotator.main.models import Job, LABEL_YES, LABEL_NO, LABEL_BROKEN
+from urlannotator.main.models import (Job, LABEL_YES, LABEL_NO, LABEL_BROKEN,
+    make_label)
 
 import logging
 log = logging.getLogger(__name__)
@@ -599,8 +600,22 @@ class GooglePredictionClassifier(Classifier):
             label_probability = self.get_default_probabilities()
             for score in result['outputMulti']:
                 probability = round(score['score'], 3)
-                label_probability[score['label'].capitalize()] = probability
+                label = make_label(score['label'])
+                if not label:
+                    log.warning(
+                        '[GooglePrediction] Got unrecognized label %s'
+                        % score['label']
+                    )
+                    return None
+                label_probability[label] = probability
 
+            label = make_label(result['outputLabel'])
+            if not label:
+                log.warning(
+                    '[GooglePrediction] Got unrecognized label %s'
+                    % result['outputLabel']
+                )
+                return None
             return {
                 'label': result['outputLabel'],
                 'labels_probability': label_probability,

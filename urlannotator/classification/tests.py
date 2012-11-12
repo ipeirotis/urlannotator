@@ -301,6 +301,7 @@ class ClassifiedSampleTests(ToolsMockedMixin, TestCase):
 
         job = Job.objects.create_active(
             account=u.get_profile(),
+            no_of_urls=1,
             gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}],
         )
         with self.assertRaises(KeyError):

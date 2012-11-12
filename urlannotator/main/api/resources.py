@@ -15,8 +15,8 @@ from tastypie.http import HttpUnauthorized, HttpNotFound, HttpBadRequest
 from django.utils.http import same_origin
 
 from urlannotator.main.models import (Job, Sample, Worker, LABEL_BROKEN,
-    LABEL_YES, LABEL_NO)
-from urlannotator.classification.models import ClassifiedSample, TrainingSet
+    LABEL_YES, LABEL_NO, make_label)
+from urlannotator.classification.models import ClassifiedSample
 from urlannotator.crowdsourcing.models import (SampleMapping,
     WorkerQualityVote, BeatTheMachineSample)
 from urlannotator.logging.models import LogEntry
@@ -72,20 +72,6 @@ def sanitize_positive_int(value, err='Wrong parameters.'):
             HttpBadRequest(json.dumps({'error': err}))
         )
     return value
-
-
-def sanitize_label(label, err='Wrong label.'):
-    label = label.lower()
-    if label in ['yes', 'good', 'ok']:
-        return LABEL_YES
-    elif label in ['no', 'bad', 'wrong']:
-        return LABEL_NO
-    elif label in ['broken']:
-        return LABEL_BROKEN
-    else:
-        raise ImmediateHttpResponse(
-            HttpBadRequest(json.dumps({'error': err}))
-        )
 
 
 def paginate_list(entry_list, limit, offset, page):
@@ -1110,9 +1096,12 @@ class BeatTheMachineResource(ModelResource):
         status = classified_sample.get_status()
         resp['status'] = status
         if classified_sample.is_successful():
+            min_p, max_p = classified_sample.get_min_max_points()
+            resp['min_points'] = min_p
+            resp['max_points'] = max_p
             resp['points'] = classified_sample.points
             resp['btm_status'] = classified_sample.btm_status_mapping()
-            resp['label_probability'] = classified_sample.label_probability
+            resp['label_probability'] = classified_sample.fixed_probability
 
         return self.create_response(request, resp)
 
@@ -1174,13 +1163,7 @@ class VoteResource(ModelResource):
 
                 for answer in answers:
                     if answer['tag'] in ['yes', 'no', 'broken']:
-                        label = None
-                        if answer['tag'] == 'broken':
-                            label = LABEL_BROKEN
-                        elif answer['tag'] == 'yes':
-                            label = LABEL_YES
-                        elif answer['tag'] == 'no':
-                            label = LABEL_NO
+                        label = make_label(answer['tag'])
 
                         if label is not None:
                             vote_constructor(

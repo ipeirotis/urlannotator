@@ -28,10 +28,13 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm, BTMForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_YES, LABEL_NO)
+    LABEL_YES, LABEL_NO, make_label)
 from urlannotator.classification.models import (ClassifierPerformance,
     ClassifiedSample, TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
+
+import logging
+log = logging.getLogger(__name__)
 
 
 def get_activation_key(email, num, salt_size=10,
@@ -362,6 +365,7 @@ def project_wizard(request):
                 'hourly_rate': attr_form.cleaned_data['hourly_rate'],
                 'budget': attr_form.cleaned_data['budget'],
                 'same_domain_allowed': addt_form.cleaned_data['same_domain'],
+                'add_filler_samples': addt_form.cleaned_data['add_filler_samples']
             }
             if not params['no_of_urls']:
                 params['no_of_urls'] = 0
@@ -379,6 +383,13 @@ def project_wizard(request):
                             continue
 
                         url_set.add(url)
+                        label = make_label(label)
+                        if not label:
+                            log.warning(
+                                'Got wrong label when parsing gold samples: %s'
+                                % label
+                            )
+                            continue
                         label_set.add(label)
                         gold_samples.append({'url': url, 'label': label})
 
@@ -402,6 +413,11 @@ def project_wizard(request):
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')
+                except:
+                    request.session['error'] =\
+                        'Gold samples file has incorrect format.'
+                    return render(request, 'main/project/wizard.html',
+                        RequestContext(request, context))
 
             if 'file_classify_urls' in request.FILES:
                 try:
@@ -411,6 +427,11 @@ def project_wizard(request):
                 except csv.Error, e:
                     request.session['error'] = e
                     return redirect('index')
+                except:
+                    request.session['error'] =\
+                        'Classify urls file has incorrect format.'
+                    return render(request, 'main/project/wizard.html',
+                        RequestContext(request, context))
 
             if is_draft:
                 job = Job.objects.create_draft(**params)

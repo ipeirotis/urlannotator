@@ -74,11 +74,6 @@ urlpatterns = patterns('urlannotator',
 
     url(r'^api/', include(v1_api.urls)),
     url(r'^readme$', 'main.views.readme_view', name='readme_view'),
-    url(r'^debug/user$', 'main.views.debug_login', name='debug_login'),
-    url(r'^debug/prediction$', 'main.views.debug_prediction',
-        name='debug_prediction'),
-    url(r'^debug/prediction/complete$', 'main.views.debug_prediction_complete',
-        name='debug_prediction_complete'),
     (r'^bad/$', bad),
 )
 
@@ -113,5 +108,9 @@ if settings.DEBUG:
             'urlannotator.main.views.project_debug', name='project_debug'),
         url(r'^debug/superuser$',
             'urlannotator.main.views.debug_superuser', name='debug_su'),
-
+        url(r'^debug/user$', 'urlannotator.main.views.debug_login', name='debug_login'),
+        url(r'^debug/prediction$', 'urlannotator.main.views.debug_prediction',
+            name='debug_prediction'),
+        url(r'^debug/prediction/complete$', 'urlannotator.main.views.debug_prediction_complete',
+            name='debug_prediction_complete'),
     )

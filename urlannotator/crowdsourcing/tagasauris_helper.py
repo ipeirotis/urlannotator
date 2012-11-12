@@ -151,6 +151,7 @@ def create_sample_gather(api_client, job):
     split = math.ceil(math.sqrt(gather_goal))
     workers_per_hit = split
     total_mediaobjects = split
+    print split
 
     # Tagasauris Job is created with dummy media object (soo ugly...).
     # Before job creation we must configure Tagasauris account and
