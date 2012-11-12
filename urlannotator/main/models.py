@@ -339,33 +339,31 @@ class Job(models.Model):
             Returns a list of samples that need to be added to the job by the
             owner.
         """
-        # TODO: Proper query
-        return [{
-                'id': 0,
-                'get_type': 'test',
-                'url': 'test',
-                'added_on': datetime.datetime.now(),
-                'get_yes_probability': 100,
-                'get_no_probability': 100,
-                'get_broken_probability': 100,
-                'get_yes_votes': 10,
-                'get_no_votes': 10,
-                'get_broken_votes': 10,
-                'label': 'yes',
-            }, {
-                'id': 1,
-                'get_type': 'test',
-                'url': 'test2',
-                'added_on': datetime.datetime.now(),
-                'get_yes_probability': 100,
-                'get_no_probability': 100,
-                'get_broken_probability': 100,
-                'get_yes_votes': 10,
-                'get_no_votes': 10,
-                'get_broken_votes': 10,
-                'label': 'no',
-            }
-        ]
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+        btms = BeatTheMachineSample.objects.filter(job=self)
+
+        def parse_btms(btms):
+            for btm in btms:
+                if btm.sample is None:
+                    continue
+
+                votes = btm.sample.workerqualityvote_set
+
+                yield {
+                    'id': 0,
+                    'get_type': '?',
+                    'url': btm.url,
+                    'added_on': btm.added_on,
+                    'get_yes_probability': btm.label_probability[LABEL_YES],
+                    'get_no_probability': btm.label_probability[LABEL_NO],
+                    'get_broken_probability': btm.label_probability[LABEL_BROKEN],
+                    'get_yes_votes': votes.filter(label=LABEL_YES).count(),
+                    'get_no_votes': votes.filter(label=LABEL_NO).count(),
+                    'get_broken_votes': votes.filter(label=LABEL_BROKEN).count(),
+                    'label': btm.label,
+                }
+
+        return list(parse_btms(btms))
 
     def add_btm_verified_sample(self, sample):
         """
