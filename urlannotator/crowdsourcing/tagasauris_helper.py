@@ -435,6 +435,13 @@ def update_voting_job(api_client, mediaobjects, ext_id):
             external_ids=[mo['id'] for mo in mediaobjects],
             external_id=ext_id
         )
+
+        # Make sure that tagasauris job is running (if not - restart it!)
+        job_info = api_client.get_job(external_id=ext_id)
+        if job_info['state'] == 'finished':
+            api_client.restart_job(external_id=ext_id)
+            # api_client.wait_for_complete(res['task_id'])
+
         return True
     except TagasaurisApiException, e:
         log.exception('Failed to update Tagasauris voting job: %s, %s' % (e, e.response))
