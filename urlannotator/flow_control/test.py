@@ -81,6 +81,7 @@ def mocked_task(*args, **kwargs):
 def eager_train(kwargs, *args, **kwds):
     train(set_id=kwargs['set_id'])
 
+
 # Mocks:
 # - website screenshot and content extraction to do nothing,
 # - classifier training to be eager, not in separate process,

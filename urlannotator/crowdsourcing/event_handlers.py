@@ -37,13 +37,13 @@ initialize_quality = registry.tasks[VoteStorageManager.name]
 
 
 @task(ignore_result=True)
-def initialize_btm_job(job_id, **kwargs):
+def initialize_btm_job(job_id, topic, description, no_of_urls, **kwargs):
     """
         Initializes BTM task for given job.
     """
     job = Job.objects.get(id=job_id)
     handler = get_job_handler(job)
-    handler.init_btm(**kwargs)
+    handler.init_btm(topic, description, no_of_urls)
 
 
 @task(ignore_result=True)

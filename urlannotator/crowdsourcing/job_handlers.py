@@ -1,12 +1,9 @@
 # Contains job handlers that are responsible for job source-specific actions
 # regarding sample gathering, voting and BTM.
 # They are gathered in this single place for easier modification later on.
-from itertools import imap
-
 from urlannotator.crowdsourcing.tagasauris_helper import (
     create_btm_voting_job, make_tagapi_client, init_tagasauris_job,
-    create_voting_job, update_voting_job)
-from urlannotator.crowdsourcing.models import SampleMapping
+    create_voting_job, update_voting_job, create_btm)
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
     JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID)
 
@@ -114,16 +111,9 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
             )
         return res
 
-    def init_btm(self, tc, btm_samples):
-        log.info(
-            'TagasaurisHandler: Updating BTM voting job for job %d' % self.job.id
-        )
-        samples = (btm.sample for btm in btm_samples)
-        res = create_btm_voting_job(tc, self.job, samples)
-        if res:
-            log.info(
-                'TagasaurisHandler: Updating BTM voting job for job %d' % self.job.id
-            )
+    def init_btm(self, topic, description, no_of_urls):
+        tc = make_tagapi_client()
+        res = create_btm(tc, self.job, topic, description, no_of_urls)
         return res
 
     def update_btm(self, btm_samples):
