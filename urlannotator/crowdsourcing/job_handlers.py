@@ -85,48 +85,48 @@ class CrowdsourcingJobHandler(object):
         '''
 
 
-class OwnWorkforceHandler(CrowdsourcingJobHandler):
+class TagasaurisHandler(CrowdsourcingJobHandler):
     '''
-        OwnWorkforce job source handler. Uses Tagasauris for all 3 tasks.
+        Tagasauris job source handler. Uses Tagasauris for all 3 tasks.
     '''
     def init_job(self, **kwargs):
         init_tagasauris_job(self.job)
 
     def init_voting(self, tc, samples):
         log.info(
-            'OwnWorkforceHandler: Creating voting job for job %d' % self.job.id
+            'TagasaurisHandler: Creating voting job for job %d' % self.job.id
         )
         res = create_voting_job(tc, self.job, samples)
         if res:
             log.info(
-                'OwnWorkforceHandler: Created voting job for job %d' % self.job.id
+                'TagasaurisHandler: Created voting job for job %d' % self.job.id
             )
         return res
 
     def update_voting(self, tc, samples):
         log.info(
-            'OwnWorkforceHandler: Updating voting job for job %d' % self.job.id
+            'TagasaurisHandler: Updating voting job for job %d' % self.job.id
         )
         res = create_voting_job(tc, self.job, samples)
         if res:
             log.info(
-                'OwnWorkforceHandler: Updating voting job for job %d' % self.job.id
+                'TagasaurisHandler: Updating voting job for job %d' % self.job.id
             )
         return res
 
     def init_btm(self, tc, btm_samples):
         log.info(
-            'OwnWorkforceHandler: Updating BTM voting job for job %d' % self.job.id
+            'TagasaurisHandler: Updating BTM voting job for job %d' % self.job.id
         )
         samples = (btm.sample for btm in btm_samples)
         res = create_btm_voting_job(tc, self.job, samples)
         if res:
             log.info(
-                'OwnWorkforceHandler: Updating BTM voting job for job %d' % self.job.id
+                'TagasaurisHandler: Updating BTM voting job for job %d' % self.job.id
             )
         return res
 
-    def update_btm(self, tc, btm_samples):
+    def update_btm(self, btm_samples):
         tc = make_tagapi_client()
         samples = (btm.sample for btm in btm_samples)
 
@@ -140,7 +140,7 @@ class OwnWorkforceHandler(CrowdsourcingJobHandler):
 
 
 handlers = {
-    JOB_SOURCE_OWN_WORKFORCE: OwnWorkforceHandler,
+    JOB_SOURCE_OWN_WORKFORCE: TagasaurisHandler,
 }
 
 
@@ -148,6 +148,6 @@ def get_job_handler(job):
     handler_class = handlers.get(job.data_source, None)
     if not handler_class:
         log.warning('Missing handler for job source %s.' % job.data_source)
-        return handler_class
+        return TagasaurisHandler(job=job)
 
     return handler_class(job=job)

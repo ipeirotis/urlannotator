@@ -31,8 +31,8 @@ class RegistrationSeleniumTests(LiveServerTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(RegistrationSeleniumTests, cls).tearDownClass()
         cls.selenium.quit()
+        super(RegistrationSeleniumTests, cls).tearDownClass()
 
     def test_registerServices(self):
         services = [('google-oauth2', 'google.com'),
@@ -67,8 +67,8 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(ProjectWizardSeleniumTests, cls).tearDownClass()
         cls.selenium.quit()
+        super(ProjectWizardSeleniumTests, cls).tearDownClass()
 
     def assertHiddenElements(self, el):
         for element in el:
@@ -185,8 +185,8 @@ class DashboardSeleniumTests(LiveServerTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(DashboardSeleniumTests, cls).tearDownClass()
         cls.selenium.quit()
+        super(DashboardSeleniumTests, cls).tearDownClass()
 
     def test_projectList(self):
         self.selenium.get('%s%s' % (self.live_server_url, reverse('index')))
@@ -205,8 +205,8 @@ class SettingsSeleniumTests(LiveServerTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(SettingsSeleniumTests, cls).tearDownClass()
         cls.selenium.quit()
+        super(SettingsSeleniumTests, cls).tearDownClass()
 
     def test_formLayout(self):
         login(self.selenium, self.live_server_url + "/login/")
