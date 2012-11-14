@@ -10,6 +10,20 @@
 
         template: getTemplate("samplegather"),
 
+        expandReason: function (reason) {
+            var description = "";
+            if (reason == "duplicate") {
+                description = "Given url already exists in our database. Please try another url.";
+            } else if (reason == "domain duplicate") {
+                description = "Given url domain already exists in our database. Please try another url.";
+            } else if (reason == "malformed url") {
+                description = "Given url is not valid. Please try another url.";
+            } else {
+                description = reason;
+            }
+            return description;
+        },
+
         addNewSample: function () {
             if (this.gathered < this.minSamples) {
                 var url = this.$(".new-sample").val();
@@ -32,7 +46,8 @@
                             that.$(".sample-error").html("");
                         } else {
                             that.$(".sample-error").html("Rejecting url: " +
-                                url + ", reason: " + data.result);
+                                url + ", Reason: " +
+                                that.expandReason(data.result));
                         }
 
                         that.renderPartial();
