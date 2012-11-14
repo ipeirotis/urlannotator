@@ -4,6 +4,9 @@ from urlannotator.crowdsourcing.models import WorkerQualityVote
 from urlannotator.main.models import (Sample, Worker, LABEL_YES, LABEL_NO,
     LABEL_BROKEN, Job, WorkerJobAssociation, make_label)
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class VotesStorage(object):
 

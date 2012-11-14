@@ -3,16 +3,15 @@ from multiprocessing.pool import Process
 from celery import task, Task, registry
 from celery.task import current
 from django.conf import settings
-from itertools import imap
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
     TrainingSample)
 from urlannotator.classification.factories import classifier_factory
-from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
+from urlannotator.crowdsourcing.models import (TagasaurisJobs,
     BeatTheMachineSample)
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_voting, samples_to_mediaobjects, update_voting_job, get_hit)
+    get_hit)
 from urlannotator.crowdsourcing.factories import quality_factory
 from urlannotator.crowdsourcing.job_handlers import get_job_handler
 from urlannotator.main.models import (Sample, Job, LABEL_BROKEN,

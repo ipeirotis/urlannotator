@@ -162,7 +162,7 @@ def register_view(request):
                 'An activation email has been sent '
                 'to %s with further instructions.') % user.email,
                 'login_view': True,
-                'form':UserLoginForm()}
+                'form': UserLoginForm()}
             return render(request, 'main/login.html',
                 RequestContext(request, context))
 
@@ -207,8 +207,10 @@ def activation_view(request, key):
     prof.user.save()
     prof.activation_key = 'activated'
     prof.save()
-    context = { 'success': 'Your account has been activated.',
-                'form':UserLoginForm()}
+    context = {
+        'success': 'Your account has been activated.',
+        'form': UserLoginForm()
+    }
     return render(request, 'main/login.html',
         RequestContext(request, context))
 

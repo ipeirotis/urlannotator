@@ -421,7 +421,6 @@ class Job(models.Model):
             Stops underlying sample gathering job.
         """
         # Importing here due to possible loop imports
-        from urlannotator.crowdsourcing.tagasauris_helper import stop_job
         tag_job = self.tagasaurisjobs
         tag_job.sample_gathering_hit = ''
         tag_job.save()
@@ -443,7 +442,6 @@ class Job(models.Model):
             Stops underlying voting job.
         """
         # Importing here due to possible loop imports
-        from urlannotator.crowdsourcing.tagasauris_helper import stop_job
         tag_job = self.tagasaurisjobs
         tag_job.voting_hit = ''
         tag_job.save()

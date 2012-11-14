@@ -124,7 +124,7 @@ classifier_ctors = {
 
 class ClassifierFactory(object):
     def initialize_classifier(self, job_id, classifier_name, main=True,
-        prefix='', *args, **kwargs):
+            prefix='', *args, **kwargs):
         """
             Manages initialization of a NEW classifier.
         """

@@ -943,8 +943,8 @@ class SampleResource(ModelResource):
         elif Sample.objects.filter(url=sanitized_url,
                 job=job).count() == 0:
             domain = Sample.objects._domain(sanitized_url)
-            if Sample.objects.filter(domain=domain, job=job
-                    ).count() >= job.same_domain_allowed:
+            if Sample.objects.filter(domain=domain,
+                    job=job).count() >= job.same_domain_allowed:
                 result = 'domain duplicate'
             else:
                 res = Sample.objects.create_by_worker(
@@ -1021,8 +1021,8 @@ class BeatTheMachineResource(ModelResource):
                 'result': 'malformed url',
             })
 
-        if BeatTheMachineSample.objects.filter(job=job, url=sanitized_url
-                ).count() != 0:
+        if BeatTheMachineSample.objects.filter(job=job,
+                url=sanitized_url).count() != 0:
             return self.create_response(request, {
                 'result': 'duplicated url',
             })
