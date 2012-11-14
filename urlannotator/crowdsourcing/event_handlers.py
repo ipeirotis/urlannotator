@@ -69,18 +69,32 @@ def update_job_votes_gathered(sample_id, worker_id):
     sample[0].job.get_top_workers(cache=False)
 
 
-@task(ignore_result=True)
-def vote_on_new_sample(sample_id, job_id):
-    '''
-        Creates a LABEL_YES vote on the brand-new sample by the sample sender.
-    '''
+def _vote_on_new_sample(sample_id, job_id, vote_constructor):
     sample = Sample.objects.get(id=sample_id)
     worker = sample.get_source_worker()
     if not worker:
         return
 
-    WorkerQualityVote.objects.new_vote(worker=worker, sample=sample,
-        label=LABEL_YES)
+    vote_constructor(worker=worker, sample=sample, label=LABEL_YES)
+
+
+@task(ignore_result=True)
+def vote_on_new_sample(sample_id, job_id):
+    '''
+        Creates a LABEL_YES vote on the brand-new sample by the sample sender.
+    '''
+    return _vote_on_new_sample(sample_id, job_id,
+        WorkerQualityVote.objects.new_vote)
+
+
+@task(ignore_result=True)
+def vote_on_new_btm_sample(sample_id, job_id):
+    '''
+        Creates a LABEL_YES vote on the brand-new btm sample by the sample
+        sender.
+    '''
+    return _vote_on_new_sample(sample_id, job_id,
+        WorkerQualityVote.objects.new_btm_vote)
 
 
 @task(ignore_result=True)
@@ -120,6 +134,7 @@ FLOW_DEFINITIONS = [
     (r'^EventBTMSendToHuman$', btm_send_to_human, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventNewVoteAdded$', update_job_votes_gathered),
     (r'^EventNewSample$', vote_on_new_sample),
+    (r'^EventNewBTMSample$', vote_on_new_btm_sample),
     (r'^EventOdeskJobMonitor$', odesk_job_monitor),
     # (r'^EventSampleGathertingHITChanged$', job_new_gathering_hit),
     # WIP: DSaS/GAL quality algorithms.
