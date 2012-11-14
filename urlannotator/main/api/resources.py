@@ -984,6 +984,10 @@ class BeatTheMachineResource(ModelResource):
                 '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
                 self.wrap_view('btm_status'),
                 name='btm_status'),
+            url(r'^(?P<resource_name>%s)/data/tagasauris/'
+                '(?P<job_id>[^/]+)/$' % self._meta.resource_name,
+                self.wrap_view('btm_data'),
+                name='btm_data'),
         ]
 
     def btm_tagasauris(self, request, **kwargs):
@@ -1102,6 +1106,35 @@ class BeatTheMachineResource(ModelResource):
             resp['points'] = classified_sample.points
             resp['btm_status'] = classified_sample.btm_status_mapping()
             resp['label_probability'] = classified_sample.fixed_probability
+
+        return self.create_response(request, resp)
+
+    def btm_data(self, request, **kwargs):
+        """
+            Provides btm configuration for given job.
+
+            Parameters (GET):
+
+            Response format:
+            `points_to_cash` - Integer. Informs worker of current points to
+                cash conversion rate.
+        """
+        self.method_check(request, allowed=['get'])
+        job_id = kwargs.get('job_id', None)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong job.'},
+                response_class=HttpNotFound,
+            )
+
+        resp = {
+            'points_to_cash': 5000
+        }
 
         return self.create_response(request, resp)
 

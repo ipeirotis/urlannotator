@@ -1,23 +1,44 @@
+<div class="additional-instruction" style="display: none;">
+    <br><br>
+
+    <div style="max-width: 50%; word-wrap: break-word;">
+    <p style="font-weight:bold;">Your input will be verified by other, trusted
+    humans, and you will receive the bonus payment only if your submission
+    indeed belongs to the correct category.<p>
+
+    <p>The URLs that you submit will be used to examine the
+    accuracy of our automatic classifier.</p>
+
+    <p>You get more bonus points if you
+    submit URLs that are not in our database and trick our classifier to
+    classify the URL into the incorrect category. So, the better you are in
+    "beating the machine", the more bonus points you get.</p>
+
+    <p>Remeber <%= points_to_cash %> bonus points = 1$.</p>
+    </div>
+</div>
+
 <form class="form-vertical" data-validate="ketchup"
 <fieldset>
     <div class="question-group">
 
     <h2>Beat the machine <span class="sample-counter"></span></h2>
 
+
     <div style="max-width: 50%; word-wrap: break-word;">
 
         <h3>You can recieve up to <span class="sample-points">0</span> points for submitted urls</h3>
 
-        <h3>Accepted urls:</h3>
-        <ul class="samples">
-        </ul>
-
-        <div class="controls">
+        <div class="controls" >
             <input class="new-sample" class="input input-xlarge required" type="text" name="sample" >
         </div>
 
-        <input class="add-new-sample" type="button" value="Add">
+        <input class="add-new-sample" type="button" value="Add" >
         <img class="spinner" src="http://127.0.0.1:8000/statics/img/spinner.gif" style="display: none;">
+
+        <h3>Accepted urls:</h3>
+        <ul class="samples">
+        </ul>
 
         <div class="sample-error" style="color: red;"></div>
 

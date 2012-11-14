@@ -104,7 +104,12 @@
         },
 
         render: function () {
+            if (this.extendedRender !== undefined) {
+                return this.extendedRender();
+            }
+
             this.el.html(this.template());
+            $(".instructions").append($(".additional-instruction").html());
             this.renderPartial();
         },
 

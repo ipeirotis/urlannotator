@@ -10,6 +10,22 @@
 
         template: getTemplate("btm"),
 
+        extendedRender: function () {
+            var that = this;
+            $.get(
+                that.coreUrl + '/api/v1/btm/data/tagasauris/' + that.jobId + '/',
+                {},
+                function (data) {
+                    that.additional_data = data;
+                    that.el.html(that.template(data));
+                    $(".instructions").append(
+                        $(".additional-instruction", that.el).html());
+                    that.renderPartial();
+                },
+                "json"
+            );
+        },
+
         addNewSample: function () {
             if (this.gathered < this.minSamples) {
                 var url = this.$(".new-sample").val();
