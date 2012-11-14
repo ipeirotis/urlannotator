@@ -169,6 +169,7 @@ class Job(models.Model):
     btm_active = models.BooleanField(default=False)
     btm_to_gather = models.PositiveIntegerField(default=0)
     add_filler_samples = models.BooleanField(default=False)
+    btm_points_to_cash = models.PositiveIntegerField(default=0)
 
     objects = JobManager()
 
@@ -300,10 +301,11 @@ class Job(models.Model):
             job_id=self.id,
         )
 
-    def start_btm(self, topic, description, no_of_urls):
+    def start_btm(self, topic, description, no_of_urls, points_to_cash):
         Job.objects.filter(id=self.id).update(
             btm_active=True,
             btm_to_gather=no_of_urls,
+            btm_points_to_cash=points_to_cash,
         )
         self.btm_active = True
         self.btm_to_gather = no_of_urls

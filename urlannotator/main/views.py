@@ -732,6 +732,7 @@ def project_btm_view(request, id):
                     topic=form.cleaned_data['topic'],
                     description=form.cleaned_data['topic_desc'],
                     no_of_urls=form.cleaned_data['no_of_urls'],
+                    points_to_cash=form.cleaned_data['points_to_cash'],
                 )
                 return redirect('project_btm_view', id=id)
             context['form'] = form

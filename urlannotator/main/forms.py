@@ -169,3 +169,5 @@ class BTMForm(forms.Form):
         'religion, gender, nationality, ethnic origni, or other</br>'
         'involuntary characteristic.')
     no_of_urls = forms.IntegerField(min_value=1, label='Number of urls')
+    points_to_cash = forms.IntegerField(min_value=1,
+        label='Points to dollars conversion rate')

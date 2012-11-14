@@ -1133,7 +1133,7 @@ class BeatTheMachineResource(ModelResource):
             )
 
         resp = {
-            'points_to_cash': 5000
+            'points_to_cash': job.btm_points_to_cash
         }
 
         return self.create_response(request, resp)
