@@ -8,11 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Job.add_filler_samples'
-        db.add_column('main_job', 'add_filler_samples',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
-                      keep_default=False)
-
         # Adding field 'Job.btm_points_to_cash'
         db.add_column('main_job', 'btm_points_to_cash',
                       self.gf('django.db.models.fields.PositiveIntegerField')(default=0),
@@ -20,9 +15,6 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        # Deleting field 'Job.add_filler_samples'
-        db.delete_column('main_job', 'add_filler_samples')
-
         # Deleting field 'Job.btm_points_to_cash'
         db.delete_column('main_job', 'btm_points_to_cash')
 
