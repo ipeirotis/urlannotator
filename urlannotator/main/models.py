@@ -341,30 +341,7 @@ class Job(models.Model):
             owner.
         """
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
-        btms = BeatTheMachineSample.objects.filter(job=self)
-
-        def parse_btms(btms):
-            for btm in btms:
-                if btm.sample is None:
-                    continue
-
-                votes = btm.sample.workerqualityvote_set
-
-                yield {
-                    'id': 0,
-                    'get_type': '?',
-                    'url': btm.url,
-                    'added_on': btm.added_on,
-                    'get_yes_probability': btm.label_probability[LABEL_YES],
-                    'get_no_probability': btm.label_probability[LABEL_NO],
-                    'get_broken_probability': btm.label_probability[LABEL_BROKEN],
-                    'get_yes_votes': votes.filter(label=LABEL_YES).count(),
-                    'get_no_votes': votes.filter(label=LABEL_NO).count(),
-                    'get_broken_votes': votes.filter(label=LABEL_BROKEN).count(),
-                    'label': btm.label,
-                }
-
-        return list(parse_btms(btms))
+        return BeatTheMachineSample.objects.get_all_ready(job=self)
 
     def add_btm_verified_sample(self, sample):
         """
@@ -398,7 +375,7 @@ class Job(models.Model):
             BTM progress.
         """
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
-        return BeatTheMachineSample.objects.get_all_btm(self.id)
+        return BeatTheMachineSample.objects.get_all_btm(self)
 
     def get_btm_progress(self):
         to_gather = self.get_btm_to_gather() or 1

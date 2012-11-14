@@ -110,8 +110,11 @@ class BeatTheMachineSampleManager(models.Manager):
         return self.select_related("sample").filter(job__id=job_id,
             btm_status__gt=3, sample__training=False)
 
-    def get_all_btm(self, job_id):
-        return self.filter(job__id=job_id)
+    def get_all_btm(self, job):
+        return self.filter(job=job)
+
+    def get_all_ready(self, job):
+        return self.get_all_btm(job).filter(sample__isnull=False)
 
 
 class BeatTheMachineSample(ClassifiedSampleCore):
@@ -159,6 +162,8 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     expected_output = models.CharField(max_length=10, choices=LABEL_CHOICES)
     btm_status = models.IntegerField(default=BTM_PENDING, choices=BTM_STATUS)
     points = models.IntegerField(default=0)
+    human_label = models.CharField(max_length=10, choices=LABEL_CHOICES,
+        null=True, blank=False)
 
     objects = BeatTheMachineSampleManager()
 
@@ -214,6 +219,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
             return self.fixed_probability[self.label.capitalize()]
 
     def updateBTMStatus(self, save=True):
+        """
+            Each execution adds another sample for voting.
+        """
+
         status = self.calculate_status()
 
         self.btm_status = status
@@ -319,6 +328,8 @@ class BeatTheMachineSample(ClassifiedSampleCore):
             else:
                 self.btm_status = self.BTM_NOT_X
 
+        self.points = self.BTM_POINTS[self.btm_status]
+        self.human_label = cat_h
         self.save()
 
     def get_status(self):
