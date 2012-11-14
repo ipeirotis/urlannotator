@@ -310,7 +310,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
         expect = self.expected_output.lower()
 
-        if cat_cl == expect and confidence == self.CONF_MEDIUM:
+        if cat_cl == expect and confidence == self.CONF_HIGH:
+            self.btm_status = self.BTM_KNOWN
+
+        elif cat_cl == expect and confidence == self.CONF_MEDIUM:
             if cat_h == expect:
                 self.btm_status = self.BTM_KNOWN_UNSURE
             else:
