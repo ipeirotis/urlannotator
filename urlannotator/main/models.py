@@ -262,6 +262,7 @@ class Job(models.Model):
         self.get_progress_stats(cache=False)
         self.get_display_samples(cache=False)
         self.get_confusion_matrix(cache=False)
+        self.get_urls_collected(cache=False)
 
     def recreate_training_set(self, force=False):
         """

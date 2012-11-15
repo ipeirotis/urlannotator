@@ -114,7 +114,6 @@ def create_sample(extraction_result, sample_id, job_id, url,
             training=training,
         )
         sample = Sample.objects.get(id=sample_id)
-
         if not silent:
             # Golden sample
             if label is not None:

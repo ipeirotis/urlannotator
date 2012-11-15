@@ -6,7 +6,7 @@ from celery import task, registry
 from django.conf import settings
 
 from urlannotator.classification.event_handlers import train
-
+from urlannotator.main.models import Sample
 
 class FlowControlMixin(object):
     """ Add flow_definition and/or suppress_events for event flow edition.
@@ -78,6 +78,12 @@ def mocked_task(*args, **kwargs):
     return True
 
 
+@task()
+def mocked_web_resource(sample_id, *args, **kwargs):
+    Sample.objects.filter(id=sample_id).update(text='test', screenshot='test')
+    return True
+
+
 def eager_train(kwargs, *args, **kwds):
     train(set_id=kwargs['set_id'])
 
@@ -96,8 +102,8 @@ def eager_train(kwargs, *args, **kwds):
 # WON'T be mocked.
 # Examples of function mocking are on the list below.
 hardcoded_mocks = [
-    ('urlannotator.main.factories.web_content_extraction', mocked_task),
-    ('urlannotator.main.factories.web_screenshot_extraction', mocked_task),
+    ('urlannotator.main.factories.web_content_extraction', mocked_web_resource),
+    ('urlannotator.main.factories.web_screenshot_extraction', mocked_web_resource),
     ('urlannotator.classification.event_handlers.process_execute', eager_train),
     ('urlannotator.crowdsourcing.job_handlers.TagasaurisHandler.init_job', mock.Mock()),
 ]

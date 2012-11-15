@@ -2,7 +2,7 @@ from celery import task, Task, registry
 from factories import SampleFactory, JobFactory
 
 from urlannotator.classification.models import TrainingSample, TrainingSet
-from urlannotator.main.models import GoldSample, LABEL_BROKEN, Job
+from urlannotator.main.models import GoldSample, LABEL_BROKEN, Job, Sample
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 
@@ -89,6 +89,7 @@ def update_job_urls_gathered(job_id, sample_id):
     # If it was created by a worker - update top workers too.
     job.get_top_workers(cache=False)
     job.get_display_samples(cache=False)
+    job.get_urls_collected(cache=False)
 
 
 @task(ignore_result=True)
