@@ -2,7 +2,7 @@ from celery import task, Task, registry
 from factories import SampleFactory, JobFactory
 
 from urlannotator.classification.models import TrainingSample, TrainingSet
-from urlannotator.main.models import GoldSample, LABEL_BROKEN, Job, Sample
+from urlannotator.main.models import GoldSample, LABEL_BROKEN, Job
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 

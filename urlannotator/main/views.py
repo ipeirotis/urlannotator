@@ -30,7 +30,7 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
 from urlannotator.main.models import (Account, Job, Worker, Sample,
     LABEL_YES, LABEL_NO, make_label)
 from urlannotator.classification.models import (ClassifierPerformance,
-    ClassifiedSample, TrainingSet)
+    TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
 
 import logging

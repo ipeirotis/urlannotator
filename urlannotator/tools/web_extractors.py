@@ -121,7 +121,7 @@ def diffbot_extractor(url):
             'url': url,
         })
         return extract_words(content)
-    except Exception, e:
+    except Exception:
         log.exception(
             '[DiffBot] Exception while getting url %s.' % url
         )
