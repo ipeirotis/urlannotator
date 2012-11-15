@@ -121,7 +121,7 @@ class JobFactoryTest(ToolsMockedMixin, TestCase):
 
 class BaseNotLoggedInTests(ToolsMockedMixin, TestCase):
     def setUp(self):
-        self.c = Client()
+        self.c = Client(HTTP_USER_AGENT='Mozilla/5.0')
 
     def testLoginNotRestrictedPages(self):
         url_list = [('', 'main/landing.html'),
@@ -212,6 +212,20 @@ class BaseNotLoggedInTests(ToolsMockedMixin, TestCase):
 
         # return to login page and display error
         self.assertEqual(resp.status_code, 200)
+
+    def testRegisterViews(self):
+        services = [('google-oauth2', 'google'),
+                    ('twitter', 'twitter'),
+                    ('facebook', 'facebook')]
+        for name, part in services:
+            r = self.c.get(reverse('register_service', args=[name]),
+                follow=True)
+            self.assertNotEqual(1, len(r.redirect_chain), '%d %s' % (r.status_code,
+                r.content))
+
+        r = self.c.get(reverse('odesk_register'), follow=True)
+        self.assertNotEqual(1, len(r.redirect_chain), '%d %s' % (r.status_code,
+            r.content))
 
 
 class LoggedInTests(ToolsMockedMixin, TestCase):
