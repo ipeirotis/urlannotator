@@ -3,7 +3,7 @@
 # They are gathered in this single place for easier modification later on.
 from urlannotator.crowdsourcing.tagasauris_helper import (
     create_btm_voting_job, make_tagapi_client, init_tagasauris_job,
-    create_voting_job, update_voting_job, create_btm)
+    create_voting_job, update_voting_job, create_btm, update_voting)
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
     JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID)
 
@@ -104,7 +104,7 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
         log.info(
             'TagasaurisHandler: Updating voting job for job %d' % self.job.id
         )
-        res = create_voting_job(tc, self.job, samples)
+        res = update_voting(tc, self.job, samples)
         if res:
             log.info(
                 'TagasaurisHandler: Updating voting job for job %d' % self.job.id
