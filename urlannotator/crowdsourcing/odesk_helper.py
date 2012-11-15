@@ -41,8 +41,11 @@ def get_worker_name(ciphertext):
         Returns oDesk worker's name with given `ciphertext`.
     """
     client = make_odesk_client()
-    r = client.provider.get_provider(ciphertext)
-    return r['dev_full_name']
+    try:
+        r = client.provider.get_provider(ciphertext)
+        return r['dev_full_name']
+    except:
+        return None
 
 # TODO: Proper category and subcategory name here.
 NEW_JOB_CATEGORY = 'Sales & Marketing'

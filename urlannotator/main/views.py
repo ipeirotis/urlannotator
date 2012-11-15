@@ -478,7 +478,8 @@ def odesk_complete(request):
 
             # Add Worker model on odesk account association
             if not Worker.objects.filter(external_id=cipher):
-                Worker.objects.create_odesk(external_id=cipher)
+                Worker.objects.create_odesk(external_id=cipher,
+                    account=request.user.get_profile())
             request.session['success'] = 'You have successfully logged in.'
         return redirect('index')
     else:
@@ -501,7 +502,8 @@ def odesk_complete(request):
 
             # Create Worker model on odesk account registration
             if not Worker.objects.filter(external_id=cipher):
-                Worker.objects.create_odesk(external_id=cipher)
+                Worker.objects.create_odesk(external_id=cipher,
+                    account=request.user.get_profile())
             request.session['success'] = 'You have successfuly registered'
             return redirect('settings')
 

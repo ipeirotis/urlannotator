@@ -1231,20 +1231,25 @@ class Worker(models.Model):
     @cached
     def _get_name(self, cache):
         from urlannotator.crowdsourcing.odesk_helper import get_worker_name
+        name = None
+
         if self.worker_type == WORKER_TYPE_ODESK:
-            return get_worker_name(ciphertext=self.external_id)
+            name = get_worker_name(ciphertext=self.external_id)
 
         if self.worker_type == WORKER_TYPE_TAGASAURIS:
             tc = make_tagapi_client()
             try:
                 worker_info = tc.get_worker(worker_id=self.external_id)
-                return worker_info['name']
+                name = worker_info['name']
             except:
-                log.exception(
-                    'Exception while getting worker %d\'s name. Using default.' % self.id
-                )
+                name = None
 
-        return 'Worker %d' % self.id
+        if name is None:
+            log.exception(
+                'Exception while getting worker %d\'s name. Using default.' % self.id
+            )
+            return 'Worker %d' % self.id
+        return name
 
     def get_name(self, cache=True):
         """
