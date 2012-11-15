@@ -60,13 +60,21 @@ def btm_send_to_human(sample_id, **kwargs):
 @task(ignore_result=True)
 def update_job_votes_gathered(sample_id, worker_id):
     sample = Sample.objects.filter(id=sample_id).select_related('job')
-    sample[0].job.get_progress_votes(cache=False)
+    if not sample:
+        log.warning(
+            'Tried updating votes gathered for not existant sample %d'
+            % sample_id
+        )
+        return
+    sample = sample[0]
+    sample.update_votes_cache()
+    sample.job.get_progress_votes(cache=False)
 
     worker = Worker.objects.get(id=worker_id)
-    worker.get_votes_added_count_for_job(sample[0].job, cache=False)
+    worker.get_votes_added_count_for_job(sample.job, cache=False)
 
     # Update top workers
-    sample[0].job.get_top_workers(cache=False)
+    sample.job.get_top_workers(cache=False)
 
 
 def _vote_on_new_sample(sample_id, job_id, vote_constructor):

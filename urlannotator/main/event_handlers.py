@@ -86,6 +86,7 @@ def update_job_urls_gathered(job_id, sample_id):
     job.get_progress_urls(cache=False)
     # If it was created by a worker - update top workers too.
     job.get_top_workers(cache=False)
+    job.get_display_samples(cache=False)
 
 
 @task(ignore_result=True)

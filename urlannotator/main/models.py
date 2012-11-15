@@ -247,6 +247,7 @@ class Job(models.Model):
         self.get_spent_stats(cache=False)
         self.get_urls_stats(cache=False)
         self.get_progress_stats(cache=False)
+        self.get_display_samples(cache=False)
 
     def recreate_training_set(self, force=False):
         """
@@ -300,6 +301,15 @@ class Job(models.Model):
             set_id=ts.id,
             job_id=self.id,
         )
+
+    @cached
+    def _get_display_samples(self, cache):
+        db_samples = self.sample_set.all().iterator()
+        return filter(lambda x: x.can_display(), db_samples)
+
+    def get_display_samples(self, cache=True):
+        cache_key = 'job-%d-display-samples'
+        return self._get_display_samples(cache_key=cache_key, cache=cache)
 
     def start_btm(self, topic, description, no_of_urls, points_to_cash):
         Job.objects.filter(id=self.id).update(
@@ -549,7 +559,8 @@ class Job(models.Model):
         samples = self.sample_set.filter(goldsample__isnull=True).iterator()
         gold_samples = [gold['url'] for gold in self.gold_samples]
 
-        collected = ifilter(lambda x: not x.url in gold_samples, samples)
+        collected = ifilter(
+            lambda x: not x.url in gold_samples and x.can_display(), samples)
         collected = sum(1 for _ in collected)
         return collected
 
@@ -893,6 +904,21 @@ class Sample(models.Model):
         elif source_type == SAMPLE_TAGASAURIS_WORKER:
             return Worker.objects.get_tagasauris(worker_id=source_val)
 
+    def can_display(self):
+        if not self.is_finished():
+            return False
+
+        # If sample is from external source - display
+        if self.source_type != SAMPLE_SOURCE_OWNER:
+            return True
+
+        # Internal source gold sample - display
+        if self.is_gold_sample():
+            return True
+
+        # Rest - classification request, etc.
+        return False
+
     def get_classified_label(self):
         class_set = self.classifiedsample_set.all().order_by('-id')
         if class_set:
@@ -982,29 +1008,49 @@ class Sample(models.Model):
                 workers.add(worker)
         return workers
 
-    def get_yes_votes(self):
+    @cached
+    def _get_yes_votes(self, cache):
         """
             Returns amount of YES votes received by this sample.
         """
-        votes = self.workerqualityvote_set.all()
-        num = sum(1 for _ in ifilter(lambda x: x.label == LABEL_YES, votes))
+        num = self.workerqualityvote_set.filter(label=LABEL_YES).count()
         return num
 
-    def get_no_votes(self):
+    def get_yes_votes(self, cache=True):
+        cache_key = 'sample-%d-yes-votes' % self.id
+        return self._get_yes_votes(cache_key=cache_key, cache=cache)
+
+    @cached
+    def _get_no_votes(self, cache):
         """
             Returns amount of NO votes received by this sample.
         """
-        votes = self.workerqualityvote_set.all()
-        num = sum(1 for _ in ifilter(lambda x: x.label == LABEL_NO, votes))
+        num = self.workerqualityvote_set.filter(label=LABEL_NO).count()
         return num
 
-    def get_broken_votes(self):
+    def get_no_votes(self, cache=True):
+        cache_key = 'sample-%d-no-votes' % self.id
+        return self._get_no_votes(cache_key=cache_key, cache=cache)
+
+    @cached
+    def _get_broken_votes(self, cache):
         """
             Returns amount of BROKEN votes received by this sample.
         """
-        votes = self.workerqualityvote_set.all()
-        num = sum(1 for _ in ifilter(lambda x: x.label == LABEL_BROKEN, votes))
+        num = self.workerqualityvote_set.filter(label=LABEL_BROKEN).count()
         return num
+
+    def get_broken_votes(self, cache=True):
+        cache_key = 'sample-%d-broken-votes' % self.id
+        return self._get_broken_votes(cache_key=cache_key, cache=cache)
+
+    def update_votes_cache(self):
+        """
+            Updates votes cache.
+        """
+        self.get_broken_votes(cache=False)
+        self.get_yes_votes(cache=False)
+        self.get_no_votes(cache=False)
 
     def get_yes_probability(self):
         """

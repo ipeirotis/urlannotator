@@ -127,6 +127,7 @@ class ClassifiedSampleManager(models.Manager):
                 job_id=kwargs['job'].id,
                 url=kwargs['url'],
                 create_classified=False,
+                vote_sample=False,
             )
 
         return classified_sample
