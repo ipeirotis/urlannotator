@@ -184,8 +184,8 @@ class Job(models.Model):
     def _get_confusion_matrix(self, cache):
         val = self.classifierperformance_set.order_by('-id')[0]
         matrix = val.value.get('matrix', {
-            LABEL_YES: {LABEL_YES: 0, LABEL_NO: 0},
-            LABEL_NO: {LABEL_YES: 0, LABEL_NO: 0}
+            LABEL_YES: {LABEL_YES: 0.0, LABEL_NO: 0.0},
+            LABEL_NO: {LABEL_YES: 0.0, LABEL_NO: 0.0}
         })
         return matrix
 
