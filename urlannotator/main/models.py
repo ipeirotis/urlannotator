@@ -180,6 +180,19 @@ class Job(models.Model):
         })
 
     @cached
+    def _get_confusion_matrix(self, cache):
+        val = self.classifierperformance_set.order_by('-id')[0]
+        matrix = val.value.get('matrix', {
+            LABEL_YES: {LABEL_YES: 0, LABEL_NO: 0},
+            LABEL_NO: {LABEL_YES: 0, LABEL_NO: 0}
+        })
+        return matrix
+
+    def get_confusion_matrix(self, cache=True):
+        cache_key = 'job-%d-confusion-matrix' % self.id
+        return self._get_confusion_matrix(cache_key=cache_key, cache=cache)
+
+    @cached
     def _get_progress_stats(self, cache):
         from urlannotator.statistics.stat_extraction import extract_progress_stats
         cont = {}
@@ -248,6 +261,7 @@ class Job(models.Model):
         self.get_urls_stats(cache=False)
         self.get_progress_stats(cache=False)
         self.get_display_samples(cache=False)
+        self.get_confusion_matrix(cache=False)
 
     def recreate_training_set(self, force=False):
         """
@@ -308,7 +322,7 @@ class Job(models.Model):
         return filter(lambda x: x.can_display(), db_samples)
 
     def get_display_samples(self, cache=True):
-        cache_key = 'job-%d-display-samples'
+        cache_key = 'job-%d-display-samples' % self.id
         return self._get_display_samples(cache_key=cache_key, cache=cache)
 
     def start_btm(self, topic, description, no_of_urls, points_to_cash):
@@ -905,15 +919,15 @@ class Sample(models.Model):
             return Worker.objects.get_tagasauris(worker_id=source_val)
 
     def can_display(self):
+        # Internal source gold sample - display
+        if self.is_gold_sample():
+            return True
+
         if not self.is_finished():
             return False
 
         # If sample is from external source - display
         if self.source_type != SAMPLE_SOURCE_OWNER:
-            return True
-
-        # Internal source gold sample - display
-        if self.is_gold_sample():
             return True
 
         # Rest - classification request, etc.

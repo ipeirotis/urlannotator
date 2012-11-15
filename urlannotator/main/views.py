@@ -802,37 +802,6 @@ def project_classifier_view(request, id):
 
     context = {'project': job}
 
-    if request.method == "GET":
-        classified_samples = request.session.get('classified-samples', [])
-        samples_pending = []
-        samples_created = []
-
-        classified_samples = ClassifiedSample.objects.filter(job=job,
-            id__in=classified_samples)
-        for sample in classified_samples:
-            if not sample.sample:
-                samples_pending.append(sample)
-            else:
-                samples_created.append(sample)
-
-        context['samples_pending'] = samples_pending
-        context['samples_created'] = samples_created
-
-    elif request.method == "POST":
-        test_type = request.POST.get('test-type', 'urls')
-        if test_type == 'urls':
-            urls = request.POST.get('test-urls', '')
-            # Split text to lines with urls, and remove duplicates
-            urls = set(urls.splitlines())
-            classified_samples = []
-            for url in urls:
-                cs = ClassifiedSample.objects.create_by_owner(
-                    job=job,
-                    url=url
-                )
-                classified_samples.append(cs.id)
-            request.session['classified-samples'] = classified_samples
-        return redirect('project_classifier_view', id)
     yes_labels = []
     no_labels = []
 
@@ -847,11 +816,18 @@ def project_classifier_view(request, id):
     nc = len(no_labels)
     yes_perc = int(yc * 100 / ((yc + nc) or 1))
     no_perc = int(nc * 100 / ((yc + nc) or 1))
+    matrix = job.get_confusion_matrix()
     context['classifier_stats'] = {
         'count': yc + nc,
         'yes_labels': {'val': yc, 'perc': yes_perc},
         'no_labels': {'val': nc, 'perc': no_perc},
-        'broken_labels': {'val': 0, 'perc': 0}}
+        'broken_labels': {'val': 0, 'perc': 0},
+        'matrix': {
+            'yes_yes': matrix[LABEL_YES][LABEL_YES],
+            'yes_no': matrix[LABEL_YES][LABEL_NO],
+            'no_yes': matrix[LABEL_NO][LABEL_YES],
+            'no_no': matrix[LABEL_NO][LABEL_NO],
+        }}
 
     context['performance_TPR'] = []
     context['performance_TNR'] = []

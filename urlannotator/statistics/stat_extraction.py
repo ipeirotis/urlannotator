@@ -166,11 +166,10 @@ def extract_performance_stats(job, context):
     )
 
 
-def TruePositiveMetric(classifier, job, analyze):
+def TruePositiveMetric(classifier, job, matrix):
     '''
         Calculates probability of saying True if the label is True in real.
     '''
-    matrix = analyze['modelDescription']['confusionMatrix']
     yes = matrix.get(LABEL_YES, {LABEL_YES: 0.0, LABEL_NO: 0.0})
     yesCount = yes.get(LABEL_YES, 0.0)
     noCount = yes.get(LABEL_NO, 0.0)
@@ -178,11 +177,10 @@ def TruePositiveMetric(classifier, job, analyze):
     return ('TPR', round(100 * yesCount / div, 4))
 
 
-def TrueNegativeMetric(classifier, job, analyze):
+def TrueNegativeMetric(classifier, job, matrix):
     '''
         Calculates probability of saying No if the label is No in real.
     '''
-    matrix = analyze['modelDescription']['confusionMatrix']
     no = matrix.get(LABEL_NO, {LABEL_YES: 0.0, LABEL_NO: 0.0})
     yesCount = no.get(LABEL_YES, 0.0)
     noCount = no.get(LABEL_YES, 0.0)
@@ -190,12 +188,12 @@ def TrueNegativeMetric(classifier, job, analyze):
     return ('TNR', round(100 * noCount / div, 4))
 
 
-def AUCMetric(classifier, job, analyze):
+def AUCMetric(classifier, job, matrix):
     '''
         Calculates 'Area Under the Curve' metric.
     '''
-    TPR = TruePositiveMetric(classifier, job, analyze)
-    TNR = TrueNegativeMetric(classifier, job, analyze)
+    TPR = TruePositiveMetric(classifier, job, matrix)
+    TNR = TrueNegativeMetric(classifier, job, matrix)
     return ('AUC', round((TPR[1] + TNR[1]) / 2.0, 4))
 
 # List of classifier performance metrics to be calculated, stored and displayed
@@ -213,15 +211,17 @@ def update_classifier_stats(classifier, job):
     '''
     stats = {}
     analyze = classifier.analyze()
+    matrix = analyze['modelDescription']['confusionMatrix']
     for metric in CLASSIFIER_PERFORMANCE_METRICS:
         try:
-            v = metric(classifier, job, analyze)
+            v = metric(classifier, job, matrix)
             stats[v[0]] = v[1]
         except Exception, e:
             raise Exception(
                 '%s error while computing metric %s with data %s'
                 % (e.message, metric, json.dumps(analyze))
             )
+    stats['matrix'] = matrix
 
     ClassifierPerformance.objects.create(
         job=job,

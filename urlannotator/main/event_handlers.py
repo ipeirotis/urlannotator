@@ -46,6 +46,8 @@ class GoldSamplesMonitor(Task):
     def run(self, gold_id, *args, **kwargs):
         gold_sample = GoldSample.objects.get(id=gold_id)
         job = gold_sample.sample.job
+        # Update cache
+        job.get_display_samples(cache=False)
 
         # If training set is not prepared, retry later
         if not job.is_training_set_created():

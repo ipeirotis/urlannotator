@@ -558,59 +558,6 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             follow=True)
         self.assertEqual(resp.status_code, 200)
 
-    def testClassifierView(self):
-        job = Job.objects.create_active(
-            title='test',
-            description='test',
-            account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
-        )
-
-        self.assertTrue(GoldSample.objects.filter(label='').count() == 0)
-
-        testUrl = 'http://google.com'
-
-        oldNum = ClassifiedSample.objects.filter(url=testUrl).count()
-        self.c.post(reverse('project_classifier_view', args=[1]),
-            {'test-urls': testUrl}, follow=True)
-
-        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
-
-        # Classification request
-        self.assertEqual(newNum - oldNum, 1)
-        # New sample (new sample shares url with gold sample)
-        self.assertEqual(Sample.objects.filter(url=testUrl, job=job).count(),
-            1)
-
-        oldNum = newNum
-        self.c.post(reverse('project_classifier_view', args=[1]),
-            {'test-urls': testUrl}, follow=True)
-        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
-
-        # classification request + old data
-        self.assertEqual(newNum - oldNum, 1)
-        # old data + new sample
-        self.assertEqual(Sample.objects.filter(job=job).count(),
-            1)
-
-        # Create a new job and check uniqueness
-        job = Job.objects.create_active(
-            title='test',
-            description='test',
-            account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
-        )
-
-        oldNum = newNum
-        self.c.post(reverse('project_classifier_view', args=[job.id]),
-            {'test-urls': testUrl}, follow=True)
-        newNum = ClassifiedSample.objects.filter(url=testUrl).count()
-
-        # classification request + old data
-        self.assertEqual(newNum - oldNum, 1)
-        # old data, no new sample since this is the same url
-        self.assertEqual(Sample.objects.filter(job=job).count(), 1)
-
     def testWorkersView(self):
         job = Job.objects.create_active(
             title='test',
