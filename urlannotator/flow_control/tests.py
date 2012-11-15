@@ -69,8 +69,8 @@ class TestToolsMocking(ToolsMockedMixin, TestCase):
         )
 
         s = Sample.objects.get(job=j, url='http://google.com')
-        self.assertEqual(s.screenshot, '')
-        self.assertEqual(s.text, '')
+        self.assertEqual(s.screenshot, 'test')
+        self.assertEqual(s.text, 'test')
 
     def testContextMock(self):
         def test_mock():
