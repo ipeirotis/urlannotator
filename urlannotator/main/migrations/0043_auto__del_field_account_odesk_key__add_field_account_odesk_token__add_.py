@@ -8,15 +8,31 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'BeatTheMachineSample.human_label'
-        db.add_column('crowdsourcing_beatthemachinesample', 'human_label',
-                      self.gf('django.db.models.fields.CharField')(max_length=10, null=True),
+        # Deleting field 'Account.odesk_key'
+        db.delete_column('main_account', 'odesk_key')
+
+        # Adding field 'Account.odesk_token'
+        db.add_column('main_account', 'odesk_token',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=100),
+                      keep_default=False)
+
+        # Adding field 'Account.odesk_secret'
+        db.add_column('main_account', 'odesk_secret',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=100),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'BeatTheMachineSample.human_label'
-        db.delete_column('crowdsourcing_beatthemachinesample', 'human_label')
+        # Adding field 'Account.odesk_key'
+        db.add_column('main_account', 'odesk_key',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=100),
+                      keep_default=False)
+
+        # Deleting field 'Account.odesk_token'
+        db.delete_column('main_account', 'odesk_token')
+
+        # Deleting field 'Account.odesk_secret'
+        db.delete_column('main_account', 'odesk_secret')
 
 
     models = {
@@ -56,59 +72,6 @@ class Migration(SchemaMigration):
             'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
         },
-        'crowdsourcing.beatthemachinesample': {
-            'Meta': {'object_name': 'BeatTheMachineSample'},
-            'added_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'btm_status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'expected_output': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            'human_label': ('django.db.models.fields.CharField', [], {'max_length': '10', 'null': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
-            'label': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            'label_probability': ('tenclouds.django.jsonfield.fields.JSONField', ['{}'], {'blank': 'True'}),
-            'points': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'sample': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Sample']", 'null': 'True', 'blank': 'True'}),
-            'source_type': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'source_val': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
-            'url': ('django.db.models.fields.URLField', [], {'max_length': '500'})
-        },
-        'crowdsourcing.samplemapping': {
-            'Meta': {'object_name': 'SampleMapping'},
-            'crowscourcing_type': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
-            'external_id': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'sample': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Sample']"})
-        },
-        'crowdsourcing.tagasaurisjobs': {
-            'Meta': {'object_name': 'TagasaurisJobs'},
-            'beatthemachine_hit': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
-            'beatthemachine_key': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'sample_gathering_hit': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
-            'sample_gathering_key': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
-            'urlannotator_job': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['main.Job']", 'unique': 'True'}),
-            'voting_btm_hit': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
-            'voting_btm_key': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
-            'voting_hit': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'}),
-            'voting_key': ('django.db.models.fields.CharField', [], {'max_length': '128', 'null': 'True', 'blank': 'True'})
-        },
-        'crowdsourcing.troiajob': {
-            'Meta': {'object_name': 'TroiaJob'},
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'job': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['main.Job']", 'unique': 'True'}),
-            'troia_id': ('django.db.models.fields.CharField', [], {'max_length': '64'})
-        },
-        'crowdsourcing.workerqualityvote': {
-            'Meta': {'unique_together': "(['worker', 'sample'],)", 'object_name': 'WorkerQualityVote'},
-            'added_on': ('django.db.models.fields.DateField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'btm_vote': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_new': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'is_valid': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'label': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            'sample': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Sample']"}),
-            'worker': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Worker']"})
-        },
         'main.account': {
             'Meta': {'object_name': 'Account'},
             'activation_key': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
@@ -116,10 +79,21 @@ class Migration(SchemaMigration):
             'email_registered': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'full_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'odesk_key': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
+            'odesk_secret': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
+            'odesk_token': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
             'odesk_uid': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['auth.User']", 'unique': 'True'}),
             'worker_entry': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['main.Worker']", 'unique': 'True', 'null': 'True', 'blank': 'True'})
+        },
+        'main.fillsample': {
+            'Meta': {'object_name': 'FillSample'},
+            'url': ('django.db.models.fields.URLField', [], {'max_length': '500', 'primary_key': 'True'})
+        },
+        'main.goldsample': {
+            'Meta': {'object_name': 'GoldSample'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'label': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
+            'sample': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['main.Sample']", 'unique': 'True'})
         },
         'main.job': {
             'Meta': {'object_name': 'Job'},
@@ -148,6 +122,22 @@ class Migration(SchemaMigration):
             'title': ('django.db.models.fields.CharField', [], {'default': "'test'", 'max_length': '100'}),
             'votes_storage': ('django.db.models.fields.CharField', [], {'max_length': '50'})
         },
+        'main.linksstatistics': {
+            'Meta': {'object_name': 'LinksStatistics'},
+            'date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'delta': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'value': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'worker': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Worker']"})
+        },
+        'main.progressstatistics': {
+            'Meta': {'object_name': 'ProgressStatistics'},
+            'date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'delta': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
+            'value': ('django.db.models.fields.IntegerField', [], {'default': '0'})
+        },
         'main.sample': {
             'Meta': {'unique_together': "(('job', 'url'),)", 'object_name': 'Sample'},
             'added_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
@@ -163,12 +153,45 @@ class Migration(SchemaMigration):
             'url': ('django.db.models.fields.URLField', [], {'max_length': '500'}),
             'vote_sample': ('django.db.models.fields.BooleanField', [], {'default': 'True'})
         },
+        'main.spentstatistics': {
+            'Meta': {'object_name': 'SpentStatistics'},
+            'date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'delta': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
+            'value': ('django.db.models.fields.IntegerField', [], {'default': '0'})
+        },
+        'main.urlstatistics': {
+            'Meta': {'object_name': 'URLStatistics'},
+            'date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'delta': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
+            'value': ('django.db.models.fields.IntegerField', [], {'default': '0'})
+        },
+        'main.votesstatistics': {
+            'Meta': {'object_name': 'VotesStatistics'},
+            'date': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'delta': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
+            'value': ('django.db.models.fields.IntegerField', [], {'default': '0'})
+        },
         'main.worker': {
             'Meta': {'object_name': 'Worker'},
             'external_id': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'worker_type': ('django.db.models.fields.IntegerField', [], {'max_length': '100'})
+        },
+        'main.workerjobassociation': {
+            'Meta': {'object_name': 'WorkerJobAssociation'},
+            'data': ('tenclouds.django.jsonfield.fields.JSONField', ['{}'], {'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
+            'started_on': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'worked_hours': ('django.db.models.fields.DecimalField', [], {'default': '0', 'max_digits': '10', 'decimal_places': '2'}),
+            'worker': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Worker']"})
         }
     }
 
-    complete_apps = ['crowdsourcing']
+    complete_apps = ['main']

@@ -26,6 +26,12 @@ DUMMY_URLANNOTATOR_URL = setting('DUMMY_URLANNOTATOR_URL',
 TAGASAURIS_HIT_SOCIAL_URL = setting('TAGASAURIS_HIT_SOCIAL_URL',
     settings.TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s')
 
+TAGASAURIS_GATHER_SAMPLES_PER_JOB = setting(
+    'TAGASAURIS_GATHER_SAMPLES_PER_JOB', 5)
+
+TAGASAURIS_GOAL_MULTIPLICATION = setting(
+    'TAGASAURIS_GOAL_MULTIPLICATION', 1.2)
+
 
 def make_tagapi_client():
     return TagasaurisClient(settings.TAGASAURIS_LOGIN,
@@ -67,6 +73,12 @@ def stop_job(external_id):
     tc = make_tagapi_client()
     res = tc.stop_job(external_id=external_id)
     tc.wait_for_complete(res['task_id'])
+
+
+def get_split(job):
+    gather_goal = math.ceil(job.no_of_urls * TAGASAURIS_GOAL_MULTIPLICATION /
+        TAGASAURIS_GATHER_SAMPLES_PER_JOB)
+    return math.ceil(math.sqrt(gather_goal))
 
 
 def init_tagasauris_job(job):
@@ -144,13 +156,8 @@ def create_sample_gather(api_client, job):
     ext_id = make_external_id()
 
     # Compute split of tasks per mediaobjects and workers.
-    samples_goal_multiplication = 1.2
-    samples_per_job = 5
-    gather_goal = math.ceil(job.no_of_urls * samples_goal_multiplication /
-        samples_per_job)
-    split = math.ceil(math.sqrt(gather_goal))
-    workers_per_hit = split
-    total_mediaobjects = split
+    workers_per_hit = get_split(job)
+    total_mediaobjects = get_split(job)
 
     # Tagasauris Job is created with dummy media object (soo ugly...).
     # Before job creation we must configure Tagasauris account and
@@ -179,7 +186,7 @@ def create_sample_gather(api_client, job):
                         "job_id": job.id,
                         "token": job.id,
                         "core_url": baseurl,
-                        "min_samples": samples_per_job,
+                        "min_samples": TAGASAURIS_GATHER_SAMPLES_PER_JOB,
                     },
                     "external_templates": {
                         "samplegather": templates + "samplegather.ejs",
@@ -208,13 +215,8 @@ def create_btm(api_client, job, topic, description, no_of_urls):
     # to have "external" flag set.
 
     # Compute split of tasks per mediaobjects and workers.
-    samples_goal_multiplication = 1.2
-    samples_per_job = 5
-    gather_goal = math.ceil(no_of_urls * samples_goal_multiplication /
-        samples_per_job)
-    split = math.ceil(math.sqrt(gather_goal))
-    workers_per_hit = split
-    total_mediaobjects = split
+    workers_per_hit = get_split(job)
+    total_mediaobjects = get_split(job)
 
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
@@ -224,7 +226,6 @@ def create_btm(api_client, job, topic, description, no_of_urls):
         topic=topic,
         description=description)
 
-    samples_per_job = 5
     baseurl = TAGASAURIS_CALLBACKS
     templates = baseurl + "/statics/js/templates/tagasauris/"
     kwargs["workflow"].update({
@@ -240,7 +241,7 @@ def create_btm(api_client, job, topic, description, no_of_urls):
                         "job_id": job.id,
                         "token": job.id,
                         "core_url": baseurl,
-                        "min_samples": samples_per_job,
+                        "min_samples": TAGASAURIS_GATHER_SAMPLES_PER_JOB,
                     },
                     "external_templates": {
                         "btm": templates + "btm.ejs",

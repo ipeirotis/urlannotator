@@ -9,17 +9,17 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding model 'OdeskJob'
-        db.create_table('crowdsourcing_odeskjob', (
-            ('job', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.Job'])),
-            ('reference', self.gf('django.db.models.fields.CharField')(max_length=25, primary_key=True)),
-        ))
-        db.send_create_signal('crowdsourcing', ['OdeskJob'])
-
+        # db.create_table('crowdsourcing_odeskjob', (
+        #     ('job', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.Job'])),
+        #     ('reference', self.gf('django.db.models.fields.CharField')(max_length=25, primary_key=True)),
+        # ))
+        # db.send_create_signal('crowdsourcing', ['OdeskJob'])
+        pass
 
     def backwards(self, orm):
         # Deleting model 'OdeskJob'
-        db.delete_table('crowdsourcing_odeskjob')
-
+        # db.delete_table('crowdsourcing_odeskjob')
+        pass
 
     models = {
         'auth.group': {
@@ -64,11 +64,6 @@ class Migration(SchemaMigration):
             'error_ratio': ('django.db.models.fields.DecimalField', [], {'default': '0', 'max_digits': '7', 'decimal_places': '5'}),
             'expected_output': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
             'sample_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['main.Sample']", 'unique': 'True', 'primary_key': 'True'})
-        },
-        'crowdsourcing.odeskjob': {
-            'Meta': {'object_name': 'OdeskJob'},
-            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
-            'reference': ('django.db.models.fields.CharField', [], {'max_length': '25', 'primary_key': 'True'})
         },
         'crowdsourcing.samplemapping': {
             'Meta': {'object_name': 'SampleMapping'},

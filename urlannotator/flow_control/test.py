@@ -106,6 +106,7 @@ hardcoded_mocks = [
     ('urlannotator.main.factories.web_screenshot_extraction', mocked_web_resource),
     ('urlannotator.classification.event_handlers.process_execute', eager_train),
     ('urlannotator.crowdsourcing.job_handlers.TagasaurisHandler.init_job', mock.Mock()),
+    ('urlannotator.crowdsourcing.job_handlers.OdeskHandler.init_job', mock.Mock()),
 ]
 
 

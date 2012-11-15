@@ -3,7 +3,7 @@ from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN)
+    LABEL_BROKEN, JOB_STATUS_ACTIVE)
 from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
@@ -397,11 +397,8 @@ class OdeskMetaJobManager(models.Manager):
     def get_active_meta(self, job_type):
         all_active = self.filter(
             job__status=JOB_STATUS_ACTIVE,
-            job_type=job_type
-        ).annotate(
-            models.Count('odeskjob')
-        ).filter(
-            odeskjob__count=models.F('to_create')
+            job_type=job_type,
+            active=True,
         )
         return all_active.iterator()
 
@@ -434,52 +431,19 @@ class OdeskMetaJob(models.Model):
     )
     job = models.ForeignKey(Job)
     reference = models.CharField(max_length=64, primary_key=True)
+    hit_reference = models.CharField(max_length=64)
     job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
-    to_create = models.PositiveIntegerField(default=0)
+    active = models.BooleanField(default=True)
 
     objects = OdeskMetaJobManager()
 
 
-class OdeskJobManager(models.Manager):
-    def create_sample_gather(self, *args, **kwargs):
-        log.debug(
-            '[oDesk] Creating sample gathering for worker %s %s.'
-            % (kwargs['worker_id'], kwargs)
-        )
-        worker, _ = Worker.objects.get_or_create_odesk(
-            worker_id=kwargs['worker_id']
-        )
-        # We are not creating a job reference now
-        return self.create(
-            job_type=OdeskJob.ODESK_WORKER_SAMPLE_GATHER,
-            worker=worker,
-            *args, **kwargs
-        )
-
-    def accept_sample_gather(self, reference):
-        log.debug(
-            '[oDesk] Accepting sample gathering for reference %s.'
-            % reference
-        )
-        self.filter(reference=reference).update(accepted=True)
-
-
 class OdeskJob(models.Model):
-    ODESK_WORKER_SAMPLE_GATHER = 'WORKER_SAMPLE_GATHER'
-    ODESK_WORKER_VOTING = 'WORKER_VOTING'
-    ODESK_WORKER_BTM = 'WORKER_BTM'
-    ODESK_JOB_TYPES = (
-        (ODESK_WORKER_SAMPLE_GATHER, 'Worker sample gathering'),
-        (ODESK_WORKER_VOTING, 'Worker sample voting'),
-        (ODESK_WORKER_SAMPLE_GATHER, 'Worker beat the machine task')
-    )
     job = models.ForeignKey(Job)
-    reference = models.CharField(max_length=64, primary_key=True)
-    job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
-    worker = models.ForeignKey(Worker)
+    worker = models.ForeignKey(Worker, blank=True, null=True)
+    meta_job = models.ForeignKey(OdeskMetaJob)
     accepted = models.BooleanField(default=False)
-
-    objects = OdeskJobManager()
+    invited = models.BooleanField(default=False)
 
 
 class TroiaJob(models.Model):

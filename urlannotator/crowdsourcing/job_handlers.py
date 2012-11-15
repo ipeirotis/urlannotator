@@ -6,6 +6,7 @@ from urlannotator.crowdsourcing.tagasauris_helper import (
     create_voting_job, update_voting_job, create_btm, update_voting)
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
     JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID)
+from urlannotator.crowdsourcing.odesk_helper import (init_odesk_job)
 
 import logging
 log = logging.getLogger(__name__)
@@ -129,8 +130,22 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
             update_voting_job(tc, self.job, samples)
 
 
+class OdeskHandler(CrowdsourcingJobHandler):
+    def __init__(self, *args, **kwargs):
+        super(OdeskHandler, self).__init__(*args, **kwargs)
+        # Use Tagasauris as the background handler
+        self.tHandler = TagasaurisHandler(*args, **kwargs)
+
+    def init_job(self, **kwargs):
+        from urlannotator.crowdsourcing.odesk_helper import (
+            create_sample_gather as ctor)
+        self.tHandler.init_job(**kwargs)
+        ctor(job=self.job)
+
 handlers = {
     JOB_SOURCE_OWN_WORKFORCE: TagasaurisHandler,
+    JOB_SOURCE_ODESK_PAID: OdeskHandler,
+    JOB_SOURCE_ODESK_FREE: OdeskHandler
 }
 
 

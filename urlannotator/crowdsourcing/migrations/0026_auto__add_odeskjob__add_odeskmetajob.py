@@ -8,15 +8,34 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'BeatTheMachineSample.human_label'
-        db.add_column('crowdsourcing_beatthemachinesample', 'human_label',
-                      self.gf('django.db.models.fields.CharField')(max_length=10, null=True),
-                      keep_default=False)
+        # Adding model 'OdeskJob'
+        db.create_table('crowdsourcing_odeskjob', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('job', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.Job'])),
+            ('worker', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.Worker'], null=True, blank=True)),
+            ('meta_job', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['crowdsourcing.OdeskMetaJob'])),
+            ('accepted', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('invited', self.gf('django.db.models.fields.BooleanField')(default=False)),
+        ))
+        db.send_create_signal('crowdsourcing', ['OdeskJob'])
+
+        # Adding model 'OdeskMetaJob'
+        db.create_table('crowdsourcing_odeskmetajob', (
+            ('job', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['main.Job'])),
+            ('reference', self.gf('django.db.models.fields.CharField')(max_length=64, primary_key=True)),
+            ('hit_reference', self.gf('django.db.models.fields.CharField')(max_length=64)),
+            ('job_type', self.gf('django.db.models.fields.CharField')(max_length=64)),
+            ('active', self.gf('django.db.models.fields.BooleanField')(default=True)),
+        ))
+        db.send_create_signal('crowdsourcing', ['OdeskMetaJob'])
 
 
     def backwards(self, orm):
-        # Deleting field 'BeatTheMachineSample.human_label'
-        db.delete_column('crowdsourcing_beatthemachinesample', 'human_label')
+        # Deleting model 'OdeskJob'
+        db.delete_table('crowdsourcing_odeskjob')
+
+        # Deleting model 'OdeskMetaJob'
+        db.delete_table('crowdsourcing_odeskmetajob')
 
 
     models = {
@@ -72,6 +91,23 @@ class Migration(SchemaMigration):
             'source_val': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'url': ('django.db.models.fields.URLField', [], {'max_length': '500'})
         },
+        'crowdsourcing.odeskjob': {
+            'Meta': {'object_name': 'OdeskJob'},
+            'accepted': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'invited': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
+            'meta_job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['crowdsourcing.OdeskMetaJob']"}),
+            'worker': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Worker']", 'null': 'True', 'blank': 'True'})
+        },
+        'crowdsourcing.odeskmetajob': {
+            'Meta': {'object_name': 'OdeskMetaJob'},
+            'active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'hit_reference': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
+            'job': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['main.Job']"}),
+            'job_type': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
+            'reference': ('django.db.models.fields.CharField', [], {'max_length': '64', 'primary_key': 'True'})
+        },
         'crowdsourcing.samplemapping': {
             'Meta': {'object_name': 'SampleMapping'},
             'crowscourcing_type': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
@@ -116,7 +152,8 @@ class Migration(SchemaMigration):
             'email_registered': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'full_name': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'odesk_key': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
+            'odesk_secret': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
+            'odesk_token': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
             'odesk_uid': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '100'}),
             'user': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['auth.User']", 'unique': 'True'}),
             'worker_entry': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['main.Worker']", 'unique': 'True', 'null': 'True', 'blank': 'True'})

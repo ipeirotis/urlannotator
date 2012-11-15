@@ -448,62 +448,66 @@ def project_wizard(request):
 @login_required
 def odesk_disconnect(request):
     request.user.get_profile().odesk_uid = ''
-    request.user.get_profile().odesk_key = ''
+    request.user.get_profile().odesk_token = ''
+    request.user.get_profile().odesk_secret = ''
     request.user.get_profile().save()
     return redirect('index')
 
 
 def odesk_complete(request):
+    client = request.session['odesk_client']
+    token, secret = client.auth.get_access_token(request.GET['oauth_verifier'])
     client = odesk.Client(
-        settings.ODESK_CLIENT_ID,
-        settings.ODESK_CLIENT_SECRET
+        settings.ODESK_SERVER_KEY,
+        settings.ODESK_SERVER_SECRET,
+        oauth_access_token=token,
+        oauth_access_token_secret=secret,
+        auth='oauth',
     )
-    auth, user = client.auth.get_token(request.GET['frob'])
-    client = odesk.Client(
-        settings.ODESK_CLIENT_ID,
-        settings.ODESK_CLIENT_SECRET,
-        auth,
-    )
-    info = client.auth.my_info()
-    url = info['info']['profile_url']
-    # Extract the ciphertext from the profile url. This should be provided by
-    # API, no?
-    cipher = url.rsplit('/', 1)[1]
+    info = client.hr.get_user('me')
+    cipher = info['profile_key']
 
     if request.user.is_authenticated():
         if request.user.get_profile().odesk_uid == '':
             request.user.get_profile().odesk_uid = cipher
-            request.user.get_profile().odesk_key = auth
+            request.user.get_profile().odesk_token = token
+            request.user.get_profile().odesk_secret = secret
             request.user.get_profile().save()
 
             # Add Worker model on odesk account association
             if not Worker.objects.filter(external_id=cipher):
-                Worker.objects.create_odesk(external_id=cipher,
-                    account=request.user.get_profile())
+                w = Worker.objects.create_odesk(external_id=cipher)
+                request.user.get_profile().worker_entry = w
+                request.user.get_profile().save()
             request.session['success'] = 'You have successfully logged in.'
         return redirect('index')
     else:
         try:
             assoc = Account.objects.get(odesk_uid=cipher)
             u = authenticate(username=assoc.user.username, password='1')
+            if not u:
+                request.session['error'] = 'Such account already exists.'
+                return redirect('login')
             login(request, u)
             return redirect('index')
         except Account.DoesNotExist:
-            u = User.objects.create_user(email=user['mail'],
+            u = User.objects.create_user(email=info['email'],
                 username=' '.join(['odesk', cipher]), password='1')
             profile = u.get_profile()
             profile.odesk_uid = cipher
-            profile.odesk_key = auth
-            profile.full_name = '%s %s' % (user['first_name'],
-                user['last_name'])
+            profile.odesk_token = token
+            profile.odesk_secret = secret
+            profile.full_name = '%s %s' % (info['first_name'],
+                info['last_name'])
             profile.save()
             u = authenticate(username=u.username, password='1')
             login(request, u)
 
             # Create Worker model on odesk account registration
             if not Worker.objects.filter(external_id=cipher):
-                Worker.objects.create_odesk(external_id=cipher,
-                    account=request.user.get_profile())
+                w = Worker.objects.create_odesk(external_id=cipher)
+                u.get_profile().worker_entry = w
+                u.get_profile().save()
             request.session['success'] = 'You have successfuly registered'
             return redirect('settings')
 
@@ -572,9 +576,13 @@ def debug_superuser(request):
 
 
 def odesk_login(request):
-    client = odesk.Client(settings.ODESK_CLIENT_ID,
-        settings.ODESK_CLIENT_SECRET)
-    return redirect(client.auth.auth_url())
+    client = odesk.Client(
+        settings.ODESK_SERVER_KEY,
+        settings.ODESK_SERVER_SECRET,
+        auth='oauth',
+    )
+    request.session['odesk_client'] = client
+    return redirect(client.auth.get_authorize_url())
 
 
 @login_required
