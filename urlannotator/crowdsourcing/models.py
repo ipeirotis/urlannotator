@@ -3,7 +3,7 @@ from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN)
+    LABEL_BROKEN, JOB_STATUS_ACTIVE)
 from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
@@ -110,8 +110,11 @@ class BeatTheMachineSampleManager(models.Manager):
         return self.select_related("sample").filter(job__id=job_id,
             btm_status__gt=3, sample__training=False)
 
-    def get_all_btm(self, job_id):
-        return self.filter(job__id=job_id)
+    def get_all_btm(self, job):
+        return self.filter(job=job)
+
+    def get_all_ready(self, job):
+        return self.get_all_btm(job).filter(sample__isnull=False)
 
 
 class BeatTheMachineSample(ClassifiedSampleCore):
@@ -159,6 +162,8 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     expected_output = models.CharField(max_length=10, choices=LABEL_CHOICES)
     btm_status = models.IntegerField(default=BTM_PENDING, choices=BTM_STATUS)
     points = models.IntegerField(default=0)
+    human_label = models.CharField(max_length=10, choices=LABEL_CHOICES,
+        null=True, blank=False)
 
     objects = BeatTheMachineSampleManager()
 
@@ -214,6 +219,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
             return self.fixed_probability[self.label.capitalize()]
 
     def updateBTMStatus(self, save=True):
+        """
+            Each execution adds another sample for voting.
+        """
+
         status = self.calculate_status()
 
         self.btm_status = status
@@ -301,7 +310,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
         expect = self.expected_output.lower()
 
-        if cat_cl == expect and confidence == self.CONF_MEDIUM:
+        if cat_cl == expect and confidence == self.CONF_HIGH:
+            self.btm_status = self.BTM_KNOWN
+
+        elif cat_cl == expect and confidence == self.CONF_MEDIUM:
             if cat_h == expect:
                 self.btm_status = self.BTM_KNOWN_UNSURE
             else:
@@ -319,6 +331,8 @@ class BeatTheMachineSample(ClassifiedSampleCore):
             else:
                 self.btm_status = self.BTM_NOT_X
 
+        self.points = self.BTM_POINTS[self.btm_status]
+        self.human_label = cat_h
         self.save()
 
     def get_status(self):
@@ -383,11 +397,8 @@ class OdeskMetaJobManager(models.Manager):
     def get_active_meta(self, job_type):
         all_active = self.filter(
             job__status=JOB_STATUS_ACTIVE,
-            job_type=job_type
-        ).annotate(
-            models.Count('odeskjob')
-        ).filter(
-            odeskjob__count=models.F('to_create')
+            job_type=job_type,
+            active=True,
         )
         return all_active.iterator()
 
@@ -420,52 +431,19 @@ class OdeskMetaJob(models.Model):
     )
     job = models.ForeignKey(Job)
     reference = models.CharField(max_length=64, primary_key=True)
+    hit_reference = models.CharField(max_length=64)
     job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
-    to_create = models.PositiveIntegerField(default=0)
+    active = models.BooleanField(default=True)
 
     objects = OdeskMetaJobManager()
 
 
-class OdeskJobManager(models.Manager):
-    def create_sample_gather(self, *args, **kwargs):
-        log.debug(
-            '[oDesk] Creating sample gathering for worker %s %s.'
-            % (kwargs['worker_id'], kwargs)
-        )
-        worker, _ = Worker.objects.get_or_create_odesk(
-            worker_id=kwargs['worker_id']
-        )
-        # We are not creating a job reference now
-        return self.create(
-            job_type=OdeskJob.ODESK_WORKER_SAMPLE_GATHER,
-            worker=worker,
-            *args, **kwargs
-        )
-
-    def accept_sample_gather(self, reference):
-        log.debug(
-            '[oDesk] Accepting sample gathering for reference %s.'
-            % reference
-        )
-        self.filter(reference=reference).update(accepted=True)
-
-
 class OdeskJob(models.Model):
-    ODESK_WORKER_SAMPLE_GATHER = 'WORKER_SAMPLE_GATHER'
-    ODESK_WORKER_VOTING = 'WORKER_VOTING'
-    ODESK_WORKER_BTM = 'WORKER_BTM'
-    ODESK_JOB_TYPES = (
-        (ODESK_WORKER_SAMPLE_GATHER, 'Worker sample gathering'),
-        (ODESK_WORKER_VOTING, 'Worker sample voting'),
-        (ODESK_WORKER_SAMPLE_GATHER, 'Worker beat the machine task')
-    )
     job = models.ForeignKey(Job)
-    reference = models.CharField(max_length=64, primary_key=True)
-    job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
-    worker = models.ForeignKey(Worker)
+    worker = models.ForeignKey(Worker, blank=True, null=True)
+    meta_job = models.ForeignKey(OdeskMetaJob)
     accepted = models.BooleanField(default=False)
-
-    objects = OdeskJobManager()
+    invited = models.BooleanField(default=False)
 
 
 class TroiaJob(models.Model):
