@@ -46,6 +46,20 @@ class CrowdsourcingJobHandler(object):
         '''
         return False
 
+    def init_btm_gather(self, **kwargs):
+        '''
+            Initializes BTM gathering job.
+            Returns True on success.
+        '''
+        return False
+
+    def init_btm_voting(self, **kwargs):
+        '''
+            Initializes BTM voting job.
+            Returns True on success.
+        '''
+        return False
+
     def update_sample_gathering(self, **kwargs):
         '''
             Updates sample gathering job tied to given job.
@@ -87,10 +101,12 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
     '''
         Tagasauris job source handler. Uses Tagasauris for all 3 tasks.
     '''
-    def init_job(self, **kwargs):
-        init_tagasauris_job(self.job)
+    def init_job(self, *args, **kwargs):
+        print 'ccccc'
+        res = init_tagasauris_job(self.job)
+        return res
 
-    def init_voting(self, tc, samples):
+    def init_voting(self, tc, samples, *args, **kwargs):
         log.info(
             'TagasaurisHandler: Creating voting job for job %d' % self.job.id
         )
@@ -101,7 +117,7 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
             )
         return res
 
-    def update_voting(self, tc, samples):
+    def update_voting(self, tc, samples, *args, **kwargs):
         log.info(
             'TagasaurisHandler: Updating voting job for job %d' % self.job.id
         )
@@ -112,12 +128,16 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
             )
         return res
 
-    def init_btm(self, topic, description, no_of_urls):
+    def init_btm_gather(self, topic, description, no_of_urls, *args, **kwargs):
         tc = make_tagapi_client()
         res = create_btm(tc, self.job, topic, description, no_of_urls)
         return res
 
-    def update_btm(self, btm_samples):
+    def init_btm_voting(self, samples, *args, **kwargs):
+        tc = make_tagapi_client()
+        create_btm_voting_job(tc, self.job, samples)
+
+    def update_btm(self, btm_samples, *args, **kwargs):
         tc = make_tagapi_client()
         samples = (btm.sample for btm in btm_samples)
 
@@ -125,22 +145,45 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
         # Job has no BTM key - create a new job
         if not tag_jobs.voting_btm_key:
             # Creates sample to mediaobject mapping
-            create_btm_voting_job(tc, self.job, samples)
+            self.init_btm_voting(samples)
         else:
             update_voting_job(tc, self.job, samples)
 
 
-class OdeskHandler(CrowdsourcingJobHandler):
+class OdeskHandler(TagasaurisHandler):
     def __init__(self, *args, **kwargs):
         super(OdeskHandler, self).__init__(*args, **kwargs)
-        # Use Tagasauris as the background handler
-        self.tHandler = TagasaurisHandler(*args, **kwargs)
 
-    def init_job(self, **kwargs):
+    def _init_job(self, t_job, odesk_job, *args, **kwargs):
+        func = getattr(super(OdeskHandler, self), t_job)
+        res = func(*args, **kwargs)
+        if not res:
+            return False
+
+        kwargs.pop('job', None)
+        print kwargs, args
+        res = odesk_job(job=self.job, *args, **kwargs)
+        return res is not None
+
+    def init_job(self, *args, **kwargs):
         from urlannotator.crowdsourcing.odesk_helper import (
             create_sample_gather as ctor)
-        self.tHandler.init_job(**kwargs)
-        ctor(job=self.job)
+        return self._init_job('init_job', ctor, *args, **kwargs)
+
+    def init_voting(self, *args, **kwargs):
+        from urlannotator.crowdsourcing.odesk_helper import (
+            create_voting as ctor)
+        return self._init_job('init_voting', ctor, *args, **kwargs)
+
+    def init_btm_gather(self, *args, **kwargs):
+        from urlannotator.crowdsourcing.odesk_helper import (
+            create_btm_gather as ctor)
+        return self._init_job('init_btm_gather', ctor, *args, **kwargs)
+
+    def init_btm_voting(self, *args, **kwargs):
+        from urlannotator.crowdsourcing.odesk_helper import (
+            create_btm_voting as ctor)
+        return self._init_job('init_btm_voting', ctor, *args, **kwargs)
 
 handlers = {
     JOB_SOURCE_OWN_WORKFORCE: TagasaurisHandler,

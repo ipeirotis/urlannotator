@@ -130,7 +130,7 @@ function submitSamples()
     ids.push(val);
   });
   $.post('/api/v1/job/{{project.id}}/btm/',
-    JSON.stringify(ids),
+    {'samples': JSON.stringify(ids)},
     function(data){
       $(samples).parent().parent().remove();
     }

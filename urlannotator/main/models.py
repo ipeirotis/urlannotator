@@ -406,7 +406,8 @@ class Job(models.Model):
     def get_btm_progress(self):
         to_gather = self.get_btm_to_gather() or 1
 
-        return round((100 * len(self.get_btm_gathered())) / to_gather, 2)
+        return min(round((100 * len(self.get_btm_gathered())) / to_gather, 2),
+            100.0)
 
     def get_accepted_btm_samples(self):
         """
@@ -452,6 +453,20 @@ class Job(models.Model):
         tag_job.save()
         stop_job(tag_job.sample_gathering_key)
         return True
+
+    def get_btm_gathering_url(self):
+        try:
+            tag_job = self.tagasaurisjobs
+            return tag_job.get_btm_gathering_url()
+        except:
+            return ''
+
+    def get_btm_voting_url(self):
+        try:
+            tag_job = self.tagasaurisjobs
+            return tag_job.get_btm_voting_url()
+        except:
+            return ''
 
     def get_voting_url(self):
         """

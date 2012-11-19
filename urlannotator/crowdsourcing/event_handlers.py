@@ -43,7 +43,8 @@ def initialize_btm_job(job_id, topic, description, no_of_urls, **kwargs):
     """
     job = Job.objects.get(id=job_id)
     handler = get_job_handler(job)
-    handler.init_btm(topic, description, no_of_urls)
+    handler.init_btm_gather(topic=topic, description=description,
+        no_of_urls=no_of_urls)
 
 
 @task(ignore_result=True)

@@ -33,6 +33,12 @@ TAGASAURIS_GOAL_MULTIPLICATION = setting(
     'TAGASAURIS_GOAL_MULTIPLICATION', 1.2)
 
 
+def get_hit_url(hit_type):
+    if hit_type == settings.TAGASAURIS_SOCIAL:
+        return TAGASAURIS_HIT_SOCIAL_URL
+    return settings.TAGASAURIS_HIT_URL
+
+
 def make_tagapi_client():
     return TagasaurisClient(settings.TAGASAURIS_LOGIN,
         settings.TAGASAURIS_PASS, settings.TAGASAURIS_HOST)
@@ -103,6 +109,7 @@ def init_tagasauris_job(job):
         sample_gathering_key=sample_gathering_key,
         sample_gathering_hit=sample_gathering_hit,
     )
+    return True
 
 
 def workflow_definition(ext_id, job, task_type, survey_id, price,
@@ -390,7 +397,7 @@ def _update_voting(api_client, job, samples, field_name):
     # would lose that info.
     if not res:
         SampleMapping.objects.filter(
-            sample__in=imap(lambda x: x.sample, mediaobjects.items())
+            sample__in=imap(lambda x: x.id, mediaobjects)
         ).delete()
 
     # In case if tagasauris job was created without screenshots earlier.
@@ -432,7 +439,7 @@ def update_voting_job(api_client, mediaobjects, ext_id):
         res = api_client.mediaobject_send(mediaobjects)
         api_client.wait_for_complete(res)
 
-        api_client.job_add_media(
+        res = api_client.job_add_media(
             external_ids=[mo['id'] for mo in mediaobjects],
             external_id=ext_id
         )

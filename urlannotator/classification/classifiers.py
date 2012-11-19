@@ -387,8 +387,8 @@ class SimpleClassifier(Classifier):
 
     def get_default_probabilities(self):
         return {
-            LABEL_YES: 0.0,
-            LABEL_NO: 0.0,
+            LABEL_YES: 0.50,
+            LABEL_NO: 0.50,
             LABEL_BROKEN: 0.0,
         }
 

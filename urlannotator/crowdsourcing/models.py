@@ -3,7 +3,8 @@ from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN, JOB_STATUS_ACTIVE)
+    LABEL_BROKEN, JOB_STATUS_ACTIVE, JOB_SOURCE_ODESK_FREE,
+    JOB_SOURCE_ODESK_PAID, JOB_SOURCE_OWN_WORKFORCE)
 from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
@@ -281,6 +282,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
         expect = self.expected_output.lower()
 
+        print cat_cl, expect, confidence
         if cat_cl == expect and confidence == self.CONF_HIGH:
             return self.BTM_KNOWN
 
@@ -345,6 +347,11 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
 
 class TagasaurisJobs(models.Model):
+    job_source_to_hit_type = {
+        JOB_SOURCE_ODESK_FREE: settings.TAGASAURIS_SOCIAL,
+        JOB_SOURCE_ODESK_PAID: settings.TAGASAURIS_SOCIAL,
+        JOB_SOURCE_OWN_WORKFORCE: settings.TAGASAURIS_MTURK,
+    }
     urlannotator_job = models.OneToOneField(Job)
     sample_gathering_key = models.CharField(max_length=128)
     voting_key = models.CharField(max_length=128, null=True, blank=True)
@@ -359,8 +366,10 @@ class TagasaurisJobs(models.Model):
     def _get_job_url(self, task):
         """ Returns URL under which Own Workforce can perform given task.
         """
+        from urlannotator.crowdsourcing.tagasauris_helper import get_hit_url
         if task is not None:
-            return settings.TAGASAURIS_HIT_URL % task
+            return get_hit_url(self.job_source_to_hit_type[
+                self.urlannotator_job.data_source]) % task
 
         return ''
 
@@ -370,8 +379,11 @@ class TagasaurisJobs(models.Model):
     def get_voting_url(self):
         return self._get_job_url(self.voting_hit)
 
-    def get_beatthemachine_url(self):
+    def get_btm_gathering_url(self):
         return self._get_job_url(self.beatthemachine_hit)
+
+    def get_btm_voting_url(self):
+        return self._get_job_url(self.voting_btm_hit)
 
 
 class SampleMapping(models.Model):
@@ -394,6 +406,27 @@ class OdeskMetaJobManager(models.Manager):
             *args, **kwargs
         )
 
+    def create_voting(self, *args, **kwargs):
+        log.debug('[oDesk] Creating voting %s.' % kwargs)
+        return self.create(
+            job_type=OdeskMetaJob.ODESK_META_VOTING,
+            *args, **kwargs
+        )
+
+    def create_btm_gather(self, *args, **kwargs):
+        log.debug('[oDesk] Creating BTM gathering job %s.' % kwargs)
+        return self.create(
+            job_type=OdeskMetaJob.ODESK_META_BTM_GATHER,
+            *args, **kwargs
+        )
+
+    def create_btm_voting(self, *args, **kwargs):
+        log.debug('[oDesk] Creating BTM voting job %s.' % kwargs)
+        return self.create(
+            job_type=OdeskMetaJob.ODESK_META_BTM_VOTING,
+            *args, **kwargs
+        )
+
     def get_active_meta(self, job_type):
         all_active = self.filter(
             job__status=JOB_STATUS_ACTIVE,
@@ -412,9 +445,14 @@ class OdeskMetaJobManager(models.Manager):
             job_type=OdeskMetaJob.ODESK_META_VOTING
         )
 
-    def get_active_btm(self):
+    def get_active_btm_gather(self):
         return self.get_active_meta(
-            job_type=OdeskMetaJob.ODESK_META_BTM
+            job_type=OdeskMetaJob.ODESK_META_BTM_GATHER
+        )
+
+    def get_active_btm_voting(self):
+        return self.get_active_meta(
+            job_type=OdeskMetaJob.ODESK_META_BTM_VOTING
         )
 
 
@@ -423,17 +461,20 @@ class OdeskMetaJob(models.Model):
     # there will be a separate job created and an offert sent to that worker.
     ODESK_META_SAMPLE_GATHER = 'META_SAMPLEGATHER'
     ODESK_META_VOTING = 'META_VOTING'
-    ODESK_META_BTM = 'META_BTM'
+    ODESK_META_BTM_GATHER = 'META_BTM_GATHER'
+    ODESK_META_BTM_VOTING = 'META_BTM_VOTING'
     ODESK_JOB_TYPES = (
         (ODESK_META_SAMPLE_GATHER, 'Sample gathering worker gatherer'),
         (ODESK_META_VOTING, 'Sample voting worker gathering'),
-        (ODESK_META_BTM, 'Beat The Machine worker gather'),
+        (ODESK_META_BTM_GATHER, 'Beat The Machine worker gather'),
+        (ODESK_META_BTM_VOTING, 'Beat The Machine voting'),
     )
     job = models.ForeignKey(Job)
     reference = models.CharField(max_length=64, primary_key=True)
     hit_reference = models.CharField(max_length=64)
     job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
     active = models.BooleanField(default=True)
+    workers_to_invite = models.PositiveIntegerField()
 
     objects = OdeskMetaJobManager()
 
@@ -443,6 +484,7 @@ class OdeskJob(models.Model):
     worker = models.ForeignKey(Worker, blank=True, null=True)
     meta_job = models.ForeignKey(OdeskMetaJob)
     accepted = models.BooleanField(default=False)
+    declined = models.BooleanField(default=False)
     invited = models.BooleanField(default=False)
 
 

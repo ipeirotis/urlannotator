@@ -1,0 +1,11 @@
+You have to collect urls that match the following description:
+{{ job.description }}
+
+The job is split into parts of collecting {{ samples_count }} urls per part.
+New parts may appear throughout the job's duration, so please stay in touch.
+You will be paid per number of parts finished.
+
+In order to take part in this job you have to apply and be accepted.
+In case of approval a new offer will be sent to you with details.
+
+Found urls should be submitted at the following url: {{ job.get_sample_gathering_url }}

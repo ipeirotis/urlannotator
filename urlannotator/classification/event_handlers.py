@@ -93,12 +93,12 @@ class SampleVotingManager(Task):
                     else:
                         handler.init_voting(tc, new_samples)
                 except Exception, e:
-                    log.warning(
+                    log.exception(
                         'SampleVotingManager: Error in job %d: %s.' % (job.id, e)
                     )
                     continue
         except Exception, e:
-            log.critical(
+            log.exception(
                 'SampleVotingManager: exception while all jobs: %s.' % e
             )
 
