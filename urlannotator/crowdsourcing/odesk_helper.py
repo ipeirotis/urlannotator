@@ -125,7 +125,7 @@ def get_voting_split(job):
     # In other works: we wont end up with sky-rocketed amount of workers
     # required to get all urls!
     split = math.sqrt(math.ceil(float(no_hits) / ODESK_HIT_SPLIT))
-    return split
+    return max(split, settings.TAGASAURIS_VOTE_WORKERS_PER_HIT)
 
 
 def _create_job(title, description, job):

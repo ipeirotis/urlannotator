@@ -89,9 +89,9 @@ class SampleVotingManager(Task):
                 try:
                     handler = get_job_handler(job)
                     if initialized:
-                        handler.update_voting(tc, new_samples)
+                        handler.update_voting(tc=tc, samples=new_samples)
                     else:
-                        handler.init_voting(tc, new_samples)
+                        handler.init_voting(tc=tc, samples=new_samples)
                 except Exception, e:
                     log.exception(
                         'SampleVotingManager: Error in job %d: %s.' % (job.id, e)
