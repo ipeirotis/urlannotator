@@ -91,9 +91,14 @@ class CrowdsourcingJobHandler(object):
             Fired on 'EventVotingHITChanged'.
         '''
 
-    def btm_hit_changed(self, old, new, **kwargs):
+    def btm_gathering_hit_changed(self, old, new, **kwargs):
         '''
-            Fired on 'EventBTMHITChanged'.
+            Fired on 'EventBTMGatheringHITChanged'.
+        '''
+
+    def btm_voting_hit_changed(self, old, new, **kwargs):
+        '''
+            Fired on 'EventBTMVotingHITChanged'.
         '''
 
 
@@ -102,7 +107,6 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
         Tagasauris job source handler. Uses Tagasauris for all 3 tasks.
     '''
     def init_job(self, *args, **kwargs):
-        print 'ccccc'
         res = init_tagasauris_job(self.job)
         return res
 
@@ -161,7 +165,6 @@ class OdeskHandler(TagasaurisHandler):
             return False
 
         kwargs.pop('job', None)
-        print kwargs, args
         res = odesk_job(job=self.job, *args, **kwargs)
         return res is not None
 

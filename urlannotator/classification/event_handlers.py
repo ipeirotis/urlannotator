@@ -108,7 +108,10 @@ send_for_voting = registry.tasks[SampleVotingManager.name]
 
 class HITMonitor(object):
     def run(self, *args, **kwargs):
-        kw = {'tagasaurisjobs__%s' % self.hit_name: None}
+        kw = {
+            'tagasaurisjobs__%s' % self.hit_name: None,
+            'tagasaurisjobs__%s__isnull' % self.key_name: False,
+        }
         jobs = Job.objects.select_related('tagasaurisjobs').filter(
             status=JOB_STATUS_ACTIVE,
             tagasaurisjobs__isnull=False, **kw).iterator()
@@ -148,6 +151,13 @@ class SampleGatheringHITMonitor(HITMonitor, Task):
 
 
 @task(ignore_result=True)
+def sample_gathering_hit_change(job_id, old_hit, new_hit, **kwargs):
+    job = Job.objects.get(id=job_id)
+    handler = get_job_handler(job)
+    handler.sample_gathering_hit_changed(old=old_hit, new=new_hit)
+
+
+@task(ignore_result=True)
 class VotingHITMonitor(HITMonitor, Task):
     """
         Checks jobs' sample gathering job for HIT changes.
@@ -159,6 +169,55 @@ class VotingHITMonitor(HITMonitor, Task):
     @singleton(name='voting-hit')
     def run(self, *args, **kwargs):
         super(self.__class__, self).run(*args, **kwargs)
+
+
+@task(ignore_result=True)
+def voting_hit_change(job_id, old_hit, new_hit, **kwargs):
+    job = Job.objects.get(id=job_id)
+    handler = get_job_handler(job)
+    handler.voting_hit_changed(old=old_hit, new=new_hit)
+
+
+@task(ignore_result=True)
+class BTMGatheringHITMonitor(HITMonitor, Task):
+    """
+        Checks jobs' sample gathering job for HIT changes.
+    """
+    hit_name = 'beatthemachine_hit'
+    key_name = 'beatthemachine_key'
+    event_name = 'EventBTMGatheringHITChanged'
+
+    @singleton(name='btm-gathering-hit')
+    def run(self, *args, **kwargs):
+        super(self.__class__, self).run(*args, **kwargs)
+
+
+@task(ignore_result=True)
+def btm_gathering_hit_change(job_id, old_hit, new_hit, **kwargs):
+    job = Job.objects.get(id=job_id)
+    handler = get_job_handler(job)
+    handler.voting_hit_changed(old=old_hit, new=new_hit)
+
+
+@task(ignore_result=True)
+class BTMVotingHITMonitor(HITMonitor, Task):
+    """
+        Checks jobs' sample gathering job for HIT changes.
+    """
+    hit_name = 'voting_btm_hit'
+    key_name = 'voting_btm_key'
+    event_name = 'EventBTMVotingHITChanged'
+
+    @singleton(name='voting-btm-hit')
+    def run(self, *args, **kwargs):
+        super(self.__class__, self).run(*args, **kwargs)
+
+
+@task(ignore_result=True)
+def btm_voting_hit_change(job_id, old_hit, new_hit, **kwargs):
+    job = Job.objects.get(id=job_id)
+    handler = get_job_handler(job)
+    handler.btm_voting_hit_changed(old=old_hit, new=new_hit)
 
 
 @task(ignore_result=True)
@@ -434,4 +493,8 @@ FLOW_DEFINITIONS = [
     (r'^EventNewClassifyBTMSample$', classify_btm),
     (r'^EventTrainingSetCompleted$', train_on_set, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventClassifierTrained$', update_classifier_stats),
+    (r'^EventSampleGathertingHITChanged$', sample_gathering_hit_change, settings.CELERY_LONGSCARCE_QUEUE),
+    (r'^EventVotingHITChanged$', voting_hit_change, settings.CELERY_LONGSCARCE_QUEUE),
+    (r'^EventBTMGatheringHITChanged$', btm_gathering_hit_change, settings.CELERY_LONGSCARCE_QUEUE),
+    (r'^EventBTMVotingHITChanged$', btm_voting_hit_change, settings.CELERY_LONGSCARCE_QUEUE),
 ]

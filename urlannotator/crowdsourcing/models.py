@@ -282,7 +282,6 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
         expect = self.expected_output.lower()
 
-        print cat_cl, expect, confidence
         if cat_cl == expect and confidence == self.CONF_HIGH:
             return self.BTM_KNOWN
 
