@@ -6,7 +6,6 @@ from urlannotator.crowdsourcing.tagasauris_helper import (
     create_voting_job, update_voting_job, create_btm, update_voting)
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
     JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID)
-from urlannotator.crowdsourcing.odesk_helper import (init_odesk_job)
 
 import logging
 log = logging.getLogger(__name__)
@@ -107,10 +106,25 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
         Tagasauris job source handler. Uses Tagasauris for all 3 tasks.
     '''
     def init_job(self, *args, **kwargs):
+        try:
+            tagjob = self.job.tagasaurisjobs
+        except:
+            tagjob = None
+
+        if tagjob and tagjob.sample_gathering_hit is not None:
+            log.info(
+                'Tried to create new sample gathering job, but it already exists'
+            )
+            return True
         res = init_tagasauris_job(self.job)
         return res
 
     def init_voting(self, tc, samples, *args, **kwargs):
+        if self.job.tagasaurisjobs.voting_hit is not None:
+            log.info(
+                'Tried to create new voting job, but it already exists'
+            )
+            return True
         log.info(
             'TagasaurisHandler: Creating voting job for job %d' % self.job.id
         )
@@ -133,11 +147,21 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
         return res
 
     def init_btm_gather(self, topic, description, no_of_urls, *args, **kwargs):
+        if self.job.tagasaurisjobs.beatthemachine_hit is not None:
+            log.info(
+                'Tried to create new btm gathering job, but it already exists'
+            )
+            return True
         tc = make_tagapi_client()
         res = create_btm(tc, self.job, topic, description, no_of_urls)
         return res
 
     def init_btm_voting(self, samples, *args, **kwargs):
+        if self.job.tagasaurisjobs.voting_btm_hit is not None:
+            log.info(
+                'Tried to create new btm voting job, but it already exists'
+            )
+            return True
         tc = make_tagapi_client()
         create_btm_voting_job(tc, self.job, samples)
 

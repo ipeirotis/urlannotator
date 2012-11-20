@@ -36,6 +36,8 @@ TAGASAURIS_GOAL_MULTIPLICATION = setting(
 def get_hit_url(hit_type):
     if hit_type == settings.TAGASAURIS_SOCIAL:
         return TAGASAURIS_HIT_SOCIAL_URL
+    elif hit_type == settings.TAGASAURIS_MTURK:
+        return settings.TAGASAURIS_HIT_MTURK_URL
     return settings.TAGASAURIS_HIT_URL
 
 
@@ -134,7 +136,7 @@ def workflow_definition(ext_id, job, task_type, survey_id, price,
         "workflow": {
             survey_id: {
                 "config": {
-                    "hit_type": settings.TAGASAURIS_HIT_TYPE,
+                    "hit_type": job.get_hit_type(),
                     "hit_title": hit_title % topic,
                     "workers_per_hit": workers_per_hit,
                     "price": price,
@@ -208,7 +210,7 @@ def create_sample_gather(api_client, job):
     kwargs.update({"dummy_media":
         [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})
 
-    return _create_job(api_client, ext_id, kwargs)
+    return _create_job(api_client, ext_id, job.get_hit_type(), kwargs)
 
 
 def create_btm(api_client, job, topic, description, no_of_urls):
@@ -264,7 +266,7 @@ def create_btm(api_client, job, topic, description, no_of_urls):
     kwargs.update({"dummy_media":
         [("dummy-" + str(no), url) for no in xrange(int(total_mediaobjects))]})
 
-    return _create_job(api_client, ext_id, kwargs)
+    return _create_job(api_client, ext_id, job.get_hit_type(), kwargs)
 
 
 def _create_voting(api_client, job, mediaobjects, notify_url):
@@ -301,7 +303,7 @@ def _create_voting(api_client, job, mediaobjects, notify_url):
     # Choosing mediaobjects
     kwargs.update({"mediaobjects": mediaobjects})
 
-    return _create_job(api_client, ext_id, kwargs)
+    return _create_job(api_client, ext_id, job.get_hit_type(), kwargs)
 
 
 def create_voting_job(api_client, job, samples):
@@ -417,10 +419,10 @@ def _update_voting(api_client, job, samples, field_name):
             return True
 
 
-def get_hit(api_client, job_ext_id):
+def get_hit(api_client, job_ext_id, hit_type):
     try:
         result = api_client.get_job(external_id=job_ext_id)
-        if settings.TAGASAURIS_HIT_TYPE == settings.TAGASAURIS_MTURK:
+        if hit_type == settings.TAGASAURIS_MTURK:
             hit_type = 'mturk_group_id'
         else:
             hit_type = 'external_id'
@@ -459,14 +461,14 @@ def update_voting_job(api_client, mediaobjects, ext_id):
         return False
 
 
-def _create_job(api_client, ext_id, kwargs):
+def _create_job(api_client, ext_id, hit_type, kwargs):
     try:
         result = api_client.create_job(**kwargs)
 
         # media_import_key = result[0]
         job_creation_key = result[1]
         api_client.wait_for_complete(job_creation_key)
-        hit = get_hit(api_client, ext_id)
+        hit = get_hit(api_client, ext_id, hit_type)
         return ext_id, hit
     except TagasaurisApiMaxRetries, e:
         log.exception('Error while creating job: %s, %s' % (e, e.response))

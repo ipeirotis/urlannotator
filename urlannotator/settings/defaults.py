@@ -375,14 +375,37 @@ CELERYBEAT_SCHEDULE = {
         },
     },
     'samplegather_hit': {
-        'task': 'urlannotator.classification.event_handlers.SampleGatheringMonitor',
+        'task': 'urlannotator.classification.event_handlers.SampleGatheringHITMonitor',
         'schedule': datetime.timedelta(seconds=3 * 60),
         'args': [],
         'options': {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
     },
-
+    'voting_hit': {
+        'task': 'urlannotator.classification.event_handlers.VotingHITMonitor',
+        'schedule': datetime.timedelta(seconds=3 * 60),
+        'args': [],
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
+    },
+    'btm_gather_hit': {
+        'task': 'urlannotator.classification.event_handlers.BTMGatheringHITMonitor',
+        'schedule': datetime.timedelta(seconds=3 * 60),
+        'args': [],
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
+    },
+    'btm_voting_hit': {
+        'task': 'urlannotator.classification.event_handlers.BTMVotingHITMonitor',
+        'schedule': datetime.timedelta(seconds=3 * 60),
+        'args': [],
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
+    },
 }
 
 # Test runner
@@ -405,7 +428,9 @@ TAGASAURIS_HIT_URL = TAGASAURIS_HIT_SANDBOX_URL
 
 TAGASAURIS_MTURK = 'mturk'
 TAGASAURIS_SOCIAL = 'social'
-TAGASAURIS_HIT_TYPE = TAGASAURIS_MTURK
+
+ODESK_HIT_TYPE = TAGASAURIS_SOCIAL
+OWN_WORKFORCE_HIT_TYPE = TAGASAURIS_MTURK
 
 TAGASAURIS_SAMPLE_GATHERER_WORKFLOW = 'sample_gather'
 TAGASAURIS_VOTING_WORKFLOW = 'voting'

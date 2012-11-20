@@ -89,9 +89,6 @@ TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_USE_SANDBOX = True
 
-TAGASAURIS_HIT_TYPE = TAGASAURIS_MTURK
-TAGASAURIS_HIT_URL = TAGASAURIS_HIT_MTURK_URL
-
 # TODO: This is ugly... any ideas how to change this?
 TAGASAURIS_NOTIFY = {
     TAGASAURIS_VOTING_WORKFLOW: 'NotifyTask_1',

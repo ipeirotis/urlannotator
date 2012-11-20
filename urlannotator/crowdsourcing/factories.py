@@ -1,70 +1,10 @@
-from urlannotator.crowdsourcing.tagasauris_helper import (init_tagasauris_job,
-    make_tagapi_client, create_btm)
-from urlannotator.crowdsourcing.odesk_helper import init_odesk_job
 from urlannotator.crowdsourcing.quality.algorithms import (MajorityVoting,
     DBVotesStorage)
-from urlannotator.main.models import (Job, JOB_SOURCE_ODESK_FREE,
-    JOB_SOURCE_ODESK_PAID, JOB_SOURCE_OWN_WORKFORCE)
-from urlannotator.crowdsourcing.models import TagasaurisJobs
+from urlannotator.main.models import Job
 from urlannotator.crowdsourcing.troia_helper import init_troia
 
 import logging
 log = logging.getLogger(__name__)
-
-
-def unsupported_job(job, *args, **kwargs):
-    raise Exception(
-        'Unsupported external job initializer for source %s.' % job.data_source
-    )
-
-
-class ExternalJobsFactory(object):
-    """
-        Handles initialization of external jobs tied to new job's data source.
-
-        If you want to add new data sources, you need to at least specify
-        initializer method inside `job_initializers`.
-        The initializer method is passed a `job` Job object which is the new
-        job being created.
-    """
-
-    sample_gather_initializers = {
-        JOB_SOURCE_OWN_WORKFORCE: init_tagasauris_job,
-        JOB_SOURCE_ODESK_PAID: init_odesk_job,
-        JOB_SOURCE_ODESK_FREE: init_odesk_job,
-    }
-
-    # btm_initializers = {
-    #     JOB_SOURCE_OWN_WORKFORCE: own_workforce_btm,
-    #     JOB_SOURCE_ODESK_PAID: odesk_btm,
-    #     JOB_SOURCE_ODESK_FREE: odesk_btm,
-    # }
-
-    def get_sample_gather(self, job):
-        return self.sample_gather_initializers.get(job.data_source, unsupported_job)
-
-    def initialize_job(self, job_id, *args, **kwargs):
-        """
-            Handles creating any external jobs for given our job's id.
-        """
-        job = Job.objects.get(id=job_id)
-
-        initializer = self.get_sample_gather(job=job)
-        initializer(job=job)
-
-    def initialize_btm(self, job_id, topic, description, no_of_urls):
-        job = Job.objects.get(id=job_id)
-
-        c = make_tagapi_client()
-
-        beatthemachine_key, beatthemachine_hit = create_btm(c, job, topic,
-            description, no_of_urls)
-
-        # Our link to tagasauris jobs.
-        tj, _ = TagasaurisJobs.objects.get_or_create(urlannotator_job=job)
-        tj.beatthemachine_key = beatthemachine_key
-        tj.beatthemachine_hit = beatthemachine_hit
-        tj.save()
 
 
 class VoteStorageFactory(object):

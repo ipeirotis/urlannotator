@@ -18,8 +18,8 @@ from django.template import Context
 
 from urlannotator.main.models import Job
 from urlannotator.crowdsourcing.models import OdeskJob, OdeskMetaJob
-from urlannotator.crowdsourcing.tagasauris_helper import (init_tagasauris_job,
-    TAGASAURIS_GATHER_SAMPLES_PER_JOB, get_split)
+from urlannotator.crowdsourcing.tagasauris_helper import (get_split,
+    TAGASAURIS_GATHER_SAMPLES_PER_JOB)
 
 import logging
 log = logging.getLogger(__name__)
@@ -36,6 +36,12 @@ def make_odesk_client(token, secret, test=False):
         oauth_access_token_secret=secret,
         auth='oauth',
     )
+
+
+def make_client_from_job(job, test=False):
+    token = job.account.odesk_token
+    secret = job.account.odesk_secret
+    return make_odesk_client(token=token, secret=secret, test=test)
 
 
 def make_test_client(token=None, secret=None):
@@ -86,29 +92,29 @@ def calculate_job_end_date():
     return date.strftime('%m-%d-%Y')
 
 
-def init_odesk_job(job):
-    """
-        Creates oDesk sample gathering job for our job.
-    """
-    init_tagasauris_job(job=job)
-    create_sample_gather(job=job)
-
-
-def check_odesk_job(job):
+def check_odesk_job(odesk_job):
     """
         Checks an oDesk job for new worker applications.
     """
-    client = make_odesk_client()
+    client = make_client_from_job(odesk_job.job)
+    reference = get_reference(client)
+    if not reference:
+        return False
     response = client.hr.get_offers(
-        buyer_team_reference=NEW_JOB_BUYER_TEAM_REFERENCE,
-        job_reference=job.reference
+        buyer_team_reference=get_reference(client),
+        job_ref=odesk_job.reference
     )
     print response
+    return True
 
 
 def get_reference(client):
-    r = client.hr.get_companies()
-    return r[0]['reference']
+    try:
+        r = client.hr.get_companies()
+        return r[0]['reference']
+    except:
+        log.exception('[oDesk] Error while getting client reference')
+        return None
 
 
 def get_voting_split(job):
@@ -137,8 +143,12 @@ def _create_job(title, description, job):
         token = job.account.odesk_token
         secret = job.account.odesk_secret
         client = make_odesk_client(token, secret)
+        reference = get_reference(client)
+        if not reference:
+            return None
+
         data = {
-            'buyer_team__reference': get_reference(client),
+            'buyer_team__reference': reference,
             'title': title,
             'job_type': NEW_JOB_TYPE,
             'description': description,
@@ -164,70 +174,95 @@ def create_sample_gather(job, only_hit=False, *args, **kwargs):
     """
         Creates oDesk sample gathering job according from passed Job object.
     """
-    context = {
-        'samples_count': TAGASAURIS_GATHER_SAMPLES_PER_JOB,
-        'job': job,
-    }
+    try:
+        context = {
+            'samples_count': TAGASAURIS_GATHER_SAMPLES_PER_JOB,
+            'job': job,
+        }
 
-    titleTemplate = get_template('odesk_meta_sample_gather_title.txt')
-    descriptionTemplate = get_template('odesk_meta_sample_gather_description.txt')
+        titleTemplate = get_template('odesk_meta_sample_gather_title.txt')
+        descriptionTemplate = get_template('odesk_meta_sample_gather_description.txt')
 
-    title = titleTemplate.render(Context(context))
-    description = descriptionTemplate.render(Context(context))
+        title = titleTemplate.render(Context(context))
+        description = descriptionTemplate.render(Context(context))
 
-    reference_meta = _create_job(title, description, job)
-    if reference_meta:
-        OdeskMetaJob.objects.create_sample_gather(job=job,
-            reference=reference_meta, workers_to_invite=get_split(job))
-    return reference_meta
+        reference_meta = _create_job(title, description, job)
+        if reference_meta:
+            OdeskMetaJob.objects.create_sample_gather(job=job,
+                reference=reference_meta, workers_to_invite=get_split(job))
+        return reference_meta
+    except:
+        log.exception(
+            '[oDesk] Error while creating sample gathering job for job %d' % job.id
+        )
+        return False
 
 
 def create_voting(job, only_hit=False, *args, **kwargs):
-    job = Job.objects.get(id=job.id)
+    try:
+        job = Job.objects.get(id=job.id)
 
-    context = {
-        'job': job,
-    }
+        context = {
+            'job': job,
+        }
 
-    titleTemplate = get_template('odesk_meta_voting_title.txt')
-    descriptionTemplate = get_template('odesk_meta_voting_description.txt')
+        titleTemplate = get_template('odesk_meta_voting_title.txt')
+        descriptionTemplate = get_template('odesk_meta_voting_description.txt')
 
-    title = titleTemplate.render(Context(context))
-    description = descriptionTemplate.render(Context(context))
+        title = titleTemplate.render(Context(context))
+        description = descriptionTemplate.render(Context(context))
 
-    reference = _create_job(title, description, job)
-    if reference:
-        OdeskMetaJob.objects.create_voting(job=job, reference=reference,
-            workers_to_invite=get_voting_split(job))
-    return reference
+        reference = _create_job(title, description, job)
+        if reference:
+            OdeskMetaJob.objects.create_voting(job=job, reference=reference,
+                workers_to_invite=get_voting_split(job))
+        return reference
+    except:
+        log.exception(
+            '[oDesk] Error while creating voting job for job %d' % job.id
+        )
+        return False
 
 
-def create_btm_gather(title, description, no_of_urls, job, only_hit=False, *args, **kwargs):
+def create_btm_gather(title, description, no_of_urls, job, only_hit=False,
+    *args, **kwargs):
     """
         Creates oDesk BTM sample gathering job according from passed Job object.
     """
-    reference_meta = _create_job(title, description, job)
-    if reference_meta:
-        OdeskMetaJob.objects.create_btm_gather(job=job,
-            reference=reference_meta, workers_to_invite=get_split(job))
-    return reference_meta
+    try:
+        reference_meta = _create_job(title, description, job)
+        if reference_meta:
+            OdeskMetaJob.objects.create_btm_gather(job=job,
+                reference=reference_meta, workers_to_invite=get_split(job))
+        return reference_meta
+    except:
+        log.exception(
+            '[oDesk] Error while creating btm gathering job for job %d' % job.id
+        )
+        return False
 
 
 def create_btm_voting(job, only_hit=False):
-    job = Job.objects.get(id=job.id)
+    try:
+        job = Job.objects.get(id=job.id)
 
-    context = {
-        'job': job,
-    }
+        context = {
+            'job': job,
+        }
 
-    titleTemplate = get_template('odesk_meta_btm_voting_title.txt')
-    descriptionTemplate = get_template('odesk_meta_btm_voting_description.txt')
+        titleTemplate = get_template('odesk_meta_btm_voting_title.txt')
+        descriptionTemplate = get_template('odesk_meta_btm_voting_description.txt')
 
-    title = titleTemplate.render(Context(context))
-    description = descriptionTemplate.render(Context(context))
+        title = titleTemplate.render(Context(context))
+        description = descriptionTemplate.render(Context(context))
 
-    reference = _create_job(title, description, job)
-    if reference:
-        OdeskMetaJob.objects.create_btm_voting(job=job, reference=reference,
-            workers_to_invite=get_voting_split(job))
-    return reference
+        reference = _create_job(title, description, job)
+        if reference:
+            OdeskMetaJob.objects.create_btm_voting(job=job, reference=reference,
+                workers_to_invite=get_voting_split(job))
+        return reference
+    except:
+        log.exception(
+            '[oDesk] Error while creating btm voting job for job %d' % job.id
+        )
+        return False

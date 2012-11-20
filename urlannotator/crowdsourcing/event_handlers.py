@@ -125,15 +125,21 @@ class OdeskJobMonitor(Task):
         log.debug('[oDesk] Checking voting: %s' % odesk_jobs)
         self.check_jobs(odesk_jobs)
 
-    def check_btm(self):
-        odesk_jobs = OdeskMetaJob.objects.get_active_btm()
+    def check_btm_gather(self):
+        odesk_jobs = OdeskMetaJob.objects.get_active_btm_gather()
         log.debug('[oDesk] Checking btm: %s' % odesk_jobs)
+        self.check_jobs(odesk_jobs)
+
+    def check_btm_voting(self):
+        odesk_jobs = OdeskMetaJob.objects.get_active_btm_voting()
+        log.debug('[oDesk] Checking btm voting: %s' % odesk_jobs)
         self.check_jobs(odesk_jobs)
 
     def run(self, *args, **kwargs):
         self.check_sample_gathering()
         self.check_voting()
-        self.check_btm()
+        self.check_btm_gather()
+        self.check_btm_voting()
 
 odesk_job_monitor = registry.tasks[OdeskJobMonitor.name]
 
@@ -144,7 +150,6 @@ FLOW_DEFINITIONS = [
     (r'^EventNewVoteAdded$', update_job_votes_gathered),
     (r'^EventNewSample$', vote_on_new_sample),
     (r'^EventNewBTMSample$', vote_on_new_btm_sample),
-    (r'^EventOdeskJobMonitor$', odesk_job_monitor),
     # (r'^EventSampleGathertingHITChanged$', job_new_gathering_hit),
     # WIP: DSaS/GAL quality algorithms.
     # (r'^EventGoldSamplesDone$', initialize_quality),

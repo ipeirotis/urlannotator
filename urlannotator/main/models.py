@@ -91,6 +91,7 @@ JOB_DATA_SOURCE_CHOICES = JOB_BASIC_DATA_SOURCE_CHOICES + \
     JOB_ODESK_DATA_SOURCE_CHOICES
 JOB_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
 
+JOB_HIT_MAPPING_NAME = 'job_source_to_hit_type'
 # Job status breakdown:
 # Draft - template of a job, not active yet, can be started.
 # Active - up and running job.
@@ -173,6 +174,23 @@ class Job(models.Model):
     btm_points_to_cash = models.PositiveIntegerField(default=0)
 
     objects = JobManager()
+
+    @classmethod
+    def job_source_to_hit(cls, source):
+        if not hasattr(cls, JOB_HIT_MAPPING_NAME):
+            setattr(cls, JOB_HIT_MAPPING_NAME,
+            {
+                JOB_SOURCE_ODESK_FREE: settings.ODESK_HIT_TYPE,
+                JOB_SOURCE_ODESK_PAID: settings.ODESK_HIT_TYPE,
+                JOB_SOURCE_OWN_WORKFORCE: settings.OWN_WORKFORCE_HIT_TYPE,
+            })
+        return getattr(cls, JOB_HIT_MAPPING_NAME)[source]
+
+    def get_hit_type(self):
+        """
+            Returns a Tagasauris HIT type according to job's source
+        """
+        return self.job_source_to_hit(self.data_source)
 
     @models.permalink
     def get_absolute_url(self):

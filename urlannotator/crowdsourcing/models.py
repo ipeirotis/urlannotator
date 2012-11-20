@@ -346,11 +346,6 @@ class BeatTheMachineSample(ClassifiedSampleCore):
 
 
 class TagasaurisJobs(models.Model):
-    job_source_to_hit_type = {
-        JOB_SOURCE_ODESK_FREE: settings.TAGASAURIS_SOCIAL,
-        JOB_SOURCE_ODESK_PAID: settings.TAGASAURIS_SOCIAL,
-        JOB_SOURCE_OWN_WORKFORCE: settings.TAGASAURIS_MTURK,
-    }
     urlannotator_job = models.OneToOneField(Job)
     sample_gathering_key = models.CharField(max_length=128)
     voting_key = models.CharField(max_length=128, null=True, blank=True)
@@ -367,8 +362,7 @@ class TagasaurisJobs(models.Model):
         """
         from urlannotator.crowdsourcing.tagasauris_helper import get_hit_url
         if task is not None:
-            return get_hit_url(self.job_source_to_hit_type[
-                self.urlannotator_job.data_source]) % task
+            return get_hit_url(self.urlannotator_job.get_hit_type()) % task
 
         return ''
 
