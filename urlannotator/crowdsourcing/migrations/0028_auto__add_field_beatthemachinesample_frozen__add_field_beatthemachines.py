@@ -7,6 +7,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ("payments", "0004_auto__add_btmbonuspayment"),
+    )
+
     def forwards(self, orm):
         # Adding field 'BeatTheMachineSample.frozen'
         db.add_column('crowdsourcing_beatthemachinesample', 'frozen',
@@ -18,14 +22,12 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['payments.BTMBonusPayment'], null=True, blank=True),
                       keep_default=False)
 
-
     def backwards(self, orm):
         # Deleting field 'BeatTheMachineSample.frozen'
         db.delete_column('crowdsourcing_beatthemachinesample', 'frozen')
 
         # Deleting field 'BeatTheMachineSample.payment'
         db.delete_column('crowdsourcing_beatthemachinesample', 'payment_id')
-
 
     models = {
         'auth.group': {
