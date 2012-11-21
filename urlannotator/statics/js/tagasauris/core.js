@@ -68,8 +68,6 @@
 
         minSamples: 5,
 
-        workerId: null, // It is set on Tagasauris side
-
         gathered: 0,
 
         el: $("#form-template"),
@@ -92,12 +90,13 @@
             this.samples.bind("add", this.renderPartial, this);
             this.samples.bind("remove", this.renderPartial, this);
 
-            data = $.parseJSON(data);
-            this.token = data.token;
-            this.jobId = data.job_id;
-            this.coreUrl = data.core_url;
-            if (data.minSamples !== undefined) {
-                this.minSamples = data.min_samples;
+            job_data = $.parseJSON(data['job_data']);
+            this.token = job_data.token;
+            this.jobId = job_data.job_id;
+            this.workerId = data['worker_id'];
+            this.coreUrl = job_data.core_url;
+            if (job_data.minSamples !== undefined) {
+                this.minSamples = job_data.min_samples;
             }
 
             this.render();

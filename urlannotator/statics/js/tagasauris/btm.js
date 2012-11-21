@@ -14,12 +14,18 @@
             var that = this;
             $.get(
                 that.coreUrl + '/api/v1/btm/data/tagasauris/' + that.jobId + '/',
-                {},
+                { worker_id: that.workerId },
                 function (data) {
                     that.additional_data = data;
                     that.el.html(that.template(data));
                     $(".instructions").append(
                         $(".additional-instruction", that.el).html());
+
+                    if (data.gathered_points !== undefined) {
+                        $(".instructions").prepend(
+                            $(".additional-notification", that.el).html());
+                    }
+
                     that.renderPartial();
                 },
                 "json"

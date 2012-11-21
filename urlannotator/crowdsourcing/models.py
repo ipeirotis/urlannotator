@@ -111,6 +111,13 @@ class BeatTheMachineSampleManager(models.Manager):
         return self.select_related("sample").filter(job__id=job_id,
             btm_status__gt=3, sample__training=False)
 
+    def get_btm_unverified(self, job, worker):
+        return self.filter(
+            job=job,
+            source_type=worker.external_id,
+            source_val=worker.worker_type,
+            btm_status=BeatTheMachineSample.BTM_HUMAN)
+
     def get_all_btm(self, job):
         return self.filter(job=job)
 

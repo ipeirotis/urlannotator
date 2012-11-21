@@ -1415,6 +1415,10 @@ class Worker(models.Model):
         points = points if points else 0
         return points
 
+    def get_btm_unverified(self, job):
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+        return BeatTheMachineSample.objects.get_btm_unverified(job, self)
+
 
 class WorkerJobManager(models.Manager):
     def associate(self, job, worker):

@@ -1168,6 +1168,14 @@ class BeatTheMachineResource(ModelResource):
             'points_to_cash': job.btm_points_to_cash
         }
 
+        worker_id = request.GET.get('worker_id', None)
+        if worker_id is not None:
+            worker, created = Worker.objects.get_or_create_tagasauris(worker_id)
+            resp.update({
+                'gathered_points': worker.get_btm_bonus(job),
+                'pending_verification': worker.get_btm_unverified(job).count(),
+            })
+
         return self.create_response(request, resp)
 
 
