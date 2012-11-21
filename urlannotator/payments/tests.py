@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from urlannotator.payments.models import BTMBonusPayment
 from urlannotator.flow_control.test import ToolsMockedMixin
-from urlannotator.main.models import Job, Worker, Sample, LABEL_YES
+from urlannotator.main.models import Job, Worker, LABEL_YES
 from urlannotator.crowdsourcing.models import BeatTheMachineSample
 
 
@@ -35,7 +35,7 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
 
         worker = Worker.objects.get(external_id=1)
 
-        payment = BTMBonusPayment.objects.create_for_worker(worker)
+        payment = BTMBonusPayment.objects.create_for_worker(worker, self.job)
         self.assertEqual(payment.points_covered, 0)
         self.assertEqual(payment.amount, 0)
         self.assertEqual(payment.beatthemachinesample_set.count(), 0)
@@ -48,7 +48,7 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
             points=4,
         )
 
-        payment = BTMBonusPayment.objects.create_for_worker(worker)
+        payment = BTMBonusPayment.objects.create_for_worker(worker, self.job)
         self.assertEqual(payment.points_covered, 0)
         self.assertEqual(payment.amount, 0)
         self.assertEqual(payment.beatthemachinesample_set.count(), 0)
@@ -60,7 +60,7 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
             points=2,
         )
 
-        payment = BTMBonusPayment.objects.create_for_worker(worker)
+        payment = BTMBonusPayment.objects.create_for_worker(worker, self.job)
         self.assertEqual(payment.points_covered, 2)
         self.assertEqual(payment.amount, 1)
         self.assertTrue(btm in payment.beatthemachinesample_set.all())
@@ -84,7 +84,7 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
             points=60,
         )
 
-        payment = BTMBonusPayment.objects.create_for_worker(worker)
+        payment = BTMBonusPayment.objects.create_for_worker(worker, self.job)
         self.assertEqual(payment.points_covered, 66)
         self.assertEqual(payment.amount, 33)
         self.assertTrue(btm1 in payment.beatthemachinesample_set.all())

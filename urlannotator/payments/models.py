@@ -195,14 +195,15 @@ class WorkerPayment(models.Model):
 
 class BTMBonusPaymentManager(models.Manager):
 
-    def create_for_worker(self, worker):
-        payment = self.create(
-            worker=worker,
-            status=PAYMENT_STATUS_INITIALIZED,
-        )
+    def create_for_worker(self, worker, job, *args, **kwargs):
+        kwargs['job'] = job
+        kwargs['worker'] = worker
+        kwargs['status'] = PAYMENT_STATUS_INITIALIZED
+        payment = self.create(*args, **kwargs)
 
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
-        samples = BeatTheMachineSample.objects.from_worker_unpaid(worker)
+        samples = BeatTheMachineSample.objects.from_worker_unpaid(
+            worker).filter(job=payment.job)
         samples.update(
             frozen=True,
             payment=payment
@@ -221,10 +222,9 @@ class BTMBonusPaymentManager(models.Manager):
 class BTMBonusPayment(models.Model):
     """
         Bonus payment for worker BTM Samples. Gathered BTMSamples should be
-        frozen before bonus payment creation. This payment can cover samples
-        for multiple jobs.
+        frozen before bonus payment creation. This payment can cover single job.
     """
-
+    job = models.ForeignKey(Job, null=True)
     worker = models.ForeignKey(Worker)
     points_covered = models.IntegerField(default=0)
     amount = models.DecimalField(default=0, decimal_places=2, max_digits=10)

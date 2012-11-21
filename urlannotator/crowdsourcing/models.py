@@ -123,6 +123,9 @@ class BeatTheMachineSampleManager(models.Manager):
             source_val=worker.worker_type,
         )
 
+    def from_worker_paid(self, worker):
+        return self.from_worker(worker).filter(frozen=True)
+
     def from_worker_unpaid(self, worker):
         return self.from_worker(worker).filter(frozen=False)
 

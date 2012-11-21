@@ -21,6 +21,7 @@ from urlannotator.crowdsourcing.models import (SampleMapping,
     WorkerQualityVote, BeatTheMachineSample)
 from urlannotator.logging.models import LogEntry
 from urlannotator.tools.utils import url_correct
+from urlannotator.payments.models import BTMBonusPayment
 
 import logging
 log = logging.getLogger(__name__)
@@ -633,6 +634,9 @@ class JobResource(ModelResource):
             url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/btm/'
                 % self._meta.resource_name,
                 self.wrap_view('btm'), name='api_job_btm'),
+            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/bonus/'
+                % self._meta.resource_name,
+                self.wrap_view('bonus'), name='api_job_bonus'),
         ]
 
     def worker(self, request, **kwargs):
@@ -676,6 +680,34 @@ class JobResource(ModelResource):
             sample_id = sanitize_positive_int(sample)
             # TODO: sample_id -> sample
             job.add_btm_verified_sample(sample_id)
+
+        return self.create_response(
+            request,
+            {'status': 'ok'},
+        )
+
+    def bonus(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self._check_job(request, **kwargs)
+        job_id = kwargs.get('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong parameters.'},
+                response_class=HttpNotFound,
+            )
+
+        workers = request.POST.get('bonus', '[]')
+        workers = json.loads(workers)
+
+        for worker in workers:
+            worker_id = sanitize_positive_int(worker)
+            worker = Worker.objects.get(id=worker_id)
+            BTMBonusPayment.objects.create_for_worker(worker, job)
 
         return self.create_response(
             request,

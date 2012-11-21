@@ -1394,6 +1394,27 @@ class Worker(models.Model):
         """
         return self.workerjobassociation_set.get(job=job).get_estimated_quality()
 
+    def get_btm_bonus(self, job):
+        """
+            Retuns worker's bonus points gathered on given job.
+        """
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+        points = BeatTheMachineSample.objects.from_worker(self).aggregate(
+            Sum('points'))['points__sum']
+        points = points if points else 0
+        return points
+
+    def get_btm_bonus_paid(self, job):
+        """
+            Retuns worker's points gathered on given job for which payment was
+            created.
+        """
+        from urlannotator.payments.models import BTMBonusPayment
+        points = BTMBonusPayment.objects.filter(worker=self, job=job
+            ).aggregate(Sum('points_covered'))['points_covered__sum']
+        points = points if points else 0
+        return points
+
 
 class WorkerJobManager(models.Manager):
     def associate(self, job, worker):

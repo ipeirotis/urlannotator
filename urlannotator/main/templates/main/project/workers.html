@@ -16,25 +16,33 @@
     </div>
   </div>
   <div class="row">
-    <div class="span12">
+    <div class="span12" id="pending_bonus">
       <div class="table-container-anno1">
         <h3>Workers stats</h3>
         <div class="table-wrapper">
           <table class="table">
             <thead>
               <tr>
+                <th style="width:14px;"><input type="checkbox" id="check-all" onclick="$('#pending_bonus input').attr('checked', this.checked);"></th>
                 <th>Worker name</th>
                 <th style="width: 100px">Votes added</th>
                 <th style="width: 100px">URLs collected</th>
+                <th style="width: 130px">Bonus points gathered</th>
+                <th style="width: 130px">Bonus points paid</th>
+                <th style="width: 130px">Bonus points pending</th>
               </tr>
             </thead>
             <tbody>
               {% if workers %}
               {% for worker in workers %}
                 <tr>
+                  <td><input type="checkbox" name="worker-checkbox" value="{{worker.id}}"></td>
                   <td><a href="{% url project_worker_view project.id worker.id%}">{{worker.name}}</a></td>
                   <td>{{worker.votes_added}}</td>
                   <td>{{worker.urls_collected}}</td>
+                  <td>{{worker.bonus_gathered}}</td>
+                  <td>{{worker.bonus_paid}}</td>
+                  <td>{{worker.bonus_pending}}</td>
                 </tr>
               {% endfor %}
               {% else %}
@@ -43,9 +51,44 @@
                 </tr>
               {% endif %}
             </tbody>
+            {% csrf_token %}
+
           </table>
         </div>
       </div>
+
+      <div class="row">
+        <span id="no-selected" style="display: none" class="offset7">You need to check, which URLs you want to add to the classifier data first.</span>
+      </div>
+      <div class="row">
+        <button id="submit-bonus" class="btn offset10" type="submit" onclick="submitBonusPayment();">Pay out bonus</button>
+      </div>
     </div>
   </div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script type="text/javascript">
+
+var csrftoken;
+function submitBonusPayment()
+{
+  var button = $('#submit-bonus');
+  button.prop('disabled', 'disabled');
+  var bonus = $('#pending_bonus input[type=checkbox][name=worker-checkbox]:checked');
+  csrftoken = $('#pending_bonus input[type=hidden][name=csrfmiddlewaretoken]')[0].value;
+  var ids = [];
+  $.each(bonus, function(i, b){
+    ids.push(parseInt(b.value));
+  });
+  $.post('/api/v1/job/{{project.id}}/bonus/',
+    {'bonus': JSON.stringify(ids)},
+    function(data){
+      $(bonus).parent().parent().remove();
+    }
+  );
+  button.prop('disabled', '');
+}
+</script>
 {% endblock %}
