@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, LABEL_YES, LABEL_NO,
@@ -9,6 +8,7 @@ from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
 from urlannotator.tools.utils import sanitize_url
+from urlannotator.payments.models import BTMBonusPayment
 
 import logging
 log = logging.getLogger(__name__)
@@ -117,6 +117,15 @@ class BeatTheMachineSampleManager(models.Manager):
     def get_all_ready(self, job):
         return self.get_all_btm(job).filter(sample__isnull=False)
 
+    def from_worker(self, worker):
+        return self.filter(
+            source_type=worker.external_id,
+            source_val=worker.worker_type,
+        )
+
+    def from_worker_unpaid(self, worker):
+        return self.from_worker(worker).filter(frozen=False)
+
 
 class BeatTheMachineSample(ClassifiedSampleCore):
     # BTM status and description/points mapping
@@ -165,6 +174,8 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     points = models.IntegerField(default=0)
     human_label = models.CharField(max_length=10, choices=LABEL_CHOICES,
         null=True, blank=False)
+    frozen = models.BooleanField(default=False)
+    payment = models.ForeignKey(BTMBonusPayment, blank=True, null=True)
 
     objects = BeatTheMachineSampleManager()
 
@@ -300,6 +311,12 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     def recalculate_human(self, cat_h):
         """ Recalculates btm sample status after voting of unsure sample.
         """
+        if self.frozen:
+            log.warning(
+                "Tried to update BTMSample %s which is frozen(paid)." % self.id
+            )
+            return
+
         conf_cl = self.confidence
         confidence = self.confidence_level(conf_cl)
 

@@ -504,3 +504,35 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
 
         # 5 - incude added BTM Samples.
         self.assertEqual(SampleMapping.objects.count(), 5)
+
+    def testBTMSampleFrozen(self):
+        btm = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/321',
+            label='',
+            expected_output=LABEL_YES,
+            worker_id=1234,
+        )
+        btm.frozen = True
+        btm.save()
+        btm = BeatTheMachineSample.objects.get(id=btm.id)
+
+        def recalc(btm_sample, clasifier, human, lab_prob):
+            btm_sample.label = clasifier
+            btm_sample.label_probability = {
+                LABEL_YES: 1.0 - lab_prob,
+                LABEL_NO: 1.0 - lab_prob}
+            btm_sample.label_probability[clasifier] = lab_prob
+            btm_sample.recalculate_human(human)
+
+        human = LABEL_YES
+        recalc(btm, LABEL_NO, human, BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01)
+        btm = BeatTheMachineSample.objects.get(id=btm.id)
+        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_PENDING)
+        self.assertTrue(btm.points == 0)
+
+        human = LABEL_NO
+        recalc(btm, LABEL_YES, human, BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01)
+        btm = BeatTheMachineSample.objects.get(id=btm.id)
+        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_PENDING)
+        self.assertTrue(btm.points == 0)

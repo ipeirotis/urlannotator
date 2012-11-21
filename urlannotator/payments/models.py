@@ -191,3 +191,46 @@ class WorkerPayment(models.Model):
 
     def is_combined_payment(self):
         return self.combined_payment_id is not None
+
+
+class BTMBonusPaymentManager(models.Manager):
+
+    def create_for_worker(self, worker):
+        payment = self.create(
+            worker=worker,
+            status=PAYMENT_STATUS_INITIALIZED,
+        )
+
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+        samples = BeatTheMachineSample.objects.from_worker_unpaid(worker)
+        samples.update(
+            frozen=True,
+            payment=payment
+        )
+
+        for sample in payment.beatthemachinesample_set.all():
+            points = sample.points
+            payment.points_covered += points
+
+            amount = float(points) / sample.job.btm_points_to_cash
+            payment.amount += amount
+        payment.save()
+        return payment
+
+
+class BTMBonusPayment(models.Model):
+    """
+        Bonus payment for worker BTM Samples. Gathered BTMSamples should be
+        frozen before bonus payment creation. This payment can cover samples
+        for multiple jobs.
+    """
+
+    worker = models.ForeignKey(Worker)
+    points_covered = models.IntegerField(default=0)
+    amount = models.DecimalField(default=0, decimal_places=2, max_digits=10)
+    status = models.PositiveIntegerField(choices=PAYMENT_STATUS_CHOICES)
+    sub_status = models.CharField(max_length=50, blank=True, null=True)
+    created_on = models.DateTimeField(auto_now_add=True)
+    additional_data = JSONField(default='{}')
+
+    objects = BTMBonusPaymentManager()

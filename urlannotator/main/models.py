@@ -171,7 +171,7 @@ class Job(models.Model):
     btm_active = models.BooleanField(default=False)
     btm_to_gather = models.PositiveIntegerField(default=0)
     add_filler_samples = models.BooleanField(default=False)
-    btm_points_to_cash = models.PositiveIntegerField(default=0)
+    btm_points_to_cash = models.PositiveIntegerField(default=1)
 
     objects = JobManager()
 
