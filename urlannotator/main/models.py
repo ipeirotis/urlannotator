@@ -1272,8 +1272,8 @@ class Worker(models.Model):
             name = get_worker_name(ciphertext=self.external_id)
 
         if self.worker_type == WORKER_TYPE_TAGASAURIS:
-            tc = make_tagapi_client()
             try:
+                tc = make_tagapi_client()
                 worker_info = tc.get_worker(worker_id=self.external_id)
                 name = worker_info['name']
             except:
