@@ -27,9 +27,26 @@
                     }
 
                     that.renderPartial();
+                    that.pollPoints();
                 },
                 "json"
             );
+        },
+
+        pollPoints: function () {
+            var that = this;
+
+            setTimeout(function(){
+                $.get(
+                    that.coreUrl + '/api/v1/btm/data/tagasauris/' + that.jobId + '/',
+                    { worker_id: that.workerId },
+                    function (data) {
+                        $(".points", $(".instructions")).html(data.gathered_points);
+                        $(".pending", $(".instructions")).html(data.pending_verification);
+                        that.pollPoints();
+                    }
+                );
+            }, 10000);
         },
 
         addNewSample: function () {
