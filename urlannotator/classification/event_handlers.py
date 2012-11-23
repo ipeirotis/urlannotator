@@ -119,7 +119,8 @@ class HITMonitor(object):
 
         for job in jobs:
             old_hit = getattr(job.tagasaurisjobs, self.hit_name)
-            new_hit = get_hit(client, getattr(job.tagasaurisjobs, self.key_name))
+            new_hit = get_hit(client,
+                getattr(job.tagasaurisjobs, self.key_name), job.get_hit_type())
 
             if not new_hit or old_hit == new_hit:
                 continue

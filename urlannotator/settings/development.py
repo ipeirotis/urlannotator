@@ -94,29 +94,3 @@ SITE_URL = 'devel.urlannotator.10clouds.com'
 TAGASAURIS_VOTE_MEDIA_PER_HIT = 1
 TAGASAURIS_VOTE_WORKERS_PER_HIT = 1
 XS_ON_NGINX = False
-
-# Mock selenium tests, so that they are not run locally
-from django.test import LiveServerTestCase
-from urlannotator.main.tests.selenium_tests import *
-from urlannotator.crowdsourcing.tests.tagasauris import *
-class DummyLiveServerTestCase(LiveServerTestCase):
-    pass
-
-
-def mock_tests(module, prefix, tests):
-    mod = sys.modules[module]
-    for el in dir(mod):
-        if prefix in el:
-            mock.patch('%s.%s' % (tests, el), new=DummyLiveServerTestCase).start()
-
-mock_tests(
-    module='urlannotator.main.tests.selenium_tests',
-    prefix='SeleniumTests',
-    tests='urlannotator.main.tests',
-)
-
-mock_tests(
-    module='urlannotator.crowdsourcing.tests.tagasauris',
-    prefix='Tagasauris',
-    tests='urlannotator.crowdsourcing.tests',
-)
