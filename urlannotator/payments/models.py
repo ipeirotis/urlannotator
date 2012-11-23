@@ -1,5 +1,6 @@
 from django.db import models
 
+from urlannotator.crowdsourcing.tagasauris_helper import make_tagapi_client
 from urlannotator.main.models import Job, Worker
 from tenclouds.django.jsonfield.fields import JSONField
 
@@ -234,3 +235,10 @@ class BTMBonusPayment(models.Model):
     additional_data = JSONField(default='{}')
 
     objects = BTMBonusPaymentManager()
+
+    def _pay_tagasauris_bonus(self):
+        tc = make_tagapi_client()
+        tc.pay_worker_bonus(
+            worker_id=self.worker.external_id,
+            amount=self.amount,
+            reason='Bonus for Beat The Machine job no %s' % self.job.id)
