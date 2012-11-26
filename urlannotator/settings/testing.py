@@ -90,8 +90,6 @@ if os.path.isfile(local_settings):
 # NOTE: This settings are used also for testing tagasauris integration. Many
 # jobs are created on Tagasauris side so devel.tagasauris.com should be used
 # ALWAYS.
-TAGASAURIS_LOGIN = 'urlannotator'
-TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_HIT_URL = TAGASAURIS_HOST + '/actions/start_annotation/?hid=%s'
 

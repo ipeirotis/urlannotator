@@ -84,8 +84,6 @@ DATABASES = {
 }
 
 # Tagasauris settings
-TAGASAURIS_LOGIN = 'urlannotator'
-TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'
 TAGASAURIS_USE_SANDBOX = True
 

@@ -104,8 +104,6 @@ DATABASES = {
 }
 
 # Tagasauris settings
-TAGASAURIS_LOGIN = 'urlannotator'
-TAGASAURIS_PASS = 'GomObUdcor1'
 TAGASAURIS_HOST = 'http://stable.tagasauris.com'
 TAGASAURIS_USE_SANDBOX = False
 
