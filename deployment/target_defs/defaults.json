@@ -4,7 +4,7 @@
     "manage_py_dir": "",
     "domain": "devel.urlannotator.10clouds.com",
     "settings_name": "defaults",
-    "source_url": "git@github.com:10clouds/urlannotator.git",
+    "source_url": "git@github.com:mickek/urlannotator.git",
     "default_prefix": "urlannotator",
     "projects_dir": "/home/urlannotator/",
     "project_display_name": "URLAnnotator",

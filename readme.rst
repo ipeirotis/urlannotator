@@ -10,7 +10,7 @@ Source/How to get it
 ====================
 From github:
 
-    git clone git@github.com:10clouds/urlannotator.git
+    git clone git@github.com:mickek/urlannotator.git
 
 What's new
 ==========
@@ -67,7 +67,7 @@ On local machine:
 
 - Pull repository to local filesystem
 
-	git clone https://github.com/10clouds/urlannotator.git
+	git clone https://github.com/mickek/urlannotator.git
 
 - Create virtualenv
 
