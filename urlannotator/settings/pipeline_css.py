@@ -29,6 +29,9 @@ PIPELINE_CSS = {
     'base': {
         'source_filenames': (
             'less/base/base.less',
+            'tenclouds/crud/css/table_headers.css',
+            'tenclouds/crud/css/meta_actions.css',
+            'tenclouds/crud/css/three_state_input.css',
         ),
         'output_filename': 'css/base.css',
         'extra_context': {

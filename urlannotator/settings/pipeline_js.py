@@ -8,18 +8,27 @@ PIPELINE_JS = {
             'js/backbone.js',
             'js/bootstrap.js',
             'js/bootstrap-tooltip.js',
+            'js/coffee-script.js',
         ),
         'output_filename': 'js/core.min.js',
     },
     'crud': {
         'source_filenames': (
-            'tenclouds/django/crud/statics/js/init.js',
-            'tenclouds/django/crud/statics/js/events.js',
-            'tenclouds/django/crud/statics/js/models.js',
-            'tenclouds/django/crud/statics/js/views.js',
-            'tenclouds/django/crud/statics/js/widgets.js',
+            'tenclouds/crud/js/init.js',
+            'tenclouds/crud/js/settings.js',
+            'tenclouds/crud/js/events.js',
+            'tenclouds/crud/js/models.js',
+            'tenclouds/crud/js/views.js',
+            'tenclouds/crud/js/widgets.js',
         ),
         'output_filename': 'crud.js',
+    },
+    'workers': {
+        'source_filenames': (
+            'js/main/models.coffee',
+            'js/main/crud.coffee',
+        ),
+        'output_filename': 'js/main_crud.js',
     },
     'less': {
         'source_filenames': (

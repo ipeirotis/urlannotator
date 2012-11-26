@@ -799,7 +799,7 @@ class JobResource(OwnerModelResource):
                 self.wrap_view('updates_feed'),
                 name='api_job_updates_feed'),
             url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/'
-                r'worker/(?P<worker_id>[^/]+)/$' % self._meta.resource_name,
+                r'worker/(?P<worker>.*)$' % self._meta.resource_name,
                 self.wrap_view('worker'),
                 name='api_job_worker'),
             url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/btm/'
@@ -817,7 +817,13 @@ class JobResource(OwnerModelResource):
         self.method_check(request, allowed=['get'])
         job_id = kwargs.get('job_id', 0)
         job_id = sanitize_positive_int(job_id)
-        worker_id = kwargs.get('worker_id', 0)
+        worker_id = kwargs.get('worker', '')
+        wr = WorkerJobAssociationResource()
+        if worker_id == 'schema/':
+            return wr.get_schema(request)
+        elif worker_id == '':
+            return wr.get_list(request, job_id=job_id)
+
         worker_id = sanitize_positive_int(worker_id)
 
         return self.create_response(
@@ -942,27 +948,48 @@ class WorkerJobAssociationResource(resources.ModelResource):
     start_time = fields.DateTimeField(attribute='started_on')
     hours_spent = fields.DecimalField(attribute='worked_hours')
     worker = fields.ForeignKey(WorkerResource, 'worker', full=True)
-    urls_collected = fields.IntegerField()
-    votes_added = fields.IntegerField()
+    urls_collected = fields.IntegerField(title='Urls collected')
+    votes_added = fields.IntegerField(title='Votes added')
+    name = fields.CharField(title='Name')
+    id = fields.IntegerField(attribute='id', title=' ')
 
     class Meta:
         resource_name = 'worker_association'
         list_allowed_methods = ['get', ]
-        per_page = 10
+        per_page = [10, 20, 50, 100, 200]
         queryset = WorkerJobAssociation.objects.all()
-        ordering = ['id']
-        fields = ['worker', 'job']
+        fields = ['id', 'name', 'urls_collected', 'votes_added']
 
     def apply_authorization_limits(self, request, obj_list):
         obj_list = super(WorkerJobAssociationResource, self).\
             apply_authorization_limits(request, obj_list)
         return obj_list.filter(job__account__user=request.user)
 
+    def dehydrate_name(self, bundle):
+        return bundle.obj.worker.external_id
+
     def dehydrate_urls_collected(self, bundle):
         return bundle.obj.get_urls_collected()
 
     def dehydrate_votes_added(self, bundle):
         return bundle.obj.get_votes_added()
+
+    def obj_get_list(self, request, job_id=None, **kwargs):
+        objs = super(WorkerJobAssociationResource, self).obj_get_list(
+                request=request, **kwargs)
+        print job_id, objs
+        if job_id is None:
+            return objs
+
+        job_id = sanitize_positive_int(job_id)
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(request,
+                {'error': 'Wrong job.'},
+                response_class=HttpNotFound)
+
+        return objs.filter(job=job)
 
 
 class SampleResource(ModelResource):

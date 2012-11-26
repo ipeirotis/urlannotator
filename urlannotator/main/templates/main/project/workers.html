@@ -20,8 +20,8 @@
       <div class="table-container-anno1">
         <h3>Workers stats</h3>
         <div class="table-wrapper">
-          <table class="table">
-            <thead>
+          <div id="workers-table">
+            <!-- <thead>
               <tr>
                 <th style="width:14px;"><input type="checkbox" id="check-all" onclick="$('#pending_bonus input').attr('checked', this.checked);"></th>
                 <th>Worker name</th>
@@ -52,8 +52,8 @@
               {% endif %}
             </tbody>
             {% csrf_token %}
-
-          </table>
+ -->
+          </div>
         </div>
       </div>
 
@@ -69,6 +69,11 @@
 
 {% block javascript %}
 {{ block.super }}
+<script type="text/javascript">
+var job_id = {{project.id}};
+</script>
+<!-- {% compressed_js "crud" %} -->
+{% compressed_js "workers" %}
 <script type="text/javascript">
 
 var csrftoken;

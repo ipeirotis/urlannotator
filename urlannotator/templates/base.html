@@ -29,6 +29,8 @@
             {% compressed_css 'base' %}
         {% endblock %}
             {% compressed_css 'urlannotator-responsive' %}
+        {% compressed_js 'core' %}
+        {% compressed_js 'crud' %}
 
     </head>
     <body class="{% block body-class %}{% endblock %}">
@@ -134,7 +136,6 @@
 
         <!-- JavaScript at the bottom for fast page loading -->
         {% block javascript %}
-            {% compressed_js 'core' %}
             <script type="text/javascript">
               $('#loginDiv').bind('click', function (e) { e.stopPropagation() })
             </script>

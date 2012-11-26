@@ -59,6 +59,12 @@ div.alert {
 div.alert form {
   margin-bottom: 0px;
 }
+div.update-box span {
+  overflow: hidden;
+  width: 200px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 div.status-draft {
   background-color: #e0b25d;
   border: 1px solid #d89e32;
