@@ -4,7 +4,8 @@ from django.db import models
 from tenclouds.django.jsonfield.fields import JSONField
 
 from urlannotator.main.models import Job
-from urlannotator.logging.settings import log_config_get, generate_log_types
+from urlannotator.logging.settings import (log_config_get, generate_log_types,
+    user_visible_types)
 from urlannotator.logging.settings import (LONG_ACTION_TRAINING, long_single,
     long_plural)
 
@@ -84,8 +85,9 @@ class LogManager(models.Manager):
             Returns all unread logs for user.
         """
         jobs = user.get_profile().job_set.all()
-        entries = self.filter(job__in=jobs, read=False)
-        res = [entry for entry in entries if entry.is_visible_to_users()]
+        entries = self.filter(job__in=jobs, read=False,
+            log_type__in=user_visible_types()).values('id')
+        res = list(entries)
         entries.update(read=True)
         return res
 
@@ -103,8 +105,9 @@ class LogManager(models.Manager):
         else:
             logs = self.all().order_by('-id')
 
-        recent_list = [log for log in logs
-            if (not user_visible or log.is_visible_to_users())]
+        recent_list = logs
+        if user_visible:
+            recent_list = recent_list.filter(log_type__in=user_visible_types())
 
         if num:
             return recent_list[:num]

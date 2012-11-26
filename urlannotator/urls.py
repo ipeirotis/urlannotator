@@ -4,7 +4,8 @@ from django.contrib import admin
 from tastypie.api import Api
 
 from urlannotator.main.api.resources import (JobResource, SampleResource,
-    VoteResource, AdminResource, BeatTheMachineResource)
+    VoteResource, AdminResource, BeatTheMachineResource,
+    WorkerJobAssociationResource, WorkerResource)
 
 admin.autodiscover()
 
@@ -14,6 +15,8 @@ v1_api.register(SampleResource())
 v1_api.register(VoteResource())
 v1_api.register(AdminResource())
 v1_api.register(BeatTheMachineResource())
+v1_api.register(WorkerJobAssociationResource())
+v1_api.register(WorkerResource())
 
 
 def bad(request):

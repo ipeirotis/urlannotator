@@ -640,9 +640,9 @@ class Job(models.Model):
 
     @cached
     def _get_top_workers(self, num, cache):
-        workers = self.get_workers()
+        workers = list(self.workerjobassociation_set.all())
         workers.sort(
-            key=lambda w: -w.get_urls_collected_count_for_job(self)
+            key=lambda w: -w.get_urls_collected()
         )
 
         workers = workers[:num]
@@ -659,7 +659,7 @@ class Job(models.Model):
         key = 'job-%d-top-workers' % self.id
         return self._get_top_workers(cache_key=key, cache=cache, num=3)
 
-    def get_cost(self, cache=False):
+    def get_cost(self, cache=True):
         """
             Returns amount of money the job has costed so far.
 
@@ -1442,6 +1442,14 @@ class WorkerJobAssociation(models.Model):
 
     def get_estimated_quality(self):
         return self.data.get('estimated_quality', 0)
+
+    def get_urls_collected(self, cache=True):
+        return self.worker.get_urls_collected_count_for_job(job=self.job,
+            cache=cache)
+
+    def get_votes_added(self, cache=True):
+        return self.worker.get_votes_added_count_for_job(job=self.job,
+            cache=cache)
 
 
 class GoldSample(models.Model):

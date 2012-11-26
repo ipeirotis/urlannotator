@@ -196,6 +196,22 @@ def log_config_get(log_type, attrs):
     return value
 
 
+def is_type_user_visible(log_type):
+    return log_config_get(log_type, ['Show_users'])
+
+
+user_visible = None
+
+
+def user_visible_types():
+    global user_visible
+    if user_visible is None:
+        user_visible = [log_id for log_id, log in log_config.iteritems()
+        if is_type_user_visible(log_id)]
+    print user_visible
+    return user_visible
+
+
 def generate_log_types():
     """
         Generates a list of tuples (log_id, log_text) and returns it.

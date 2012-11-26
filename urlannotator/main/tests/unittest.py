@@ -8,7 +8,6 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core import mail
-from tastypie.exceptions import ImmediateHttpResponse
 
 from social_auth.models import UserSocialAuth
 
@@ -663,8 +662,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         resp = self.c.get('/api/v1/job/?format=json', follow=True)
 
         array = json.loads(resp.content)
-        self.assertIn('meta', array)
-        self.assertEqual(array['meta']['total_count'], 1)
+        self.assertEqual(array['total'], 1)
 
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
             follow=True)
@@ -696,9 +694,9 @@ class ApiTests(ToolsMockedMixin, TestCase):
             % (self.api_url, 'job/1/feed/'), follow=True)
 
         array = json.loads(resp.content)
-        self.assertIn('entries', array)
-        self.assertIn('count', array)
-        count = array['count']
+        self.assertIn('objects', array)
+        self.assertIn('total', array)
+        count = array['total']
         self.assertTrue(count > 0)
 
         u = User.objects.create_user(username='test2', password='!')
@@ -829,6 +827,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.assertEqual(len(array), 1)
 
     def testTools(self):
+        from tastypie.exceptions import ImmediateHttpResponse
         num = '0'
         self.assertEqual(sanitize_positive_int(num), 0)
 
@@ -859,23 +858,6 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.assertEqual(res['count'], 10)
         self.assertEqual(res['offset'], 10)
         self.assertEqual(res['limit'], 20)
-
-    def testAlertResource(self):
-        self.c.login(username='testing', password='test')
-        Job.objects.create_active(
-            account=self.user.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
-        )
-
-        log = LogEntry.objects.all()[:1][0]
-        res = AlertResource().raw_detail(log=log)
-        self.assertEqual(res['id'], log.id)
-        self.assertEqual(res['type'], log.log_type)
-        self.assertEqual(res['job_id'], log.job_id)
-        # self.assertEqual(res['date'], log.date.strftime('%Y-%m-%d %H:%M:%S'))
-        self.assertEqual(res['single_text'], log.get_single_text())
-        self.assertEqual(res['plural_text'], log.get_plural_text())
-        self.assertEqual(res['box'], log.get_box())
 
     def testClassifiedSampleResource(self):
         self.c.login(username='testing', password='test')
@@ -924,13 +906,13 @@ class ApiTests(ToolsMockedMixin, TestCase):
         )
 
         w = Worker.objects.get_tagasauris(worker_id='1')
-        res = self.c.get('%sjob/%s/worker/%s/?format=json'
-            % (self.api_url, job.id, w.id))
+        wja = w.workerjobassociation_set.filter(job=job)[0]
+        res = self.c.get('%sworker_association/%s/?format=json'
+            % (self.api_url, wja.id))
 
         res = json.loads(res.content)
-        self.assertEqual(res['earned'], 0)
         self.assertEqual(res['hours_spent'], '0')
-        self.assertEqual(res['id'], w.id)
+        self.assertEqual(res['worker']['id'], '1')
         self.assertEqual(res['urls_collected'], 1)
         self.assertEqual(res['votes_added'], 0)
         self.assertIn('start_time', res)
@@ -956,7 +938,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         self.assertEqual(resp.status_code, 200)
         array = json.loads(resp.content)
-        self.assertEqual(array['total_count'], 0)
+        self.assertEqual(array['total'], 0)
 
         job = Job.objects.create_active(
             account=self.user.get_profile(),
@@ -967,8 +949,8 @@ class ApiTests(ToolsMockedMixin, TestCase):
 
         self.assertEqual(resp.status_code, 200)
         array = json.loads(resp.content)
-        self.assertTrue(array['total_count'] > 0)
-        self.assertEqual(len(array['entries']), array['count'])
+        self.assertTrue(array['total'] > 0)
+        self.assertTrue(len(array['objects']) <= array['total'])
 
         resp = self.c.get('%sadmin/job/%d/stop_sample_gathering/?format=json' % (self.api_url, job.id))
 

@@ -301,7 +301,7 @@ function updateAlerts(url){
       val['active'] = false;
     })
 
-    $.each(data['entries'], function(idx, val){
+    $.each(data['objects'], function(idx, val){
       box = val['box'];
       new_alerts.push(new alert_view(box['Image_url'], box['By_id'], box['By'], box['Title'], box['Text'], {{project.id}}, val['timedelta']));
       if (!(box['Image_url'] in image_cache)){
@@ -332,7 +332,7 @@ function updateTopWorkers(workers){
     new_worker = new worker();
     new_worker.id(val['id']);
     new_worker.urls_collected(val['urls_collected']);
-    new_worker.name(val['name']);
+    new_worker.name(val['worker']['name']);
     new_worker.hours_spent(val['hours_spent']);
     new_worker.votes_added(val['votes_added']);
     new_worker.earned(val['earned']);

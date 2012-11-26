@@ -6,16 +6,19 @@ from django.conf.urls import url
 from django.conf import settings
 from django.middleware.csrf import _sanitize_token, constant_time_compare
 from django.core.urlresolvers import reverse
-from itertools import chain
+from django.core.exceptions import ObjectDoesNotExist
+from tenclouds.crud import fields, resources
+from tenclouds.crud.paginator import Paginator
 
 from tastypie.resources import ModelResource, Resource
 from tastypie.authentication import Authentication
+from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse
-from tastypie.http import HttpUnauthorized, HttpNotFound, HttpBadRequest
+from tastypie.http import HttpNotFound, HttpBadRequest
 from django.utils.http import same_origin
 
 from urlannotator.main.models import (Job, Sample, Worker, LABEL_BROKEN,
-    LABEL_YES, LABEL_NO, make_label)
+    LABEL_YES, LABEL_NO, make_label, WorkerJobAssociation)
 from urlannotator.classification.models import ClassifiedSample
 from urlannotator.crowdsourcing.models import (SampleMapping,
     WorkerQualityVote, BeatTheMachineSample)
@@ -211,23 +214,9 @@ class AdminResource(Resource):
                        Defaults to 0.
         """
         self.is_authenticated(request)
-        alerts = LogEntry.objects.recent_for_job(num=0)
+        res = AlertResource()
+        return res.get_list(request, **kwargs)
 
-        limit = request.GET.get('limit', 10)
-        offset = request.GET.get('offset', 0)
-
-        page = reverse(
-            'api_admin_updates',
-            kwargs={
-                'api_name': 'v1',
-                'resource_name': 'admin',
-            }
-        )
-
-        resp = paginate_list(alerts, limit, offset, page)
-        resp['entries'] = map(self.alert_resource.raw_detail, resp['entries'])
-
-        return self.create_response(request, resp)
 
 
 class ClassifiedSampleResource(Resource):
@@ -512,90 +501,223 @@ ALERTS_DEFAULT_LIMIT = 20
 ALERTS_DEFAULTS_OFFSET = 0
 
 
-class AlertResource(Resource):
+class AlertResource(resources.ModelResource):
     """
         Resource allowing API access to Jobs alerts.
+
+        `id` - Integer. Alert's id.
+        `type` - Integer. Alert's type.
+        `job_id` - Integer. Alert's job's id.
+        `timedelta` - Integer. Difference between current time and time of
+                      creation.
+        `single_text` - String. Text of the alert in singular form.
+        `plural_text` - String. Text of the alert in plural form.
+        `box` - Dictionary. Contains data about alert's update box
+                template.
+            `Title` - String. Box's title.
+            `Text` - String. Box's text.
+            `Image_url` - String. Box's image that's displayed on the left
+                          hand side.
+            `By` - String. Optional. Name of the worker that has caused
+                   this event. Can be an empty string, and should be
+                   considered as empty in that case.
+            `By_id` - Integer. Optional. Id of the worker that has caused
+                      this event. Can be 0, or empty, and should be
+                      considered as empty in that case.
+            `Job_id` - Integer. Alert's job's id.
     """
-    def raw_detail(self, log):
-        """
-            Returns a raw JSON form of AlertResource.
+    id = fields.IntegerField(attribute='id')
+    type = fields.IntegerField(attribute='log_type')
+    job = fields.ForeignKey('urlannotator.main.api.resources.JobResource', 'job')
+    job_id = fields.IntegerField(attribute='job_id')
+    timedelta = fields.IntegerField()
+    single_text = fields.CharField()
+    plural_text = fields.CharField()
+    box = fields.DictField()
 
-            `id` - Integer. Alert's id.
-            `type` - Integer. Alert's type.
-            `job_id` - Integer. Alert's job's id.
-            `timedelta` - Integer. Difference between current time and time of
-                          creation.
-            `single_text` - String. Text of the alert in singular form.
-            `plural_text` - String. Text of the alert in plural form.
-            `box` - Dictionary. Contains data about alert's update box
-                    template.
-                `Title` - String. Box's title.
-                `Text` - String. Box's text.
-                `Image_url` - String. Box's image that's displayed on the left
-                              hand side.
-                `By` - String. Optional. Name of the worker that has caused
-                       this event. Can be an empty string, and should be
-                       considered as empty in that case.
-                `By_id` - Integer. Optional. Id of the worker that has caused
-                          this event. Can be 0, or empty, and should be
-                          considered as empty in that case.
-                `Job_id` - Integer. Alert's job's id.
-        """
-        delta = datetime.datetime.now(pytz.utc) - log.date
-        return {
-            'id': log.id,
-            'type': log.log_type,
-            'job_id': log.job_id,
-            'timedelta': round(delta.total_seconds()),
-            'single_text': log.get_single_text(),
-            'plural_text': log.get_plural_text(),
-            'box': log.get_box(),
-        }
+    class Meta:
+        authentication = SessionAuthentication()
+        per_page = [4, 10, 20, 100, 200]
+        paginator = Paginator
+        ordering = ['date']
+        fields = ['id', 'job_id']
+
+    def apply_authorization_limits(self, request, object_list):
+        object_list = super(JobFeedResource, self).apply_authorization_limits(
+            request, object_list)
+        if not request.user.is_superuser:
+            return object_list.filter(job__account=request.user.get_profile())
+        return object_list
+
+    def dehydrate_box(self, bundle):
+        return bundle.obj.get_box()
+
+    def dehydrate_plural_text(self, bundle):
+        return bundle.obj.get_plural_text()
+
+    def dehydrate_single_text(self, bundle):
+        return bundle.obj.get_single_text()
+
+    def dehydrate_timedelta(self, bundle):
+        delta = datetime.datetime.now(pytz.utc) - bundle.obj.date
+        return round(delta.total_seconds())
+
+    def obj_get_list(self, request, job_id=0, **kwargs):
+        if job_id == 0 and request.user.is_superuser:
+            alerts = LogEntry.objects.recent_for_job(
+                num=0,
+            )
+            return alerts
+
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong parameters.'},
+                response_class=HttpBadRequest,
+            )
+
+        alerts = LogEntry.objects.recent_for_job(
+            job=job,
+            num=0,
+        )
+        return alerts
 
 
-class WorkerResource(Resource):
+class WorkerResource(resources.ModelResource):
     """
         Resource allowing API access to Workers.
     """
-    def raw_detail(self, worker_id, job_id):
-        """
-            Returns worker's details in regards to given job.
+    id = fields.CharField(attribute='external_id')
+    name = fields.CharField()
 
-            Response format:
-            `id` - Integer. Worker's id.
-            `urls_collected` - Integer. Number of urls collected.
-            `hours_spent` - String. Decimal number of hours spent in the job.
-            `votes_added` - Integer. Number of votes worker has done.
-            `earned` - Float. Amount of money worker has earned in job.
-            `start_time` - String. Work start time in format %Y-%m-%d %H:%M:%S
-                           as of datetime.strftime().
-            `name` - String. Name of the worker.
-        """
-        worker = Worker.objects.get(id=worker_id)
-        job = Job.objects.get(id=job_id)
+    class Meta:
+        resource_name = 'worker'
+        list_allowed_methods = ['get', ]
+        per_page = 10
+        queryset = Worker.objects.all()
+        ordering = ['id']
+        fields = ['id']
 
-        start_time = worker.get_job_start_time(job)
-        return {
-            'id': worker.id,
-            'urls_collected': worker.get_urls_collected_count_for_job(job, cache=True),
-            'hours_spent': worker.get_hours_spent_for_job(job),
-            'votes_added': worker.get_votes_added_count_for_job(job, cache=True),
-            'earned': worker.get_earned_for_job(job),
-            'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
-            'name': worker.get_name(cache=True),
-        }
+    def dehydrate_name(self, bundle):
+        return bundle.obj.get_name()
 
 
-class JobResource(ModelResource):
+class JobFeedResource(Resource):
+
+    class Meta:
+        authentication = SessionAuthentication()
+        per_page = 10
+        paginator = Paginator
+        list_allowed_methods = ['get', ]
+
+    def apply_authorization_limits(self, request, object_list):
+        object_list = super(JobFeedResource, self).apply_authorization_limits(
+            request, object_list)
+        if not request.user.is_superuser:
+            return object_list.filter(job__account=request.user.get_profile())
+        return object_list
+
+    def obj_get(self, request, pk, *args, **kwargs):
+        print pk
+        print args, kwargs
+        return {}
+
+    def obj_get_list(self, request, job_id, *args, **kwargs):
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong parameters.'},
+                response_class=HttpBadRequest,
+            )
+
+        alerts = LogEntry.objects.recent_for_job(
+            job=job,
+            num=0,
+        )
+        return alerts
+
+
+class OwnerAuthorization(Authorization):
+    def __init__(self, attribute, *args, **kwargs):
+        self.attributes = attribute.split('.')
+        super(Authorization, self).__init__(*args, **kwargs)
+
+    def is_authorized(self, request, object=None):
+        if request.user.is_superuser or object is None:
+            return True
+
+        obj = object
+        for attr in self.attributes:
+            obj = getattr(obj, attr)
+
+        return obj == request.user
+
+
+class OwnerModelResource(resources.ModelResource):
+    def cached_obj_get(self, request, **kwargs):
+        bundle = super(OwnerModelResource, self).cached_obj_get(
+            request=request, **kwargs)
+
+        if self._meta.authorization.is_authorized(
+            request=request, object=bundle):
+            return bundle
+
+        raise ObjectDoesNotExist()
+
+
+class JobResource(OwnerModelResource):
     """
         Resource allowing API access to Jobs
+
+        Response format:
+        `id` - Integer. Job's id.
+        `title` - String. Job's title.
+        `description` - String. Job's description.
+        `urls_to_collect` - Integer. URLs to collected defined at creation.
+        `urls_collected` - Integer. URLs already collected.
+        `classifier` - String. URL classifier can be queried from.
+        `feed` - String. URL updates feed can be queried from.
+        `no_of_workers` - Integer. Number of workers in the job.
+        `cost` - String. Actual decimal cost of the job.
+        `budget` - String. Decimal job's budget.
+        `progress` - Integer. Percentage of job's completion.
+        `hours_spent` - Integer. No. of hours workers have spent on the job.
+        `sample_gathering_url` - String. URL people can gather samples to.
+                                 (Only Own Workforce jobs)
+        `sample_voting_url` - String. URL people can vote on sample labels.
+                              (Only Own Workforce jobs)
     """
+    urls_to_collect = fields.IntegerField(attribute='no_of_urls')
+    urls_collected = fields.IntegerField(attribute='collected_urls')
+    no_of_workers = fields.IntegerField()
+    cost = fields.DecimalField()
+    progress = fields.IntegerField()
+    hours_spent = fields.IntegerField()
+    sample_gathering_url = fields.CharField()
+    sample_voting_url = fields.CharField()
+    votes_gathered = fields.IntegerField()
+    progress_urls = fields.IntegerField()
+    progress_votes = fields.IntegerField()
+    newest_votes = fields.ListField()
+    top_workers = fields.ListField()
+    feed = fields.CharField()
+
     class Meta:
         queryset = Job.objects.all()
         resource_name = 'job'
         list_allowed_methods = ['get', 'post']
         authentication = SessionAuthentication()
+        authorization = OwnerAuthorization(attribute='account.user')
         include_absolute_url = True
+        fields = ['id', 'title', 'description', 'budget']
 
     def __init__(self, *args, **kwargs):
         self.classifier_resource = ClassifierResource()
@@ -604,7 +726,56 @@ class JobResource(ModelResource):
         super(JobResource, self).__init__(*args, **kwargs)
 
     def apply_authorization_limits(self, request, object_list):
-        return object_list.filter(account=request.user.get_profile())
+        object_list = super(JobResource, self).apply_authorization_limits(
+            request, object_list)
+        if not request.user.is_superuser:
+            return object_list.filter(account=request.user.get_profile())
+        return object_list
+
+    def dehydrate_feed(self, bundle):
+        return self._build_reverse_url('api_job_updates_feed', kwargs={
+            'api_name': 'v1',
+            'resource_name': 'job',
+            'job_id': bundle.obj.id,
+        })
+
+    def dehydrate_top_workers(self, bundle):
+        wr = WorkerJobAssociationResource()
+        worker_list = []
+        for assoc in bundle.obj.get_top_workers(cache=True):
+            bundle = wr.build_bundle(obj=assoc)
+            worker_list.append(wr.full_dehydrate(bundle))
+        return worker_list
+
+    def dehydrate_newest_votes(self, bundle):
+        return bundle.obj.get_newest_votes(cache=True)
+
+    def dehydrate_progress_votes(self, bundle):
+        return bundle.obj.get_progress_votes(cache=True)
+
+    def dehydrate_progress_urls(self, bundle):
+        return bundle.obj.get_progress_urls(cache=True)
+
+    def dehydrate_votes_gathered(self, bundle):
+        return bundle.obj.get_votes_gathered(cache=True)
+
+    def dehydrate_sample_gathering_url(self, bundle):
+        return bundle.obj.get_sample_gathering_url()
+
+    def dehydrate_sample_voting_url(self, bundle):
+        return bundle.obj.get_voting_url()
+
+    def dehydrate_hours_spent(self, bundle):
+        return bundle.obj.get_hours_spent(cache=True)
+
+    def dehydrate_progress(self, bundle):
+        return bundle.obj.get_progress(cache=True)
+
+    def dehydrate_cost(self, bundle):
+        return bundle.obj.get_cost(cache=True)
+
+    def dehydrate_no_of_workers(self, bundle):
+        return bundle.obj.get_no_of_workers()
 
     def override_urls(self):
         return [
@@ -644,7 +815,6 @@ class JobResource(ModelResource):
             Returns worker's details.
         """
         self.method_check(request, allowed=['get'])
-        self._check_job(request, **kwargs)
         job_id = kwargs.get('job_id', 0)
         job_id = sanitize_positive_int(job_id)
         worker_id = kwargs.get('worker_id', 0)
@@ -652,7 +822,7 @@ class JobResource(ModelResource):
 
         return self.create_response(
             request,
-            self.worker_resource.raw_detail(
+            self.worker_resource.get_detail(request,
                 job_id=job_id,
                 worker_id=worker_id,
             )
@@ -660,7 +830,6 @@ class JobResource(ModelResource):
 
     def btm(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
-        self._check_job(request, **kwargs)
         job_id = kwargs.get('job_id', 0)
         job_id = sanitize_positive_int(job_id)
 
@@ -688,7 +857,6 @@ class JobResource(ModelResource):
 
     def bonus(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
-        self._check_job(request, **kwargs)
         job_id = kwargs.get('job_id', 0)
         job_id = sanitize_positive_int(job_id)
 
@@ -714,91 +882,7 @@ class JobResource(ModelResource):
             {'status': 'ok'},
         )
 
-    def get_detail(self, request, **kwargs):
-        """
-            Returns details of given job.
-
-            Response format:
-            `id` - Integer. Job's id.
-            `title` - String. Job's title.
-            `description` - String. Job's description.
-            `urls_to_collect` - Integer. URLs to collected defined at creation.
-            `urls_collected` - Integer. URLs already collected.
-            `classifier` - String. URL classifier can be queried from.
-            `feed` - String. URL updates feed can be queried from.
-            `no_of_workers` - Integer. Number of workers in the job.
-            `cost` - String. Actual decimal cost of the job.
-            `budget` - String. Decimal job's budget.
-            `progress` - Integer. Percentage of job's completion.
-            `hours_spent` - Integer. No. of hours workers have spent on the job.
-            `sample_gathering_url` - String. URL people can gather samples to.
-                                     (Only Own Workforce jobs)
-            `sample_voting_url` - String. URL people can vote on sample labels.
-                                  (Only Own Workforce jobs)
-        """
-        self.method_check(request, allowed=['get'])
-        kwargs['job_id'] = kwargs['pk']
-        self._check_job(request, **kwargs)
-        job_id = kwargs.get('job_id', 0)
-        job_id = sanitize_positive_int(job_id)
-
-        try:
-            job = Job.objects.get(id=job_id)
-        except Job.DoesNotExist:
-            return self.create_response(
-                request,
-                {'error': 'Wrong parameters.'},
-                response_class=HttpNotFound,
-            )
-
-        top_workers = job.get_top_workers(cache=True)
-        top_workers = [self.worker_resource.raw_detail(job_id=job.id,
-            worker_id=x.id) for x in top_workers]
-
-        newest_votes = job.get_newest_votes(cache=True)
-
-        urls_collected = job.get_urls_collected(cache=True)
-        no_of_workers = job.get_no_of_workers()
-        progress = job.get_progress(cache=True)
-        progress_urls = job.get_progress_urls(cache=True)
-        progress_votes = job.get_progress_votes(cache=True)
-        votes_gathered = job.get_votes_gathered(cache=True)
-        hours_spent = job.get_hours_spent(cache=True)
-
-        response = {
-            'id': job.id,
-            'title': job.title,
-            'description': job.description,
-            'urls_to_collect': job.no_of_urls,
-            'urls_collected': urls_collected,
-            # 'classifier': reverse('api_classifier', kwargs={
-            #     'api_name': 'v1',
-            #     'resource_name': 'job',
-            #     'job_id': job_id,
-            # }),
-            'feed': '/api/v1/job/%d/feed/' % job_id,
-            'no_of_workers': no_of_workers,
-            'cost': job.get_cost(cache=True),
-            'budget': job.budget,
-            'progress': progress,
-            'hours_spent': hours_spent,
-            'top_workers': top_workers,
-            'newest_votes': newest_votes,
-            'progress_urls': progress_urls,
-            'progress_votes': progress_votes,
-            'votes_gathered': votes_gathered,
-        }
-
-        if job.is_own_workforce():
-            additional = {
-                'sample_gathering_url': job.get_sample_gathering_url(),
-                'sample_voting_url': job.get_voting_url(),
-            }
-            response = dict(chain(response.iteritems(), additional.iteritems()))
-
-        return self.create_response(request, response)
-
-    def updates_feed(self, request, **kwargs):
+    def updates_feed(self, request, job_id, **kwargs):
         """
             Returns updates feed for given job.
 
@@ -816,82 +900,14 @@ class JobResource(ModelResource):
                        oldest.
         """
         self.method_check(request, allowed=['get'])
-        self._check_job(request, **kwargs)
-
-        limit = request.GET.get('limit', ALERTS_DEFAULT_LIMIT)
-        offset = request.GET.get('offset', ALERTS_DEFAULTS_OFFSET)
-
-        job_id = kwargs.get('job_id', 0)
-        job_id = sanitize_positive_int(job_id)
-
-        try:
-            job = Job.objects.get(id=job_id)
-        except Job.DoesNotExist:
-            return self.create_response(
-                request,
-                {'error': 'Wrong parameters.'},
-                response_class=HttpBadRequest,
-            )
-
-        alerts = LogEntry.objects.recent_for_job(
-            job=job,
-            num=0,
-        )
-
-        base_url = reverse(
-            "api_job_updates_feed",
-            kwargs={
-                'api_name': 'v1',
-                'resource_name': 'job',
-                'job_id': job_id,
-            }
-        )
-
-        resp = paginate_list(
-            entry_list=alerts,
-            limit=limit,
-            offset=offset,
-            page=base_url,
-        )
-        alerts = map(self.alert_resource.raw_detail, resp['entries'])
-        resp['entries'] = alerts
-
-        return self.create_response(request, resp)
-
-    def _check_job(self, request, **kwargs):
-        """
-            Checks if user can access requested job.
-        """
-        self.is_authenticated(request)
-        job_id = kwargs.get('job_id', None)
-        job_id = sanitize_positive_int(job_id)
-
-        try:
-            job = Job.objects.get(id=kwargs['job_id'])
-        except Job.DoesNotExist:
-            raise ImmediateHttpResponse(
-                HttpNotFound(json.dumps({'error': 'Wrong job.'}))
-            )
-
-        if request.user.is_authenticated():
-            account = request.user.get_profile()
-            if job.account != account and not request.user.is_superuser:
-                raise ImmediateHttpResponse(
-                    HttpNotFound(json.dumps({'error': 'Wrong job.'}))
-                )
-        else:
-            raise ImmediateHttpResponse(
-                HttpUnauthorized(json.dumps({'error': 'Wrong job.'}))
-            )
-
-        return None
+        res = AlertResource()
+        return res.get_list(request, job_id=job_id, **kwargs)
 
     def classifier_history(self, request, **kwargs):
         """
             Returns classifier's classification history.
         """
         self.method_check(request, allowed=['get'])
-        self._check_job(request, **kwargs)
 
         return self.classifier_resource.classify_history(request, **kwargs)
 
@@ -900,7 +916,6 @@ class JobResource(ModelResource):
             Returns classification status.
         """
         self.method_check(request, allowed=['get'])
-        self._check_job(request, **kwargs)
         return self.classifier_resource.classify_status(request, **kwargs)
 
     def classifier_classify(self, request, **kwargs):
@@ -908,7 +923,6 @@ class JobResource(ModelResource):
             Returns classifier details for given job.
         """
         self.method_check(request, allowed=['post'])
-        self._check_job(request, **kwargs)
 
         return self.classifier_resource.classify(request, **kwargs)
 
@@ -917,9 +931,38 @@ class JobResource(ModelResource):
             Returns classifier details for given job.
         """
         self.method_check(request, allowed=['get'])
-        self._check_job(request, **kwargs)
 
         return self.classifier_resource.get_detail(request, **kwargs)
+
+
+class WorkerJobAssociationResource(resources.ModelResource):
+    """
+        Resource allowing API access to worker's data inside a job.
+    """
+    start_time = fields.DateTimeField(attribute='started_on')
+    hours_spent = fields.DecimalField(attribute='worked_hours')
+    worker = fields.ForeignKey(WorkerResource, 'worker', full=True)
+    urls_collected = fields.IntegerField()
+    votes_added = fields.IntegerField()
+
+    class Meta:
+        resource_name = 'worker_association'
+        list_allowed_methods = ['get', ]
+        per_page = 10
+        queryset = WorkerJobAssociation.objects.all()
+        ordering = ['id']
+        fields = ['worker', 'job']
+
+    def apply_authorization_limits(self, request, obj_list):
+        obj_list = super(WorkerJobAssociationResource, self).\
+            apply_authorization_limits(request, obj_list)
+        return obj_list.filter(job__account__user=request.user)
+
+    def dehydrate_urls_collected(self, bundle):
+        return bundle.obj.get_urls_collected()
+
+    def dehydrate_votes_added(self, bundle):
+        return bundle.obj.get_votes_added()
 
 
 class SampleResource(ModelResource):
