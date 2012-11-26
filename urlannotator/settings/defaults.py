@@ -417,8 +417,6 @@ TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 # NOTE 1: Tagasauris account must have disabled "billings" option.
 # NOTE 2: Tagasauris Workflows must have set "external" flag.
 
-TAGASAURIS_LOGIN = 'urlannotator'
-TAGASAURIS_PASS = 'urlannotator'
 TAGASAURIS_HOST = 'http://devel.tagasauris.com'  # Mind updating XS_SHARING_*
 TAGASAURIS_USE_SANDBOX = True
 
