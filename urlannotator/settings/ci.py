@@ -7,12 +7,6 @@ from defaults import *
 from imagescale2 import *
 from imagescale2 import DEF_PORT as IMAGESCALE_DEF_PORT
 
-try:
-    from ci_config import *
-except Exception:
-    from django.core.exceptions import ImproperlyConfigured
-    raise ImproperlyConfigured
-
 JOB_DEFAULT_CLASSIFIER = 'Classifier247'
 TWENTYFOUR_DEFAULT_CLASSIFIER = 'GooglePredictionClassifier'
 
