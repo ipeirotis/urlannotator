@@ -242,3 +242,6 @@ class BTMBonusPayment(models.Model):
             worker_id=self.worker.external_id,
             amount=self.amount,
             reason='Bonus for Beat The Machine job no %s' % self.job.id)
+
+    def pay_bonus(self):
+        self._pay_tagasauris_bonus()

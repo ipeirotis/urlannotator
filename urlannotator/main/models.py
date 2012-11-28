@@ -1419,6 +1419,16 @@ class Worker(models.Model):
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
         return BeatTheMachineSample.objects.get_btm_unverified(job, self)
 
+    def _send_tagasauris_message(self, subject, content):
+        tc = make_tagapi_client()
+        tc.send_message(
+            worker_id=self.worker.external_id,
+            subject=subject,
+            content=content)
+
+    def send_message(self, subject, content):
+        self._send_tagasauris_message(subject, content)
+
 
 class WorkerJobManager(models.Manager):
     def associate(self, job, worker):
