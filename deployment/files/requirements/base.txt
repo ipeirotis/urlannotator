@@ -25,3 +25,4 @@ django_jenkins
 -e git+git@github.com:10clouds/Troia-Python-Client.git#egg=troia_client
 pytz
 -e git+git@github.com:10clouds/dj-crud.git#egg=dj_crud
+django-extensions

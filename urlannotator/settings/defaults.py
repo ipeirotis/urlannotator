@@ -176,6 +176,18 @@ PROJECT_APPS = (
 
 INSTALLED_APPS = BASE_APPS + PROJECT_APPS
 
+# use django_extensions if available
+try:
+    # very useful utilities, take a look at
+    # http://packages.python.org/django-extensions/
+    __import__("django_extensions")
+
+    INSTALLED_APPS = tuple(list(INSTALLED_APPS) + [
+        'django_extensions',
+    ])
+except ImportError:
+    pass
+
 SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['email', 'username']
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/'
 SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/settings/'
