@@ -108,8 +108,19 @@
             }
 
             this.el.html(this.template());
+
+            this.removeDuplicateTagasaurisBinding();
+
             $(".instructions").append($(".additional-instruction").html());
             this.renderPartial();
+        },
+
+        removeDuplicateTagasaurisBinding: function () {
+            // Remove this class so we can store data in one place with submit
+            // binded properly by Tagasauris.
+            this.$(".form-vertical").removeClass("form-vertical");
+            this.$(".question-group").removeClass("question-group");
+            this.$(".validated-urls").removeClass("validated-urls");
         },
 
         renderPartial: function () {
@@ -150,14 +161,14 @@
         },
 
         clearValidatedSamples: function () {
-            this.$(".validated-urls").html("");
+            $(".validated-urls").html("");
         },
 
         prepareValidatedSamples: function () {
             var urls = this.samples.getAdded();
             for (var i = urls.length - 1; i >= 0; i--) {
                 if (urls[i] !== undefined) {
-                    this.$(".validated-urls").append(
+                    $(".validated-urls").append(
                         this.templateValidatedSample({url: urls[i]})
                     );
                 }
@@ -165,7 +176,7 @@
         },
 
         sendValidatedSamples: function () {
-            this.$(".form-vertical").submit();
+            $(".form-vertical").submit();
         }
 
     });

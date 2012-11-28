@@ -1,3 +1,12 @@
+<form class="form-vertical" data-validate="ketchup" style="display: none;">
+<fieldset>
+    <div class="question-group">
+        <h2>btm urls</h2>
+        <div class="validated-urls"></div>
+    </div>
+</fieldset>
+</form>
+
 <div class="additional-instruction" style="display: none;">
     <br><br>
 
@@ -29,34 +38,24 @@
     </div>
 </div>
 
-<form class="form-vertical" data-validate="ketchup"
-<fieldset>
-    <div class="question-group">
+<h2>Enter urls matching description <span class="sample-counter"></span></h2>
 
-    <h2>Enter urls matching description <span class="sample-counter"></span></h2>
+<div style="max-width: 50%; word-wrap: break-word;">
 
+    <h3>You can recieve up to <span class="sample-points">0</span> points for submitted urls</h3>
 
-    <div style="max-width: 50%; word-wrap: break-word;">
-
-        <h3>You can recieve up to <span class="sample-points">0</span> points for submitted urls</h3>
-
-        <div class="controls" >
-            <input class="new-sample" class="input input-xlarge required" type="text" name="sample" >
-        </div>
-
-        <input class="add-new-sample" type="button" value="Add" >
-        <img class="spinner" src="http://buildaclassifier.com/statics/img/spinner.gif" style="display: none;">
-
-        <h3>Accepted urls:</h3>
-        <ul class="samples">
-        </ul>
-
-        <div class="sample-error" style="color: red;"></div>
-
-        <div class="validated-urls" style="display: none;"></div>
-
+    <div class="controls" >
+        <input class="new-sample" class="input input-xlarge required" type="text" name="sample" >
     </div>
 
-    </div>
-</fieldset>
-</form>
+    <input class="add-new-sample" type="button" value="Add" >
+    <img class="spinner" src="http://buildaclassifier.com/statics/img/spinner.gif" style="display: none;">
+
+    <h3>Accepted urls:</h3>
+    <ul class="samples">
+    </ul>
+
+    <div class="sample-error" style="color: red;"></div>
+
+</div>
+

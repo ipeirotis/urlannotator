@@ -26,6 +26,8 @@
                             $(".additional-notification", that.el).html());
                     }
 
+                    that.removeDuplicateTagasaurisBinding();
+
                     that.renderPartial();
                     that.pollPoints();
                 },
@@ -93,6 +95,7 @@
                             sample.min_points = data.min_points;
                             sample.btm_status = data.btm_status;
                             sample.label_probability = data.label_probability;
+                            sample.added = true;
                             that.gathered++;
 
                             var view = new SampleView({model: sample}
