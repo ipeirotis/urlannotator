@@ -229,7 +229,7 @@ def create_btm(api_client, job, topic, description, no_of_urls):
 
     kwargs = workflow_definition(ext_id, job, task_type,
         settings.TAGASAURIS_SURVEY[task_type],
-        settings.TAGASAURIS_GATHER_PRICE,
+        "0.0",
         hit_title="Beat the Machine for \"%s\"",
         workers_per_hit=workers_per_hit,
         topic=topic,
