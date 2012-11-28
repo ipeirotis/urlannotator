@@ -116,7 +116,7 @@ def init_tagasauris_job(job):
 
 def workflow_definition(ext_id, job, task_type, survey_id, price,
         hit_title="%s", workers_per_hit=1, media_per_hit=1,
-        hit_instructions=None, topic=None, description=None):
+        hit_instructions=None, topic=None, description=None, labels=[]):
 
     if hit_instructions is None:
         hit_instructions = job.description if description is None else description
@@ -156,6 +156,7 @@ def workflow_definition(ext_id, job, task_type, survey_id, price,
                 }
             ],
         },
+        "labels": ["URLAnnotator"] + labels
     }
 
 
@@ -233,7 +234,8 @@ def create_btm(api_client, job, topic, description, no_of_urls):
         hit_title="Beat the Machine for \"%s\"",
         workers_per_hit=workers_per_hit,
         topic=topic,
-        description=description)
+        description=description,
+        labels=["BTM", ])
 
     baseurl = TAGASAURIS_CALLBACKS
     templates = baseurl + "/statics/js/templates/tagasauris/"
