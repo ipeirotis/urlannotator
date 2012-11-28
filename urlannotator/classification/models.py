@@ -175,6 +175,10 @@ class ClassifiedSampleCore(models.Model):
     def is_successful(self):
         return self.get_status() == CLASSIFIED_SAMPLE_SUCCESS
 
+    @property
+    def worker(self):
+        return self.get_source_worker()
+
     def get_source_worker(self):
         """
             Returns a worker who has sent this sample.

@@ -88,7 +88,7 @@
               </td>
               <td><a href="{% url project_data_detail project.id sample.id%}">{{sample.url}}</a></td>
               <td>{{sample.added_on|date:"Y-m-d H:i"}}</td>
-              <td class="tiny-col">{{sample.source_val}}</td>
+              <td class="tiny-col">{{sample.worker}}</td>
               <td class="tiny-col">{{sample.sample.get_workers|length}}</td>
               <td class="tiny-col">{{sample.sample.get_yes_votes}} <span class="badge badge-info badge-yes"><i class="icon icon-o"></i></span> {{sample.sample.get_no_votes}} <span class="badge badge-info badge-no"><i class="icon icon-n"></i></span> {{sample.sample.get_broken_votes}} <span class="badge badge-info badge-broken"><i class="icon icon-b"></i></span></td>
               <td>{{sample.get_yes_probability}}% {{sample.get_no_probability}}%</td>
