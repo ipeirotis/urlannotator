@@ -571,34 +571,6 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             follow=True)
         self.assertEqual(resp.status_code, 200)
 
-    def testWorkersView(self):
-        job = Job.objects.create_active(
-            title='test',
-            description='test',
-            account=self.u.get_profile(),
-            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}])
-        )
-        resp = self.c.get(
-            reverse('project_workers_view', args=[job.id]),
-            follow=True
-        )
-        self.assertIn('workers', resp.context)
-        self.assertFalse(resp.context['workers'])
-
-        Worker.objects.create_odesk(external_id='~~97784d8733806815')
-        w = Worker.objects.get_odesk(external_id='~~97784d8733806815')
-        WorkerJobAssociation.objects.associate(
-            job=job,
-            worker=w,
-        )
-        if w:
-            resp = self.c.get(
-                reverse('project_worker_view', args=[job.id, w.id]),
-                follow=True
-            )
-            self.assertIn('worker', resp.context)
-            self.assertTrue(resp.context['worker']['name'])
-
     def testDataView(self):
         job = Job.objects.create_active(
             title='test',

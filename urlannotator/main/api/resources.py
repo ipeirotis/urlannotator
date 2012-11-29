@@ -9,6 +9,7 @@ from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from tenclouds.crud import fields, resources
 from tenclouds.crud.paginator import Paginator
+from tenclouds.crud import actions
 
 from tastypie.resources import ModelResource, Resource
 from tastypie.authentication import Authentication
@@ -622,8 +623,6 @@ class JobFeedResource(Resource):
         return object_list
 
     def obj_get(self, request, pk, *args, **kwargs):
-        print pk
-        print args, kwargs
         return {}
 
     def obj_get_list(self, request, job_id, *args, **kwargs):
@@ -805,24 +804,24 @@ class JobResource(OwnerModelResource):
             url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/btm/'
                 % self._meta.resource_name,
                 self.wrap_view('btm'), name='api_job_btm'),
-            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/bonus/'
-                % self._meta.resource_name,
-                self.wrap_view('bonus'), name='api_job_bonus'),
         ]
 
     def worker(self, request, **kwargs):
         """
             Returns worker's details.
         """
-        self.method_check(request, allowed=['get'])
-        job_id = kwargs.get('job_id', 0)
+        self.method_check(request, allowed=['get', 'post'])
+        job_id = kwargs.pop('job_id', 0)
         job_id = sanitize_positive_int(job_id)
-        worker_id = kwargs.get('worker', '')
+        worker_id = kwargs.pop('worker', '')
         wr = WorkerJobAssociationResource()
         if worker_id == 'schema/':
             return wr.get_schema(request)
         elif worker_id == '':
             return wr.get_list(request, job_id=job_id)
+        elif worker_id == '_actions/':
+            return wr.dispatch_actions(request, job_id=job_id,
+                worker_id=worker_id, **kwargs)
 
         worker_id = sanitize_positive_int(worker_id)
 
@@ -855,33 +854,6 @@ class JobResource(OwnerModelResource):
             sample_id = sanitize_positive_int(sample)
             # TODO: sample_id -> sample
             job.add_btm_verified_sample(sample_id)
-
-        return self.create_response(
-            request,
-            {'status': 'ok'},
-        )
-
-    def bonus(self, request, **kwargs):
-        self.method_check(request, allowed=['post'])
-        job_id = kwargs.get('job_id', 0)
-        job_id = sanitize_positive_int(job_id)
-
-        try:
-            job = Job.objects.get(id=job_id)
-        except Job.DoesNotExist:
-            return self.create_response(
-                request,
-                {'error': 'Wrong parameters.'},
-                response_class=HttpNotFound,
-            )
-
-        workers = request.POST.get('bonus', '[]')
-        workers = json.loads(workers)
-
-        for worker in workers:
-            worker_id = sanitize_positive_int(worker)
-            worker = Worker.objects.get(id=worker_id)
-            BTMBonusPayment.objects.create_for_worker(worker, job)
 
         return self.create_response(
             request,
@@ -950,7 +922,10 @@ class WorkerJobAssociationResource(resources.ModelResource):
     worker = fields.ForeignKey(WorkerResource, 'worker', full=True)
     urls_collected = fields.IntegerField(title='Urls collected')
     votes_added = fields.IntegerField(title='Votes added')
-    name = fields.CharField(title='Name')
+    name = fields.CharField(title='Name', url='worker_job_url')
+    bonus_gathered = fields.IntegerField(title='Bonus points gathered')
+    bonus_paid = fields.IntegerField(title='Bonus points paid')
+    bonus_pending = fields.IntegerField(title='Bonus points pending')
     id = fields.IntegerField(attribute='id', title=' ')
 
     class Meta:
@@ -958,15 +933,31 @@ class WorkerJobAssociationResource(resources.ModelResource):
         list_allowed_methods = ['get', ]
         per_page = [10, 20, 50, 100, 200]
         queryset = WorkerJobAssociation.objects.all()
-        fields = ['id', 'name', 'urls_collected', 'votes_added']
+        fields = ['id', 'name', 'urls_collected', 'votes_added',
+                  'bonus_gathered', 'bonus_paid', 'bonus_pending']
 
     def apply_authorization_limits(self, request, obj_list):
         obj_list = super(WorkerJobAssociationResource, self).\
             apply_authorization_limits(request, obj_list)
         return obj_list.filter(job__account__user=request.user)
 
+    def dehydrate_worker_job_url(self, bundle):
+        return reverse('project_worker_view', kwargs={
+            'id': bundle.obj.job_id,
+            'worker_id': bundle.obj.worker_id,
+        })
+
+    def dehydrate_bonus_pending(self, bundle):
+        return bundle.obj.btm_pending
+
+    def dehydrate_bonus_paid(self, bundle):
+        return bundle.obj.btm_paid
+
+    def dehydrate_bonus_gathered(self, bundle):
+        return bundle.obj.btm_gathered
+
     def dehydrate_name(self, bundle):
-        return bundle.obj.worker.external_id
+        return bundle.obj.worker.get_name()
 
     def dehydrate_urls_collected(self, bundle):
         return bundle.obj.get_urls_collected()
@@ -977,7 +968,6 @@ class WorkerJobAssociationResource(resources.ModelResource):
     def obj_get_list(self, request, job_id=None, **kwargs):
         objs = super(WorkerJobAssociationResource, self).obj_get_list(
                 request=request, **kwargs)
-        print job_id, objs
         if job_id is None:
             return objs
 
@@ -990,6 +980,40 @@ class WorkerJobAssociationResource(resources.ModelResource):
                 response_class=HttpNotFound)
 
         return objs.filter(job=job)
+
+    @actions.action_handler()
+    def pay_btm_bonus(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        job_id = kwargs.get('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+            if request.user != job.account.user and not request.user.is_superuser:
+                return self.create_response(
+                    request,
+                    {'error': 'Wrong parameters.'},
+                    response_class=HttpBadRequest,
+                )
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong parameters.'},
+                response_class=HttpNotFound,
+            )
+
+        workers = request.POST.get('bonus', '[]')
+        workers = json.loads(workers)
+
+        for worker in workers:
+            worker_id = sanitize_positive_int(worker)
+            worker = Worker.objects.get(id=worker_id)
+            BTMBonusPayment.objects.create_for_worker(worker, job)
+
+        return self.create_response(
+            request,
+            {'status': 'ok'},
+        )
 
 
 class SampleResource(ModelResource):

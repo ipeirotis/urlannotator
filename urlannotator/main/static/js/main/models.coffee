@@ -10,3 +10,4 @@ class crud.view.WorkerTableRow extends crud.view.TableRow
 
 class crud.view.WorkerTable extends crud.view.Table
     itemViewClass: crud.view.WorkerTableRow
+    template: crud.template('js/main/table.ejs')

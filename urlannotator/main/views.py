@@ -636,22 +636,6 @@ def project_workers_view(request, id):
         return redirect('index')
 
     context = {'project': job}
-    workers = []
-    for worker in job.get_workers():
-        points = worker.get_btm_bonus(job)
-        points_paid = worker.get_btm_bonus_paid(job)
-        workers.append({
-            'id': worker.id,
-            'name': worker.get_name(cache=True),
-            'quality': worker.get_estimated_quality_for_job(job),
-            'votes_added': worker.get_votes_added_count_for_job(job, cache=True),
-            'urls_collected': worker.get_urls_collected_count_for_job(job, cache=True),
-            'hours_spent': worker.get_hours_spent_for_job(job),
-            'bonus_gathered': points,
-            'bonus_paid': points_paid,
-            'bonus_pending': points - points_paid,
-        })
-    context['workers'] = workers
     return render(request, 'main/project/workers.html',
         RequestContext(request, context))
 
@@ -680,7 +664,7 @@ def project_worker_view(request, id, worker_id):
     assocs = ifilter(lambda x: x.job.account == account, assocs)
     projects = (w.job.get_link_with_title() for w in assocs)
     context['worker'] = {
-        'name': worker.get_name,
+        'name': worker.get_name(),
         'urls_collected': worker.get_urls_collected_count_for_job(job),
         'votes_added': worker.get_votes_added_count_for_job(job),
         'hours_spent': worker.get_hours_spent_for_job(job),

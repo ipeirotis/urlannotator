@@ -1461,6 +1461,18 @@ class WorkerJobAssociation(models.Model):
         return self.worker.get_votes_added_count_for_job(job=self.job,
             cache=cache)
 
+    @property
+    def btm_gathered(self):
+        return self.worker.get_btm_bonus(job=self.job)
+
+    @property
+    def btm_paid(self):
+        return self.worker.get_btm_bonus_paid(job=self.job)
+
+    @property
+    def btm_pending(self):
+        return self.btm_gathered - self.btm_paid
+
 
 class GoldSample(models.Model):
     """
