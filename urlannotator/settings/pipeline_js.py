@@ -23,12 +23,19 @@ PIPELINE_JS = {
         ),
         'output_filename': 'crud.js',
     },
-    'workers': {
+    'samples_crud': {
         'source_filenames': (
-            'js/main/models.coffee',
-            'js/main/crud.coffee',
+            'js/main/samples/models.coffee',
+            'js/main/samples/crud.coffee',
         ),
-        'output_filename': 'js/main_crud.js',
+        'output_filename': 'js/samples_crud.js',
+    },
+    'workers_crud': {
+        'source_filenames': (
+            'js/main/workers/models.coffee',
+            'js/main/workers/crud.coffee',
+        ),
+        'output_filename': 'js/workers_crud.js',
     },
     'less': {
         'source_filenames': (

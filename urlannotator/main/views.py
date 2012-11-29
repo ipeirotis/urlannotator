@@ -756,7 +756,6 @@ def project_data_view(request, id):
 
     context = {
         'project': job,
-        'data_set': job.get_display_samples(cache=True),
     }
 
     return render(request, 'main/project/data.html',

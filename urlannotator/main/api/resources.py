@@ -708,6 +708,14 @@ class JobResource(OwnerModelResource):
     newest_votes = fields.ListField()
     top_workers = fields.ListField()
     feed = fields.CharField()
+    workers = fields.ToManyField(
+        'urlannotator.main.api.resources.WorkerJobAssociationResource',
+        'workerjobassociation_set'
+    )
+    samples = fields.ToManyField(
+        'urlannotator.main.api.resources.SampleResource',
+        'sample_set'
+    )
 
     class Meta:
         queryset = Job.objects.all()
@@ -801,6 +809,10 @@ class JobResource(OwnerModelResource):
                 r'worker/(?P<worker>.*)$' % self._meta.resource_name,
                 self.wrap_view('worker'),
                 name='api_job_worker'),
+            url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/'
+                r'sample/(?P<sample>.*)$' % self._meta.resource_name,
+                self.wrap_view('sample'),
+                name='api_job_sample'),
             url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/btm/'
                 % self._meta.resource_name,
                 self.wrap_view('btm'), name='api_job_btm'),
@@ -808,7 +820,7 @@ class JobResource(OwnerModelResource):
 
     def worker(self, request, **kwargs):
         """
-            Returns worker's details.
+            Returns worker's details, list or actions, depending on the ID.
         """
         self.method_check(request, allowed=['get', 'post'])
         job_id = kwargs.pop('job_id', 0)
@@ -830,6 +842,33 @@ class JobResource(OwnerModelResource):
             self.worker_resource.get_detail(request,
                 job_id=job_id,
                 worker_id=worker_id,
+            )
+        )
+
+    def sample(self, request, **kwargs):
+        """
+            Returns worker's details.
+        """
+        self.method_check(request, allowed=['get', 'post'])
+        job_id = kwargs.pop('job_id', 0)
+        job_id = sanitize_positive_int(job_id)
+        sample_id = kwargs.pop('sample', '')
+        sr = SampleResource()
+        if sample_id == 'schema/':
+            return sr.get_schema(request)
+        elif sample_id == '':
+            return sr.get_list(request, job_id=job_id)
+        elif sample_id == '_actions/':
+            return sr.dispatch_actions(request, job_id=job_id,
+                sample_id=sample_id, **kwargs)
+
+        sample_id = sanitize_positive_int(sample_id)
+
+        return self.create_response(
+            request,
+            sr.get_detail(request,
+                job_id=job_id,
+                sample_id=sample_id,
             )
         )
 
@@ -981,7 +1020,7 @@ class WorkerJobAssociationResource(resources.ModelResource):
 
         return objs.filter(job=job)
 
-    @actions.action_handler()
+    @actions.action_handler(name='Pay out BTM bonus')
     def pay_btm_bonus(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
         job_id = kwargs.get('job_id', 0)
@@ -1016,13 +1055,79 @@ class WorkerJobAssociationResource(resources.ModelResource):
         )
 
 
-class SampleResource(ModelResource):
+class SampleResource(resources.ModelResource):
     """ Entry point for externally gathered samples.
     """
+    id = fields.IntegerField(attribute='id')
+    job = fields.ForeignKey(JobResource, 'job')
+    url = fields.CharField(title='URL', attribute='url', url='sample_url')
+    screenshot = fields.CharField(title='Preview', attribute='screenshot')
+    small_thumb = fields.CharField()
+    large_thumb = fields.CharField()
+    votes = fields.DictField(title='Voting')
+    gold_sample = fields.CharField(title='Gold Sample')
+    added_on = fields.DateTimeField(title='Added on', attribute='added_on')
 
     class Meta:
         resource_name = 'sample'
-        list_allowed_methods = ['post']
+        queryset = Sample.objects.all()
+        list_allowed_methods = ['get', 'post']
+        per_page = [10, 20, 50, 100, 200, 500]
+        authorization = OwnerAuthorization(attribute="job.account.user")
+        fields = ['screenshot', 'url', 'added_on', 'votes', 'gold_sample']
+
+    def apply_authorization_limits(self, request, obj_list):
+        if not request.user.is_superuser:
+            obj_list = obj_list.filter(job__account__user=request.user)
+        return obj_list
+
+    def dehydrate_sample_url(self, bundle):
+        return reverse('project_data_detail', kwargs={
+            'id': bundle.obj.job_id,
+            'data_id': bundle.obj.id,
+        })
+
+    def dehydrate_large_thumb(self, bundle):
+        return bundle.obj.get_large_thumbnail_url()
+
+    def dehydrate_small_thumb(self, bundle):
+        return bundle.obj.get_small_thumbnail_url()
+
+    def dehydrate_added_on(self, bundle):
+        return bundle.obj.added_on.strftime('%Y-%m-%d %H:%M')
+
+    def dehydrate_gold_sample(self, bundle):
+        return bundle.obj.get_label()
+
+    def dehydrate_votes(self, bundle):
+        return {
+            'yes': bundle.obj.get_yes_votes(cache=True),
+            'no': bundle.obj.get_no_votes(cache=True),
+            'broken': bundle.obj.get_broken_votes(cache=True),
+        }
+
+    def obj_get_list(self, request, job_id=None, **kwargs):
+        if request.user.is_superuser and job_id is None:
+            return Sample.objects.all()
+
+        job_id = sanitize_positive_int(job_id)
+
+        try:
+            job = Job.objects.get(id=job_id)
+            if request.user != job.account.user and not request.user.is_superuser:
+                return self.create_response(
+                    request,
+                    {'error': 'Wrong parameters.'},
+                    response_class=HttpBadRequest,
+                )
+        except Job.DoesNotExist:
+            return self.create_response(
+                request,
+                {'error': 'Wrong parameters.'},
+                response_class=HttpNotFound,
+            )
+
+        return job.sample_set.all()
 
     def override_urls(self):
         return [

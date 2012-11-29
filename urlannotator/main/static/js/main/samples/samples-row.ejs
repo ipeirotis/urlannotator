@@ -1,0 +1,27 @@
+<% for (var i=0; i<meta.fieldsOrder.length; ++i) { %>
+    <% if (meta.fieldsOrder[i] === 'id') { %>
+        <td class="crud-table-item-selector">
+            <input type="checkbox" name="item_<%= model.id %>" <% if (model.get('_selected')) { %>checked<% } %>>
+        </td>
+    <% } else { %>
+        <td class="cell-<%= meta.fieldsOrder[i] %>">
+            <% if (meta.fieldsURL[meta.fieldsOrder[i]]) { %>
+                <a href="<%= model.get(meta.fieldsURL[meta.fieldsOrder[i]]) %>">
+                    <%= model.display(meta.fieldsOrder[i]) %>
+                </a>
+            <% } else { %>
+                <% if (meta.fieldsOrder[i] == 'votes') { %>
+                  <%= model.display('votes__yes') %> <span class="badge badge-info badge-yes"><i class="icon icon-o"></i></span> <%= model.display('votes__no') %> <span class="badge badge-info badge-no"><i class="icon icon-n"></i></span> <%= model.display('votes__broken') %> <span class="badge badge-info badge-broken"><i class="icon icon-b"></i></span>
+                <% } else { %>
+                    <% if (meta.fieldsOrder[i] == 'screenshot') { %>
+                      <a href="<%= model.display('large_thumb') %>">
+                      <img style="width: 60px; max-height: 45px;" src="<%= model.display('small_thumb') %>">
+                    </a>
+                    <% } else { %>
+                        <%= model.display(meta.fieldsOrder[i]) %>
+                    <% } %>
+                <% } %>
+            <% } %>
+        </td>
+    <% } %>
+<% } %>

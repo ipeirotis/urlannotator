@@ -20,7 +20,8 @@
       <div class="table-container-anno1">
         <h3>Data results</h3>
         <div class="table-wrapper">
-          <table class="table fix">
+          <div id="samples-table"></div>
+          <!-- <table class="table fix"> --><!--
             <thead>
               <tr>
                 <th class="tiny-col">Preview</th>
@@ -38,7 +39,7 @@
                     <img class="pop" rel="popover" data-content="<img src='http://placehold.it/240x180'/>" width="60px" height="45px" src="http://placehold.it/60x45"/>
                   </td> -->
                   <!-- TODO XX Replace following column with the one above? -->
-                  <td class="tiny-col">
+                  <!-- <td class="tiny-col"> --><!--
                     <a href="{{ data.get_large_thumbnail_url }}">
                       <img style="width: 60px; max-height: 45px;" src="{{ data.get_small_thumbnail_url }}">
                     </a>
@@ -63,7 +64,7 @@
                 </tr>
               {% endif %}
             </tbody>
-          </table>
+          </table> -->
         </div>
       </div>
     </div>
@@ -76,5 +77,7 @@
 $(function(){
   $('.pop').popover();
 })
+var job_id = {{project.id}};
 </script>
+{% compressed_js "samples_crud" %}
 {% endblock %}

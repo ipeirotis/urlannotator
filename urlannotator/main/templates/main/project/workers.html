@@ -29,6 +29,7 @@
         <span id="no-selected" style="display: none" class="offset7">You need to check, which URLs you want to add to the classifier data first.</span>
       </div>
     </div>
+    {% csrf_token %}
   </div>
 {% endblock %}
 
@@ -36,7 +37,11 @@
 {{ block.super }}
 <script type="text/javascript">
 var job_id = {{project.id}};
+var csrftoken;
+
+$.ready(function(){
+  csrftoken = $("input[type=hidden][name=csrfmiddlewaretoken]")[0].value();
+});
 </script>
-<!-- {% compressed_js "crud" %} -->
-{% compressed_js "workers" %}
+{% compressed_js "workers_crud" %}
 {% endblock %}
