@@ -63,6 +63,7 @@ class Account(models.Model):
     odesk_token = models.CharField(default='', max_length=100)
     odesk_secret = models.CharField(default='', max_length=100)
     odesk_uid = models.CharField(default='', max_length=100)
+    odesk_teams = JSONField('{}')
     full_name = models.CharField(default='', max_length=100)
     alerts = models.BooleanField(default=False)
     worker_entry = models.OneToOneField('Worker', null=True, blank=True)

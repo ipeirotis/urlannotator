@@ -2,8 +2,7 @@ from django.db import models
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN, JOB_STATUS_ACTIVE, JOB_SOURCE_ODESK_FREE,
-    JOB_SOURCE_ODESK_PAID, JOB_SOURCE_OWN_WORKFORCE)
+    LABEL_BROKEN, JOB_STATUS_ACTIVE, Account)
 from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
@@ -449,11 +448,9 @@ class OdeskMetaJobManager(models.Manager):
 
     def get_active_meta(self, job_type):
         all_active = self.filter(
-            job__status=JOB_STATUS_ACTIVE,
             job_type=job_type,
-            active=True,
         )
-        return all_active.iterator()
+        return all_active
 
     def get_active_sample_gathering(self):
         return self.get_active_meta(
@@ -477,8 +474,6 @@ class OdeskMetaJobManager(models.Manager):
 
 
 class OdeskMetaJob(models.Model):
-    # ODESK_META_* entries are used to gather workers. For each gathered worker
-    # there will be a separate job created and an offert sent to that worker.
     ODESK_META_SAMPLE_GATHER = 'META_SAMPLEGATHER'
     ODESK_META_VOTING = 'META_VOTING'
     ODESK_META_BTM_GATHER = 'META_BTM_GATHER'
@@ -489,7 +484,8 @@ class OdeskMetaJob(models.Model):
         (ODESK_META_BTM_GATHER, 'Beat The Machine worker gather'),
         (ODESK_META_BTM_VOTING, 'Beat The Machine voting'),
     )
-    job = models.ForeignKey(Job)
+    job = models.ForeignKey(Job, blank=True, null=True)
+    account = models.ForeignKey(Account)
     reference = models.CharField(max_length=64, primary_key=True)
     hit_reference = models.CharField(max_length=64)
     job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
@@ -498,9 +494,20 @@ class OdeskMetaJob(models.Model):
 
     objects = OdeskMetaJobManager()
 
+    def get_team_reference(self):
+        from urlannotator.crowdsourcing.odesk_helper import (
+            JOB_SAMPLE_GATHERING_KEY, JOB_VOTING_KEY, JOB_BTM_GATHERING_KEY,
+            JOB_BTM_VOTING_KEY)
+        mapping = {
+            self.ODESK_META_SAMPLE_GATHER: JOB_SAMPLE_GATHERING_KEY,
+            self.ODESK_META_VOTING: JOB_VOTING_KEY,
+            self.ODESK_META_BTM_GATHER: JOB_BTM_GATHERING_KEY,
+            self.ODESK_META_BTM_VOTING: JOB_BTM_VOTING_KEY,
+        }
+        return self.account.odesk_teams[mapping[self.job_type]]
+
 
 class OdeskJob(models.Model):
-    job = models.ForeignKey(Job)
     worker = models.ForeignKey(Worker, blank=True, null=True)
     meta_job = models.ForeignKey(OdeskMetaJob)
     accepted = models.BooleanField(default=False)
