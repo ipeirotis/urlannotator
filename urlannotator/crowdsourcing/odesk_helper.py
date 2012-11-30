@@ -241,10 +241,110 @@ def send_offer(cipher, job_reference, client, buyer_reference,
 #         return None
 
 
+def handle_owner_offers(offers, meta_job, odesk_jobs):
+    """
+        Checks through listed owner `offers` in `meta_job` and updates status
+        of them in database.
+
+        :param offers: list of offers from oDesk API
+        :param meta_job: `OdeskMetaJob` instance representing oDesk job
+        :param odesk_jobs: a dictionary of `OdeskJob` relationships between
+                           an oDesk worker and the job
+    """
+    for offer in offers:
+        candidacy_status = offer['candidacy_status']
+        cipher = parse_cipher_from_profile(offer['provider__profile_url'])
+        oj = odesk_jobs.get(cipher, None)
+
+        if oj is None:
+            log.info(
+                '[oDesk] Sent offer to worker that didn\'t apply. Skipping'
+            )
+            continue
+
+        if candidacy_status == OFFER_CANDIDACY_O_FILLED:
+            # WORKER has accepted the offer. Process it!
+            if not oj.accepted:
+                oj.accepted = True
+                oj.save()
+        elif candidacy_status == OFFER_CANDIDACY_O_IN_PROCESS:
+            # WORKER hasn't decided yet
+            pass
+        elif candidacy_status == OFFER_CANDIDACY_O_REJECTED:
+            # OWNER has rejected the offer. Process it!
+            if not oj.declined:
+                oj.declined = True
+                oj.save()
+        elif candidacy_status == OFFER_CANDIDACY_O_CANCELLED:
+            # WORKER has declined the offer. Process it!
+            if not oj.declined:
+                oj.declined = True
+                oj.save()
+        else:
+            log.info(
+                'Unhandled candidacy status %s' % candidacy_status
+            )
+
+
+def handle_worker_offers(offers, meta_job, odesk_jobs, client):
+    """
+        Checks through listed worker `offers` in `meta_job` and updates status
+        of them in database. In addition, sends an offer by the owner to newly
+        applied workers, declining theirs' applications. (To make it possible
+        to send the second application)
+
+        :param offers: list of offers from oDesk API
+        :param meta_job: `OdeskMetaJob` instance representing oDesk job
+        :param odesk_jobs: a dictionary of `OdeskJob` relationships between
+                           an oDesk worker and the job
+    """
+    for offer in offers:
+        candidacy_status = offer['candidacy_status']
+        cipher = parse_cipher_from_profile(offer['provider__profile_url'])
+        if candidacy_status == OFFER_CANDIDACY_W_REJECTED:
+            # WORKER's candidacy has been rejected by the OWNER
+            # Could be that sending an offer failed after declining this one
+            # so we have to rehandle.
+            worker, new = Worker.objects.get_or_create_odesk(worker_id=cipher)
+            oj = odesk_jobs.get(cipher, None)
+
+            # Invitation succeeded
+            if oj is not None and oj.invited:
+                continue
+
+            send_offer(cipher=cipher, job_reference=meta_job.reference,
+                client=client, buyer_reference=meta_job.get_team_reference(),
+                worker_reference=offer['provider__reference'])
+            if oj is None:
+                odesk_jobs[cipher] = OdeskJob.objects.create(meta_job=meta_job,
+                    worker=worker, invited=True)
+            else:
+                oj.invited = True
+                oj.save()
+        elif candidacy_status == OFFER_CANDIDACY_W_IN_PROCESS:
+            # Not processed WORKER's candidacy
+            worker, new = Worker.objects.get_or_create_odesk(worker_id=cipher)
+            decline_offer(offer_reference=offer['reference'])
+            send_offer(cipher=cipher, job_reference=meta_job.reference,
+                client=client, buyer_reference=meta_job.get_team_reference(),
+                worker_reference=offer['provider__reference'])
+            odesk_jobs[cipher] = OdeskJob.objects.create(meta_job=meta_job,
+                worker=worker, invited=True)
+        elif candidacy_status == OFFER_CANDIDACY_W_CANCELLED:
+            # WORKER's cancelled offer (by himself)
+            pass
+        else:
+            log.info(
+                'Unhandled candidacy status %s' % candidacy_status
+            )
+
+
 def check_odesk_job(odesk_job):
     """
         Checks an oDesk job for new worker applications and handles offers sent
         by us.
+
+        :param odesk_job: `OdeskMetaJob` instance of job to be checked.
     """
     client = make_client_from_account(odesk_job.account)
     try:
@@ -253,8 +353,6 @@ def check_odesk_job(odesk_job):
             job_ref=odesk_job.reference,
             page_size=ODESK_OFFERS_PAGE_SIZE,
         )
-        import pprint
-        pprint.pprint(response)
     except:
         log.exception(
             'Error while getting offers for job %s' % odesk_job.reference
@@ -266,13 +364,11 @@ def check_odesk_job(odesk_job):
     offers_by_owner = []
     offers_by_worker = []
     while (offset < total_items):
-        log.debug('offset %s total %s' % (offset, total_items))
         offers = response['offer']
         # Single offer was returned - as a dict, not as a list of 1 element
         # Wrap it so we can handle all cases uniformely
         if type(offers) == dict:
             offers = [offers]
-            log.debug('Job %s had single offer' % odesk_job.reference)
 
         for offer in offers:
             created_type = offer['created_type']
@@ -289,135 +385,25 @@ def check_odesk_job(odesk_job):
                 page_size=ODESK_OFFERS_PAGE_SIZE,
                 page_offset=offset,
             )
-            import pprint
-            pprint.pprint(response)
         except:
             log.exception(
                 '[oDesk] Error while getting offers offset %d for job %s' %
                 (offset, odesk_job.reference)
             )
-            # Break the loop
-            total_items = 0
+            break
 
     odeskjobs = {}
-    for odeskjob in odesk_job.odeskjob_set.filter(worker__isnull=False).iterator():
+    for odeskjob in odesk_job.odeskjob_set.filter(worker__isnull=False).\
+        select_related('worker').iterator():
         odeskjobs[odeskjob.worker.external_id] = odeskjob
 
-    print len(offers_by_owner), len(offers_by_worker)
     # First handle offers by owner
-    for offer in offers_by_owner:
-        # import pprint
-        # pprint.pprint(offer)
-        candidacy_status = offer['candidacy_status']
-        cipher = parse_cipher_from_profile(offer['provider__profile_url'])
-        log.debug(
-            'Found offer %s by owner to worker %s' % (offer['reference'], cipher)
-        )
-        try:
-            oj = odeskjobs[cipher]
-        except KeyError:
-            log.debug('Missing worker cipher')
-            continue
-
-        if candidacy_status == OFFER_CANDIDACY_O_FILLED:
-            # WORKER has accepted the offer. Process it!
-            log.debug(
-                'Worker has accepted the offer'
-            )
-            if oj.accepted:
-                log.debug('Worker already accepted')
-            else:
-                log.debug('New worker has accepted offer')
-                oj.accepted = True
-                oj.save()
-        elif candidacy_status == OFFER_CANDIDACY_O_IN_PROCESS:
-            # WORKER hasn't decided yet
-            log.debug(
-                'Sent by owner. Worker hasn\'t decided yet'
-            )
-        elif candidacy_status == OFFER_CANDIDACY_O_REJECTED:
-            # OWNER has rejected the offer. Process it!
-            log.debug(
-                'Owner has rejected the offer'
-            )
-            if oj.declined:
-                log.debug('Worker already declined')
-            else:
-                log.debug('Worker has declined our offer')
-                oj.declined = True
-                oj.save()
-                # We need to find a replacement. This is thread-safe as noone
-                # else will modify it.
-                oj.meta_job.workers_to_invite = oj.meta_job.workers_to_invite + 1
-                oj.meta_job.save()
-        elif candidacy_status == OFFER_CANDIDACY_O_CANCELLED:
-            # WORKER has declined the offer. Process it!
-            log.debug(
-                'Worker has declined the offer'
-            )
-            if oj.declined:
-                log.debug('Worker already declined')
-            else:
-                log.debug('Worker has declined our offer')
-                oj.declined = True
-                oj.save()
-                # We need to find a replacement. This is thread-safe as noone
-                # else will modify it.
-                oj.meta_job.workers_to_invite = oj.meta_job.workers_to_invite + 1
-                oj.meta_job.save()
-        else:
-            log.debug(
-                'Unhandled candidacy status %s' % candidacy_status
-            )
+    handle_owner_offers(offers=offers_by_owner, meta_job=odesk_job,
+        odesk_jobs=odeskjobs)
 
     # Then offers by workers
-    for offer in offers_by_worker:
-        candidacy_status = offer['candidacy_status']
-        cipher = parse_cipher_from_profile(offer['provider__profile_url'])
-        log.debug(
-            'Found offer %s by worker %s' % (offer['reference'], cipher)
-        )
-        if candidacy_status == OFFER_CANDIDACY_W_REJECTED:
-            # WORKER's candidacy has been rejected by the OWNER
-            # Could be that sending and offer failed after declining this one
-            log.debug('Offer has been rejected by the owner')
-            worker, new = Worker.objects.get_or_create_odesk(worker_id=cipher)
-            oj = OdeskJob.objects.filter(meta_job=odesk_job, worker=worker)
-            if oj:
-                oj = oj[0]
-                # Invitation succeeded
-                if oj.invited:
-                    continue
-            send_offer(cipher=cipher, job_reference=odesk_job.reference,
-                client=client, buyer_reference=odesk_job.get_team_reference(),
-                worker_reference=offer['provider__reference'])
-            OdeskJob.objects.create(meta_job=odesk_job,
-                worker=worker, invited=True)
-
-        elif candidacy_status == OFFER_CANDIDACY_W_IN_PROCESS:
-            # Not processed WORKER's candidacy
-            log.debug('Not processed offer')
-            worker, new = Worker.objects.get_or_create_odesk(worker_id=cipher)
-            decline_offer(offer_reference=offer['reference'])
-            send_offer(cipher=cipher, job_reference=odesk_job.reference,
-                client=client, buyer_reference=odesk_job.get_team_reference(),
-                worker_reference=offer['provider__reference'])
-            # if res:
-            OdeskJob.objects.create(meta_job=odesk_job,
-                worker=worker, invited=True)
-            #     odesk_job.workers_to_invite = odesk_job.workers_to_invite - 1
-            #     odesk_job.save()
-
-            # We should reject WORKER's application here as it is not needed
-            # anymore.
-        elif candidacy_status == OFFER_CANDIDACY_W_CANCELLED:
-            # WORKER's cancelled offer (by himself)
-            log.debug('Offer has been cancelled by worker')
-        else:
-            log.debug(
-                'Unhandled candidacy status %s' % candidacy_status
-            )
-    log.debug('Job checked: %s more workers to invite' % odesk_job.workers_to_invite)
+    handle_worker_offers(offers=offers_by_worker, meta_job=odesk_job,
+        odesk_jobs=odeskjobs, client=client)
     return True
 
 
