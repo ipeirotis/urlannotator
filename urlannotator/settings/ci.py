@@ -68,6 +68,7 @@ except ImportError:
 # Broker for celery
 BROKER_URL = 'amqp://guest@localhost:5673/'
 
+ODESK_TEAM_PREFIX = 'devel'
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):

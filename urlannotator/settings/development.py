@@ -84,6 +84,7 @@ CELERY_REALTIME_QUEUE = CELERY_DEFAULT_QUEUE
 CELERY_LONGSCARCE_QUEUE = CELERY_DEFAULT_QUEUE
 CELERY_LONGCOMMON_QUEUE = CELERY_DEFAULT_QUEUE
 
+ODESK_TEAM_PREFIX = 'local'
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):

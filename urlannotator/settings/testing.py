@@ -11,7 +11,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(ROOT_DIR, '..', 'database.sqlite3.db'),
-        # 'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
+        'TEST_NAME': os.path.join(ROOT_DIR, '..', 'test_database.sqlite3.db'),
     }
 }
 
@@ -81,6 +81,8 @@ except ImportError:
 IMAGESCALE_URL = '127.0.0.1:%d' % IMAGESCALE_DEF_PORT
 
 LOGGING['loggers'] = {}
+
+ODESK_TEAM_PREFIX = 'testing'
 
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
