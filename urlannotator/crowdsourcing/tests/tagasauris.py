@@ -164,6 +164,7 @@ class TagasaurisJobCreationChain(TestCase):
         self.assertEqual(tj.urlannotator_job.id, self.job.id)
         self.assertEqual(len(tj.sample_gathering_key), 32)
         SampleGatheringHITMonitor.delay()
+        tj = TagasaurisJobs.objects.all()[0]
         self.assertEqual(len(tj.sample_gathering_hit), 32)
 
 
