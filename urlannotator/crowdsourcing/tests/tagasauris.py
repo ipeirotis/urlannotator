@@ -14,7 +14,8 @@ from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
     BeatTheMachineSample)
 from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
 from urlannotator.flow_control import send_event
-from urlannotator.classification.event_handlers import train
+from urlannotator.classification.event_handlers import (train,
+    SampleGatheringHITMonitor, VotingHITMonitor)
 
 
 class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
@@ -162,6 +163,7 @@ class TagasaurisJobCreationChain(TestCase):
         tj = TagasaurisJobs.objects.all()[0]
         self.assertEqual(tj.urlannotator_job.id, self.job.id)
         self.assertEqual(len(tj.sample_gathering_key), 32)
+        SampleGatheringHITMonitor.delay()
         self.assertEqual(len(tj.sample_gathering_hit), 32)
 
 
@@ -202,6 +204,7 @@ class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
 
         self.assertEqual(TagasaurisJobs.objects.count(), 1)
         self.assertEqual(len(TagasaurisJobs.objects.all()[0].voting_key), 32)
+        VotingHITMonitor.delay()
         self.assertEqual(len(TagasaurisJobs.objects.all()[0].voting_hit), 32)
 
 
