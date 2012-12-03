@@ -26,3 +26,4 @@ django_jenkins
 pytz
 -e git+git@github.com:10clouds/dj-crud.git#egg=dj_crud
 django-extensions
+selenium
