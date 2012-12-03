@@ -1,0 +1,9 @@
+Beat The Machine summary for "{{ job.title }}":
+
+Bonus gathered so far: {{ bonus }}
+Bonus payment accepted: {{ bonus_paid }}
+
+Paid | Points | Url
+{% for btm in btms %}
+{% if btm.payment %}PAID{% else %}----{% endif %} | {{ btm.points }} | {{ btm.url }}
+{% endfor %}

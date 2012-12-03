@@ -2,7 +2,7 @@ from django.db import models
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN, JOB_STATUS_ACTIVE, Account)
+    LABEL_BROKEN, Account, worker_type_to_sample_source)
 from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
@@ -113,8 +113,8 @@ class BeatTheMachineSampleManager(models.Manager):
     def get_btm_unverified(self, job, worker):
         return self.filter(
             job=job,
-            source_type=worker.external_id,
-            source_val=worker.worker_type,
+            source_val=worker.external_id,
+            source_type=worker_type_to_sample_source[worker.worker_type],
             btm_status=BeatTheMachineSample.BTM_HUMAN)
 
     def get_all_btm(self, job):
@@ -125,8 +125,8 @@ class BeatTheMachineSampleManager(models.Manager):
 
     def from_worker(self, worker):
         return self.filter(
-            source_type=worker.external_id,
-            source_val=worker.worker_type,
+            source_val=worker.external_id,
+            source_type=worker_type_to_sample_source[worker.worker_type],
         )
 
     def from_worker_paid(self, worker):

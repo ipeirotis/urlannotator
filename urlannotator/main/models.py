@@ -10,6 +10,8 @@ from django.utils.timezone import now
 from django.utils.http import urlencode
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.template.loader import get_template
+from django.template import Context
 from itertools import ifilter
 from tenclouds.django.jsonfield.fields import JSONField
 
@@ -1429,6 +1431,22 @@ class Worker(models.Model):
 
     def send_message(self, subject, content):
         self._send_tagasauris_message(subject, content)
+
+    def send_bonus_notification(self, job):
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+        btms = BeatTheMachineSample.objects.from_worker(self).filter(job=job)
+
+        plaintext = get_template('bonus_notification.txt')
+        content = plaintext.render(Context({
+            'job': job,
+            'btms': btms,
+            'bonus': self.get_btm_bonus(job),
+            'bonus_paid': self.get_btm_bonus_paid(job),
+        }))
+
+        self.send_message(
+            subject="URLAnnotator Beat The Machine: Bonus points",
+            content=content)
 
 
 class WorkerJobManager(models.Manager):
