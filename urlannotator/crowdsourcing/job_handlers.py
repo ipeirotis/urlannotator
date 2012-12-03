@@ -4,6 +4,8 @@
 from urlannotator.crowdsourcing.tagasauris_helper import (
     create_btm_voting_job, make_tagapi_client, init_tagasauris_job,
     create_voting_job, update_voting_job, create_btm, update_voting)
+from urlannotator.crowdsourcing.odesk_helper import notify_workers
+from urlannotator.crowdsourcing.models import OdeskMetaJob
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
     JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID)
 
@@ -211,6 +213,50 @@ class OdeskHandler(TagasaurisHandler):
         from urlannotator.crowdsourcing.odesk_helper import (
             create_btm_voting as ctor)
         return self._init_job('init_btm_voting', ctor, *args, **kwargs)
+
+    def sample_gathering_hit_changed(self, old, new, **kwargs):
+        super(OdeskHandler, self).sample_gathering_hit_changed(
+            old=old, new=new, **kwargs)
+        try:
+            meta = self.job.account.odeskmetajob_set.get(
+                job_type=OdeskMetaJob.ODESK_META_SAMPLE_GATHER)
+        except OdeskMetaJob.DoesNotExist:
+            return
+        self.job.account.odeskmetajob_set.filter(pk=meta.pk).update(active=True)
+        notify_workers(odesk_job=meta, hit=new, job=self.job)
+
+    def voting_hit_changed(self, old, new, **kwargs):
+        super(OdeskHandler, self).voting_hit_changed(
+            old=old, new=new, **kwargs)
+        try:
+            meta = self.job.account.odeskmetajob_set.get(
+                job_type=OdeskMetaJob.ODESK_META_VOTING)
+        except OdeskMetaJob.DoesNotExist:
+            return
+        self.job.account.odeskmetajob_set.filter(pk=meta.pk).update(active=True)
+        notify_workers(odesk_job=meta, hit=new, job=self.job)
+
+    def btm_gathering_hit_changed(self, old, new, **kwargs):
+        super(OdeskHandler, self).btm_gathering_hit_changed(
+            old=old, new=new, **kwargs)
+        try:
+            meta = self.job.account.odeskmetajob_set.get(
+                job_type=OdeskMetaJob.ODESK_META_BTM_GATHER)
+        except OdeskMetaJob.DoesNotExist:
+            return
+        self.job.account.odeskmetajob_set.filter(pk=meta.pk).update(active=True)
+        notify_workers(odesk_job=meta, hit=new, job=self.job)
+
+    def btm_voting_hit_changed(self, old, new, **kwargs):
+        super(OdeskHandler, self).btm_voting_hit_changed(
+            old=old, new=new, **kwargs)
+        try:
+            meta = self.job.account.odeskmetajob_set.get(
+                job_type=OdeskMetaJob.ODESK_META_BTM_VOTING)
+        except OdeskMetaJob.DoesNotExist:
+            return
+        self.job.account.odeskmetajob_set.filter(pk=meta.pk).update(active=True)
+        notify_workers(odesk_job=meta, hit=new, job=self.job)
 
 handlers = {
     JOB_SOURCE_OWN_WORKFORCE: TagasaurisHandler,

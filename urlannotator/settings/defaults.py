@@ -419,6 +419,14 @@ CELERYBEAT_SCHEDULE = {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
     },
+    'odesk_monitor': {
+        'task': 'urlannotator.crowdsourcing.event_handlers.OdeskJobMonitor',
+        'schedule': datetime.timedelta(seconds=3 * 60),
+        'args': [],
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
+    },
 }
 
 # Test runner

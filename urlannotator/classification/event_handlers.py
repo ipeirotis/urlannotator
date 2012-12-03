@@ -144,7 +144,7 @@ class SampleGatheringHITMonitor(HITMonitor, Task):
     """
     hit_name = 'sample_gathering_hit'
     key_name = 'sample_gathering_key'
-    event_name = 'EventSampleGathertingHITChanged'
+    event_name = 'EventSampleGatheringHITChanged'
 
     @singleton(name='samplegather-hit')
     def run(self, *args, **kwargs):
@@ -494,7 +494,7 @@ FLOW_DEFINITIONS = [
     (r'^EventNewClassifyBTMSample$', classify_btm),
     (r'^EventTrainingSetCompleted$', train_on_set, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventClassifierTrained$', update_classifier_stats),
-    (r'^EventSampleGathertingHITChanged$', sample_gathering_hit_change, settings.CELERY_LONGSCARCE_QUEUE),
+    (r'^EventSampleGatheringHITChanged$', sample_gathering_hit_change, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventVotingHITChanged$', voting_hit_change, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMGatheringHITChanged$', btm_gathering_hit_change, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMVotingHITChanged$', btm_voting_hit_change, settings.CELERY_LONGSCARCE_QUEUE),

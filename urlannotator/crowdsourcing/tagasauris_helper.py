@@ -8,6 +8,7 @@ from itertools import imap
 from tagapi.api import TagasaurisClient
 from tagapi.error import TagasaurisApiException, TagasaurisApiMaxRetries
 from urlannotator.tools.utils import setting
+from urlannotator.flow_control import send_event
 
 import logging
 log = logging.getLogger(__name__)
@@ -109,7 +110,6 @@ def init_tagasauris_job(job):
     TagasaurisJobs.objects.create(
         urlannotator_job=job,
         sample_gathering_key=sample_gathering_key,
-        sample_gathering_hit=sample_gathering_hit,
     )
     return True
 
@@ -343,8 +343,6 @@ def create_voting(api_client, job, samples, field_name,
         return False
 
     setattr(job.tagasaurisjobs, '%s_key' % field_name, key)
-    if hit is not None:
-        setattr(job.tagasaurisjobs, '%s_hit' % field_name, hit)
     job.tagasaurisjobs.save()
 
     # ALWAYS add mediaobject mappings assuming Tagasauris will handle them

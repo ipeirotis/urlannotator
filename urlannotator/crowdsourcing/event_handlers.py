@@ -1,12 +1,15 @@
 from celery import task, Task, registry
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from factories import VoteStorageFactory
 from urlannotator.crowdsourcing.models import (BeatTheMachineSample,
     WorkerQualityVote, OdeskMetaJob)
 from urlannotator.main.models import Job, Sample, Worker, LABEL_YES
-from urlannotator.crowdsourcing.odesk_helper import check_odesk_job
+from urlannotator.crowdsourcing.odesk_helper import (check_odesk_job,
+    add_odesk_teams)
 from urlannotator.crowdsourcing.job_handlers import get_job_handler
+from urlannotator.tools.synchronization import singleton
 
 import logging
 log = logging.getLogger(__name__)
@@ -135,6 +138,7 @@ class OdeskJobMonitor(Task):
         log.debug('[oDesk] Checking btm voting: %s' % odesk_jobs)
         self.check_jobs(odesk_jobs)
 
+    @singleton(name='odesk-job-monitor')
     def run(self, *args, **kwargs):
         self.check_sample_gathering()
         self.check_voting()
@@ -143,6 +147,12 @@ class OdeskJobMonitor(Task):
 
 odesk_job_monitor = registry.tasks[OdeskJobMonitor.name]
 
+
+@task(ignore_result=True)
+def create_odesk_teams(user_id, **kwargs):
+    user = User.objects.get(id=user_id)
+    add_odesk_teams(user=user)
+
 FLOW_DEFINITIONS = [
     (r'^EventNewJobInitializationDone$', initialize_external_job, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMStarted$', initialize_btm_job, settings.CELERY_LONGSCARCE_QUEUE),
@@ -150,6 +160,7 @@ FLOW_DEFINITIONS = [
     (r'^EventNewVoteAdded$', update_job_votes_gathered),
     (r'^EventNewSample$', vote_on_new_sample),
     (r'^EventNewBTMSample$', vote_on_new_btm_sample),
+    (r'^EventNewOdeskAssoc$', create_odesk_teams),
     # (r'^EventSampleGathertingHITChanged$', job_new_gathering_hit),
     # WIP: DSaS/GAL quality algorithms.
     # (r'^EventGoldSamplesDone$', initialize_quality),

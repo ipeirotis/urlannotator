@@ -18,10 +18,11 @@ from django.template.loader import get_template
 from django.template import Context
 from selenium.webdriver.firefox.webdriver import WebDriver
 
-from urlannotator.main.models import Job, Worker
+from urlannotator.main.models import Job, Worker, JOB_STATUS_ACTIVE
 from urlannotator.crowdsourcing.models import OdeskJob, OdeskMetaJob
 from urlannotator.crowdsourcing.tagasauris_helper import (get_split,
     TAGASAURIS_GATHER_SAMPLES_PER_JOB)
+from urlannotator.tools.utils import setting
 
 import logging
 log = logging.getLogger(__name__)
@@ -90,6 +91,13 @@ JOB_VOTING_KEY = 'voting'
 JOB_BTM_GATHERING_KEY = 'btm_gathering'
 JOB_BTM_VOTING_KEY = 'btm_voting'
 
+SAMPLE_GATHERING_TEAM = '%s Sample Gathering'
+VOTING_TEAM = '%s Voting'
+BTM_GATHERING_TEAM = '%s Beat The Machine Gathering'
+BTM_VOTING_TEAM = '%s Beat The Machine Voting'
+
+TEAM_PREFIX = setting('ODESK_TEAM_PREFIX', 'Build A Classifier')
+
 ODESK_HIT_SPLIT = 20
 
 ODESK_OFFERS_PAGE_SIZE = 200
@@ -140,6 +148,133 @@ def calculate_job_end_date():
     return date.strftime('%m-%d-%Y')
 
 
+def notify_workers(odesk_job, hit, job):
+    """
+        Notifies workers in a job about a new Tagasauris job available.
+    """
+    worker_ids = map(lambda x: x.user_id, odesk_job.odeskjob_set.all())
+    sender = odesk_job.account.odesk_id
+    title = get_template('odesk_new_hit_title.txt')
+    body = get_template('odesk_new_hit_body.txt')
+    hit_url = ''
+    if odesk_job.job_type == OdeskMetaJob.ODESK_META_SAMPLE_GATHER:
+        hit_url = job.get_sample_gathering_url()
+    elif odesk_job.job_type == OdeskMetaJob.ODESK_META_VOTING:
+        hit_url = job.get_voting_url()
+    elif odesk_job.job_type == OdeskMetaJob.ODESK_META_BTM_GATHER:
+        hit_url = job.get_btm_gathering_url()
+    elif odesk_job.job_type == OdeskMetaJob.ODESK_META_BTM_VOTING:
+        hit_url = job.get_btm_voting_url()
+
+    context = {'hit_url': hit_url}
+    title = title.render(Context(context))
+    body = body.render(Context(context))
+
+    client = make_client_from_job(job)
+    for worker_id in worker_ids:
+        client.mc.post_message(username=sender,
+            recipients=worker_id, subject=title, body=body)
+
+
+def send_current_hits(worker_id, odesk_job):
+    """
+        Sends current hit URLs to a newly invited worker.
+    """
+    sender = odesk_job.account.odesk_id
+    title = get_template('odesk_new_worker_title.txt')
+    body = get_template('odesk_new_worker_body.txt')
+    hit_urls = []
+    for job in odesk_job.account.job_set.filter(status=JOB_STATUS_ACTIVE):
+        if odesk_job.job_type == OdeskMetaJob.ODESK_META_SAMPLE_GATHER:
+            hit_urls.append(job.get_sample_gathering_url())
+        elif odesk_job.job_type == OdeskMetaJob.ODESK_META_VOTING:
+            hit_urls.append(job.get_voting_url())
+        elif odesk_job.job_type == OdeskMetaJob.ODESK_META_BTM_GATHER:
+            hit_urls.append(job.get_btm_gathering_url())
+        elif odesk_job.job_type == OdeskMetaJob.ODESK_META_BTM_VOTING:
+            hit_urls.append(job.get_btm_voting_url())
+
+    context = {'hit_urls': hit_urls}
+    title = title.render(Context(context))
+    body = body.render(Context(context))
+
+    client = make_client_from_job(job)
+    client.mc.post_message(username=sender,
+        recipients=worker_id, subject=title, body=body)
+
+
+def selenium_login(webdriver):
+    """
+        Logs a selenium webdriver into odesk.
+    """
+    webdriver.get('https:/www.odesk.com/login')
+    webdriver.find_element_by_id("username").clear()
+    webdriver.find_element_by_id("username").send_keys(settings.ODESK_TEST_ACC_NAME)
+    webdriver.find_element_by_id("password").clear()
+    webdriver.find_element_by_id("password").send_keys(settings.ODESK_TEST_ACC_PASS)
+    webdriver.find_element_by_id("submit").click()
+
+
+def add_odesk_team(webdriver, name):
+    try:
+        webdriver.find_element_by_css_selector("a.oNavIcon.oNavIconSettings").click()
+        webdriver.find_element_by_link_text("Teams").click()
+        webdriver.find_element_by_link_text("Create a New Team").click()
+        webdriver.find_element_by_id("name").clear()
+        webdriver.find_element_by_id("name").send_keys(name)
+        webdriver.find_element_by_id("submit").click()
+        return True
+    except:
+        log.exception('[oDesk] Error while creating a team %s' % name)
+        return False
+
+
+def add_odesk_teams(user):
+    """
+        Creates oDesk teams that will be used for our jobs.
+    """
+    driver = WebDriver()
+    driver.implicitly_wait(time_to_wait=10)
+
+    selenium_login(webdriver=driver)
+    account = user.get_profile()
+
+    # Gain access to settings
+    driver.find_element_by_css_selector("a.oNavIcon.oNavIconSettings").click()
+    driver.find_element_by_id("answer").clear()
+    driver.find_element_by_id("answer").send_keys(settings.ODESK_TEST_ACC_ANSWER)
+    driver.find_element_by_id("submitButton").click()
+
+    sg_name = SAMPLE_GATHERING_TEAM % TEAM_PREFIX
+    v_name = VOTING_TEAM % TEAM_PREFIX
+    btmg_name = BTM_GATHERING_TEAM % TEAM_PREFIX
+    btmv_name = BTM_VOTING_TEAM % TEAM_PREFIX
+
+    sg_res = add_odesk_team(webdriver=driver, name=sg_name)
+    v_res = add_odesk_team(webdriver=driver, name=v_name)
+    btmg_res = add_odesk_team(webdriver=driver, name=btmg_name)
+    btmv_res = add_odesk_team(webdriver=driver, name=btmv_name)
+
+    if not all([sg_res, v_res, btmg_res, btmv_res]):
+        log.warning('[oDesk] Failed to create oDesk teams.')
+        return False
+
+    client = make_client_from_account(account)
+    teams = client.hr.get_teams()
+
+    for team in teams:
+        if team['name'] == sg_name:
+            account.odesk_teams[JOB_SAMPLE_GATHERING_KEY] = team['reference']
+        elif team['name'] == v_name:
+            account.odesk_teams[JOB_VOTING_KEY] = team['reference']
+        elif team['name'] == btmg_name:
+            account.odesk_teams[JOB_BTM_GATHERING_KEY] = team['reference']
+        elif team['name'] == btmv_name:
+            account.odesk_teams[JOB_BTM_VOTING_KEY] = team['reference']
+    account.save()
+    return True
+
+
 # Below function should work once the oDesk API is fixed, until then we have to
 # resort to Selenium because they are using scrambled JS code to generate
 # form tokens.
@@ -148,12 +283,7 @@ def decline_offer(offer_reference):
     driver = WebDriver()
 
     # Login
-    driver.get('https:/www.odesk.com/login')
-    driver.find_element_by_id("username").clear()
-    driver.find_element_by_id("username").send_keys(settings.ODESK_TEST_ACC_NAME)
-    driver.find_element_by_id("password").clear()
-    driver.find_element_by_id("password").send_keys(settings.ODESK_TEST_ACC_PASS)
-    driver.find_element_by_id("submit").click()
+    selenium_login(webdriver=driver)
 
     # Decline offer
     driver.get('https://www.odesk.com/applications/%s' % offer_reference)
@@ -169,14 +299,10 @@ def decline_offer(offer_reference):
 def send_offer(cipher, job_reference, client, buyer_reference,
         worker_reference):
     driver = WebDriver()
+    driver.implicitly_wait(time_to_wait=10)
 
     # Login
-    driver.get('https:/www.odesk.com/login')
-    driver.find_element_by_id("username").clear()
-    driver.find_element_by_id("username").send_keys(settings.ODESK_TEST_ACC_NAME)
-    driver.find_element_by_id("password").clear()
-    driver.find_element_by_id("password").send_keys(settings.ODESK_TEST_ACC_PASS)
-    driver.find_element_by_id("submit").click()
+    selenium_login(webdriver=driver)
 
     # Worker's page
     driver.get('https:/www.odesk.com/users/%s' % cipher)
@@ -266,7 +392,10 @@ def handle_owner_offers(offers, meta_job, odesk_jobs):
             # WORKER has accepted the offer. Process it!
             if not oj.accepted:
                 oj.accepted = True
+                oj.engagement_id = offer['engagement__reference']
                 oj.save()
+                send_current_hits(worker_id=oj.user_id,
+                    odesk_job=meta_job)
         elif candidacy_status == OFFER_CANDIDACY_O_IN_PROCESS:
             # WORKER hasn't decided yet
             pass
@@ -317,7 +446,7 @@ def handle_worker_offers(offers, meta_job, odesk_jobs, client):
                 worker_reference=offer['provider__reference'])
             if oj is None:
                 odesk_jobs[cipher] = OdeskJob.objects.create(meta_job=meta_job,
-                    worker=worker, invited=True)
+                    worker=worker, invited=True, user_id=offer['provider__id'])
             else:
                 oj.invited = True
                 oj.save()
@@ -329,7 +458,7 @@ def handle_worker_offers(offers, meta_job, odesk_jobs, client):
                 client=client, buyer_reference=meta_job.get_team_reference(),
                 worker_reference=offer['provider__reference'])
             odesk_jobs[cipher] = OdeskJob.objects.create(meta_job=meta_job,
-                worker=worker, invited=True)
+                worker=worker, invited=True, user_id=offer['provider__id'])
         elif candidacy_status == OFFER_CANDIDACY_W_CANCELLED:
             # WORKER's cancelled offer (by himself)
             pass

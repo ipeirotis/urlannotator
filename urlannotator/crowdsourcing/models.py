@@ -449,6 +449,7 @@ class OdeskMetaJobManager(models.Manager):
     def get_active_meta(self, job_type):
         all_active = self.filter(
             job_type=job_type,
+            active=True,
         )
         return all_active
 
@@ -489,7 +490,7 @@ class OdeskMetaJob(models.Model):
     reference = models.CharField(max_length=64, primary_key=True)
     hit_reference = models.CharField(max_length=64)
     job_type = models.CharField(max_length=64, choices=ODESK_JOB_TYPES)
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(default=False)
     workers_to_invite = models.PositiveIntegerField()
 
     objects = OdeskMetaJobManager()
@@ -509,6 +510,8 @@ class OdeskMetaJob(models.Model):
 
 class OdeskJob(models.Model):
     worker = models.ForeignKey(Worker, blank=True, null=True)
+    user_id = models.CharField(max_length=128)
+    engagement_id = models.CharField(max_length=128)
     meta_job = models.ForeignKey(OdeskMetaJob)
     accepted = models.BooleanField(default=False)
     declined = models.BooleanField(default=False)

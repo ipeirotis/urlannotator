@@ -32,6 +32,7 @@ from urlannotator.main.models import (Account, Job, Worker, Sample,
 from urlannotator.classification.models import (ClassifierPerformance,
     TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
+from urlannotator.flow_control import send_event
 
 import logging
 log = logging.getLogger(__name__)
@@ -469,11 +470,13 @@ def odesk_complete(request):
 
     if request.user.is_authenticated():
         if request.user.get_profile().odesk_uid == '':
+            request.user.get_profile().odesk_id = info['id']
             request.user.get_profile().odesk_uid = cipher
             request.user.get_profile().odesk_token = token
             request.user.get_profile().odesk_secret = secret
             request.user.get_profile().save()
 
+            send_event("EventNewOdeskAssoc", user_id=request.user.id)
             # Add Worker model on odesk account association
             if not Worker.objects.filter(external_id=cipher):
                 w = Worker.objects.create_odesk(external_id=cipher)
@@ -494,9 +497,11 @@ def odesk_complete(request):
             u = User.objects.create_user(email=info['email'],
                 username=' '.join(['odesk', cipher]), password='1')
             profile = u.get_profile()
+            profile.odesk_id = info['id']
             profile.odesk_uid = cipher
             profile.odesk_token = token
             profile.odesk_secret = secret
+            send_event("EventNewOdeskAssoc", user_id=u.id)
             profile.full_name = '%s %s' % (info['first_name'],
                 info['last_name'])
             profile.save()
