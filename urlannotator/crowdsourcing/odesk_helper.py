@@ -51,7 +51,7 @@ def make_client_from_account(account, test=False):
     return make_odesk_client(token=token, secret=secret, test=test)
 
 
-def make_test_client(token=None, secret=None):
+def make_test_client(token=None, secret=None, *args, **kwargs):
     """
         Returns server-authenticated oDesk client.
     """
@@ -661,7 +661,7 @@ def create_voting(job, only_hit=False, *args, **kwargs):
         return False
 
 
-def create_btm_gather(title, description, no_of_urls, job, only_hit=False,
+def create_btm_gather(topic, description, no_of_urls, job, only_hit=False,
     *args, **kwargs):
     """
         Creates oDesk BTM sample gathering job according from passed Job object.
@@ -673,7 +673,7 @@ def create_btm_gather(title, description, no_of_urls, job, only_hit=False,
 
     try:
         team = job.account.odesk_teams[JOB_BTM_GATHERING_KEY]
-        reference_meta = _create_job(title, description, job, team)
+        reference_meta = _create_job(topic, description, job, team)
         if reference_meta:
             OdeskMetaJob.objects.create_btm_gather(account=job.account,
                 reference=reference_meta, workers_to_invite=get_split(job))

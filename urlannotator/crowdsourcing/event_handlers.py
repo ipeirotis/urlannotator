@@ -161,6 +161,7 @@ FLOW_DEFINITIONS = [
     (r'^EventNewSample$', vote_on_new_sample),
     (r'^EventNewBTMSample$', vote_on_new_btm_sample),
     (r'^EventNewOdeskAssoc$', create_odesk_teams),
+    (r'^OdeskJobMonitor$', odesk_job_monitor),
     # (r'^EventSampleGathertingHITChanged$', job_new_gathering_hit),
     # WIP: DSaS/GAL quality algorithms.
     # (r'^EventGoldSamplesDone$', initialize_quality),

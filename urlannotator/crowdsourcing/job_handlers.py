@@ -155,8 +155,10 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
             )
             return True
         tc = make_tagapi_client()
-        res = create_btm(tc, self.job, topic, description, no_of_urls)
-        return res
+        key, hit = create_btm(tc, self.job, topic, description, no_of_urls)
+        self.job.tagasaurisjobs.beatthemachine_key = key
+        self.job.tagasaurisjobs.save()
+        return key is not None
 
     def init_btm_voting(self, samples, *args, **kwargs):
         if self.job.tagasaurisjobs.voting_btm_hit is not None:
@@ -191,7 +193,7 @@ class OdeskHandler(TagasaurisHandler):
             return False
 
         kwargs.pop('job', None)
-        res = odesk_job(job=self.job, *args, **kwargs)
+        # res = odesk_job(job=self.job, *args, **kwargs)
         return res is not None
 
     def init_job(self, *args, **kwargs):

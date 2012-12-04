@@ -3,7 +3,8 @@ from django.test import TestCase
 
 from urlannotator.payments.models import BTMBonusPayment
 from urlannotator.flow_control.test import ToolsMockedMixin
-from urlannotator.main.models import Job, Worker, LABEL_YES
+from urlannotator.main.models import (Job, Worker, LABEL_YES,
+    worker_type_to_sample_source)
 from urlannotator.crowdsourcing.models import BeatTheMachineSample
 
 
@@ -43,8 +44,8 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
 
         BeatTheMachineSample.objects.create(
             job=self.job,
-            source_type=worker.external_id + '1',
-            source_val=worker.worker_type,
+            source_type=worker_type_to_sample_source[worker.worker_type],
+            source_val=worker.external_id + '1',
             points=4,
         )
 
@@ -55,11 +56,10 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
 
         btm = BeatTheMachineSample.objects.create(
             job=self.job,
-            source_type=worker.external_id,
-            source_val=worker.worker_type,
+            source_type=worker_type_to_sample_source[worker.worker_type],
+            source_val=worker.external_id,
             points=2,
         )
-
         payment = BTMBonusPayment.objects.create_for_worker(worker, self.job)
         self.assertEqual(payment.points_covered, 2)
         self.assertEqual(payment.amount, 1)
@@ -67,20 +67,20 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
 
         btm1 = BeatTheMachineSample.objects.create(
             job=self.job,
-            source_type=worker.external_id,
-            source_val=worker.worker_type,
+            source_type=worker_type_to_sample_source[worker.worker_type],
+            source_val=worker.external_id,
             points=2,
         )
         btm2 = BeatTheMachineSample.objects.create(
             job=self.job,
-            source_type=worker.external_id,
-            source_val=worker.worker_type,
+            source_type=worker_type_to_sample_source[worker.worker_type],
+            source_val=worker.external_id,
             points=4,
         )
         btm3 = BeatTheMachineSample.objects.create(
             job=self.job,
-            source_type=worker.external_id,
-            source_val=worker.worker_type,
+            source_type=worker_type_to_sample_source[worker.worker_type],
+            source_val=worker.external_id,
             points=60,
         )
 
