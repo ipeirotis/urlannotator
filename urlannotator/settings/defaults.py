@@ -156,8 +156,8 @@ BASE_APPS = (
     'django_jenkins',
     'bootstrap',
     'djcelery',
-    'tenclouds.crud',
     'tastypie',
+    'tenclouds.crud',
 
     'social_auth',
     'odesk',
