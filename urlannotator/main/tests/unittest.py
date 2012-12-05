@@ -13,12 +13,11 @@ from django.conf import settings
 from social_auth.models import UserSocialAuth
 
 from urlannotator.main.models import (Account, Job, Worker, Sample, GoldSample,
-    WorkerJobAssociation, LABEL_YES)
+    LABEL_YES)
 from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
-    paginate_list, AlertResource, ClassifiedSampleResource)
-from urlannotator.logging.models import LogEntry
+    paginate_list, ClassifiedSampleResource)
 from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
 
 
@@ -573,7 +572,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def testLimits(self):
-        for _ in xrange(settings.USER_MAX_JOBS-1):
+        for _ in xrange(settings.USER_MAX_JOBS - 1):
             Job.objects.create_active(
                 title='test',
                 description='test',
@@ -658,7 +657,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             data = {'topic': 'Test',
                     'topic_desc': 'a',
                     'data_source': '1',
-                    'no_of_urls': settings.USER_MAX_URLS_PER_JOB+1,
+                    'no_of_urls': settings.USER_MAX_URLS_PER_JOB + 1,
                     'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
@@ -670,8 +669,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             self.assertEqual(resp.status_code, 200)
 
             self.assertEqual(Job.objects.filter(account=self.u.get_profile())
-                .count(), settings.USER_MAX_JOBS+1)
-
+                .count(), settings.USER_MAX_JOBS + 1)
 
 
 class DocsTest(ToolsMockedMixin, TestCase):
