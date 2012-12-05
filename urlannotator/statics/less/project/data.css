@@ -212,3 +212,17 @@
 .body-data-detail .btn-back {
   margin-top: 3px;
 }
+#samples-table .field-screenshot {
+  width: 70px;
+}
+#samples-table .field-url {
+  width: 55%;
+}
+#samples-table .cell-url {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crud-meta-actions {
+  display: none;
+}
