@@ -65,6 +65,13 @@ div.update-box span {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+@media (max-width: 1200px) {
+  div.update-box span {
+    overflow: hidden;
+    width: 150px;
+    text-overflow: ellipsis;
+  }
+}
 div.status-draft {
   background-color: #e0b25d;
   border: 1px solid #d89e32;
