@@ -4,8 +4,10 @@ from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User
 
+from tagapi.error import TagasaurisApiException
+
 from urlannotator.main.models import (Job, Sample, LABEL_NO, LABEL_YES,
-    LABEL_BROKEN)
+    LABEL_BROKEN, Worker)
 from urlannotator.flow_control.test import ToolsMockedMixin
 from urlannotator.crowdsourcing.models import (SampleMapping,
     WorkerQualityVote, BeatTheMachineSample)
@@ -435,3 +437,43 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         self.assertTrue('status' in resp_dict.keys())
         self.assertTrue('points' in resp_dict.keys())
         self.assertTrue('btm_status' in resp_dict.keys())
+
+
+class TagasaurisWorker(ToolsMockedMixin, TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testing',
+            password='test')
+        self.job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps(
+                [{'url': 'google.com', 'label': LABEL_YES}]),
+        )
+
+        # Twitter worker on devel.tagasauris.com
+        self.twitter_worker = Worker.objects.create_tagasauris(external_id=83)
+
+        # Mturk worker on devel.tagasauris.com
+        self.mturk_worker = Worker.objects.create_tagasauris(external_id=41)
+
+    def testMessageSending(self):
+        # Basic tagasauris message notification
+        with self.assertRaises(TagasaurisApiException):
+            self.twitter_worker._send_tagasauris_message("subject", "content")
+
+        # Should invoke _send_tagasauris_message
+        with self.assertRaises(TagasaurisApiException):
+            self.twitter_worker.send_message("subject", "content")
+
+        # Basic tagasauris message notification
+        self.mturk_worker._send_tagasauris_message("test_subject",
+            "test_content")
+
+        # Should invoke _send_tagasauris_message
+        self.mturk_worker.send_message("test_subject", "test_content")
+
+        # Checks if message contains all important data
+        self.mturk_worker._prepare_bonus_notification(self.job)
+
+        # Only prep + send.
+        self.mturk_worker.send_bonus_notification(self.job)

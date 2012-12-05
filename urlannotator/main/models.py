@@ -1426,28 +1426,29 @@ class Worker(models.Model):
     def _send_tagasauris_message(self, subject, content):
         tc = make_tagapi_client()
         tc.send_message(
-            worker_id=int(self.worker.external_id),
+            worker_id=int(self.external_id),
             subject=subject,
             content=content)
 
     def send_message(self, subject, content):
         self._send_tagasauris_message(subject, content)
 
-    def send_bonus_notification(self, job):
+    def _prepare_bonus_notification(self, job):
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
         btms = BeatTheMachineSample.objects.from_worker(self).filter(job=job)
 
         plaintext = get_template('bonus_notification.txt')
-        content = plaintext.render(Context({
+        return plaintext.render(Context({
             'job': job,
             'btms': btms,
             'bonus': self.get_btm_bonus(job),
             'bonus_paid': self.get_btm_bonus_paid(job),
         }))
 
+    def send_bonus_notification(self, job):
         self.send_message(
             subject="URLAnnotator Beat The Machine: Bonus points",
-            content=content)
+            content=self._prepare_bonus_notification(job))
 
 
 class WorkerJobManager(models.Manager):

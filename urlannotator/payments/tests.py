@@ -125,5 +125,4 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
             status=PAYMENT_STATUS_INITIALIZED)
         self.assertEqual(payment.amount, 1)
 
-        # This should fail because only mturk worker supports payments
         payment._pay_tagasauris_bonus()
