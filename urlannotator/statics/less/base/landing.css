@@ -126,7 +126,7 @@ header.content .content-login .container-login .btn-login {
   border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
   filter: progid:dximagetransform.microsoft.gradient(enabled=false);
   color: white;
-  text-shadow: none;
+  text-shadow: 0px -1px #000000;
 }
 header.content .content-login .container-login .btn-login:hover,
 header.content .content-login .container-login .btn-login:active,
@@ -261,6 +261,7 @@ section.section-bottom .container .col2 .ico-desc p {
   font-size: 13px;
   line-height: 18px;
   color: #333;
+  font-weight: bold;
 }
 section.section-bottom .container .col1 .ico-desc p a,
 section.section-bottom .container .col2 .ico-desc p a {
