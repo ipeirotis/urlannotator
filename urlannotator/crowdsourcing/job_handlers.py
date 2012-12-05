@@ -262,8 +262,8 @@ class OdeskHandler(TagasaurisHandler):
 
 handlers = {
     JOB_SOURCE_OWN_WORKFORCE: TagasaurisHandler,
-    JOB_SOURCE_ODESK_PAID: OdeskHandler,
-    JOB_SOURCE_ODESK_FREE: OdeskHandler
+    JOB_SOURCE_ODESK_PAID: TagasaurisHandler,
+    JOB_SOURCE_ODESK_FREE: TagasaurisHandler
 }
 
 
