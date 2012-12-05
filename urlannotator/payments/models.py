@@ -243,5 +243,27 @@ class BTMBonusPayment(models.Model):
             amount=self.amount,
             reason='Bonus for Beat The Machine job no %s' % self.job.id)
 
+    def _pay_odesk_bonus(self):
+        """
+        Not tested yet.
+        """
+        from urlannotator.crowdsourcing.models import OdeskJob, OdeskMetaJob
+        from urlannotator.crowdsourcing.odesk_helper import (
+            make_client_from_job, JOB_BTM_GATHERING_KEY)
+
+        oc = make_client_from_job(self.job)
+
+        oj = OdeskJob.objects.filter(
+            meta_job__acount=self.job.account,
+            meta_job__job_type=OdeskMetaJob.ODESK_META_BTM_GATHER)
+
+        oc.hr.post_team_adjustment(
+            team_reference=self.job.account.odesk_teams[
+                JOB_BTM_GATHERING_KEY],
+            engagement_reference=oj.engagement_id,
+            amount=self.amount,
+            comments='Bonus for Beat The Machine job no %s' % self.job.id,
+            notes='')
+
     def pay_bonus(self):
         self._pay_tagasauris_bonus()
