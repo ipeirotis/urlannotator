@@ -9,7 +9,23 @@
 form.form.form-horizontal {
   .form-actions {
     background-color: white;
-    border-top:0px none;
+    border-top:1px #e1e1e1;
+    padding-left: 0px;
+    padding-right: 0px;
+    .gradient {
+      height:11px;
+      #gradient > .vertical( #e6e6e6, #ffffff );
+      margin-bottom: 20px;
+    }
+    .custom-offset {
+      margin-left:270px;
+    }
+  }
+  .control-label {
+    width: 180px;
+  }
+  .controls {
+    margin-left: 200px;
   }
 }
 
@@ -23,4 +39,12 @@ form.form.form-horizontal {
     text-decoration:underline;
     color:#005580;
   }
+}
+
+hr {
+  margin-top: 5px;
+}
+
+h4 {
+  margin-top: 20px;
 }
