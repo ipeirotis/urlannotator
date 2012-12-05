@@ -239,7 +239,7 @@ class BTMBonusPayment(models.Model):
     def _pay_tagasauris_bonus(self):
         tc = make_tagapi_client()
         tc.pay_worker_bonus(
-            worker_id=self.worker.external_id,
+            worker_id=int(self.worker.external_id),
             amount=self.amount,
             reason='Bonus for Beat The Machine job no %s' % self.job.id)
 

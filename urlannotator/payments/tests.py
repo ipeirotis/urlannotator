@@ -1,11 +1,14 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from urlannotator.payments.models import BTMBonusPayment
+from urlannotator.payments.models import (BTMBonusPayment,
+    PAYMENT_STATUS_INITIALIZED)
 from urlannotator.flow_control.test import ToolsMockedMixin
 from urlannotator.main.models import (Job, Worker, LABEL_YES,
     worker_type_to_sample_source)
 from urlannotator.crowdsourcing.models import BeatTheMachineSample
+
+from tagapi.error import TagasaurisApiException
 
 
 class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
@@ -96,3 +99,31 @@ class BTMBonusPaymentTests(ToolsMockedMixin, TestCase):
             frozen=True).count(), 4)
         self.assertEqual(BeatTheMachineSample.objects.filter(
             frozen=False).count(), 1)
+
+    def testTagasaurisPayment(self):
+        # Twitter worker on devel.tagasauris.com
+        twitter_worker = Worker.objects.create_tagasauris(external_id=83)
+
+        # Mturk worker on devel.tagasauris.com
+        mturk_worker = Worker.objects.create_tagasauris(external_id=41)
+
+        payment = BTMBonusPayment.objects.create(
+            job=self.job,
+            worker=twitter_worker,
+            amount=1,
+            status=PAYMENT_STATUS_INITIALIZED)
+        self.assertEqual(payment.amount, 1)
+
+        # This should fail because only mturk worker supports payments
+        with self.assertRaises(TagasaurisApiException):
+            payment._pay_tagasauris_bonus()
+
+        payment = BTMBonusPayment.objects.create(
+            job=self.job,
+            worker=mturk_worker,
+            amount=1,
+            status=PAYMENT_STATUS_INITIALIZED)
+        self.assertEqual(payment.amount, 1)
+
+        # This should fail because only mturk worker supports payments
+        payment._pay_tagasauris_bonus()
