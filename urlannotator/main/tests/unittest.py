@@ -368,6 +368,9 @@ class ProjectTests(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
+        acc = self.u.get_profile()
+        acc.job_limits['max_jobs'] = 0
+        acc.save()
 
         self.c = Client()
         self.c.login(username='testing', password='test')
@@ -572,6 +575,9 @@ class ProjectTests(ToolsMockedMixin, TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def testLimits(self):
+        acc = self.u.get_profile()
+        acc.job_limits['max_jobs'] = settings.USER_MAX_JOBS
+        acc.save()
         for _ in xrange(settings.USER_MAX_JOBS - 1):
             Job.objects.create_active(
                 title='test',
