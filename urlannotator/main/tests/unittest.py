@@ -8,6 +8,7 @@ from django.test.client import Client
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core import mail
+from django.conf import settings
 
 from social_auth.models import UserSocialAuth
 
@@ -570,6 +571,107 @@ class ProjectTests(ToolsMockedMixin, TestCase):
         resp = self.c.get(reverse('project_worker_view', args=[0, 1]),
             follow=True)
         self.assertEqual(resp.status_code, 200)
+
+    def testLimits(self):
+        for _ in xrange(settings.USER_MAX_JOBS-1):
+            Job.objects.create_active(
+                title='test',
+                description='test',
+                account=self.u.get_profile()
+            )
+
+        self.assertEqual(Job.objects.filter(account=self.u.get_profile())
+            .count(), settings.USER_MAX_JOBS - 1)
+        r = self.c.get(reverse('project_wizard'))
+        self.assertNotIn('wizard_error', r.context)
+
+        # Created jobs limit
+        with open('test_golds.csv', 'wb') as f:
+            f.write('"http://google.com",No\n')
+            f.write('"http://google.com/1",No\n')
+            f.write('"http://google.com/2",No\n')
+            f.write('"http://google.com/5",No\n')
+            f.write('"http://google.com/3",Yes\n')
+            f.write('"http://google.com/4",No\n')
+            f.flush()
+
+        with open('test_golds.csv', 'rb') as f:
+            data = {'topic': 'Test',
+                    'topic_desc': 'a',
+                    'data_source': '1',
+                    'no_of_urls': settings.USER_MAX_URLS_PER_JOB + 1,
+                    'project_type': '0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'active'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertIn('wizard_error', resp.context)
+            self.assertEqual(resp.status_code, 200)
+
+            self.assertEqual(Job.objects.filter(account=self.u.get_profile())
+                .count(), settings.USER_MAX_JOBS - 1)
+
+            data = {'topic': 'Test',
+                    'topic_desc': 'a',
+                    'data_source': '1',
+                    'no_of_urls': settings.USER_MAX_URLS_PER_JOB,
+                    'project_type': '0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'active'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertNotIn('wizard_error', resp.context)
+            self.assertEqual(resp.status_code, 200)
+
+            r = self.c.get(reverse('project_wizard'))
+            self.assertIn('wizard_error', r.context)
+
+            self.assertEqual(Job.objects.filter(account=self.u.get_profile())
+                .count(), settings.USER_MAX_JOBS)
+
+            data = {'topic': 'Test',
+                    'topic_desc': 'a',
+                    'data_source': '1',
+                    'no_of_urls': settings.USER_MAX_URLS_PER_JOB,
+                    'project_type': '0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'active'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertIn('wizard_error', resp.context)
+            self.assertEqual(resp.status_code, 200)
+
+            self.assertEqual(Job.objects.filter(account=self.u.get_profile())
+                .count(), settings.USER_MAX_JOBS)
+
+            acc = self.u.get_profile()
+            acc.job_limits['max_jobs'] = 0
+            acc.job_limits['max_urls_per_job'] = 0
+            acc.save()
+
+            data = {'topic': 'Test',
+                    'topic_desc': 'a',
+                    'data_source': '1',
+                    'no_of_urls': settings.USER_MAX_URLS_PER_JOB+1,
+                    'project_type': '0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'active'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertNotIn('wizard_error', resp.context)
+            self.assertEqual(resp.status_code, 200)
+
+            self.assertEqual(Job.objects.filter(account=self.u.get_profile())
+                .count(), settings.USER_MAX_JOBS+1)
+
 
 
 class DocsTest(ToolsMockedMixin, TestCase):

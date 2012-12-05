@@ -332,6 +332,13 @@ def settings_view(request):
 @login_required
 def project_wizard(request):
     odeskLogged = request.user.get_profile().odesk_uid != ''
+    acc = request.user.get_profile()
+    max_jobs = acc.job_limits.get('max_jobs',
+        settings.USER_MAX_JOBS)
+    jobs_count = acc.job_set.all().count()
+    can_create = request.user.is_superuser or not max_jobs \
+        or max_jobs > jobs_count
+
     if request.method == "GET":
         context = {'topic_form': WizardTopicForm(),
                    'attributes_form': WizardAttributesForm(odeskLogged),
@@ -340,6 +347,9 @@ def project_wizard(request):
             context['wizard_alert'] = ('Your account is not connected to '
                 'Odesk. If you want to have more options connect to Odesk at '
                 '<a href="%s">settings</a> page.') % reverse('settings')
+        if not can_create:
+            context['wizard_error'] = ('You have reached a limit of maximum '
+                'jobs created')
     else:
         topic_form = WizardTopicForm(request.POST)
         attr_form = WizardAttributesForm(odeskLogged, request.POST)
@@ -355,9 +365,14 @@ def project_wizard(request):
                 'Odesk. If you want to have more options connect to Odesk at '
                 '<a href="%s">settings</a> page.') % reverse('settings')
 
+        if not can_create:
+            context['wizard_error'] = ('You have reached a limit of maximum '
+                'jobs created')
+
         if (addt_form.is_valid() and
                 attr_form.is_valid() and
-                topic_form.is_valid()):
+                topic_form.is_valid() and
+                can_create):
             params = {
                 'account': request.user.get_profile(),
                 'title': topic_form.cleaned_data['topic'],
@@ -372,6 +387,16 @@ def project_wizard(request):
             }
             if not params['no_of_urls']:
                 params['no_of_urls'] = 0
+
+            max_urls = acc.job_limits.get('max_urls_per_job',
+                settings.USER_MAX_URLS_PER_JOB)
+
+            if max_urls and params['no_of_urls'] > max_urls:
+                context['wizard_error'] = ('You have entered too many urls to'
+                    ' gather. Youre allowed to collect at max %d urls.'
+                    % max_urls)
+                return render(request, 'main/project/wizard.html',
+                    RequestContext(request, context))
 
             if 'file_gold_urls' in request.FILES:
                 url_set = set()

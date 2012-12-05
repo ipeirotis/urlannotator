@@ -484,3 +484,11 @@ TAGASAURIS_VOTING_INSTRUCTION_URL = \
 XS_ON_NGINX = True
 XS_SHARING_ALLOWED_ORIGINS = TAGASAURIS_HOST
 XS_SHARING_ALLOWED_METHODS = ['POST', 'GET']
+
+# Defines how many jobs a user can have created by default. Change-able via
+# User.Account.job_limits. 0 equals to no limit.
+USER_MAX_JOBS = 4
+
+# Defines how many urls to gather a job can have by default per user.
+# Change-able via User.Account.job_limits. 0 equals to no limit.
+USER_MAX_URLS_PER_JOB = 1000

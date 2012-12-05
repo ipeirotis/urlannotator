@@ -1,3 +1,4 @@
+import json
 import datetime
 import hashlib
 import urlparse
@@ -70,6 +71,10 @@ class Account(models.Model):
     full_name = models.CharField(default='', max_length=100)
     alerts = models.BooleanField(default=False)
     worker_entry = models.OneToOneField('Worker', null=True, blank=True)
+    job_limits = JSONField(default=json.dumps({
+        'max_jobs': settings.USER_MAX_JOBS,
+        'max_urls_per_job': settings.USER_MAX_URLS_PER_JOB,
+    }))
 
 
 def create_user_profile(sender, instance, created, raw, **kwargs):
