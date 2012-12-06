@@ -391,7 +391,8 @@ def project_wizard(request):
             max_urls = acc.job_limits.get('max_urls_per_job',
                 settings.USER_MAX_URLS_PER_JOB)
 
-            if max_urls and params['no_of_urls'] > max_urls:
+            if (not request.user.is_superuser and
+                    max_urls and params['no_of_urls'] > max_urls):
                 context['wizard_error'] = ('You have entered too many urls to'
                     ' gather. Youre allowed to collect at max %d urls.'
                     % max_urls)
