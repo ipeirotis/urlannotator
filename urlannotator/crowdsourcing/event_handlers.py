@@ -2,6 +2,8 @@ from celery import task, Task, registry
 from django.conf import settings
 from django.contrib.auth.models import User
 
+from tagapi.error import TagasaurisApiException
+
 from factories import VoteStorageFactory
 from urlannotator.crowdsourcing.models import (BeatTheMachineSample,
     WorkerQualityVote, OdeskMetaJob)
@@ -152,6 +154,23 @@ odesk_job_monitor = registry.tasks[OdeskJobMonitor.name]
 def create_odesk_teams(user_id, **kwargs):
     user = User.objects.get(id=user_id)
     add_odesk_teams(user=user)
+
+
+@task(ignore_result=True)
+class WorkerBTMNotification(Task):
+    @singleton(name='worker-btm-notification')
+    def run(*args, **kwargs):
+        btms = BeatTheMachineSample.objects.filter(points_change=True)
+        for btm in btms:
+            try:
+                btm.worker.send_bonus_notification(btm.job)
+                btm.points_change = False
+                btm.save()
+            except TagasaurisApiException:
+                log.exception(
+                    'Worker BTM Notification failed with btm %s' % btm.id
+                )
+
 
 FLOW_DEFINITIONS = [
     (r'^EventNewJobInitializationDone$', initialize_external_job, settings.CELERY_LONGSCARCE_QUEUE),

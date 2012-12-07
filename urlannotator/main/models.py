@@ -1440,7 +1440,7 @@ class Worker(models.Model):
 
     def _prepare_bonus_notification(self, job):
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
-        btms = BeatTheMachineSample.objects.from_worker(self).filter(job=job)
+        btms = BeatTheMachineSample.objects.for_notification(self, job)
 
         plaintext = get_template('bonus_notification.txt')
         return plaintext.render(Context({

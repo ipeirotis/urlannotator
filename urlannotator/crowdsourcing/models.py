@@ -135,6 +135,9 @@ class BeatTheMachineSampleManager(models.Manager):
     def from_worker_unpaid(self, worker):
         return self.from_worker(worker).filter(frozen=False)
 
+    def for_notification(self, worker, job):
+        return self.from_worker(worker).filter(job=job, points_change=True)
+
 
 class BeatTheMachineSample(ClassifiedSampleCore):
     # BTM status and description/points mapping
@@ -181,6 +184,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     expected_output = models.CharField(max_length=10, choices=LABEL_CHOICES)
     btm_status = models.IntegerField(default=BTM_PENDING, choices=BTM_STATUS)
     points = models.IntegerField(default=0)
+    points_change = models.BooleanField(default=False)
     human_label = models.CharField(max_length=10, choices=LABEL_CHOICES,
         null=True, blank=False)
     frozen = models.BooleanField(default=False)
@@ -247,7 +251,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
         status = self.calculate_status()
 
         self.btm_status = status
-        self.points = self.BTM_POINTS[status]
+        self.update_points(status)
 
         if save:
             self.save()
@@ -358,9 +362,16 @@ class BeatTheMachineSample(ClassifiedSampleCore):
             else:
                 self.btm_status = self.BTM_NOT_X
 
-        self.points = self.BTM_POINTS[self.btm_status]
+        self.update_points(self.btm_status)
         self.human_label = cat_h
         self.save()
+
+    def update_points(self, status):
+        old = self.points
+        self.points = self.BTM_POINTS[status]
+
+        if old != self.points:
+            self.points_change = True
 
     def get_status(self):
         '''

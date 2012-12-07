@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from celery import task
 
 from urlannotator.main.models import (Job, Sample, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN)
+    LABEL_BROKEN, Worker)
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
     create_sample_gather, sample_to_mediaobject, stop_job, create_btm)
 from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
@@ -16,6 +16,7 @@ from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
 from urlannotator.flow_control import send_event
 from urlannotator.classification.event_handlers import (train,
     SampleGatheringHITMonitor, VotingHITMonitor)
+from urlannotator.crowdsourcing.event_handlers import WorkerBTMNotification
 
 
 class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
@@ -447,6 +448,21 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
         self.assertEqual(btm.human_label.lower(), human.lower())
         self.assertTrue(btm.points == 0)
 
+    def testBTMWorkerNotification(self):
+        worker_id = 41  # Mturk worker - notification should work
+        Worker.objects.create_tagasauris(external_id=worker_id)
+        btm = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/321',
+            label='',
+            expected_output=LABEL_YES,
+            worker_id=worker_id,
+            points_change=True,
+        )
+        WorkerBTMNotification.delay()
+        self.assertFalse(
+            BeatTheMachineSample.objects.get(id=btm.id).points_change)
+
 
 class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
 
@@ -540,3 +556,19 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
         btm = BeatTheMachineSample.objects.get(id=btm.id)
         self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_PENDING)
         self.assertTrue(btm.points == 0)
+
+    def testUpdatePoints(self):
+        btm = BeatTheMachineSample.objects.create_by_worker(
+            job=self.job,
+            url='google.com/321',
+            label='',
+            expected_output=LABEL_YES,
+            worker_id=1234,
+        )
+
+        self.assertEqual(btm.points, 0)
+        self.assertEqual(btm.points_change, False)
+
+        btm.update_points(BeatTheMachineSample.BTM_HOLE)
+        self.assertNotEqual(btm.points, 0)
+        self.assertEqual(btm.points_change, True)

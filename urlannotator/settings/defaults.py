@@ -371,6 +371,14 @@ CELERYBEAT_SCHEDULE = {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
     },
+    'worker_btm_notification': {
+        'task': 'urlannotator.crowdsourcing.event_handlers.WorkerBTMNotification',
+        'schedule': WORKER_MONITOR_INTERVAL,
+        'kwargs': {'interval': datetime.timedelta(days=1)},
+        'options': {
+            'queue': CELERY_LONGSCARCE_QUEUE,
+        },
+    },
     'send_validated_samples': {
         'task': 'urlannotator.classification.event_handlers.SampleVotingManager',
         'schedule': datetime.timedelta(seconds=3 * 60),
