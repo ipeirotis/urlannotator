@@ -143,7 +143,7 @@ class WizardAdditionalForm(forms.Form):
         "\"url\",Yes/No per line.<br/>E.g. \"http://google.com\",Yes.")
     additional_classify_info = ("Entries should be in format \"url\" per line."
         "<br/>E.g. \"http://google.com\".")
-    filler_samples_info = ("Includes gold samples labeled as 'No' in number "
+    filler_samples_info = ("Includes gold samples labeled as \"No\" in number "
         "equal to number of urls to gather.")
     icon = "<i title='%s' class='icon-info-sign pop'></i>"
     gold_help_text = icon % additional_gold_info

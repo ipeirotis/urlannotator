@@ -544,6 +544,57 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             self.assertEqual(resp.status_code, 200)
         os.unlink('test_golds.csv')
 
+    def testGoldFormat(self):
+        filename = 'test_golds.csv'
+        with open(filename, 'wb') as f:
+            f.write('"http://google.com",No\n')
+            f.write('"http://google.com/1",No\n')
+            f.write('"http://google.com/2",No\n')
+            f.write('"http://google.com/5",No\n')
+            f.write('"http://google.com/3",No\n')
+            f.write('"http://google.com/4",No\n')
+            f.flush()
+
+        with open(filename, 'rb') as f:
+            data = {'topic': 'Test',
+                    'topic_desc': 'a',
+                    'data_source': '1',
+                    'no_of_urls': '1',
+                    'project_type': '0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'active'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertIn('wizard_error', resp.context)
+
+        os.unlink(filename)
+        with open(filename, 'wb') as f:
+            f.write('"http://google.com",No\n')
+            f.write('"http://google.com/1",No\n')
+            f.write('"http://google.com/2"\n')
+            f.write('"http://google.com/5"\n')
+            f.write('"http://google.com/3"\n')
+            f.write('"http://google.com/4"\n')
+            f.flush()
+
+        with open(filename, 'rb') as f:
+            data = {'topic': 'Test',
+                    'topic_desc': 'a',
+                    'data_source': '1',
+                    'no_of_urls': '1',
+                    'project_type': '0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'submit': 'active'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertIn('error', self.c.session)
+
+        os.unlink(filename)
+
     def testOverview(self):
         Job.objects.create_active(
             title='test',

@@ -399,58 +399,61 @@ def project_wizard(request):
                 return render(request, 'main/project/wizard.html',
                     RequestContext(request, context))
 
-            if 'file_gold_urls' in request.FILES:
-                url_set = set()
-                label_set = set()
-                try:
-                    urls = csv.reader(request.FILES['file_gold_urls'])
-                    gold_samples = []
-                    for line in urls:
-                        url = line[0]
-                        label = line[1]
-                        if url in url_set:
-                            continue
+            # Gold urls file is required in the form. Since it's valid by now
+            # - the file is present
+            gold_file = request.FILES.get('file_gold_urls')
 
-                        url_set.add(url)
-                        label = make_label(label)
-                        if not label:
-                            log.warning(
-                                'Got wrong label when parsing gold samples: %s'
-                                % label
-                            )
-                            continue
-                        label_set.add(label)
-                        gold_samples.append({'url': url, 'label': label})
+            url_set = set()
+            label_set = set()
+            try:
+                urls = csv.reader(gold_file)
+                gold_samples = []
+                for url, label in urls:
+                    if url in url_set:
+                        continue
 
-                    if len(url_set) < 6:
-                        context['wizard_error'] = (
-                            'You have to provide at least 6 different '
-                            'gold samples.'
+                    label = make_label(label)
+                    if not label:
+                        log.warning(
+                            'Got wrong label when parsing gold samples: %s'
+                            % label
                         )
-                        return render(request, 'main/project/wizard.html',
-                            RequestContext(request, context))
+                        continue
+                    url_set.add(url)
+                    label_set.add(label)
+                    gold_samples.append({'url': url, 'label': label})
 
-                    if len(label_set) < 2:
-                        context['wizard_error'] = (
-                            'You have to provide at least 2 different labels.'
-                        )
-                        return render(request, 'main/project/wizard.html',
-                            RequestContext(request, context))
-
-                    params['gold_samples'] = json.dumps(gold_samples)
-
-                except csv.Error, e:
-                    request.session['error'] = e
-                    return redirect('index')
-                except:
-                    request.session['error'] =\
-                        'Gold samples file has incorrect format.'
+                if len(url_set) < 6:
+                    context['wizard_error'] = (
+                        'You have to provide at least 6 different '
+                        'gold samples.'
+                    )
                     return render(request, 'main/project/wizard.html',
                         RequestContext(request, context))
 
-            if 'file_classify_urls' in request.FILES:
+                if len(label_set) < 2:
+                    context['wizard_error'] = (
+                        'You have to provide at least 2 different labels.'
+                    )
+                    return render(request, 'main/project/wizard.html',
+                        RequestContext(request, context))
+
+                params['gold_samples'] = json.dumps(gold_samples)
+
+            except csv.Error, e:
+                request.session['error'] = e
+                return redirect('index')
+            except:
+                request.session['error'] =\
+                    'Gold samples file has incorrect format.'
+                return render(request, 'main/project/wizard.html',
+                    RequestContext(request, context))
+
+            classify_file = request.FILES.get('file_classify_urls', None)
+
+            if classify_file:
                 try:
-                    urls = csv.reader(request.FILES['file_classify_urls'])
+                    urls = csv.reader(classify_file)
                     classify_urls = [line[0] for line in urls]
                     params['classify_urls'] = json.dumps(classify_urls)
                 except csv.Error, e:
