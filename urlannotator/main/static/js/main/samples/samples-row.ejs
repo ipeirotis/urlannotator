@@ -15,7 +15,7 @@
                 <% } else { %>
                     <% if (meta.fieldsOrder[i] == 'screenshot') { %>
                       <a href="<%= model.display('large_thumb') %>">
-                      <img style="width: 60px; max-height: 45px;" src="<%= model.display('small_thumb') %>">
+                      <img class="pop" rel="popover" data-content="<img src='<%= model.display('large_thumb') %>'  style='width:240px;height:180px;' />" style="width: 60px; max-height: 45px;" src="<%= model.display('small_thumb') %>">
                     </a>
                     <% } else { %>
                         <%= model.display(meta.fieldsOrder[i]) %>

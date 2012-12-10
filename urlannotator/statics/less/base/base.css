@@ -452,3 +452,7 @@ table.table-url .span {
 table.table-url .btn-success {
   padding: 4px 16px 4px;
 }
+button.close {
+  border: 0px none;
+  background-color: transparent;
+}
