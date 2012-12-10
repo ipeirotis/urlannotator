@@ -385,7 +385,7 @@ class Job(models.Model):
         """
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
 
-        btms = BeatTheMachineSample.objects.get_btm_verified(job_id=self.id)
+        btms = BeatTheMachineSample.objects.get_btm_verified(job_id=self)
         return [b.sample for b in btms]
 
     def get_btm_pending_samples(self):
@@ -403,7 +403,7 @@ class Job(models.Model):
         """
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
 
-        btms = BeatTheMachineSample.objects.get_btm_verified(job_id=self.id)
+        btms = BeatTheMachineSample.objects.get_btm_verified(job_id=self)
         samples = [b.sample for b in btms]
         for sample in samples:
             sample.training = True

@@ -455,6 +455,42 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
         self.assertFalse(
             BeatTheMachineSample.objects.get(id=btm.id).points_change)
 
+    def testSampleManager(self):
+
+        def make_btm(btm_status):
+            BeatTheMachineSample.objects.create_by_worker(
+                btm_status=btm_status,
+                job=self.job,
+                url='google.com/31221',
+                worker_id=1234
+            )
+
+        make_btm(BeatTheMachineSample.BTM_PENDING)
+        make_btm(BeatTheMachineSample.BTM_NO_STATUS)
+        make_btm(BeatTheMachineSample.BTM_HUMAN)
+        make_btm(BeatTheMachineSample.BTM_KNOWN)
+        make_btm(BeatTheMachineSample.BTM_KNOWN_UNSURE)
+        make_btm(BeatTheMachineSample.BTM_X_CORRECTED)
+        make_btm(BeatTheMachineSample.BTM_NOTX_CORRECTED)
+        make_btm(BeatTheMachineSample.BTM_HOLE)
+        make_btm(BeatTheMachineSample.BTM_NOT_NONX)
+
+        self.assertTrue(BeatTheMachineSample.objects.count() > 8)
+
+        statuses = [x.btm_status for x in
+            BeatTheMachineSample.objects.get_btm_verified(self.job)]
+
+        self.assertTrue(BeatTheMachineSample.BTM_PENDING not in statuses)
+        self.assertTrue(BeatTheMachineSample.BTM_NO_STATUS not in statuses)
+        self.assertTrue(BeatTheMachineSample.BTM_HUMAN not in statuses)
+
+        self.assertEqual(
+            BeatTheMachineSample.objects.get_all_btm(self.job).count(),
+            BeatTheMachineSample.objects.filter(job=self.job).count())
+
+        self.assertTrue(
+            BeatTheMachineSample.objects.get_all_ready(self.job).count() > 0)
+
 
 class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
 
