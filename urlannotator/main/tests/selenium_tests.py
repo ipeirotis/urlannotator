@@ -93,14 +93,6 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
         self.assertTrue(self.selenium.find_element_by_id('id_topic_desc'))
         self.assertTrue(self.selenium.find_element_by_id('id_data_source'))
 
-        selector_free = 'select#id_data_source option[value="0"]'
-        selector_paid = 'select#id_data_source option[value="2"]'
-
-        # NoSuchElementException - missing odesk options
-        with self.assertRaises(exceptions.NoSuchElementException):
-            self.selenium.find_element_by_css_selector(selector_free)
-            self.selenium.find_element_by_css_selector(selector_paid)
-
         shown_elements = ['id_no_of_urls']
         self.assertShownElements(shown_elements)
 
@@ -116,35 +108,11 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
 
         self.selenium.get('%s%s'
                           % (self.live_server_url, reverse('project_wizard')))
-        # User connected to odesk - diplay odesk options
-        self.selenium.find_element_by_css_selector(selector_free)
-        self.selenium.find_element_by_css_selector(selector_paid)
-
         # Data source changing - change displayed project types etc.
         data_source = self.selenium.find_element_by_id('id_data_source')
-        project_type = self.selenium.find_element_by_id('id_project_type')
-        # Odesk free, fixed number of urls automatically selected
-        opt = data_source.find_element_by_xpath('.//option[@value="0"]')
-        opt.click()
-
-        shown_elements = ['id_project_type', 'id_no_of_urls', 'id_hourly_rate']
-        self.assertShownElements(shown_elements)
-
-        hidden_elements = ['id_budget']
-        self.assertHiddenElements(hidden_elements)
 
         # Fixed price
         selector = './/option[@value="1"]'
-        project_opt = project_type.find_element_by_xpath(selector)
-        project_opt.click()
-
-        shown_elements = ['id_project_type', 'id_budget']
-        self.assertShownElements(shown_elements)
-
-        hidden_elements = ['id_no_of_urls', 'id_hourly_rate']
-        self.assertHiddenElements(hidden_elements)
-
-        # Own workforce
         opt = data_source.find_element_by_xpath(selector)
         opt.click()
 
@@ -154,26 +122,6 @@ class ProjectWizardSeleniumTests(LiveServerTestCase):
         hidden_elements = ['id_project_type',
                            'id_hourly_rate',
                            'id_budget']
-        self.assertHiddenElements(hidden_elements)
-
-        # Odesk paid
-        opt = data_source.find_element_by_xpath('.//option[@value="2"]')
-        opt.click()
-
-        shown_elements = ['id_project_type',
-                          'id_no_of_urls',
-                          'id_hourly_rate']
-        self.assertShownElements(shown_elements)
-
-        hidden_elements = ['id_budget']
-        self.assertHiddenElements(hidden_elements)
-
-        project_opt.click()
-
-        shown_elements = ['id_project_type', 'id_budget']
-        self.assertShownElements(shown_elements)
-
-        hidden_elements = ['id_no_of_urls', 'id_hourly_rate']
         self.assertHiddenElements(hidden_elements)
 
 
