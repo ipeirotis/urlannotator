@@ -1265,7 +1265,7 @@ class BeatTheMachineResource(ModelResource):
             job=job,
             url=url,
             label='',
-            expected_output=LABEL_YES,
+            expected_output=LABEL_NO,
             worker_id=worker_id
         )
 

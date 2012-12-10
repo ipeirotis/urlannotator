@@ -146,10 +146,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     BTM_HUMAN = 2
     BTM_KNOWN = 3
     BTM_KNOWN_UNSURE = 4
-    BTM_NOT_X_UNSURE = 5
-    BTM_KNOWN_UNCERTAIN = 6
+    BTM_X_CORRECTED = 5
+    BTM_NOTX_CORRECTED = 6
     BTM_HOLE = 7
-    BTM_NOT_X = 8
+    BTM_NOT_NONX = 8
 
     BTM_STATUS = (
         (BTM_PENDING, "Pending"),
@@ -157,10 +157,10 @@ class BeatTheMachineSample(ClassifiedSampleCore):
         (BTM_HUMAN, "Human"),
         (BTM_KNOWN, "Known"),
         (BTM_KNOWN_UNSURE, "KnownUnsure"),
-        (BTM_NOT_X_UNSURE, "NotXUnsre"),
-        (BTM_KNOWN_UNCERTAIN, "KnownUncertain"),
+        (BTM_X_CORRECTED, "NotXUnsre"),
+        (BTM_NOTX_CORRECTED, "KnownUncertain"),
         (BTM_HOLE, "Hole"),
-        (BTM_NOT_X, "NotX"),
+        (BTM_NOT_NONX, "NotX"),
     )
 
     BTM_REWARD_0 = 0
@@ -172,13 +172,13 @@ class BeatTheMachineSample(ClassifiedSampleCore):
     BTM_POINTS = {
         BTM_PENDING: 0,
         BTM_NO_STATUS: 0,
-        BTM_HUMAN: BTM_REWARD_0,
+        BTM_HUMAN: 0,
         BTM_KNOWN: BTM_REWARD_0,
         BTM_KNOWN_UNSURE: BTM_REWARD_1,
-        BTM_NOT_X_UNSURE: BTM_REWARD_2,
-        BTM_KNOWN_UNCERTAIN: BTM_REWARD_3,
+        BTM_X_CORRECTED: BTM_REWARD_2,
+        BTM_NOTX_CORRECTED: BTM_REWARD_3,
         BTM_HOLE: BTM_REWARD_4,
-        BTM_NOT_X: BTM_REWARD_0,
+        BTM_NOT_NONX: BTM_REWARD_0,
     }
 
     expected_output = models.CharField(max_length=10, choices=LABEL_CHOICES)
@@ -348,19 +348,19 @@ class BeatTheMachineSample(ClassifiedSampleCore):
             if cat_h == expect:
                 self.btm_status = self.BTM_KNOWN_UNSURE
             else:
-                self.btm_status = self.BTM_NOT_X_UNSURE
-
-        elif cat_cl != expect and confidence == self.CONF_MEDIUM:
-            if cat_h == expect:
-                self.btm_status = self.BTM_KNOWN_UNCERTAIN
-            else:
-                self.btm_status = self.BTM_NOT_X_UNSURE
+                self.btm_status = self.BTM_X_CORRECTED
 
         elif cat_cl != expect and confidence == self.CONF_HIGH:
             if cat_h == expect:
                 self.btm_status = self.BTM_HOLE
             else:
-                self.btm_status = self.BTM_NOT_X
+                self.btm_status = self.BTM_NOT_NONX
+
+        elif cat_cl != expect and confidence == self.CONF_MEDIUM:
+            if cat_h == expect:
+                self.btm_status = self.BTM_NOTX_CORRECTED
+            else:
+                self.btm_status = self.BTM_KNOWN_UNSURE
 
         self.update_points(self.btm_status)
         self.human_label = cat_h

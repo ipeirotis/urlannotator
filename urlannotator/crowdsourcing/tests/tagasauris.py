@@ -375,7 +375,7 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
             job=self.job,
             url='google.com/321',
             label='',
-            expected_output=LABEL_YES,
+            expected_output=LABEL_NO,
             worker_id=1234
         )
         btm = BeatTheMachineSample.objects.get(id=btm.id)
@@ -391,35 +391,41 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
         #
         # CLASSIFIER SAYS "NO"
         human = LABEL_YES
+        recalc(btm, LABEL_NO, human, BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01)
+        btm = BeatTheMachineSample.objects.get(id=btm.id)
+        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_KNOWN)
+        self.assertTrue(btm.points == 0)
+
+        human = LABEL_YES
         recalc(btm, LABEL_NO, human, BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01)
         btm = BeatTheMachineSample.objects.get(id=btm.id)
-        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_KNOWN_UNCERTAIN)
+        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_X_CORRECTED)
         self.assertEqual(btm.human_label.lower(), human.lower())
         self.assertTrue(btm.points > 0)
 
+        human = LABEL_NO
+        recalc(btm, LABEL_NO, human, BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01)
+        btm = BeatTheMachineSample.objects.get(id=btm.id)
+        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_KNOWN_UNSURE)
+        self.assertEqual(btm.human_label.lower(), human.lower())
+        self.assertTrue(btm.points > 0)
+
+        #
+        # CLASSIFIER SAYS "YES"
         human = LABEL_YES
-        recalc(btm, LABEL_NO, human, BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01)
+        recalc(btm, LABEL_YES, human, BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01)
+        btm = BeatTheMachineSample.objects.get(id=btm.id)
+        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_NOT_NONX)
+        self.assertEqual(btm.human_label.lower(), human.lower())
+        self.assertTrue(btm.points == 0)
+
+        human = LABEL_NO
+        recalc(btm, LABEL_YES, human, BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01)
         btm = BeatTheMachineSample.objects.get(id=btm.id)
         self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_HOLE)
         self.assertEqual(btm.human_label.lower(), human.lower())
         self.assertTrue(btm.points > 0)
 
-        human = LABEL_NO
-        recalc(btm, LABEL_NO, human, BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01)
-        btm = BeatTheMachineSample.objects.get(id=btm.id)
-        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_NOT_X_UNSURE)
-        self.assertEqual(btm.human_label.lower(), human.lower())
-        self.assertTrue(btm.points > 0)
-
-        human = LABEL_NO
-        recalc(btm, LABEL_NO, human, BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01)
-        btm = BeatTheMachineSample.objects.get(id=btm.id)
-        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_NOT_X)
-        self.assertEqual(btm.human_label.lower(), human.lower())
-        self.assertTrue(btm.points == 0)
-
-        #
-        # CLASSIFIER SAYS "YES"
         human = LABEL_YES
         recalc(btm, LABEL_YES, human, BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01)
         btm = BeatTheMachineSample.objects.get(id=btm.id)
@@ -427,26 +433,12 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
         self.assertEqual(btm.human_label.lower(), human.lower())
         self.assertTrue(btm.points > 0)
 
-        human = LABEL_YES
-        recalc(btm, LABEL_YES, human, BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01)
-        btm = BeatTheMachineSample.objects.get(id=btm.id)
-        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_KNOWN)
-        self.assertEqual(btm.human_label.lower(), human.lower())
-        self.assertTrue(btm.points == 0)
-
         human = LABEL_NO
         recalc(btm, LABEL_YES, human, BeatTheMachineSample.CONF_MEDIUM_TRESHOLD + 0.01)
         btm = BeatTheMachineSample.objects.get(id=btm.id)
-        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_NOT_X_UNSURE)
+        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_NOTX_CORRECTED)
         self.assertEqual(btm.human_label.lower(), human.lower())
         self.assertTrue(btm.points > 0)
-
-        human = LABEL_NO
-        recalc(btm, LABEL_YES, human, BeatTheMachineSample.CONF_HIGH_TRESHOLD + 0.01)
-        btm = BeatTheMachineSample.objects.get(id=btm.id)
-        self.assertEqual(btm.btm_status, BeatTheMachineSample.BTM_KNOWN)
-        self.assertEqual(btm.human_label.lower(), human.lower())
-        self.assertTrue(btm.points == 0)
 
     def testBTMWorkerNotification(self):
         worker_id = 41  # Mturk worker - notification should work
