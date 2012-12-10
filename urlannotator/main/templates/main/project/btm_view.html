@@ -58,7 +58,7 @@
     <div class="table-container-anno1">
       <h3>Data results</h3>
       <div class="table-wrapper">
-         <table class="table fix">
+         <table id="samples-table" class="table fix">
 
           <thead>
             <tr>
@@ -86,7 +86,7 @@
                   <img style="width: 60px; max-height: 45px;" src="{{ sample.sample.get_small_thumbnail_url }}">
                 </a>
               </td>
-              <td><a href="{% url project_data_detail project.id sample.id%}">{{sample.url}}</a></td>
+              <td class="cell-url"><a href="{% url project_data_detail project.id sample.id%}">{{sample.url}}</a></td>
               <td>{{sample.added_on|date:"Y-m-d H:i"}}</td>
               <td class="tiny-col">{{sample.worker}}</td>
               <td class="tiny-col">{{sample.sample.get_workers|length}}</td>
