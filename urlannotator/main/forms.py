@@ -96,13 +96,6 @@ class WizardAttributesForm(forms.Form):
         max_digits=10, label="Declared budget")
     odesk_connect = False
 
-    def __init__(self, odeskConnected=False, *args, **kwargs):
-        super(WizardAttributesForm, self).__init__(*args, **kwargs)
-        # If user is connected to odesk, add new choices
-        if odeskConnected:
-            self.fields['data_source'].choices = JOB_DATA_SOURCE_CHOICES
-            self.odesk_connect = True
-
     def _clean_value(self, dict, key, val):
         var = dict.get(key, val)
         if not var:

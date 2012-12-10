@@ -341,7 +341,7 @@ def project_wizard(request):
 
     if request.method == "GET":
         context = {'topic_form': WizardTopicForm(),
-                   'attributes_form': WizardAttributesForm(odeskLogged),
+                   'attributes_form': WizardAttributesForm(),
                    'additional_form': WizardAdditionalForm()}
         if not odeskLogged:
             context['wizard_alert'] = ('Your account is not connected to '
@@ -352,7 +352,7 @@ def project_wizard(request):
                 'jobs created')
     else:
         topic_form = WizardTopicForm(request.POST)
-        attr_form = WizardAttributesForm(odeskLogged, request.POST)
+        attr_form = WizardAttributesForm(request.POST)
         addt_form = WizardAdditionalForm(request.POST, request.FILES)
         is_draft = request.POST['submit'] == 'draft'
 

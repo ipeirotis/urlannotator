@@ -13,7 +13,7 @@ from django.conf import settings
 from social_auth.models import UserSocialAuth
 
 from urlannotator.main.models import (Account, Job, Worker, Sample, GoldSample,
-    LABEL_YES)
+    LABEL_YES, JOB_DATA_SOURCE_CHOICES)
 from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
@@ -422,67 +422,8 @@ class ProjectTests(ToolsMockedMixin, TestCase):
 
             # Check project creation
 
-            # Odesk free project type
-            # Missing data source values, get defaults
-            for submit in ['draft', 'active']:
-                data = {'topic': 'Test',
-                        'topic_desc': 'Test desc',
-                        'data_source': '0',
-                        'no_of_urls': '1',
-                        'file_gold_urls': f,
-                        'same_domain': '0',
-                        'submit': submit}
-
-                resp = self.c.post(reverse('project_wizard'), data, follow=True)
-                f.seek(0)
-                self.assertTemplateUsed(resp, 'main/project/overview.html')
-
-            # Selected project type, missing values, get defaults
-            for submit in ['draft', 'active']:
-                data = {'topic': 'Test',
-                        'topic_desc': 'Test desc',
-                        'data_source': '0',
-                        'project_type': '0',
-                        'no_of_urls': '1',
-                        'file_gold_urls': f,
-                        'same_domain': '0',
-                        'submit': submit}
-
-                resp = self.c.post(reverse('project_wizard'), data, follow=True)
-                f.seek(0)
-                self.assertTemplateUsed(resp, 'main/project/overview.html')
-
-            # Missing one of values from project type
-            for submit in ['draft', 'active']:
-                data = {'topic': 'Test',
-                        'topic_desc': 'Test desc',
-                        'data_source': '0',
-                        'project_type': '0',
-                        'no_of_urls': '1',
-                        'file_gold_urls': f,
-                        'same_domain': '0',
-                        'submit': submit}
-
-                resp = self.c.post(reverse('project_wizard'), data, follow=True)
-                f.seek(0)
-                self.assertTemplateUsed(resp, 'main/project/overview.html')
-
-            for submit in ['draft', 'active']:
-                data = {'topic': 'Test',
-                        'topic_desc': 'Test desc',
-                        'data_source': '0',
-                        'no_of_urls': '1',
-                        'project_type': '1',
-                        'file_gold_urls': f,
-                        'same_domain': '0',
-                        'submit': submit}
-
-                resp = self.c.post(reverse('project_wizard'), data, follow=True)
-                f.seek(0)
-                self.assertTemplateUsed(resp, 'main/project/overview.html')
-
             # Full values provided
-            for source in ['0', '1', '2']:
+            for source, name in JOB_DATA_SOURCE_CHOICES:
                 for submit in ['draft', 'active']:
                     data = {'topic': 'Test',
                             'topic_desc': 'Test desc',
