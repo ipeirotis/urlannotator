@@ -111,7 +111,7 @@ function job(){
   this.cost = ko.observable();
   this.no_of_workers = ko.observable();
   this.gather_url = ko.observable();
-  this.voting_url = ko.observable();
+  this.vot_url = ko.observable();
   this.alerts = ko.observableArray();
   this.top_workers = ko.observableArray();
   this.newest_votes = ko.observableArray();
@@ -119,6 +119,17 @@ function job(){
   this.progress_votes = ko.observable();
   this.votes_gathered = ko.observable();
 
+
+  this.gathering_url = ko.computed(function(){
+    if (this.gather_url())
+      return this.gather_url();
+    return 'Not available yet.';
+  }, this);
+  this.voting_url = ko.computed(function(){
+    if (this.vot_url())
+      return this.vot_url();
+    return 'Not available yet.';
+  }, this);
   this.hasOwnWorkforceLinks = ko.computed(function(){
     return (this.gather_url() != "") || (this.voting_url() != "");
   }, this);

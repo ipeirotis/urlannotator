@@ -4,13 +4,21 @@
 <br>
 <table>
     <tbody>
-        <tr data-bind="visible: gather_url">
+        <tr data-bind="visible: gathering_url">
             <td style="width: 150px;vertical-align:top;text-align:right;padding-right:10px">URL Collecting Link</td>
+            {% if project.get_sample_gathering_url %}
             <td><input data-bind="value: gather_url" type="text" value="{{project.get_sample_gathering_url}}"></input>  <a data-bind="attr: {href: gather_url}" href="{{project.get_sample_gathering_url}}">go to</a></td>
+            {% else %}
+            <td>Not available yet.</td>
+            {% endif %}
         </tr>
         <tr data-bind="visible: voting_url">
             <td style="width: 150px;vertical-align:top;text-align:right;padding-right:10px">URL Voting Link</td>
+            {% if project.get_voting_url %}
             <td><input data-bind="value: voting_url" type="text" value="{{project.get_voting_url}}"></input>  <a data-bind="attr: {href: voting_url}" href="{{project.get_voting_url}}">go to</a></td>
+            {% else %}
+            <td>Not available yet.</td>
+            {% endif %}
         </tr>
     </tbody>
 </table>
