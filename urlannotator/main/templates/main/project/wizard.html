@@ -81,11 +81,55 @@
       </div>
     </div>
     <div class="row">
+      <div class="span12">
+        <h4>Cost and payment</h4>
+        <hr/>
+      </div>
+    </div>
+    <div class="row">
+      <div class="offset1 span11">
+        <fieldset>
+          <div class="control-group ">
+            <label class="control-label" for="id_same_domain">
+              Cost of classifier [USD]
+            </label>
+            <div class="controls">
+              <input type="text" name="estimated_cost" id="id_estimated_cost" disabled>
+              <span style="display: block;">
+                This cost is calculated base on previous parameters.
+              </span>
+            </div>
+          </div>
+          <div class="control-group ">
+            <label class="control-label" for="id_same_domain">
+              Payment
+            </label>
+            <div class="controls">
+              <script src="https://button.stripe.com/v1/button.js" class="stripe-button"
+                      data-key="pk_NjMf2QUPtR28Wg0xmyWtepIzUziVr"
+                      data-amount="5000"
+                      data-label="Pay with Stripe"></script>
+              <span id="id_payment_done" style="display: none;">
+                Thank you for payment.
+              </span>
+              <script type="text/javascript" charset="utf-8">
+                $('.stripe-button').bind('token', function(e, token){
+                  $("#id_payment_done").show();
+                  $("#id_activate").removeAttr("disabled")
+                });
+              </script>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+    <div class="row">
       <div class="form-actions">
         <div class="gradient"></div>
         <div class="custom-offset">
           <button class="btn-link" type="submit" name="submit" value="draft">Save as Draft</button>
-          <button class="btn btn-success span" type="submit" name="submit" value="active">Activate & Create Project</button>
+          <button id="id_activate" class="btn btn-success span" type="submit"
+            name="submit" value="active" disabled="disabled">Activate & Create Project</button>
         </div>
       </div>
     </div>
