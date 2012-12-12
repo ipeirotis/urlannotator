@@ -849,7 +849,8 @@ class Job(models.Model):
 
     @staticmethod
     def is_odesk_required_for_source(source):
-        return int(source) != 1
+        return int(source) not in [
+            JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_MTURK_WORKFORCE]
 
 # Sample source types breakdown:
 # owner - Sample created by the job creator. source_val is empty.
