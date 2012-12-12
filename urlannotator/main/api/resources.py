@@ -786,6 +786,9 @@ class JobResource(OwnerModelResource):
 
     def override_urls(self):
         return [
+            url(r'^(?P<resource_name>%s)/estimate/'
+                % self._meta.resource_name,
+                self.wrap_view('estimate_cost'), name='estimate_cost'),
             url(r'^(?P<resource_name>%s)/(?P<job_id>[^/]+)/classifier/$'
                 % self._meta.resource_name,
                 self.wrap_view('classifier'), name='api_classifier'),
@@ -950,6 +953,20 @@ class JobResource(OwnerModelResource):
         self.method_check(request, allowed=['get'])
 
         return self.classifier_resource.get_detail(request, **kwargs)
+
+    def estimate_cost(self, request, **kwargs):
+        self.method_check(request, allowed=['get'])
+
+        data_source = int(request.GET.get('data_source'))
+        no_of_urls = request.GET.get('no_of_urls', 0)
+        no_of_urls = int(no_of_urls if no_of_urls else 0)
+
+        cost = Job.estimate_cost(data_source, no_of_urls)
+
+        return self.create_response(
+            request,
+            {'cost': cost},
+        )
 
 
 class WorkerJobAssociationResource(resources.ModelResource):

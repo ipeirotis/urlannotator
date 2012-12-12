@@ -21,7 +21,7 @@ from urlannotator.tools.synchronization import POSIXLock
 from urlannotator.tools.utils import cached
 from urlannotator.settings import imagescale2
 from urlannotator.crowdsourcing.tagasauris_helper import (stop_job,
-    make_tagapi_client)
+    make_tagapi_client, get_gather_cost, get_vote_cost)
 
 import logging
 log = logging.getLogger(__name__)
@@ -87,9 +87,11 @@ post_save.connect(create_user_profile, sender=User)
 JOB_SOURCE_ODESK_FREE = 0
 JOB_SOURCE_OWN_WORKFORCE = 1
 JOB_SOURCE_ODESK_PAID = 2
+JOB_SOURCE_MTURK = 3
 
 JOB_BASIC_DATA_SOURCE_CHOICES = (
     (JOB_SOURCE_OWN_WORKFORCE, 'Own workforce'),
+    (JOB_SOURCE_MTURK, 'Amazon Mechanical Turk'),
 )
 JOB_ODESK_DATA_SOURCE_CHOICES = (
     (JOB_SOURCE_ODESK_FREE, 'Odesk free'),
@@ -182,6 +184,22 @@ class Job(models.Model):
     btm_points_to_cash = models.PositiveIntegerField(default=1)
 
     objects = JobManager()
+
+    @classmethod
+    def estimate_cost(cls, data_source, no_of_urls):
+        estimation = 0
+        if data_source == JOB_SOURCE_OWN_WORKFORCE:
+            # I assume own workforce is free.
+            estimation = 0
+
+        if data_source == JOB_SOURCE_MTURK:
+            # Only tagasauris cost.
+            gather_cost = get_gather_cost(no_of_urls)
+            vote_cost = get_vote_cost(no_of_urls)
+
+            estimation = gather_cost + vote_cost
+
+        return round(estimation, 2)
 
     @classmethod
     def job_source_to_hit(cls, source):

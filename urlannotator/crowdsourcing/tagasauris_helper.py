@@ -8,7 +8,6 @@ from itertools import imap
 from tagapi.api import TagasaurisClient
 from tagapi.error import TagasaurisApiException, TagasaurisApiMaxRetries
 from urlannotator.tools.utils import setting
-from urlannotator.flow_control import send_event
 
 import logging
 log = logging.getLogger(__name__)
@@ -84,10 +83,26 @@ def stop_job(external_id):
     tc.wait_for_complete(res['task_id'])
 
 
-def get_split(job):
-    gather_goal = math.ceil(job.no_of_urls * TAGASAURIS_GOAL_MULTIPLICATION /
+def get_gather_goal(no_of_urls):
+    return math.ceil(no_of_urls * TAGASAURIS_GOAL_MULTIPLICATION /
         TAGASAURIS_GATHER_SAMPLES_PER_JOB)
+
+
+def get_gather_cost(no_of_urls):
+    return get_gather_goal(no_of_urls) * float(
+        settings.TAGASAURIS_GATHER_PRICE)
+
+
+def get_split(job):
+    gather_goal = get_gather_goal(job.no_of_urls)
     return math.ceil(math.sqrt(gather_goal))
+
+
+def get_vote_cost(no_of_urls):
+    return no_of_urls * TAGASAURIS_GOAL_MULTIPLICATION *\
+        float(settings.TAGASAURIS_VOTE_WORKERS_PER_HIT) *\
+        float(settings.TAGASAURIS_VOTE_PRICE) /\
+        float(settings.TAGASAURIS_VOTE_MEDIA_PER_HIT)
 
 
 def init_tagasauris_job(job):

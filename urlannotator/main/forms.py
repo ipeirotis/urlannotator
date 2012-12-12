@@ -112,7 +112,7 @@ class WizardAttributesForm(forms.Form):
             raise forms.ValidationError(
                 'You have to be connected to Odesk to use this option.')
 
-        if cleaned_data['data_source'] == '1':
+        if cleaned_data['data_source'] in ['1', '3']:
             cleaned_data['hourly_rate'] = 0
             cleaned_data['budget'] = 0
         else:

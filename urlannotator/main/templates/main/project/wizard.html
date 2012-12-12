@@ -107,7 +107,6 @@
             <div class="controls">
               <script src="https://button.stripe.com/v1/button.js" class="stripe-button"
                       data-key="pk_NjMf2QUPtR28Wg0xmyWtepIzUziVr"
-                      data-amount="5000"
                       data-label="Pay with Stripe"></script>
               <span id="id_payment_done" style="display: none;">
                 Thank you for payment.
@@ -146,9 +145,29 @@
 {% block javascript %}
 {{ block.super }}
 <script type="text/javascript">
+
+  var estimate_costs = function () {
+    var no_of_urls = $("#id_no_of_urls").val();
+    var data_source = $("#id_data_source").val();
+    $.get('/api/v1/job/estimate/?format=json',
+      {no_of_urls: no_of_urls, data_source: data_source},
+      function(data){
+        $("#id_estimated_cost").val(data.cost);
+        if (data.cost == 0) {
+          $("#id_activate").removeAttr("disabled")
+        } else if ($("input[name=stripeToken]").length == 0) {
+          $("#id_activate").attr("disabled", "disabled")
+        }
+      });
+  };
+
+  $("#id_no_of_urls").change(function () {
+    estimate_costs();
+  });
+
 $('#id_data_source').change(function(obj){
         var index = $('#id_data_source').val();
-        if (index == 1) {
+        if (index == 1 || index == 3) {
             $('#id_project_type').parent().parent().css('display', 'none')
             $('#id_no_of_urls').parent().parent().css('display', '')
             $('#id_hourly_rate').parent().parent().css('display', 'none')
@@ -158,6 +177,7 @@ $('#id_data_source').change(function(obj){
             $('#id_project_type').val(0)
             $('#id_project_type').change()
         }
+        estimate_costs();
     }
 );
 $('#id_project_type').change(function(obj){
