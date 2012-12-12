@@ -355,6 +355,7 @@ def project_wizard(request):
         attr_form = WizardAttributesForm(request.POST)
         addt_form = WizardAdditionalForm(request.POST, request.FILES)
         is_draft = request.POST['submit'] == 'draft'
+        stripe_token = request.POST.get('stripeToken', None)
 
         context = {'topic_form': topic_form,
                    'attributes_form': attr_form,
@@ -369,10 +370,14 @@ def project_wizard(request):
             context['wizard_error'] = ('You have reached a limit of maximum '
                 'jobs created')
 
+        if not stripe_token:
+            context['wizard_error'] = 'No Stripe payment'
+
         if (addt_form.is_valid() and
                 attr_form.is_valid() and
                 topic_form.is_valid() and
-                can_create):
+                can_create and
+                stripe_token):
             params = {
                 'account': request.user.get_profile(),
                 'title': topic_form.cleaned_data['topic'],
