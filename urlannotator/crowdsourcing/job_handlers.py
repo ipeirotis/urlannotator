@@ -7,7 +7,8 @@ from urlannotator.crowdsourcing.tagasauris_helper import (
 from urlannotator.crowdsourcing.odesk_helper import notify_workers
 from urlannotator.crowdsourcing.models import OdeskMetaJob
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
-    JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID)
+    JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID,
+    JOB_SOURCE_MTURK_WORKFORCE)
 
 import logging
 log = logging.getLogger(__name__)
@@ -261,6 +262,7 @@ class OdeskHandler(TagasaurisHandler):
         notify_workers(odesk_job=meta, hit=new, job=self.job)
 
 handlers = {
+    JOB_SOURCE_MTURK_WORKFORCE: TagasaurisHandler,
     JOB_SOURCE_OWN_WORKFORCE: TagasaurisHandler,
     JOB_SOURCE_ODESK_PAID: TagasaurisHandler,
     JOB_SOURCE_ODESK_FREE: TagasaurisHandler

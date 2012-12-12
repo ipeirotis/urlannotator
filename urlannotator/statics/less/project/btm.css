@@ -41,3 +41,14 @@
 .body-btm table#start-btm td {
   vertical-align: top;
 }
+#samples-table .field-screenshot {
+  width: 70px;
+}
+#samples-table .field-url {
+  width: 55%;
+}
+#samples-table .cell-url {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

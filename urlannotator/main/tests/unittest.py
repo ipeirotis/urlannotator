@@ -404,6 +404,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                         'hourly_rate': '1.0',
                         'budget': '1.0',
                         'same_domain': '0',
+                        'stripeToken': 'abc',
                         'file_gold_urls': f,
                         'submit': 'draft'}
 
@@ -434,6 +435,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                             'budget': '1.0',
                             'file_gold_urls': f,
                             'same_domain': '0',
+                            'stripeToken': 'abc',
                             'submit': submit}
 
                     resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -449,6 +451,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'budget': '1.0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
                     'submit': 'draft'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -464,6 +467,23 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'budget': '1.0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
+                    'submit': 'draft'}
+
+            resp = self.c.post(reverse('project_wizard'), data, follow=True)
+            f.seek(0)
+            self.assertFormError(resp, 'topic_form', 'topic_desc',
+                                 'Please input project topic description.')
+
+            data = {'topic': 'Test',
+                    'data_source': '1',
+                    'project_type': '0',
+                    'no_of_urls': '1',
+                    'hourly_rate': '1.0',
+                    'budget': '1.0',
+                    'file_gold_urls': f,
+                    'same_domain': '0',
+                    'stripeToken': '',
                     'submit': 'draft'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -478,6 +498,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
                     'submit': 'active'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -504,6 +525,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
                     'submit': 'active'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -528,6 +550,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
                     'submit': 'active'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -600,6 +623,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
                     'submit': 'active'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -617,6 +641,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
                     'submit': 'active'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -637,6 +662,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
                     'submit': 'active'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
@@ -659,6 +685,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
+                    'stripeToken': 'abc',
                     'submit': 'active'}
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)

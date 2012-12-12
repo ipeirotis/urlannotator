@@ -87,11 +87,11 @@ post_save.connect(create_user_profile, sender=User)
 JOB_SOURCE_ODESK_FREE = 0
 JOB_SOURCE_OWN_WORKFORCE = 1
 JOB_SOURCE_ODESK_PAID = 2
-JOB_SOURCE_MTURK = 3
+JOB_SOURCE_MTURK_WORKFORCE = 3
 
 JOB_BASIC_DATA_SOURCE_CHOICES = (
     (JOB_SOURCE_OWN_WORKFORCE, 'Own workforce'),
-    (JOB_SOURCE_MTURK, 'Amazon Mechanical Turk'),
+    (JOB_SOURCE_MTURK_WORKFORCE, 'Amazon Mechanical Turk'),
 )
 JOB_ODESK_DATA_SOURCE_CHOICES = (
     (JOB_SOURCE_ODESK_FREE, 'Odesk free'),
@@ -192,7 +192,7 @@ class Job(models.Model):
             # I assume own workforce is free.
             estimation = 0
 
-        if data_source == JOB_SOURCE_MTURK:
+        if data_source == JOB_SOURCE_MTURK_WORKFORCE:
             # Only tagasauris cost.
             gather_cost = get_gather_cost(no_of_urls)
             vote_cost = get_vote_cost(no_of_urls)
@@ -209,6 +209,7 @@ class Job(models.Model):
                 JOB_SOURCE_ODESK_FREE: settings.ODESK_HIT_TYPE,
                 JOB_SOURCE_ODESK_PAID: settings.ODESK_HIT_TYPE,
                 JOB_SOURCE_OWN_WORKFORCE: settings.OWN_WORKFORCE_HIT_TYPE,
+                JOB_SOURCE_MTURK_WORKFORCE: settings.MTURK_WORKFORCE_HIT_TYPE,
             })
         return getattr(cls, JOB_HIT_MAPPING_NAME)[source]
 
