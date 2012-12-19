@@ -10,7 +10,7 @@ from urlannotator.main.models import (Job, Sample, LABEL_NO, LABEL_YES,
     LABEL_BROKEN, Worker)
 from urlannotator.flow_control.test import ToolsMockedMixin
 from urlannotator.crowdsourcing.models import (SampleMapping,
-    WorkerQualityVote, BeatTheMachineSample)
+    WorkerQualityVote, BeatTheMachineSample, TagasaurisJobs)
 
 
 class TagasaurisSampleResourceTests(ToolsMockedMixin, TestCase):
@@ -437,6 +437,29 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         self.assertTrue('status' in resp_dict.keys())
         self.assertTrue('points' in resp_dict.keys())
         self.assertTrue('btm_status' in resp_dict.keys())
+
+    def testStartBtm(self):
+        job = Job.objects.create_active(
+            account=self.user.get_profile(),
+            gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
+        )
+
+        TagasaurisJobs.objects.create(
+            urlannotator_job=job,
+        )
+        self.assertEqual(1, TagasaurisJobs.objects.count())
+
+        job.start_btm("test topic", "test desc", 10, 5000)
+        job = Job.objects.get(id=job.id)
+
+        self.assertTrue(job.btm_active)
+        self.assertEqual(10, job.btm_to_gather)
+        self.assertFalse(job.add_filler_samples)
+        self.assertEqual(5000, job.btm_points_to_cash)
+
+        self.assertEqual(1, TagasaurisJobs.objects.count())
+        tj = TagasaurisJobs.objects.all()[0]
+        self.assertEqual(32, len(tj.beatthemachine_key))
 
 
 class TagasaurisWorker(ToolsMockedMixin, TestCase):

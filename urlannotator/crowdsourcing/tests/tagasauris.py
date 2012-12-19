@@ -9,7 +9,8 @@ from celery import task
 from urlannotator.main.models import (Job, Sample, LABEL_YES, LABEL_NO,
     LABEL_BROKEN, Worker)
 from urlannotator.crowdsourcing.tagasauris_helper import (make_tagapi_client,
-    create_sample_gather, sample_to_mediaobject, stop_job, create_btm)
+    create_sample_gather, sample_to_mediaobject, stop_job, create_btm,
+    samples_to_mediaobjects)
 from urlannotator.crowdsourcing.models import (SampleMapping, TagasaurisJobs,
     BeatTheMachineSample)
 from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
@@ -50,6 +51,9 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
         self.assertEqual(len(mo['id']), 32)
         self.assertEqual(mo['url'], self.sample.screenshot)
         self.assertEqual(mo['mimetype'], 'image/png')
+
+        self.sample.screenshot = None
+        self.assertEqual({}, samples_to_mediaobjects([self.sample, ]))
 
     def testCreateAndStop(self):
         voting_key, voting_hit = create_sample_gather(self.tc, self.job)
