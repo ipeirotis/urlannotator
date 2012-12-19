@@ -1,8 +1,14 @@
 from django.db import models
+from django.conf import settings
+
+import stripe
 
 from urlannotator.crowdsourcing.tagasauris_helper import make_tagapi_client
 from urlannotator.main.models import Job, Worker
 from tenclouds.django.jsonfield.fields import JSONField
+
+import logging
+log = logging.getLogger(__name__)
 
 # Payment statuses breakdown:
 # NOTE: Not every backend could use all of those statuses.
@@ -267,3 +273,51 @@ class BTMBonusPayment(models.Model):
 
     def pay_bonus(self):
         self._pay_tagasauris_bonus()
+
+
+class JobChargeException(Exception):
+    pass
+
+
+class JobChargeManager(models.Manager):
+
+    def from_token(self, stripe_token, description="URLannotator Customer"):
+        try:
+            stripe.api_key = settings.STRIPE_SECRET
+            customer = stripe.Customer.create(
+                description=description,
+                card=stripe_token
+            )
+            return self.create(customer_id=customer.id)
+
+        except stripe.CardError, e:
+            body = e.json_body
+            err = body['error']['message']
+            raise JobChargeException(err)
+
+        except stripe.InvalidRequestError:
+            raise JobChargeException("Stripe: Invalid credit card data")
+
+        # except stripe.AuthenticationError, e:
+        # except stripe.APIConnectionError, e:
+        except stripe.StripeError:
+            log.exception(e)
+            raise JobChargeException("Stripe temporarily unavailable")
+
+
+class JobCharge(models.Model):
+    job = models.ForeignKey(Job, null=True)
+    customer_id = models.CharField(max_length=50)
+
+    objects = JobChargeManager()
+
+    def charge(self, amount):
+        """
+            amount in usd
+        """
+        amount_cents = amount * 100
+        stripe.Charge.create(
+            amount=amount_cents,
+            currency="usd",
+            customer=self.customer_id
+        )

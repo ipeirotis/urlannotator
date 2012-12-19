@@ -426,11 +426,12 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             # Full values provided
             for source, name in JOB_DATA_SOURCE_CHOICES:
                 for submit in ['draft', 'active']:
+                    no_of_urls = 1
                     data = {'topic': 'Test',
                             'topic_desc': 'Test desc',
                             'data_source': source,
                             'project_type': '0',
-                            'no_of_urls': '1',
+                            'no_of_urls': no_of_urls,
                             'hourly_rate': '1.0',
                             'budget': '1.0',
                             'file_gold_urls': f,
@@ -440,7 +441,13 @@ class ProjectTests(ToolsMockedMixin, TestCase):
 
                     resp = self.c.post(reverse('project_wizard'), data, follow=True)
                     f.seek(0)
-                    self.assertTemplateUsed(resp, 'main/project/overview.html')
+
+                    if Job.estimate_cost(source, no_of_urls) > 0:
+                        # We need to provide correct stripe token.
+                        self.assertTemplateUsed(resp, 'main/project/wizard-form-error.html')
+                    else:
+                        # For free project we don't need payment
+                        self.assertTemplateUsed(resp, 'main/project/overview.html')
 
             # Check project topic and description
             data = {'topic_desc': 'Test desc',

@@ -24,6 +24,7 @@ from itertools import ifilter
 from oauth2client.file import Storage
 from oauth2client.client import OAuth2WebServerFlow
 
+
 from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm, BTMForm)
@@ -33,6 +34,7 @@ from urlannotator.classification.models import (ClassifierPerformance,
     TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
 from urlannotator.flow_control import send_event
+from urlannotator.payments.models import JobCharge, JobChargeException
 
 import logging
 log = logging.getLogger(__name__)
@@ -339,10 +341,14 @@ def project_wizard(request):
     can_create = request.user.is_superuser or not max_jobs \
         or max_jobs > jobs_count
 
+    context = {'stripe_key': settings.STRIPE_PUBLISHABLE}
+
     if request.method == "GET":
-        context = {'topic_form': WizardTopicForm(),
-                   'attributes_form': WizardAttributesForm(),
-                   'additional_form': WizardAdditionalForm()}
+        context.update({
+            'topic_form': WizardTopicForm(),
+            'attributes_form': WizardAttributesForm(),
+            'additional_form': WizardAdditionalForm()
+        })
         if not odeskLogged:
             context['wizard_alert'] = ('Your account is not connected to '
                 'Odesk. If you want to have more options connect to Odesk at '
@@ -357,9 +363,11 @@ def project_wizard(request):
         is_draft = request.POST['submit'] == 'draft'
         stripe_token = request.POST.get('stripeToken', None)
 
-        context = {'topic_form': topic_form,
-                   'attributes_form': attr_form,
-                   'additional_form': addt_form}
+        context.update({
+            'topic_form': topic_form,
+            'attributes_form': attr_form,
+            'additional_form': addt_form
+        })
 
         if not odeskLogged:
             context['wizard_alert'] = ('Your account is not connected to '
@@ -370,14 +378,10 @@ def project_wizard(request):
             context['wizard_error'] = ('You have reached a limit of maximum '
                 'jobs created')
 
-        if not stripe_token:
-            context['wizard_error'] = 'No Stripe payment'
-
         if (addt_form.is_valid() and
                 attr_form.is_valid() and
                 topic_form.is_valid() and
-                can_create and
-                stripe_token):
+                can_create):
             params = {
                 'account': request.user.get_profile(),
                 'title': topic_form.cleaned_data['topic'],
@@ -470,12 +474,34 @@ def project_wizard(request):
                     return render(request, 'main/project/wizard.html',
                         RequestContext(request, context))
 
+            job_charge = None
+            if Job.estimate_cost(int(params['data_source']),
+                    params['no_of_urls']) > 0:
+                if not stripe_token:
+                    context['wizard_error'] = 'No Stripe payment'
+                    return render(request, 'main/project/wizard.html',
+                        RequestContext(request, context))
+                description = "Customer for User %s in job: %s " % (
+                    request.user.id, params['title'])
+                try:
+                    job_charge = JobCharge.objects.from_token(
+                        stripe_token, description)
+                except JobChargeException, e:
+                    context['wizard_error'] = e.message
+                    return render(request, 'main/project/wizard.html',
+                        RequestContext(request, context))
+
             if is_draft:
                 job = Job.objects.create_draft(**params)
             else:
                 job = Job.objects.create_active(**params)
 
+            if job_charge:
+                job_charge.job = job
+                job_charge.save()
+
             return redirect('project_view', id=job.id)
+
     return render(request, 'main/project/wizard.html',
         RequestContext(request, context))
 
