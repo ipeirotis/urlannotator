@@ -84,11 +84,12 @@ class WizardAttributesForm(forms.Form):
     """ Form representing project wizard's attributes part.
     """
     data_source = forms.ChoiceField(JOB_BASIC_DATA_SOURCE_CHOICES,
+        required=True,
         label="Data source",
         help_text="You have 800 free URL quota provided by Odesk")
     project_type = forms.ChoiceField(JOB_TYPE_CHOICES, required=False,
         label="Project type")
-    no_of_urls = forms.IntegerField(required=False,
+    no_of_urls = forms.IntegerField(required=True,
         label="No. of URLs to collect", min_value=1)
     hourly_rate = forms.DecimalField(required=False, decimal_places=2,
         max_digits=10, label="Hourly rate (US$)")
