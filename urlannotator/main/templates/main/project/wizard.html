@@ -105,18 +105,35 @@
               Payment
             </label>
             <div class="controls">
-              <script src="https://button.stripe.com/v1/button.js" class="stripe-button"
-                      data-key="{{ stripe_key }}"
-                      data-label="Pay with Stripe"></script>
+              <script src="https://checkout.stripe.com/v2/checkout.js"></script>
+
+              <button id="id_stripe_button" class="stripe-button-el"
+                style="visibility: visible;"><span>Pay with Stripe</span></button>
+
+              <input type="text" name="stripeToken" id="id_stripe_token"
+                value="" style="display: none;">
+
+              <script>
+                $('#id_stripe_button').click(function(){
+                  var token = function(res){
+                    $("#id_stripe_token").val(res.id);
+                    $("#id_payment_done").show();
+                    $("#id_activate").removeAttr("disabled")
+                  };
+
+                  StripeCheckout.open({
+                    key:         '{{ stripe_key }}',
+                    panelLabel:  'Pay',
+                    token:       token
+                  });
+
+                  return false;
+                });
+              </script>
+
               <span id="id_payment_done" style="display: none;">
                 Thank you for payment.
               </span>
-              <script type="text/javascript" charset="utf-8">
-                $('.stripe-button').bind('token', function(e, token){
-                  $("#id_payment_done").show();
-                  $("#id_activate").removeAttr("disabled")
-                });
-              </script>
             </div>
           </div>
         </fieldset>
