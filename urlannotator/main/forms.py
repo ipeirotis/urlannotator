@@ -147,8 +147,14 @@ class WizardAdditionalForm(forms.Form):
         label='Additional gold samples', help_text=filler_samples_help_text)
     same_domain = forms.IntegerField(
         label="No. of allowed multiple URLs from the same domain")
-    file_gold_urls = forms.FileField(required=True,
+    file_gold_urls = forms.FileField(required=False,
         label="Upload gold, (preclassified) urls", help_text=gold_help_text)
+    gold_urls_positive = forms.CharField(required=False, widget=forms.Textarea,
+        label="Positive URLs (that match your search)",
+        help_text='Here you can add your URLs. End each one with enter')
+    gold_urls_negative = forms.CharField(required=False, widget=forms.Textarea,
+        label="Negative URLs (that don't match your search)",
+        help_text='Here you can add your URLs. End each one with enter')
     file_classify_urls = forms.FileField(required=False,
         label="Upload additional non classified URLs", help_text=classify_help_text)
 

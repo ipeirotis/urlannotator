@@ -410,12 +410,20 @@ def project_wizard(request):
 
             # Gold urls file is required in the form. Since it's valid by now
             # - the file is present
-            gold_file = request.FILES.get('file_gold_urls')
+            gold_file = request.FILES.get('file_gold_urls', None)
+            gold_positive = [(x, 'yes') for x in
+                addt_form.cleaned_data['gold_urls_positive'].splitlines()]
+            gold_negative = [(x, 'no') for x in
+                addt_form.cleaned_data['gold_urls_negative'].splitlines()]
 
             url_set = set()
             label_set = set()
             try:
-                urls = csv.reader(gold_file)
+                if gold_file:
+                    urls = csv.reader(gold_file)
+                else:
+                    urls = gold_positive + gold_negative
+
                 gold_samples = []
                 for url, label in urls:
                     if url in url_set:
