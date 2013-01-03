@@ -34,6 +34,7 @@
           <tr>
             <th>Project name</th>
             <th>Status</th>
+            <th>Data source</th>
             <th>Beat the machine</th>
             <th>Links collected</th>
             <th>Hours spent</th>
@@ -48,7 +49,8 @@
           <tr>
             <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">(i)</a> <a href="#" onclick="stopVoting({{p.id}});">stop voting</a> <a href="#" onclick="stopGathering({{p.id}})">stop sample gathering</a></td>
             <td class="statusCol">{{p.get_status}}</td>
-            <td class="beatMachineCol">--</td>
+            <td class="dataSourceCol">{{p.get_data_source}}</td>
+            <td class="beatMachineCol">{{p.get_btm_status}}</td>
             <td class="linksCol">{{p.get_urls_collected}}</td>
             <td class="hoursSpentCol">{{p.get_hours_spent}}</td>
             <td class="totalCostCol">{{p.get_cost}}</td>

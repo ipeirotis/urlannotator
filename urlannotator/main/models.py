@@ -99,6 +99,7 @@ JOB_ODESK_DATA_SOURCE_CHOICES = (
 )
 
 JOB_DATA_SOURCE_CHOICES = JOB_BASIC_DATA_SOURCE_CHOICES
+JOB_DATA_SOURCE_CHOICES_DICT = dict(JOB_DATA_SOURCE_CHOICES)
 JOB_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
 
 JOB_HIT_MAPPING_NAME = 'job_source_to_hit_type'
@@ -212,6 +213,9 @@ class Job(models.Model):
                 JOB_SOURCE_MTURK_WORKFORCE: settings.MTURK_WORKFORCE_HIT_TYPE,
             })
         return getattr(cls, JOB_HIT_MAPPING_NAME)[source]
+
+    def get_data_source(self):
+        return JOB_DATA_SOURCE_CHOICES_DICT[self.data_source]
 
     def get_hit_type(self):
         """
@@ -393,9 +397,10 @@ class Job(models.Model):
         """
             Returns a string representing job's BTM status.
         """
-        # TODO: Fill this out
+        if self.btm_active:
+            return 'yes'
 
-        return '---'
+        return 'no'
 
     def get_btm_verified_samples(self):
         """

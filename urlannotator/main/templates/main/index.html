@@ -14,6 +14,7 @@
               <tr>
                 <th>Project name</th>
                 <th>Status</th>
+                <th>Data source</th>
                 <th>Beat the machine</th>
                 <th>URLs collected</th>
                 <th>Budget (USD)</th>
@@ -26,6 +27,7 @@
               <tr>
                 <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">&nbsp;<i class="icon-info-sign"></i></a></td>
                 <td class="statusCol">{{p.get_status}}</td>
+                <td class="dataSourceCol">{{p.get_data_source}}</td>
                 <td class="beatMachineCol">{{p.get_btm_status}}</td>
                 <td class="linksCol">{{p.get_urls_collected}}</td>
                 <td class="budgetCol">{{p.budget}}</td>

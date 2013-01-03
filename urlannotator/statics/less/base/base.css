@@ -429,6 +429,9 @@ td.linksCol {
 td.beatMachineCol {
   width: 40px;
 }
+td.dataSourceCol {
+  width: 150px;
+}
 td.statusCol {
   width: 90px;
 }
