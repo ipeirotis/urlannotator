@@ -11,13 +11,7 @@
 {% block body-class %}body-{{project.get_status|lower}} body-project{% endblock %}
 
 {% block header %}
-  {% if project.is_draft %}
-    <form method="POST" action="{% url project_view id=project.id %}" class="pull-right">
-      {% csrf_token %}
-      <input type="submit" name="submit" value="Activate project" class="btn ">
-      <input type="submit" name="submit" value="Settings" class="btn ">
-    </form>
-  {% else %}
+  {% if not project.is_draft %}
 
       <div class="pull-right btn-group">
         <a href="{% url project_classifier_data project.id %}" class="btn">Export Training Data</a>

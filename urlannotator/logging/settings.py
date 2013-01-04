@@ -208,7 +208,6 @@ def user_visible_types():
     if user_visible is None:
         user_visible = [log_id for log_id, log in log_config.iteritems()
         if is_type_user_visible(log_id)]
-    print user_visible
     return user_visible
 
 

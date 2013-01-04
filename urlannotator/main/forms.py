@@ -87,15 +87,15 @@ class WizardAttributesForm(forms.Form):
         required=True,
         label="Data source",
         help_text="You have 800 free URL quota provided by Odesk")
-    project_type = forms.ChoiceField(JOB_TYPE_CHOICES, required=False,
-        label="Project type")
+    # project_type = forms.ChoiceField(JOB_TYPE_CHOICES, required=False,
+    #     label="Project type")
     no_of_urls = forms.IntegerField(required=True,
         label="No. of URLs to collect", min_value=1)
-    hourly_rate = forms.DecimalField(required=False, decimal_places=2,
-        max_digits=10, label="Hourly rate (US$)")
-    budget = forms.DecimalField(required=False, decimal_places=2,
-        max_digits=10, label="Declared budget")
-    odesk_connect = False
+    # hourly_rate = forms.DecimalField(required=False, decimal_places=2,
+    #     max_digits=10, label="Hourly rate (US$)")
+    # budget = forms.DecimalField(required=False, decimal_places=2,
+    #     max_digits=10, label="Declared budget")
+    # odesk_connect = False
 
     def _clean_value(self, dict, key, val):
         var = dict.get(key, val)

@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import User
 
 import stripe
 
@@ -281,7 +282,8 @@ class JobChargeException(Exception):
 
 class JobChargeManager(models.Manager):
 
-    def from_token(self, stripe_token, description="URLannotator Customer"):
+    def from_token(self, stripe_token,
+            description="BuildAClassifer Customer"):
         try:
             stripe.api_key = settings.STRIPE_SECRET
             customer = stripe.Customer.create(
@@ -300,7 +302,7 @@ class JobChargeManager(models.Manager):
 
         # except stripe.AuthenticationError, e:
         # except stripe.APIConnectionError, e:
-        except stripe.StripeError:
+        except stripe.StripeError, e:
             log.exception(e)
             raise JobChargeException("Stripe temporarily unavailable")
 
@@ -308,6 +310,7 @@ class JobChargeManager(models.Manager):
 class JobCharge(models.Model):
     job = models.ForeignKey(Job, null=True)
     customer_id = models.CharField(max_length=50)
+    charge_id = models.CharField(max_length=50)
 
     objects = JobChargeManager()
 
@@ -315,9 +318,11 @@ class JobCharge(models.Model):
         """
             amount in usd
         """
-        amount_cents = amount * 100
-        stripe.Charge.create(
+        amount_cents = int(amount * 100)
+        data = stripe.Charge.create(
             amount=amount_cents,
             currency="usd",
             customer=self.customer_id
         )
+        self.charge_id = data['id']
+        self.save()

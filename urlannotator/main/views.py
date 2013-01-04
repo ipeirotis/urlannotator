@@ -387,10 +387,7 @@ def project_wizard(request):
                 'title': topic_form.cleaned_data['topic'],
                 'description': topic_form.cleaned_data['topic_desc'],
                 'data_source': attr_form.cleaned_data['data_source'],
-                'project_type': attr_form.cleaned_data['project_type'],
                 'no_of_urls': attr_form.cleaned_data['no_of_urls'],
-                'hourly_rate': attr_form.cleaned_data['hourly_rate'],
-                'budget': attr_form.cleaned_data['budget'],
                 'same_domain_allowed': addt_form.cleaned_data['same_domain'],
                 'add_filler_samples': addt_form.cleaned_data['add_filler_samples']
             }
@@ -483,8 +480,9 @@ def project_wizard(request):
                         RequestContext(request, context))
 
             job_charge = None
-            if Job.estimate_cost(int(params['data_source']),
-                    params['no_of_urls']) > 0:
+            job_cost = Job.estimate_cost(int(params['data_source']),
+                    params['no_of_urls'])
+            if job_cost > 0:
                 if not stripe_token:
                     context['wizard_error'] = 'No Stripe payment'
                     return render(request, 'main/project/wizard.html',
@@ -499,14 +497,12 @@ def project_wizard(request):
                     return render(request, 'main/project/wizard.html',
                         RequestContext(request, context))
 
-            if is_draft:
-                job = Job.objects.create_draft(**params)
-            else:
-                job = Job.objects.create_active(**params)
+            job = Job.objects.create_draft(**params)
 
             if job_charge:
                 job_charge.job = job
                 job_charge.save()
+                job_charge.charge(job_cost)
 
             return redirect('project_view', id=job.id)
 
@@ -684,6 +680,7 @@ def project_view(request, id):
     context.update(proj.get_performance_stats(cache=True))
     context.update(proj.get_votes_stats(cache=True))
     context['hours_spent'] = proj.get_hours_spent(cache=True)
+    context['votes_gathered'] = proj.get_votes_gathered(cache=True)
     context['urls_collected'] = proj.get_urls_collected(cache=True)
     context['no_of_workers'] = proj.get_no_of_workers()
     context['cost'] = proj.get_cost(cache=True)

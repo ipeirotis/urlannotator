@@ -118,12 +118,17 @@
                   var token = function(res){
                     $("#id_stripe_token").val(res.id);
                     $("#id_payment_done").show();
-                    $("#id_activate").removeAttr("disabled")
+                    switchActivate(true);
                   };
+                  // Amount in cents
+                  var amount = parseFloat($("#id_estimated_cost").val()) * 100;
+                  if (amount === NaN || amount <= 0)
+                    return;
 
                   StripeCheckout.open({
                     key:         '{{ stripe_key }}',
                     panelLabel:  'Pay',
+                    amount:      amount,
                     token:       token
                   });
 
@@ -143,8 +148,7 @@
       <div class="form-actions">
         <div class="gradient"></div>
         <div class="custom-offset">
-          <button class="btn-link" type="submit" name="submit" value="draft">Save as Draft</button>
-          <button id="id_activate" class="btn btn-success span" type="submit"
+          <button id="id_activate" class="btn btn-success span disabled" type="submit"
             name="submit" value="active" disabled="disabled">Activate & Create Project</button>
         </div>
       </div>
@@ -163,6 +167,19 @@
 {{ block.super }}
 <script type="text/javascript">
 
+  function switchActivate(enable)
+  {
+    var el = $("#id_activate");
+    if (enable)
+    {
+      el.removeAttr("disabled");
+      el.removeClass("disabled");
+    } else {
+      el.attr("disabled", "disabled");
+      el.addClass("disabled");
+    }
+  }
+
   var estimate_costs = function () {
     var no_of_urls = $("#id_no_of_urls").val();
     var data_source = $("#id_data_source").val();
@@ -170,11 +187,7 @@
       {no_of_urls: no_of_urls, data_source: data_source},
       function(data){
         $("#id_estimated_cost").val(data.cost);
-        if (data.cost == 0) {
-          $("#id_activate").removeAttr("disabled")
-        } else if ($("input[name=stripeToken]").length == 0) {
-          $("#id_activate").attr("disabled", "disabled")
-        }
+        switchActivate(false);
       });
   };
 
@@ -210,8 +223,9 @@ $('#id_project_type').change(function(obj){
         }
     }
 );
-$('#id_data_source').change();
+
 $(function(){
+  estimate_costs();
   setTimeout("$('.alert-error').css('display', 'none');", 30*1000);
   $('.pop').tooltip();
 });

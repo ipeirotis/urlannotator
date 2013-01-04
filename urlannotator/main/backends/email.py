@@ -44,7 +44,6 @@ class EmailBackend(BaseEmailBackend):
         """
         if not email_message.recipients():
             return False
-        print 'test'
         try:
             ps = Popen(["sendmail"] + list(email_message.recipients()),
                        stdin=PIPE)

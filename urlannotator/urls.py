@@ -6,6 +6,7 @@ from tastypie.api import Api
 from urlannotator.main.api.resources import (JobResource, SampleResource,
     VoteResource, AdminResource, BeatTheMachineResource,
     WorkerJobAssociationResource, WorkerResource)
+from urlannotator.payments.urls import urlpatterns as payment_urls
 
 admin.autodiscover()
 
@@ -77,6 +78,7 @@ urlpatterns = patterns('urlannotator',
 
     url(r'^api/', include(v1_api.urls)),
     url(r'^readme$', 'main.views.readme_view', name='readme_view'),
+    url(r'^payments/', include(payment_urls, app_name='payments')),
     (r'^bad/$', bad),
 )
 
