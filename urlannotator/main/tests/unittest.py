@@ -379,8 +379,6 @@ class ProjectTests(ToolsMockedMixin, TestCase):
         # No odesk association - display alert
         resp = self.c.get(reverse('project_wizard'), follow=True)
 
-        self.assertTrue('wizard_alert' in resp.context)
-
         with open('test_golds.csv', 'wb') as f:
             f.write('"http://google.com",No\n')
             f.write('"http://google.com/1",No\n')
@@ -391,38 +389,6 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             f.flush()
 
         with open('test_golds.csv', 'rb') as f:
-            # Invalid option - odesk chosen, account not connected
-            odesk_sources = ['0', '2']
-            error_text = 'You have to be connected to Odesk to use this option.'
-            for source in odesk_sources:
-                data = {'topic': 'Test',
-                        'topic_desc': 'Test desc',
-                        'data_source': source,
-                        'file_gold_urls': f,
-                        'project_type': '0',
-                        'no_of_urls': '1',
-                        'hourly_rate': '1.0',
-                        'budget': '1.0',
-                        'same_domain': '0',
-                        'stripeToken': 'abc',
-                        'file_gold_urls': f,
-                        'submit': 'draft'}
-
-                resp = self.c.post(reverse('project_wizard'), data, follow=True)
-                f.seek(0)
-                self.assertFormError(resp, 'attributes_form', None, error_text)
-
-            prof = self.u.get_profile()
-            prof.odesk_uid = 'test'
-            prof.save()
-
-            # Odesk is associated
-            resp = self.c.get(reverse('project_wizard'), follow=True)
-
-            self.assertFalse('wizard_alert' in resp.context)
-
-            # Check project creation
-
             # Full values provided
             for source, name in JOB_DATA_SOURCE_CHOICES:
                 for submit in ['draft', 'active']:
@@ -430,10 +396,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     data = {'topic': 'Test',
                             'topic_desc': 'Test desc',
                             'data_source': source,
-                            'project_type': '0',
                             'no_of_urls': no_of_urls,
-                            'hourly_rate': '1.0',
-                            'budget': '1.0',
                             'file_gold_urls': f,
                             'same_domain': '0',
                             'stripeToken': 'abc',
@@ -452,10 +415,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
             # Check project topic and description
             data = {'topic_desc': 'Test desc',
                     'data_source': '1',
-                    'project_type': '0',
                     'no_of_urls': '1',
-                    'hourly_rate': '1.0',
-                    'budget': '1.0',
                     'file_gold_urls': f,
                     'same_domain': '0',
                     'stripeToken': 'abc',
@@ -468,10 +428,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
 
             data = {'topic': 'Test',
                     'data_source': '1',
-                    'project_type': '0',
                     'no_of_urls': '1',
-                    'hourly_rate': '1.0',
-                    'budget': '1.0',
                     'file_gold_urls': f,
                     'same_domain': '0',
                     'stripeToken': 'abc',
@@ -484,10 +441,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
 
             data = {'topic': 'Test',
                     'data_source': '1',
-                    'project_type': '0',
                     'no_of_urls': '1',
-                    'hourly_rate': '1.0',
-                    'budget': '1.0',
                     'file_gold_urls': f,
                     'same_domain': '0',
                     'stripeToken': '',
@@ -502,7 +456,6 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'topic_desc': 'a',
                     'data_source': '1',
                     'no_of_urls': '1',
-                    'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
                     'stripeToken': 'abc',
@@ -645,7 +598,6 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'topic_desc': 'a',
                     'data_source': '1',
                     'no_of_urls': settings.USER_MAX_URLS_PER_JOB,
-                    'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
                     'stripeToken': 'abc',
@@ -653,7 +605,8 @@ class ProjectTests(ToolsMockedMixin, TestCase):
 
             resp = self.c.post(reverse('project_wizard'), data, follow=True)
             f.seek(0)
-            self.assertNotIn('wizard_error', resp.context)
+            self.assertNotIn('wizard_error', resp.context,
+                'There was wizard error: asa')
             self.assertEqual(resp.status_code, 200)
 
             r = self.c.get(reverse('project_wizard'))
@@ -666,7 +619,6 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'topic_desc': 'a',
                     'data_source': '1',
                     'no_of_urls': settings.USER_MAX_URLS_PER_JOB,
-                    'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
                     'stripeToken': 'abc',
@@ -689,7 +641,6 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'topic_desc': 'a',
                     'data_source': '1',
                     'no_of_urls': settings.USER_MAX_URLS_PER_JOB + 1,
-                    'project_type': '0',
                     'file_gold_urls': f,
                     'same_domain': '0',
                     'stripeToken': 'abc',

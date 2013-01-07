@@ -78,7 +78,7 @@ urlpatterns = patterns('urlannotator',
 
     url(r'^api/', include(v1_api.urls)),
     url(r'^readme$', 'main.views.readme_view', name='readme_view'),
-    url(r'^payments/', include(payment_urls, app_name='payments')),
+    url(r'^payments/', include(payment_urls, namespace='payments')),
     (r'^bad/$', bad),
 )
 

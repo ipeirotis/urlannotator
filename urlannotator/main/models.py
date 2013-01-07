@@ -532,11 +532,25 @@ class Job(models.Model):
         """
             Stops underlying voting job.
         """
-        # Importing here due to possible loop imports
         tag_job = self.tagasaurisjobs
         tag_job.voting_hit = ''
         tag_job.save()
         stop_job(tag_job.voting_key)
+        return True
+
+    def stop_btm(self):
+        """
+            Stops Beat The Machine job.
+        """
+        if not self.is_btm_active():
+            return False
+
+        tag_job = self.tagasaurisjobs
+        tag_job.beatthemachine_hit = ''
+        tag_job.voting_btm_hit = ''
+        tag_job.save()
+        stop_job(tag_job.beatthemachine_key)
+        stop_job(tag_job.voting_btm_key)
         return True
 
     def get_classifier_performance(self):
@@ -593,25 +607,47 @@ class Job(models.Model):
     def is_active(self):
         return self.status == JOB_STATUS_ACTIVE
 
-    def activate(self):
+    def activate(self, force=False):
         """
-            Activates current job. Due to it's nature, this method REQUIRES
-            synchronization outside.
+            Activates current job. If due to concurrency job's status changes
+            inbetween, then if `force` is True the job is activated forcefully.
+            Otherwise nothing happens.
         """
-        if self.is_active():
-            return
-        self.status = JOB_STATUS_ACTIVE
-        self.activated = now()
-        self.save()
+        with POSIXLock(name='job-%d-mutex' % self.id):
+            job = Job.objects.get(id=self.id)
+            if job.status != self.status and not force:
+                return
+
+            if self.is_active():
+                return
+
+            self.status = JOB_STATUS_ACTIVE
+            self.activated = now()
+            Job.objects.filter(id=self.id).update(status=self.status,
+                activated=self.activated)
         send_event(
             "EventNewJobInitializationDone",
             job_id=self.id,
         )
 
-    def initialize(self):
-        self.status = JOB_STATUS_INIT
-        self.remaining_urls = self.no_of_urls
-        self.save()
+    def initialize(self, force=False):
+        """
+            Initializes current job. If, due to concurrent calls, job's status
+            changes then if `force` is True initialization is performed.
+            Otherwise the call does nothing.
+        """
+        with POSIXLock(name='job-%d-mutex' % self.id):
+            job = Job.objects.get(id=self.id)
+            if job.status != self.status and not force:
+                return
+
+            if self.is_initializing():
+                return
+
+            self.status = JOB_STATUS_INIT
+            self.remaining_urls = self.no_of_urls
+            Job.objects.filter(id=self.id).update(status=self.status,
+                remaining_urls=self.no_of_urls)
         send_event('EventNewJobInitialization',
             job_id=self.id)
 
@@ -786,9 +822,39 @@ class Job(models.Model):
     def is_stopped(self):
         return self.status == JOB_STATUS_STOPPED
 
-    def stop(self):
-        self.status = JOB_STATUS_STOPPED
-        self.save()
+    def stop(self, force=False):
+        """
+            Stops the job. If `force` is True, the job is forcefully stopped
+            no matter if during concurrent status change job's status has
+            changed. Otherwise the call will do nothing.
+        """
+        with POSIXLock(name='job-%d-mutex' % self.id):
+            job = Job.objects.get(id=self.id)
+            if job.status != self.status and not force:
+                return
+
+            if self.is_stopped():
+                return
+
+            self.status = JOB_STATUS_STOPPED
+            Job.objects.filter(id=self.id).update(status=self.status)
+            try:
+                self.stop_voting()
+            except Exception:
+                log.exception("Job: Couldn't stop voting for job {0}"
+                    .format(self.id))
+
+            try:
+                self.stop_sample_gathering()
+            except Exception:
+                log.exception("Job: Couldn't stop sample_gathering for job {0}"
+                    .format(self.id))
+
+            try:
+                self.stop_btm()
+            except Exception:
+                log.exception("Job: Couldn't stop btm for job {0}"
+                    .format(self.id))
 
     def is_initializing(self):
         return self.status == JOB_STATUS_INIT
@@ -801,15 +867,10 @@ class Job(models.Model):
             job = Job.objects.get(id=self.id)
             self.initialization_status = job.initialization_status
 
-            if self.initialization_status == JOB_FLAGS_ALL:
-                self.activate()
-            elif (self.is_training_set_created()
-                    and self.is_gold_samples_done()
-                    and self.is_classifier_created()
-                    and not self.gold_samples):
-                # If we have no gold samples, activate without training
-                # the classifier.
-                self.activate()
+            if self.initialization_status != JOB_FLAGS_ALL:
+                return
+
+        self.activate()
 
     def unset_flag(self, flag):
         self.initialization_status = F('initialization_status') & (~flag)

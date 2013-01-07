@@ -87,47 +87,8 @@ class WizardAttributesForm(forms.Form):
         required=True,
         label="Data source",
         help_text="You have 800 free URL quota provided by Odesk")
-    # project_type = forms.ChoiceField(JOB_TYPE_CHOICES, required=False,
-    #     label="Project type")
     no_of_urls = forms.IntegerField(required=True,
         label="No. of URLs to collect", min_value=1)
-    # hourly_rate = forms.DecimalField(required=False, decimal_places=2,
-    #     max_digits=10, label="Hourly rate (US$)")
-    # budget = forms.DecimalField(required=False, decimal_places=2,
-    #     max_digits=10, label="Declared budget")
-    # odesk_connect = False
-
-    def _clean_value(self, dict, key, val):
-        var = dict.get(key, val)
-        if not var:
-            var = val
-        dict[key] = var
-
-    def clean(self):
-        cleaned_data = super(WizardAttributesForm, self).clean()
-
-        self._clean_value(cleaned_data, 'data_source', '0')
-
-        if (Job.is_odesk_required_for_source(cleaned_data['data_source']) and
-                not self.odesk_connect):
-            raise forms.ValidationError(
-                'You have to be connected to Odesk to use this option.')
-
-        if cleaned_data['data_source'] in ['1', '3']:
-            cleaned_data['hourly_rate'] = 0
-            cleaned_data['budget'] = 0
-        else:
-            self._clean_value(cleaned_data, 'project_type', '0')
-
-            if cleaned_data['project_type'] == '0':
-                cleaned_data['budget'] = 0
-                self._clean_value(cleaned_data, 'no_of_urls', '0')
-                self._clean_value(cleaned_data, 'hourly_rate', '0')
-            else:
-                cleaned_data['no_of_urls'] = 0
-                cleaned_data['hourly_rate'] = 0
-                self._clean_value(cleaned_data, 'budget', '0')
-        return cleaned_data
 
 
 class WizardAdditionalForm(forms.Form):

@@ -2,8 +2,6 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import User
 
-import stripe
-
 from urlannotator.crowdsourcing.tagasauris_helper import make_tagapi_client
 from urlannotator.main.models import Job, Worker
 from tenclouds.django.jsonfield.fields import JSONField
@@ -282,15 +280,18 @@ class JobChargeException(Exception):
 
 class JobChargeManager(models.Manager):
 
-    def from_token(self, stripe_token,
-            description="BuildAClassifer Customer"):
+    def _from_token(self, stripe_token, description, charge_type):
+        from urlannotator.payments.stripe_handlers import stripe_client
         try:
-            stripe.api_key = settings.STRIPE_SECRET
+            stripe = stripe_client()
             customer = stripe.Customer.create(
                 description=description,
                 card=stripe_token
             )
-            return self.create(customer_id=customer.id)
+            return self.create(
+                customer_id=customer.id,
+                charge_type=charge_type,
+            )
 
         except stripe.CardError, e:
             body = e.json_body
@@ -306,11 +307,32 @@ class JobChargeManager(models.Manager):
             log.exception(e)
             raise JobChargeException("Stripe temporarily unavailable")
 
+    def base_from_token(self, stripe_token,
+            description="BuildAClassifer Customer"):
+        return self._from_token(stripe_token, description, JobCharge.Type.BASE_JOB)
+
+    def btm_from_token(self, stripe_token,
+            description="BuildAClassifer Customer"):
+        return self._from_token(stripe_token, description, JobCharge.Type.BTM_JOB)
+
 
 class JobCharge(models.Model):
+    class Type:
+        # The regular job charge
+        BASE_JOB = 'base_job'
+
+        # The Beat The Machine job charge
+        BTM_JOB = 'btm_job'
+
+    TYPE_CHOICES = (
+        (Type.BASE_JOB, 'Base job'),
+        (Type.BTM_JOB, 'Beat The Machine job'),
+    )
+
     job = models.ForeignKey(Job, null=True)
     customer_id = models.CharField(max_length=50)
     charge_id = models.CharField(max_length=50)
+    charge_type = models.CharField(max_length=50, choices=TYPE_CHOICES)
 
     objects = JobChargeManager()
 
@@ -318,7 +340,10 @@ class JobCharge(models.Model):
         """
             amount in usd
         """
+        from urlannotator.payments.stripe_handlers import stripe_client
+
         amount_cents = int(amount * 100)
+        stripe = stripe_client()
         data = stripe.Charge.create(
             amount=amount_cents,
             currency="usd",

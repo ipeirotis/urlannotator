@@ -333,7 +333,6 @@ def settings_view(request):
 
 @login_required
 def project_wizard(request):
-    odeskLogged = request.user.get_profile().odesk_uid != ''
     acc = request.user.get_profile()
     max_jobs = acc.job_limits.get('max_jobs',
         settings.USER_MAX_JOBS)
@@ -349,10 +348,6 @@ def project_wizard(request):
             'attributes_form': WizardAttributesForm(),
             'additional_form': WizardAdditionalForm()
         })
-        if not odeskLogged:
-            context['wizard_alert'] = ('Your account is not connected to '
-                'Odesk. If you want to have more options connect to Odesk at '
-                '<a href="%s">settings</a> page.') % reverse('settings')
         if not can_create:
             context['wizard_error'] = ('You have reached a limit of maximum '
                 'jobs created')
@@ -360,7 +355,6 @@ def project_wizard(request):
         topic_form = WizardTopicForm(request.POST)
         attr_form = WizardAttributesForm(request.POST)
         addt_form = WizardAdditionalForm(request.POST, request.FILES)
-        is_draft = request.POST['submit'] == 'draft'
         stripe_token = request.POST.get('stripeToken', None)
 
         context.update({
@@ -368,11 +362,6 @@ def project_wizard(request):
             'attributes_form': attr_form,
             'additional_form': addt_form
         })
-
-        if not odeskLogged:
-            context['wizard_alert'] = ('Your account is not connected to '
-                'Odesk. If you want to have more options connect to Odesk at '
-                '<a href="%s">settings</a> page.') % reverse('settings')
 
         if not can_create:
             context['wizard_error'] = ('You have reached a limit of maximum '
@@ -391,8 +380,13 @@ def project_wizard(request):
                 'same_domain_allowed': addt_form.cleaned_data['same_domain'],
                 'add_filler_samples': addt_form.cleaned_data['add_filler_samples']
             }
+
             if not params['no_of_urls']:
-                params['no_of_urls'] = 0
+                context['wizard_error'] = (
+                    'You need to specify number of urls to collect.'
+                )
+                return render(request, 'main/project/wizard.html',
+                    RequestContext(request, context))
 
             max_urls = acc.job_limits.get('max_urls_per_job',
                 settings.USER_MAX_URLS_PER_JOB)
@@ -490,7 +484,7 @@ def project_wizard(request):
                 description = "Customer for User %s in job: %s " % (
                     request.user.id, params['title'])
                 try:
-                    job_charge = JobCharge.objects.from_token(
+                    job_charge = JobCharge.objects.base_from_token(
                         stripe_token, description)
                 except JobChargeException, e:
                     context['wizard_error'] = e.message
