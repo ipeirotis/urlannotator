@@ -3,7 +3,6 @@ import logging
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import simplejson
-from django.conf import settings
 
 from urlannotator.payments.stripe_handlers import handle_event, stripe_client
 
@@ -12,6 +11,9 @@ log = logging.getLogger(__name__)
 
 @csrf_exempt
 def stripe_callback(request):
+    if request.method == "GET":
+        return HttpResponseBadRequest()
+
     content = request.body
     try:
         content = simplejson.loads(content)

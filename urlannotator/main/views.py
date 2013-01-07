@@ -789,6 +789,7 @@ def project_btm_view(request, id):
         return render(request, 'main/project/btm_view.html',
             RequestContext(request, context))
     else:
+        context['stripe_key'] = settings.STRIPE_PUBLISHABLE
         context['form'] = BTMForm()
         if request.method == 'POST':
             form = BTMForm(request.POST)

@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import JOB_BASIC_DATA_SOURCE_CHOICES,\
-    JOB_DATA_SOURCE_CHOICES, JOB_TYPE_CHOICES, Job
+from urlannotator.main.models import JOB_BASIC_DATA_SOURCE_CHOICES
 
 
 class NewUserForm(forms.Form):
@@ -107,7 +106,8 @@ class WizardAdditionalForm(forms.Form):
     add_filler_samples = forms.BooleanField(required=False, initial=False,
         label='Additional gold samples', help_text=filler_samples_help_text)
     same_domain = forms.IntegerField(
-        label="No. of allowed multiple URLs from the same domain")
+        label="No. of allowed multiple URLs from the same domain",
+        min_value=1)
     file_gold_urls = forms.FileField(required=False,
         label="Upload gold, (preclassified) urls", help_text=gold_help_text)
     gold_urls_positive = forms.CharField(required=False, widget=forms.Textarea,

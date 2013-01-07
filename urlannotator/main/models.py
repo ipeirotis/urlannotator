@@ -158,6 +158,22 @@ class Job(models.Model):
         Model representing actual project that is start by user, and consists
         of gathering, verifying and classifying samples.
     """
+    class BTMStatus:
+        # Not activated
+        NOT_ACTIVE = 'not_active'
+
+        # Up and running
+        ACTIVE = 'active'
+
+        # Payment pending
+        PENDING = 'pending'
+
+    BTMSTATUS_CHOICES = (
+        (BTMStatus.NOT_ACTIVE, 'Not active'),
+        (BTMStatus.PENDING, 'Pending'),
+        (BTMStatus.ACTIVE, 'Active'),
+    )
+
     account = models.ForeignKey(Account)
     title = models.CharField(max_length=100, default='test')
     description = models.TextField()
@@ -179,10 +195,13 @@ class Job(models.Model):
     activated = models.DateTimeField(auto_now_add=True)
     votes_storage = models.CharField(max_length=50)
     quality_algorithm = models.CharField(max_length=50)
-    btm_active = models.BooleanField(default=False)
+    btm_status = models.CharField(max_length=50, default=BTMStatus.NOT_ACTIVE,
+        choices=BTMSTATUS_CHOICES)
     btm_to_gather = models.PositiveIntegerField(default=0)
-    add_filler_samples = models.BooleanField(default=False)
     btm_points_to_cash = models.PositiveIntegerField(default=1)
+    btm_title = models.CharField(max_length=250, default='')
+    btm_description = models.TextField(default='')
+    add_filler_samples = models.BooleanField(default=False)
 
     objects = JobManager()
 
@@ -200,6 +219,18 @@ class Job(models.Model):
 
             estimation = gather_cost + vote_cost
 
+        return round(estimation, 2)
+
+    @classmethod
+    def btm_estimate_cost(cls, no_of_urls, pts_per_dollars):
+        from urlannotator.crowdsourcing.models import BeatTheMachineSample
+        gather_cost = get_gather_cost(no_of_urls)
+        vote_cost = get_vote_cost(no_of_urls)
+        # Maximize costs (most pesimistic case)
+        bonus_cost = BeatTheMachineSample.BTM_REWARD_4 * no_of_urls \
+            / pts_per_dollars
+
+        estimation = gather_cost + vote_cost + bonus_cost
         return round(estimation, 2)
 
     @classmethod
@@ -378,11 +409,13 @@ class Job(models.Model):
 
     def start_btm(self, topic, description, no_of_urls, points_to_cash):
         Job.objects.filter(id=self.id).update(
-            btm_active=True,
+            btm_status=self.BTMStatus.ACTIVE,
+            btm_title=topic,
+            btm_description=description,
             btm_to_gather=no_of_urls,
             btm_points_to_cash=points_to_cash,
         )
-        self.btm_active = True
+        self.btm_status = self.BTMStatus.ACTIVE
         self.btm_to_gather = no_of_urls
 
         send_event(
@@ -397,7 +430,7 @@ class Job(models.Model):
         """
             Returns a string representing job's BTM status.
         """
-        if self.btm_active:
+        if self.btm_status == self.BTMStatus.ACTIVE:
             return 'yes'
 
         return 'no'
@@ -439,7 +472,7 @@ class Job(models.Model):
             and (self.get_btm_gathered() == self.get_btm_to_gather()))
 
     def is_btm_active(self):
-        return self.btm_active
+        return self.btm_status == self.BTMStatus.ACTIVE
 
     def get_btm_to_gather(self):
         return self.btm_to_gather

@@ -452,7 +452,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         job.start_btm("test topic", "test desc", 10, 5000)
         job = Job.objects.get(id=job.id)
 
-        self.assertTrue(job.btm_active)
+        self.assertEqual(job.btm_status, job.BTMStatus.ACTIVE)
         self.assertEqual(10, job.btm_to_gather)
         self.assertFalse(job.add_filler_samples)
         self.assertEqual(5000, job.btm_points_to_cash)

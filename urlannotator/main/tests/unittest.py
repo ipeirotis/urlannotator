@@ -398,7 +398,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                             'data_source': source,
                             'no_of_urls': no_of_urls,
                             'file_gold_urls': f,
-                            'same_domain': '0',
+                            'same_domain': '1',
                             'stripeToken': 'abc',
                             'submit': submit}
 
@@ -417,7 +417,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'data_source': '1',
                     'no_of_urls': '1',
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'draft'}
 
@@ -430,7 +430,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'data_source': '1',
                     'no_of_urls': '1',
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'draft'}
 
@@ -443,7 +443,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'data_source': '1',
                     'no_of_urls': '1',
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': '',
                     'submit': 'draft'}
 
@@ -457,7 +457,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'data_source': '1',
                     'no_of_urls': '1',
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'active'}
 
@@ -484,7 +484,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'no_of_urls': '1',
                     'project_type': '0',
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'active'}
 
@@ -509,7 +509,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'no_of_urls': '1',
                     'project_type': '0',
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'active'}
 
@@ -582,7 +582,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'no_of_urls': settings.USER_MAX_URLS_PER_JOB + 1,
                     'project_type': '0',
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'active'}
 
@@ -599,7 +599,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'data_source': '1',
                     'no_of_urls': settings.USER_MAX_URLS_PER_JOB,
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'active'}
 
@@ -620,7 +620,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'data_source': '1',
                     'no_of_urls': settings.USER_MAX_URLS_PER_JOB,
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'active'}
 
@@ -642,7 +642,7 @@ class ProjectTests(ToolsMockedMixin, TestCase):
                     'data_source': '1',
                     'no_of_urls': settings.USER_MAX_URLS_PER_JOB + 1,
                     'file_gold_urls': f,
-                    'same_domain': '0',
+                    'same_domain': '1',
                     'stripeToken': 'abc',
                     'submit': 'active'}
 

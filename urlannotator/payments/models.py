@@ -1,6 +1,4 @@
 from django.db import models
-from django.conf import settings
-from django.contrib.auth.models import User
 
 from urlannotator.crowdsourcing.tagasauris_helper import make_tagapi_client
 from urlannotator.main.models import Job, Worker
@@ -324,30 +322,45 @@ class JobCharge(models.Model):
         # The Beat The Machine job charge
         BTM_JOB = 'btm_job'
 
+    class Currency:
+        USD = 'usd'
+
     TYPE_CHOICES = (
         (Type.BASE_JOB, 'Base job'),
         (Type.BTM_JOB, 'Beat The Machine job'),
+    )
+
+    CURRENCY_CHOICES = (
+        (Currency.USD, 'USD'),
     )
 
     job = models.ForeignKey(Job, null=True)
     customer_id = models.CharField(max_length=50)
     charge_id = models.CharField(max_length=50)
     charge_type = models.CharField(max_length=50, choices=TYPE_CHOICES)
+    amount = models.PositiveIntegerField(default=0)
+    currency = models.CharField(max_length=50, choices=CURRENCY_CHOICES)
 
     objects = JobChargeManager()
 
-    def charge(self, amount):
+    def charge(self, amount, description=None):
         """
-            amount in usd
+            Charges linked customer with `amount` in USD dollars.
         """
         from urlannotator.payments.stripe_handlers import stripe_client
 
         amount_cents = int(amount * 100)
+        currency = self.Currency.USD
         stripe = stripe_client()
+        desc = description if description else self.get_charge_type_display()
+
         data = stripe.Charge.create(
             amount=amount_cents,
-            currency="usd",
-            customer=self.customer_id
+            currency=currency,
+            customer=self.customer_id,
+            description=desc,
         )
+        self.amount = amount_cents
+        self.currency = currency
         self.charge_id = data['id']
         self.save()
