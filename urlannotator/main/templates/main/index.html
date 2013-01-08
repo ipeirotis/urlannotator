@@ -25,7 +25,7 @@
             <tbody>
             {% for p in projects %}
               <tr>
-                <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}">&nbsp;<i class="icon-info-sign"></i></a></td>
+                <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}" data-placement="bottom">&nbsp;<i class="icon-info-sign"></i></a></td>
                 <td class="statusCol">{{p.get_status}}</td>
                 <td class="dataSourceCol">{{p.get_data_source}}</td>
                 <td class="beatMachineCol">{{p.get_btm_status}}</td>
