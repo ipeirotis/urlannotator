@@ -102,7 +102,7 @@ class WizardAdditionalForm(forms.Form):
     icon = "<i title='%s' class='icon-info-sign pop'></i>"
     gold_help_text = icon % additional_gold_info
     classify_help_text = icon % additional_classify_info
-    filler_samples_help_text = icon % filler_samples_info
+    filler_samples_help_text = filler_samples_info
     add_filler_samples = forms.BooleanField(required=False, initial=False,
         label='Additional gold samples', help_text=filler_samples_help_text)
     same_domain = forms.IntegerField(
