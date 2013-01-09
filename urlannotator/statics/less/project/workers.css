@@ -40,3 +40,12 @@
 #workers-table .field-id {
   width: 20px;
 }
+.span4 {
+  margin-left: 6px !important;
+  margin-right: -1px;
+}
+@media (min-width: 1200px) {
+  .span4 {
+    margin-left: 11px !important;
+  }
+}
