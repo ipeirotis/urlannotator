@@ -52,7 +52,9 @@
           <input type="text" id="estimated_cost" disabled="disabled" value="0.00">
         </div>
       </div>
-      <div class="controls">
+      <div class="control-group">
+        <label for="id_stripe_button" class="control-label">Payment</label>
+        <div class="controls">
           <script src="https://checkout.stripe.com/v2/checkout.js"></script>
 
           <button id="id_stripe_button" class="stripe-button-el"
@@ -66,12 +68,14 @@
               var token = function(res){
                 $("#id_stripe_token").val(res.id);
                 $("#id_payment_done").show();
+                $('#id_stripe_button').text('Payment done');
+                $('#id_stripe_button').attr('disabled', 'disabled');
                 switchActive(true);
               };
               // Amount in cents
               var amount = parseFloat($estimated_cost.val()) * 100;
               if (amount === NaN || amount <= 0)
-                return;
+                return false;
 
               StripeCheckout.open({
                 key:         '{{ stripe_key }}',
@@ -88,6 +92,7 @@
             Thank you for payment.
           </span>
         </div>
+      </div>
         <div class="row">
           <div class="form-actions">
           <button id="send_button" class="btn btn-success span disabled" type="submit" name="submit" value="active" disabled="disabled">Start Beat The Machine</button>
@@ -117,6 +122,9 @@ function switchActive(enable)
   } else {
     $send_button.attr('disabled', 'disabled');
     $send_button.addClass('disabled');
+    $('#id_stripe_button').text('Pay with Stripe');
+    $('#id_stripe_button').removeAttr('disabled');
+    $('#id_payment_done').hide();
   }
 }
 
@@ -133,11 +141,9 @@ function estimate_cost()
     {no_of_urls: no_of_urls, points_per_dollar: pts_per_dol},
     function (data){
       $estimated_cost.val(data.cost);
-      if (!data.cost){
-        switchActive(false);
-      }
-  }).complete(function(){estimating = false;})
-  .error(function(){switchActive(false);});
+      switchActive(false);
+    }
+  ).complete(function(){estimating = false;});
 }
 
 (function() {

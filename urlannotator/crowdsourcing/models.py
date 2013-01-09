@@ -46,6 +46,12 @@ class WorkerQualityVoteManager(models.Manager):
             worker=kwargs['worker'],
         )
         kwargs['btm_vote'] = True
+        send_event(
+            'EventNewBTMVoteAdded',
+            worker_id=kwargs['worker'].id,
+            sample_id=kwargs['sample'].id,
+        )
+
         try:
             vote, new = self.get_or_create(**kwargs)
             if not new:
@@ -275,7 +281,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
             return "Error state. It will be verified."
 
     CONF_HIGH_TRESHOLD = 0.8
-    CONF_MEDIUM_TRESHOLD = 0.5
+    CONF_MEDIUM_TRESHOLD = 0.51
     CONF_HIGH = 1
     CONF_MEDIUM = 2
     CONF_LOW = 3

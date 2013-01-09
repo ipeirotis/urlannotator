@@ -47,42 +47,63 @@ class ChargeResource(StripeResource):
             get(charge_id=ChargeResource._object_id(**event_data))
 
     def handle_succeeded(self, **event_data):
-        self._get_charge(**event_data).job.initialize()
+        charge = self._get_charge(**event_data)
+        if charge.charge_type == charge.Type.BASE_JOB:
+            charge.job.initialize()
+        elif charge.charge_type == charge.Type.BTM_JOB:
+            charge.job.activate_btm()
 
     def handle_refunded(self, **event_data):
         charge = self._get_charge(**event_data)
-        charge.job.stop()
+        if charge.charge_type == charge.Type.BASE_JOB:
+            charge.job.stop()
+        elif charge.charge_type == charge.Type.BTM_JOB:
+            charge.job.stop_btm()
+
         data = {
             'charge_id': charge.charge_id,
             'job_id': charge.job_id,
+            'charge_type': charge.charge_type,
         }
         log.warning(
-            'Stripe callback: Charge {charge_id} for job {job_id} '
-            'has got refunded! The job has been stopped.'.format(**data)
+            'Stripe callback: Charge {charge_id} ({charge_type}) for '
+            'job {job_id} has got refunded! The job has '
+            'been stopped.'.format(**data)
         )
 
     def handle_failed(self, **event_data):
         charge = self._get_charge(**event_data)
-        charge.job.stop()
+        if charge.charge_type == charge.Type.BASE_JOB:
+            charge.job.stop()
+        elif charge.charge_type == charge.Type.BTM_JOB:
+            charge.job.stop_btm()
+
         data = {
             'charge_id': charge.charge_id,
             'job_id': charge.job_id,
+            'charge_type': charge.charge_type,
         }
         log.warning(
-            'Stripe callback: Charge {charge_id} for job {job_id} '
-            'has failed! The job has been stopped.'.format(**data)
+            'Stripe callback: Charge {charge_id} ({charge_type}) for '
+            'job {job_id} has failed! The job has been stopped.'.format(**data)
         )
 
     def handle_dispute_created(self, **event_data):
         charge = self._get_charge(**event_data)
-        charge.job.stop()
+        if charge.charge_type == charge.Type.BASE_JOB:
+            charge.job.stop()
+        elif charge.charge_type == charge.Type.BTM_JOB:
+            charge.job.stop_btm()
+
         data = {
             'charge_id': charge.charge_id,
             'job_id': charge.job_id,
+            'charge_type': charge.charge_type,
         }
         log.warning(
-            'Stripe callback: Charge {charge_id} for job {job_id} '
-            'was disputed! The job will be stopped.'.format(**data)
+            'Stripe callback: Charge {charge_id} ({charge_type}) for '
+            'job {job_id} was disputed! The job will '
+            'be stopped.'.format(**data)
         )
 
 

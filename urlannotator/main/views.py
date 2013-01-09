@@ -476,7 +476,7 @@ def project_wizard(request):
             job_charge = None
             job_cost = Job.estimate_cost(int(params['data_source']),
                     params['no_of_urls'])
-            if job_cost > 0:
+            if job_cost >= 0.5:
                 if not stripe_token:
                     context['wizard_error'] = 'No Stripe payment'
                     return render(request, 'main/project/wizard.html',
@@ -490,6 +490,10 @@ def project_wizard(request):
                     context['wizard_error'] = e.message
                     return render(request, 'main/project/wizard.html',
                         RequestContext(request, context))
+            elif Job.is_paid_source(int(params['data_source'])):
+                context['wizard_error'] = 'Cost has to be at least 50 cents.'
+                return render(request, 'main/project/wizard.html',
+                    RequestContext(request, context))
 
             job = Job.objects.create_draft(**params)
 
@@ -784,7 +788,7 @@ def project_btm_view(request, id):
         return redirect('index')
 
     context = {'project': job}
-    if job.is_btm_active():
+    if job.is_btm_active() or job.is_btm_pending() or job.is_btm_finished():
         context['pending_samples'] = job.get_btm_pending_samples()
         return render(request, 'main/project/btm_view.html',
             RequestContext(request, context))
@@ -793,13 +797,30 @@ def project_btm_view(request, id):
         context['form'] = BTMForm()
         if request.method == 'POST':
             form = BTMForm(request.POST)
-            if form.is_valid():
-                job.start_btm(
-                    topic=form.cleaned_data['topic'],
-                    description=form.cleaned_data['topic_desc'],
-                    no_of_urls=form.cleaned_data['no_of_urls'],
-                    points_to_cash=form.cleaned_data['points_to_cash'],
-                )
+            stripe_token = request.POST.get('stripeToken', None)
+
+            if form.is_valid() and stripe_token:
+                cost = Job.btm_estimate_cost(form.cleaned_data['no_of_urls'],
+                    form.cleaned_data['points_to_cash'])
+                if cost < 0.5:
+                    context['btm_warn'] = 'Cost has to be at least 50 cents.'
+                    return render(request, 'main/project/btm.html',
+                        RequestContext(request, context))
+
+                description = "Customer {0} for btm job {1}: {2}".format(
+                    request.user.id, job.id, form.cleaned_data['topic'])
+
+                job.start_btm(form.cleaned_data['topic'],
+                    form.cleaned_data['topic_desc'],
+                    form.cleaned_data['no_of_urls'],
+                    form.cleaned_data['points_to_cash'])
+
+                charge = JobCharge.objects.btm_from_token(stripe_token,
+                    description)
+                charge.job = job
+                charge.save()
+
+                charge.charge(cost)
                 return redirect('project_btm_view', id=id)
             context['form'] = form
         return render(request, 'main/project/btm.html',

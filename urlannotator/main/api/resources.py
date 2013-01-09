@@ -892,6 +892,13 @@ class JobResource(OwnerModelResource):
                 response_class=HttpNotFound,
             )
 
+        if not job.is_btm_finished():
+            return self.create_response(
+                request,
+                {'error': 'Beat The Machine has not finished.'},
+                response_class=HttpBadRequest,
+            )
+
         samples = request.POST.get('samples', '[]')
         samples = json.loads(samples)
 

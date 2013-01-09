@@ -102,6 +102,7 @@ JOB_DATA_SOURCE_CHOICES = JOB_BASIC_DATA_SOURCE_CHOICES
 JOB_DATA_SOURCE_CHOICES_DICT = dict(JOB_DATA_SOURCE_CHOICES)
 JOB_TYPE_CHOICES = ((0, 'Fixed no. of URLs to collect'), (1, 'Fixed price'))
 
+JOB_FREE_SOURCES = (JOB_SOURCE_OWN_WORKFORCE,)
 JOB_HIT_MAPPING_NAME = 'job_source_to_hit_type'
 # Job status breakdown:
 # Draft - template of a job, not active yet, can be started.
@@ -168,10 +169,18 @@ class Job(models.Model):
         # Payment pending
         PENDING = 'pending'
 
+        # Finished
+        FINISHED = 'finished'
+
+        # Stopped
+        STOPPED = 'stopped'
+
     BTMSTATUS_CHOICES = (
         (BTMStatus.NOT_ACTIVE, 'Not active'),
         (BTMStatus.PENDING, 'Pending'),
         (BTMStatus.ACTIVE, 'Active'),
+        (BTMStatus.FINISHED, 'Finished'),
+        (BTMStatus.STOPPED, 'Stopped'),
     )
 
     account = models.ForeignKey(Account)
@@ -206,10 +215,13 @@ class Job(models.Model):
     objects = JobManager()
 
     @classmethod
+    def is_paid_source(cls, data_source):
+        return not data_source in JOB_FREE_SOURCES
+
+    @classmethod
     def estimate_cost(cls, data_source, no_of_urls):
         estimation = 0
-        if data_source == JOB_SOURCE_OWN_WORKFORCE:
-            # I assume own workforce is free.
+        if not Job.is_paid_source(data_source):
             estimation = 0
 
         if data_source == JOB_SOURCE_MTURK_WORKFORCE:
@@ -344,6 +356,7 @@ class Job(models.Model):
         self.get_display_samples(cache=False)
         self.get_confusion_matrix(cache=False)
         self.get_urls_collected(cache=False)
+        self.get_btm_votes(cache=False)
 
     def recreate_training_set(self, force=False):
         """
@@ -407,23 +420,30 @@ class Job(models.Model):
         cache_key = 'job-%d-display-samples' % self.id
         return self._get_display_samples(cache_key=cache_key, cache=cache)
 
-    def start_btm(self, topic, description, no_of_urls, points_to_cash):
-        Job.objects.filter(id=self.id).update(
-            btm_status=self.BTMStatus.ACTIVE,
-            btm_title=topic,
-            btm_description=description,
-            btm_to_gather=no_of_urls,
-            btm_points_to_cash=points_to_cash,
-        )
+    def start_btm(self, title, description, no_of_urls, points_to_cash):
+        kwargs = {
+            'btm_status': self.BTMStatus.PENDING,
+            'btm_title': title,
+            'btm_description': description,
+            'btm_to_gather': no_of_urls,
+            'btm_points_to_cash': points_to_cash,
+        }
+
+        Job.objects.filter(pk=self.pk).update(**kwargs)
+        for name, key in kwargs.iteritems():
+            setattr(self, name, key)
+
+    def activate_btm(self):
+        Job.objects.filter(pk=self.pk).update(btm_status=self.BTMStatus.ACTIVE)
+
         self.btm_status = self.BTMStatus.ACTIVE
-        self.btm_to_gather = no_of_urls
 
         send_event(
             'EventBTMStarted',
             job_id=self.id,
-            topic=topic,
-            description=description,
-            no_of_urls=no_of_urls,
+            topic=self.btm_title,
+            description=self.btm_description,
+            no_of_urls=self.btm_to_gather,
         )
 
     def get_btm_status(self):
@@ -467,9 +487,18 @@ class Job(models.Model):
 
         return samples
 
+    def finish_btm(self):
+        Job.objects.filter(pk=self.pk).\
+            update(btm_status=self.BTMStatus.FINISHED)
+
+        self.btm_status = self.BTMStatus.FINISHED
+
     def is_btm_finished(self):
         return (self.is_btm_active()
             and (self.get_btm_gathered() == self.get_btm_to_gather()))
+
+    def is_btm_pending(self):
+        return self.btm_status == self.BTMStatus.PENDING
 
     def is_btm_active(self):
         return self.btm_status == self.BTMStatus.ACTIVE
@@ -486,11 +515,30 @@ class Job(models.Model):
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
         return BeatTheMachineSample.objects.get_all_btm(self)
 
+    @cached
+    def _get_btm_votes(self, cache):
+        from urlannotator.crowdsourcing.models import WorkerQualityVote
+        return WorkerQualityVote.objects.filter(sample__job=self,
+            btm_vote=True, is_valid=True)
+
+    def get_btm_votes(self, cache=True):
+        cache_key = 'job-{0}-btm-votes'.format(self.id)
+        return self._get_btm_votes(cache=cache, cache_key=cache_key)
+
+    def update_btm_progress(self):
+        progress = self.get_btm_progress()
+        if not progress == 100:
+            return
+
+        self.finish_btm()
+
     def get_btm_progress(self):
         to_gather = self.get_btm_to_gather() or 1
+        to_vote = to_gather * settings.TAGASAURIS_VOTE_WORKERS_PER_HIT
+        progress = len(self.get_btm_gathered()) + len(self.get_btm_votes())
+        total = to_vote + to_gather
 
-        return min(round((100 * len(self.get_btm_gathered())) / to_gather, 2),
-            100.0)
+        return min(round((100.0 * progress) / total, 2), 100.0)
 
     def get_accepted_btm_samples(self):
         """
@@ -584,6 +632,10 @@ class Job(models.Model):
         tag_job.save()
         stop_job(tag_job.beatthemachine_key)
         stop_job(tag_job.voting_btm_key)
+
+        Job.objects.filter(pk=self.pk).\
+            update(btm_status=self.BTMStatus.STOPPED)
+        self.btm_status = self.BTMStatus.STOPPED
         return True
 
     def get_classifier_performance(self):
@@ -827,7 +879,8 @@ class Job(models.Model):
 
     @cached
     def _get_progress_votes(self, cache):
-        count = self.sample_set.all().count() * 3
+        count = self.sample_set.all().count() * \
+            settings.TAGASAURIS_VOTE_WORKERS_PER_HIT
         got = self.get_votes_gathered(cache=cache)
 
         count = count or 1

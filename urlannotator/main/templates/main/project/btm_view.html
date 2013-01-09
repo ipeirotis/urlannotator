@@ -32,6 +32,8 @@
       <tbody>
         {% if project.is_btm_finished %}
         <tr><td>Status: Finished</td></tr>
+        {% elif project.is_btm_pending %}
+        <tr><td>Status: Initializing</td></tr>
         {% else %}
         <tr><td>Status: In progress</td><td>{{ project.get_btm_progress }}%</td></tr>
         {% endif %}
@@ -47,11 +49,13 @@
     <hr>
   </div>
 </div>
+{% if not project.is_btm_finished %}
 <div class="row">
   <div class="span12">
     Beat the machine is still in progress. You can add your results to the classifier data once the status is finished
   </div>
 </div>
+{% endif %}
 <div class="row">
   <div class="span12" id="pending_samples">
 
@@ -108,7 +112,7 @@
         <span id="no-selected" style="display: none" class="offset7">You need to check, which URLs you want to add to the classifier data first.</span>
       </div>
       <div class="row">
-        <button id="submit-samples" class="btn offset10" type="submit" onclick="submitSamples();">Add to classifier data</button>
+        <button id="submit-samples" class="btn offset10 {% if not project.is_btm_finished %}disabled{% endif %}" type="submit" onclick="submitSamples();" {% if not project.is_btm_finished %}disabled="disabled"{% endif %}>Add to classifier data</button>
       </div>
   </div>
 </div>

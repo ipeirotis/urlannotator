@@ -86,15 +86,15 @@ CELERY_LONGCOMMON_QUEUE = CELERY_DEFAULT_QUEUE
 
 ODESK_TEAM_PREFIX = 'local'
 
-local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
-if os.path.isfile(local_settings):
-    from local import *
-
 SITE_URL = 'devel.urlannotator.10clouds.com'
 
 TAGASAURIS_VOTE_MEDIA_PER_HIT = 1
 TAGASAURIS_VOTE_WORKERS_PER_HIT = 1
 XS_ON_NGINX = False
+
+local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
+if os.path.isfile(local_settings):
+    from local import *
 
 # Mock selenium tests, so that they are not run locally
 from django.test import LiveServerTestCase

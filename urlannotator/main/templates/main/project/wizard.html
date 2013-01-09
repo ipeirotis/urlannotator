@@ -114,16 +114,18 @@
                 value="" style="display: none;">
 
               <script>
-                $('#id_stripe_button').click(function(){
+                $('#id_stripe_button').click(function(e){
                   var token = function(res){
                     $("#id_stripe_token").val(res.id);
                     $("#id_payment_done").show();
+                    $('#id_stripe_button').text('Payment done');
+                    $('#id_stripe_button').attr('disabled', 'disabled');
                     switchActivate(true);
                   };
                   // Amount in cents
                   var amount = parseFloat($("#id_estimated_cost").val()) * 100;
                   if (amount === NaN || amount <= 0)
-                    return;
+                    return false;
 
                   StripeCheckout.open({
                     key:         '{{ stripe_key }}',
@@ -177,6 +179,9 @@
     } else {
       el.attr("disabled", "disabled");
       el.addClass("disabled");
+      $('#id_stripe_button').text('Pay with Stripe');
+      $('#id_stripe_button').removeAttr('disabled');
+      $('#id_payment_done').hide();
     }
   }
 
@@ -188,7 +193,8 @@
       function(data){
         $("#id_estimated_cost").val(data.cost);
         switchActivate(false);
-      });
+      }
+    ).error(function(){switchActivate(false)});
   };
 
   $("#id_no_of_urls").change(function () {

@@ -72,9 +72,11 @@ def update_job_votes_gathered(sample_id, worker_id):
             % sample_id
         )
         return
+
     sample = sample[0]
     sample.update_votes_cache()
     sample.job.get_progress_votes(cache=False)
+    sample.job.get_btm_votes(cache=False)
 
     worker = Worker.objects.get(id=worker_id)
     worker.get_votes_added_count_for_job(sample.job, cache=False)
@@ -107,6 +109,9 @@ def vote_on_new_btm_sample(sample_id, job_id):
         Creates a LABEL_YES vote on the brand-new btm sample by the sample
         sender.
     '''
+    job = Job.objects.get(id=job_id)
+    job.update_btm_progress()
+
     return _vote_on_new_sample(sample_id, job_id,
         WorkerQualityVote.objects.new_btm_vote)
 
@@ -177,6 +182,7 @@ FLOW_DEFINITIONS = [
     (r'^EventBTMStarted$', initialize_btm_job, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventBTMSendToHuman$', btm_send_to_human, settings.CELERY_LONGSCARCE_QUEUE),
     (r'^EventNewVoteAdded$', update_job_votes_gathered),
+    (r'^EventNewBTMVoteAdded$', update_job_votes_gathered),
     (r'^EventNewSample$', vote_on_new_sample),
     (r'^EventNewBTMSample$', vote_on_new_btm_sample),
     (r'^EventNewOdeskAssoc$', create_odesk_teams),
