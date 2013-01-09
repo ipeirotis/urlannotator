@@ -534,9 +534,8 @@ class Job(models.Model):
 
     def get_btm_progress(self):
         to_gather = self.get_btm_to_gather() or 1
-        to_vote = to_gather * settings.TAGASAURIS_VOTE_WORKERS_PER_HIT
-        progress = len(self.get_btm_gathered()) + len(self.get_btm_votes())
-        total = to_vote + to_gather
+        progress = len(self.get_btm_gathered())
+        total = to_gather
 
         return min(round((100.0 * progress) / total, 2), 100.0)
 

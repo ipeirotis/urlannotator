@@ -96,10 +96,10 @@ if os.path.isfile(local_settings):
 
 DATABASES = {
     'default': {
-    'ENGINE': 'django.db.backends.postgresql_psycopg2',
-    'NAME': STABLE_DB_NAME,
-    'USER': STABLE_DB_USER,
-    'PASSWORD': STABLE_DB_PASSWORD,
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASSWORD,
     }
 }
 

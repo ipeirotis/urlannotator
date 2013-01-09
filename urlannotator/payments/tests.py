@@ -171,7 +171,7 @@ class StripeTests(ToolsMockedMixin, TestCase):
         post_data = {
             'topic': 'Test Stripe',
             'topic_desc': 'Stripe test job',
-            'no_of_urls': '5',
+            'no_of_urls': '100',
             'data_source': str(JOB_SOURCE_MTURK_WORKFORCE),
             'same_domain': '10',
             'stripeToken': 'abc',
@@ -182,6 +182,8 @@ class StripeTests(ToolsMockedMixin, TestCase):
         r = self.client.post(reverse('project_wizard'), data=post_data,
             follow=True)
         self.assertEqual(r.status_code, 200, "Error when creating job")
+        self.assertTemplateUsed(r, 'main/project/overview.html',
+            'Failed to create a job!')
 
         try:
             j = Job.objects.get(account__user=self.u)

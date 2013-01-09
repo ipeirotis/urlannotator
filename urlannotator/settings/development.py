@@ -92,6 +92,10 @@ TAGASAURIS_VOTE_MEDIA_PER_HIT = 1
 TAGASAURIS_VOTE_WORKERS_PER_HIT = 1
 XS_ON_NGINX = False
 
+# Change CELERYBEAT's queue to default one
+for task in CELERYBEAT_SCHEDULE:
+    CELERYBEAT_SCHEDULE[task]['options']['queue'] = CELERY_DEFAULT_QUEUE
+
 local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
