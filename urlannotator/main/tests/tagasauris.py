@@ -450,6 +450,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         self.assertEqual(1, TagasaurisJobs.objects.count())
 
         job.start_btm("test topic", "test desc", 10, 5000)
+        job.activate_btm()
         job = Job.objects.get(id=job.id)
 
         self.assertEqual(job.btm_status, job.BTMStatus.ACTIVE)

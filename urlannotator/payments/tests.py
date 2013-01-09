@@ -171,7 +171,7 @@ class StripeTests(ToolsMockedMixin, TestCase):
         post_data = {
             'topic': 'Test Stripe',
             'topic_desc': 'Stripe test job',
-            'no_of_urls': '1',
+            'no_of_urls': '5',
             'data_source': str(JOB_SOURCE_MTURK_WORKFORCE),
             'same_domain': '10',
             'stripeToken': 'abc',
