@@ -169,66 +169,47 @@
 {{ block.super }}
 <script type="text/javascript">
 
-  function switchActivate(enable)
-  {
-    var el = $("#id_activate");
-    if (enable)
-    {
-      el.removeAttr("disabled");
-      el.removeClass("disabled");
-    } else {
-      el.attr("disabled", "disabled");
-      el.addClass("disabled");
-      $('#id_stripe_button').text('Pay with Stripe');
-      $('#id_stripe_button').removeAttr('disabled');
-      $('#id_payment_done').hide();
-    }
-  }
+var free_sources = [{{ free_sources }}];
 
-  var estimate_costs = function () {
-    var no_of_urls = $("#id_no_of_urls").val();
-    var data_source = $("#id_data_source").val();
-    $.get('/api/v1/job/estimate/?format=json',
-      {no_of_urls: no_of_urls, data_source: data_source},
-      function(data){
-        $("#id_estimated_cost").val(data.cost);
+function switchActivate(enable)
+{
+  var el = $("#id_activate");
+  if (enable)
+  {
+    el.removeAttr("disabled");
+    el.removeClass("disabled");
+  } else {
+    el.attr("disabled", "disabled");
+    el.addClass("disabled");
+    $('#id_stripe_button').text('Pay with Stripe');
+    $('#id_stripe_button').removeAttr('disabled');
+    $('#id_payment_done').hide();
+  }
+}
+
+var estimate_costs = function () {
+  var no_of_urls = $("#id_no_of_urls").val();
+  var data_source = $("#id_data_source").val();
+  $.get('/api/v1/job/estimate/?format=json',
+    {no_of_urls: no_of_urls, data_source: data_source},
+    function(data){
+      $("#id_estimated_cost").val(data.cost);
+      if ($.inArray(parseInt(data_source), free_sources) != -1) {
+        switchActivate(true);
+      } else {
         switchActivate(false);
       }
-    ).error(function(){switchActivate(false)});
-  };
+    }
+  ).error(function(){switchActivate(false)});
+};
 
-  $("#id_no_of_urls").change(function () {
-    estimate_costs();
-  });
+$("#id_no_of_urls").change(function () {
+  estimate_costs();
+});
 
 $('#id_data_source').change(function(obj){
-        var index = $('#id_data_source').val();
-        if (index == 1 || index == 3) {
-            $('#id_project_type').parent().parent().css('display', 'none')
-            $('#id_no_of_urls').parent().parent().css('display', '')
-            $('#id_hourly_rate').parent().parent().css('display', 'none')
-            $('#id_budget').parent().parent().css('display', 'none')
-        } else {
-            $('#id_project_type').parent().parent().css('display', '')
-            $('#id_project_type').val(0)
-            $('#id_project_type').change()
-        }
-        estimate_costs();
-    }
-);
-$('#id_project_type').change(function(obj){
-        var index = $('#id_project_type').val();
-        if (index == 0){
-            $('#id_no_of_urls').parent().parent().css('display', '')
-            $('#id_hourly_rate').parent().parent().css('display', '')
-            $('#id_budget').parent().parent().css('display', 'none')
-        } else {
-            $('#id_no_of_urls').parent().parent().css('display', 'none')
-            $('#id_hourly_rate').parent().parent().css('display', 'none')
-            $('#id_budget').parent().parent().css('display', '')
-        }
-    }
-);
+  estimate_costs();
+});
 
 $(function(){
   estimate_costs();

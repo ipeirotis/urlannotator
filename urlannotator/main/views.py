@@ -20,7 +20,7 @@ from django.core.urlresolvers import reverse
 from django.template.loader import get_template
 from django.views.decorators.cache import cache_page
 from django.conf import settings
-from itertools import ifilter
+from itertools import ifilter, imap
 from oauth2client.file import Storage
 from oauth2client.client import OAuth2WebServerFlow
 
@@ -29,7 +29,7 @@ from urlannotator.main.forms import (WizardTopicForm, WizardAttributesForm,
     WizardAdditionalForm, NewUserForm, UserLoginForm, AlertsSetupForm,
     GeneralEmailUserForm, GeneralUserForm, BTMForm)
 from urlannotator.main.models import (Account, Job, Worker, Sample,
-    LABEL_YES, LABEL_NO, make_label)
+    LABEL_YES, LABEL_NO, make_label, JOB_FREE_SOURCES)
 from urlannotator.classification.models import (ClassifierPerformance,
     TrainingSet)
 from urlannotator.logging.models import LogEntry, LongActionEntry
@@ -340,7 +340,10 @@ def project_wizard(request):
     can_create = request.user.is_superuser or not max_jobs \
         or max_jobs > jobs_count
 
-    context = {'stripe_key': settings.STRIPE_PUBLISHABLE}
+    context = {
+        'stripe_key': settings.STRIPE_PUBLISHABLE,
+        'free_sources': ', '.join(imap(lambda x: str(x), JOB_FREE_SOURCES)),
+    }
 
     if request.method == "GET":
         context.update({
@@ -495,12 +498,13 @@ def project_wizard(request):
                 return render(request, 'main/project/wizard.html',
                     RequestContext(request, context))
 
-            job = Job.objects.create_draft(**params)
-
             if job_charge:
+                job = Job.objects.create_draft(**params)
                 job_charge.job = job
                 job_charge.save()
                 job_charge.charge(job_cost)
+            else:
+                job = Job.objects.create_active(**params)
 
             return redirect('project_view', id=job.id)
 

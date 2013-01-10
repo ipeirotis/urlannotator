@@ -84,8 +84,7 @@ class WizardAttributesForm(forms.Form):
     """
     data_source = forms.ChoiceField(JOB_BASIC_DATA_SOURCE_CHOICES,
         required=True,
-        label="Data source",
-        help_text="You have 800 free URL quota provided by Odesk")
+        label="Data source")
     no_of_urls = forms.IntegerField(required=True,
         label="No. of URLs to collect", min_value=1)
 
