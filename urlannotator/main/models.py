@@ -648,17 +648,10 @@ class Job(models.Model):
 
     @cached
     def _get_newest_votes(self, num, cache):
-        from urlannotator.classification.models import (TrainingSet,
-            TrainingSample)
-        training_set = TrainingSet.objects.newest_for_job(job=self)
-        if not training_set:
-            return []
+        from urlannotator.crowdsourcing.models import WorkerQualityVote
 
-        samples = TrainingSample.objects.filter(
-            set=training_set,
-            label=LABEL_YES,
-        ).order_by('-id')[:num].iterator()
-        date = training_set.revision.strftime('%Y-%m-%d %H:%M:%S')
+        votes = WorkerQualityVote.objects.filter(sample__job=self,
+            label=LABEL_YES).order_by('-added_on')[:num].iterator()
         newest_votes = [{
             'screenshot': s.sample.get_small_thumbnail_url(),
             'url': s.sample.url,
@@ -668,8 +661,8 @@ class Job(models.Model):
             }),
             'label': s.label,
             'added_on': s.sample.added_on.strftime('%Y-%m-%d %H:%M:%S'),
-            'date': date,
-        } for s in samples]
+            'date': s.added_on.strftime('%Y-%m-%d %H:%M:%S'),
+        } for s in votes]
         return newest_votes
 
     def get_newest_votes(self, num=3, cache=False):

@@ -72,7 +72,7 @@ class WorkerQualityVote(models.Model):
     worker = models.ForeignKey(Worker)
     sample = models.ForeignKey(Sample)
     label = models.CharField(max_length=10, choices=LABEL_CHOICES)
-    added_on = models.DateField(auto_now_add=True)
+    added_on = models.DateTimeField(auto_now_add=True)
     is_valid = models.BooleanField(default=True)
     is_new = models.BooleanField(default=True)
     btm_vote = models.BooleanField(default=False)
