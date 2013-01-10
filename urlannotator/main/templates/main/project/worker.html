@@ -40,23 +40,97 @@
     </div>
   </div>
   <div class="row">
-    <div class="table-container-anno1 span6">
-      <h3>Statistics</h3>
-      <div class="table-wrapper">
-        <table id="more-information">
-          <thead></thead>
-          <tbody>
-            <tr><td>Work since</td><td>{{worker.work_started}}</td></tr>
-            <tr><td>Projects worked on</td><td>
-            {% autoescape off %}
-            {{ worker.projects|join:', '}}
-            {% endautoescape %}
-            </td></tr>
-            <!--<tr><td>Status</td><td>{{worker.status}}</td></tr>-->
-          </tbody>
-        </table>
-        <div id="urlGraph"></div>
+      <div class="span6">
+        <div class="table-container-anno1">
+          <h3>Statistics</h3>
+          <div class="table-wrapper">
+            <div id="urlGraph"></div>
+            <table id="more-information">
+              <thead></thead>
+              <tbody>
+                <tr><td>Work since</td><td>{{worker.work_started}}</td></tr>
+                <tr><td>Projects worked on</td><td>
+                {% autoescape off %}
+                {{ worker.projects|join:', '}}
+                {% endautoescape %}
+                </td></tr>
+                <!--<tr><td>Status</td><td>{{worker.status}}</td></tr>-->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-    </div>
+      <div class="span6">
+        <div class="table-container-anno1">
+          <h3>Recently added</h3>
+          <div class="table-wrapper">
+            <table id="recently-added" style="width: 100%; text-align: center">
+              <thead>
+                <th style="width: 60px">Preview</th>
+                <th>URL</th>
+                <th style="width: 60px">Class Probability good</th>
+                <th style="width: 60px">Class Probability wrong</th>
+                <th>Added on</th>
+              </thead>
+              <tbody>
+                {% for class_sample in recent_samples %}
+                  <tr>
+                    <td><a href="{{ class_sample.sample.get_large_thumbnail_url }}">
+                      <img class="pop" rel="popover" data-content="<img src='{{ class_sample.sample.get_large_thumbnail_url }}'  style='width:240px;height:180px;' />" style="width: 60px; max-height: 45px;" src="{{ class_sample.sample.get_small_thumbnail_url }}">
+                    </a></td>
+                    <td class="cell-url"><a href="/project/{{ project.id }}/data/{{ class_sample.sample.id }}/">{{ class_sample.url }}</a></td>
+                    <td>{{ class_sample.get_yes_probability }}%</td>
+                    <td>{{ class_sample.get_no_probability }}%</td>
+                    <td>{{ class_sample.added_on|date:'m/d/Y H:i:s'}}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
   </div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script src="{{STATIC_URL}}js/highcharts.js" type="text/javascript"></script>
+<script type="text/javascript">
+var graphColor = '#c79155';
+var urlGraph;
+
+$(function(){
+  urlGraph = new Highcharts.Chart({
+     chart: {
+        renderTo: 'urlGraph',
+        zoomType: 'x',
+        type: 'line'
+     },
+     title: {
+        text: 'URLs collected per day'
+     },
+     xAxis: {
+        type: 'datetime',
+        maxZoom: 5 * 24 * 3600 * 1000, // five days
+        tickInterval: 24 * 60 * 60 * 1000,
+     },
+     yAxis: {
+        title: {
+          showEmpty:false,
+          text: ''
+        },
+        min: 0,
+        showFirstLabel: false,
+        allowDecimals: false,
+     },
+     series: [{
+        showInLegend: false,
+        name: 'URLs',
+        color: graphColor,
+        data: [{{url_stats|safe}}],
+     }]
+  });
+
+});
+</script>
 {% endblock %}

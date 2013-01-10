@@ -1645,6 +1645,7 @@ class WorkerJobManager(models.Manager):
         exists = self.filter(job=job, worker=worker).count()
         if not exists:
             self.create(job=job, worker=worker)
+            WorkerJobURLStatistics.objects.create(job=job, worker=worker)
 
 
 class WorkerJobAssociation(models.Model):
@@ -1696,6 +1697,20 @@ class WorkerJobAssociation(models.Model):
     @property
     def btm_pending(self):
         return self.btm_gathered - self.btm_paid
+
+    @cached
+    def _get_url_collected_stats(self, cache):
+        from urlannotator.statistics.stat_extraction import extract_stat
+
+        model = WorkerJobURLStatistics
+        models = model.objects.filter(job=self.job, worker=self.worker).\
+            order_by('date')
+        return extract_stat(models, interval=datetime.timedelta(days=1),
+            time=False)
+
+    def get_url_collected_stats(self, cache=True):
+        cache_key = 'worker_job_assoc-{0}-urls-collected-stats'.format(self.pk)
+        return self._get_url_collected_stats(cache=cache, cache_key=cache_key)
 
 
 class GoldSample(models.Model):
@@ -1829,6 +1844,27 @@ class LinksStatistics(models.Model):
 
     objects = LinksStatManager()
 
+
+class WorkerJobManager(models.Manager):
+    def latest_for_assoc(self, worker_assoc):
+        els = self.filter(worker=worker_assoc.worker, job=worker_assoc.job).\
+            order_by('-id')
+
+        if not els:
+            return None
+
+        return els[0]
+
+
+class WorkerJobURLStatistics(models.Model):
+    """ Keeps track of urls collected by worker per day per job
+    """
+    worker = models.ForeignKey(Worker)
+    job = models.ForeignKey(Job)
+    date = models.DateTimeField(auto_now_add=True)
+    value = models.IntegerField(default=0)
+
+    objects = WorkerJobManager()
 
 def create_stats(sender, instance, created, raw, **kwargs):
     """

@@ -8,55 +8,25 @@ from urlannotator.main.models import (SpentStatistics, ProgressStatistics,
 from urlannotator.classification.models import ClassifierPerformance
 
 
-def format_date_val(val):
+def format_date_val(val, time=True):
     """
         Formats a date statistics value into a Date.UTC(y,m,j,H,i,s) format.
     """
-    arg_string = val['date'].strftime('%Y,%m-1,%d,%H,%M,%S')
-    return '[Date.UTC(%s),%f]' % (arg_string, val['delta'])
+    date_string = '%Y,%m-1,%d'
+    if time:
+        date_string += ',%H,%M,%S'
+    arg_string = val['date'].strftime(date_string)
+    return '[Date.UTC(%s),%f]' % (arg_string, val['value'])
 
 
-def extract_stat(cls, stats):
+def extract_stat(stats, interval=datetime.timedelta(hours=1), time=True):
     """
         Returns a string representing a list of statistics samples formatted
         for use in Highcharts. The closest, earliest value is always used.
+
+        If `time` is set, stat's time is also insert alongside to date.
     """
-    stats = list(stats)
-    stats_count = len(stats)
-    now_time = now()
-    idx = 1
-    interval = datetime.timedelta(hours=1)
-    actual_time = datetime.datetime(
-        year=stats[0].date.year,
-        month=stats[0].date.month,
-        day=stats[0].date.day,
-        hour=stats[0].date.hour,
-        minute=0,
-        second=0,
-        microsecond=0,
-        tzinfo=stats[0].date.tzinfo,
-    )
-    list_stats = [{'date': actual_time, 'delta': stats[0].value}]
-    actual_time += interval
-    actual_value = stats[0].value
-
-    while actual_time <= now_time:
-        # Find next closest sample
-        while idx < stats_count:
-            if stats[idx].date > actual_time:
-                break
-            idx += 1
-
-        stat = stats[idx - 1]
-        list_stats.append({
-            'date': actual_time,
-            'delta': stat.value - actual_value
-        })
-        actual_value = stat.value
-        actual_time += interval
-
-    stats = ','.join([format_date_val(v) for v in list_stats])
-    return stats
+    return extract_stat_by_val(stats, lambda x: x.value, interval, time)
 
 
 def extract_progress_stats(job, context):
@@ -64,7 +34,7 @@ def extract_progress_stats(job, context):
         Extracts job's progress statistics as difference per hour.
     '''
     stats = ProgressStatistics.objects.filter(job=job).order_by('date')
-    context['progress_stats'] = extract_stat(ProgressStatistics, stats)
+    context['progress_stats'] = extract_stat(stats)
 
 
 def extract_spent_stats(job, context):
@@ -72,7 +42,7 @@ def extract_spent_stats(job, context):
         Extracts job's money spent statistics as difference per hour.
     '''
     stats = SpentStatistics.objects.filter(job=job).order_by('date')
-    context['spent_stats'] = extract_stat(SpentStatistics, stats)
+    context['spent_stats'] = extract_stat(stats)
 
 
 def extract_url_stats(job, context):
@@ -80,7 +50,7 @@ def extract_url_stats(job, context):
         Extracts job's url statistics as difference per hour.
     '''
     stats = URLStatistics.objects.filter(job=job).order_by('date')
-    context['url_stats'] = extract_stat(URLStatistics, stats)
+    context['url_stats'] = extract_stat(stats)
 
 
 def extract_votes_stats(job, context):
@@ -88,7 +58,7 @@ def extract_votes_stats(job, context):
         Extracts job's votes gathered statistics as difference per hour.
     '''
     stats = VotesStatistics.objects.filter(job=job).order_by('date')
-    context['votes_stats'] = extract_stat(URLStatistics, stats)
+    context['votes_stats'] = extract_stat(stats)
 
 
 def extract_workerlinks_stats(worker, context):
@@ -96,17 +66,18 @@ def extract_workerlinks_stats(worker, context):
         Extracts job's url statistics as difference per hour.
     '''
     stats = LinksStatistics.objects.filter(worker=worker).order_by('date')
-    context['workerlinks_stats'] = extract_stat(LinksStatistics, stats)
+    context['workerlinks_stats'] = extract_stat(stats)
 
 
-def extract_stat_by_val(cls, job, val_fun):
+def extract_stat_by_val(stats, val_fun, interval=datetime.timedelta(hours=1),
+        time=True):
     '''
         Extracts stat using a val_fun to take value from entry.
     '''
-    stats = cls.objects.filter(job=job).order_by('date')
     stats = list(stats)
     stats_count = len(stats)
     now_time = now()
+    idx = 1
     actual_time = datetime.datetime(
         year=stats[0].date.year,
         month=stats[0].date.month,
@@ -117,13 +88,11 @@ def extract_stat_by_val(cls, job, val_fun):
         microsecond=0,
         tzinfo=stats[0].date.tzinfo,
     )
-    idx = 1
-    interval = datetime.timedelta(hours=1)
-    list_stats = [{'date': actual_time, 'delta': val_fun(stats[0])}]
     actual_time += interval
-    actual_value = val_fun(stats[0])
+    list_stats = []
 
-    while actual_time <= now_time:
+    # Do-until-loop
+    while True:
         # Find next closest sample
         while idx < stats_count:
             if stats[idx].date > actual_time:
@@ -133,12 +102,13 @@ def extract_stat_by_val(cls, job, val_fun):
         stat = stats[idx - 1]
         list_stats.append({
             'date': actual_time,
-            'delta': val_fun(stat) - actual_value
+            'value': val_fun(stat)
         })
-        actual_value = val_fun(stat)
         actual_time += interval
+        if actual_time > now_time:
+            break
 
-    stats = ','.join([format_date_val(v) for v in list_stats])
+    stats = ','.join([format_date_val(v, time) for v in list_stats])
     return stats
 
 
@@ -149,19 +119,18 @@ def extract_performance_stats(job, context):
     extract_TPR = lambda x: x.value.get('TPR', 0)
     extract_TNR = lambda x: x.value.get('TNR', 0)
     extract_AUC = lambda x: x.value.get('AUC', 0)
+    stats = ClassifierPerformance.objects.filter(job=job).order_by('date')
+
     context['performance_TPR'] = extract_stat_by_val(
-        ClassifierPerformance,
-        job,
+        stats,
         extract_TPR
     )
     context['performance_TNR'] = extract_stat_by_val(
-        ClassifierPerformance,
-        job,
+        stats,
         extract_TNR
     )
     context['performance_AUC'] = extract_stat_by_val(
-        ClassifierPerformance,
-        job,
+        stats,
         extract_AUC
     )
 
@@ -229,4 +198,3 @@ def update_classifier_stats(classifier, job):
     )
     job.get_performance_stats(cache=False)
     job.get_confusion_matrix(cache=False)
-

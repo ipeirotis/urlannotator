@@ -2,7 +2,7 @@ import datetime
 
 from django.utils.timezone import now
 
-from urlannotator.main.models import Job, Worker
+from urlannotator.main.models import Job, Worker, WorkerJobAssociation
 
 
 class StatsMonitor(object):
@@ -86,6 +86,23 @@ class JobMonitor(StatsMonitor):
 
     def get_objects(self):
         return Job.objects.get_active()
+
+    def new_stats(self, obj, value, delta):
+        return self.model_cls(
+            job=obj,
+            value=value,
+            delta=delta
+        )
+
+
+class WorkerJobMonitor(StatsMonitor):
+
+    def get_latest(self, obj):
+        return self.model_cls.objects.latest_for_assoc(obj)
+
+    def get_objects(self):
+        return WorkerJobAssociation.objects.filter(
+            job__in=Job.objects.get_active())
 
     def new_stats(self, obj, value, delta):
         return self.model_cls(
