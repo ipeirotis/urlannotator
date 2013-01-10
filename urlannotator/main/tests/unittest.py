@@ -703,7 +703,7 @@ class ApiTests(ToolsMockedMixin, TestCase):
         self.assertIn('sample_gathering_url', array)
         self.assertIn('sample_voting_url', array)
         self.assertIn('newest_votes', array)
-        self.assertTrue(array['newest_votes'])
+        self.assertFalse(array['newest_votes'])
 
         TrainingSet.objects.filter(job=job).delete()
         resp = self.c.get('%s%s?format=json' % (self.api_url, 'job/1/'),
