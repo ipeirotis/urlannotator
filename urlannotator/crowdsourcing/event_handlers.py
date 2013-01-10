@@ -84,6 +84,8 @@ def update_job_votes_gathered(sample_id, worker_id):
     # Update top workers
     sample.job.get_top_workers(cache=False)
 
+    sample.job.workerjobassociation_set.get(worker=worker).get_votes_added()
+
 
 def _vote_on_new_sample(sample_id, job_id, vote_constructor):
     sample = Sample.objects.get(id=sample_id)

@@ -34,6 +34,7 @@ PIPELINE_JS = {
         'source_filenames': (
             'js/main/workers/models.coffee',
             'js/main/workers/crud.coffee',
+            'js/main/workers/widgets.js',
         ),
         'output_filename': 'js/workers_crud.js',
     },

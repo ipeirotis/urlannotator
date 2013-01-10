@@ -1434,6 +1434,9 @@ class Worker(models.Model):
     external_id = models.CharField(max_length=100)
     worker_type = models.IntegerField(max_length=100, choices=WORKER_TYPES)
 
+    # For easier searching
+    name = models.CharField(max_length=256, default='')
+
     objects = WorkerManager()
 
     def __unicode__(self):
@@ -1463,6 +1466,10 @@ class Worker(models.Model):
                 'Exception while getting worker %d\'s name. Using default.' % self.id
             )
             return 'Worker %d' % self.id
+
+        if self.name != name:
+            self.name = name
+            Worker.objects.filter(pk=self.pk).update(name=name)
         return name
 
     def get_name(self, cache=True):
@@ -1622,8 +1629,15 @@ class Worker(models.Model):
 
     def send_bonus_notification(self, job):
         self.send_message(
-            subject="URLAnnotator Beat The Machine: Bonus points",
+            subject="Build A Classifier Beat The Machine: Bonus points",
             content=self._prepare_bonus_notification(job))
+
+
+def update_worker_name(sender, instance, created, raw, **kwargs):
+    if created and not raw:
+        instance.get_name()
+
+post_save.connect(update_worker_name, sender=Worker)
 
 
 class WorkerJobManager(models.Manager):
@@ -1644,18 +1658,32 @@ class WorkerJobAssociation(models.Model):
         max_digits=10)
     data = JSONField(default='{}')
 
+    # For easier searching
+    votes_gathered = models.IntegerField(default=0)
+    urls_gathered = models.IntegerField(default=0)
+
     objects = WorkerJobManager()
 
     def get_estimated_quality(self):
         return self.data.get('estimated_quality', 0)
 
     def get_urls_collected(self, cache=True):
-        return self.worker.get_urls_collected_count_for_job(job=self.job,
+        val = self.worker.get_urls_collected_count_for_job(job=self.job,
             cache=cache)
+        if val != self.urls_gathered:
+            self.urls_gathered = val
+            WorkerJobAssociation.objects.filter(pk=self.pk).\
+                update(urls_gathered=val)
+        return val
 
     def get_votes_added(self, cache=True):
-        return self.worker.get_votes_added_count_for_job(job=self.job,
+        val = self.worker.get_votes_added_count_for_job(job=self.job,
             cache=cache)
+        if val != self.votes_gathered:
+            self.votes_gathered = val
+            WorkerJobAssociation.objects.filter(pk=self.pk).\
+                update(votes_gathered=val)
+        return val
 
     @property
     def btm_gathered(self):

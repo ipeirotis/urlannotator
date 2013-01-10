@@ -5,11 +5,20 @@ $ ->
     workers = new crud.collection.Workers
 
     workers.fetchMeta (meta) ->
+        filteredWorkers = new crud.collection.Workers()
 
-        workersTable = new crud.view.WorkerTable
-            el: $('#workers-table')
-            meta: meta
-            collection: workers
+        filteredWorkers.fetchMeta (workersMeta) ->
 
-        workersTable.render()
-        workers.fetch()
+            workersTable = new crud.view.WorkerTable
+                el: $('#workers-table')
+                meta: workersMeta
+                collection: filteredWorkers
+
+            fV = new crud.view.FilterList(
+              collection: filteredWorkers
+              filterGroups: workersMeta.filterGroups
+            )
+            $(".sidebar-nav").append fV.render().el
+
+            # fetch data
+            filteredWorkers.fetch()

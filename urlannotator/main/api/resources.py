@@ -10,6 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from tenclouds.crud import fields, resources
 from tenclouds.crud.paginator import Paginator
 from tenclouds.crud import actions
+from tenclouds.crud.qfilters import Group, FullTextSearch
 
 from tastypie.resources import ModelResource, Resource
 from tastypie.authentication import Authentication
@@ -18,6 +19,7 @@ from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpNotFound, HttpBadRequest
 from django.utils.http import same_origin
 
+from urlannotator.main.crud.filters import IntegerFilter
 from urlannotator.main.models import (Job, Sample, Worker, LABEL_BROKEN,
     LABEL_YES, LABEL_NO, make_label, WorkerJobAssociation)
 from urlannotator.classification.models import ClassifiedSample
@@ -217,7 +219,6 @@ class AdminResource(Resource):
         self.is_authenticated(request)
         res = AlertResource()
         return res.get_list(request, **kwargs)
-
 
 
 class ClassifiedSampleResource(Resource):
@@ -695,7 +696,7 @@ class JobResource(OwnerModelResource):
                               (Only Own Workforce jobs)
     """
     urls_to_collect = fields.IntegerField(attribute='no_of_urls')
-    urls_collected = fields.IntegerField(attribute='collected_urls')
+    urls_collected = fields.IntegerField()
     no_of_workers = fields.IntegerField()
     cost = fields.DecimalField()
     progress = fields.IntegerField()
@@ -738,6 +739,9 @@ class JobResource(OwnerModelResource):
         if not request.user.is_superuser:
             return object_list.filter(account=request.user.get_profile())
         return object_list
+
+    def dehydrate_urls_collected(self, bundle):
+        return bundle.obj.get_urls_collected(cache=True)
 
     def dehydrate_feed(self, bundle):
         return self._build_reverse_url('api_job_updates_feed', kwargs={
@@ -1016,6 +1020,17 @@ class WorkerJobAssociationResource(resources.ModelResource):
         queryset = WorkerJobAssociation.objects.all()
         fields = ['id', 'name', 'urls_collected', 'votes_added',
                   'bonus_gathered', 'bonus_paid', 'bonus_pending']
+        filters = (
+            Group('Search', FullTextSearch('worker', 'worker__name__icontains')),
+            Group('Urls collected',
+                IntegerFilter('urls_from_l', 'From:', 'urls_gathered__gte'),
+                IntegerFilter('urls_from_u', 'To:', 'urls_gathered__lte'),
+                join='and'),
+            Group('Votes collected',
+                IntegerFilter('votes_from_l', 'From:', 'votes_gathered__gte'),
+                IntegerFilter('votes_from_u', 'To:', 'votes_gathered__lte'),
+                join='and')
+        )
 
     def apply_authorization_limits(self, request, obj_list):
         obj_list = super(WorkerJobAssociationResource, self).\

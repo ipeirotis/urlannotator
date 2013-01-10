@@ -2,7 +2,7 @@ from celery import task, Task, registry
 from factories import SampleFactory, JobFactory
 
 from urlannotator.classification.models import TrainingSample, TrainingSet
-from urlannotator.main.models import GoldSample, LABEL_BROKEN, Job
+from urlannotator.main.models import GoldSample, LABEL_BROKEN, Job, Sample
 from urlannotator.flow_control import send_event
 from urlannotator.tools.synchronization import POSIXLock
 
@@ -83,6 +83,7 @@ new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]
 @task(ignore_result=True)
 def update_job_urls_gathered(job_id, sample_id):
     job = Job.objects.get(id=job_id)
+    sample = Sample.objects.get(id=sample_id)
 
     # A sample has been created.
     job.get_progress_urls(cache=False)
@@ -90,6 +91,10 @@ def update_job_urls_gathered(job_id, sample_id):
     job.get_top_workers(cache=False)
     job.get_display_samples(cache=False)
     job.get_urls_collected(cache=False)
+
+    worker = sample.get_source_worker()
+    if worker is not None:
+        job.workerjobassociation_set.get(worker=worker).get_urls_collected()
 
 
 @task(ignore_result=True)
