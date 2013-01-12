@@ -114,6 +114,8 @@ if settings.DEBUG:
         url(r'^debug/superuser$',
             'urlannotator.main.views.debug_superuser', name='debug_su'),
         url(r'^debug/user$', 'urlannotator.main.views.debug_login', name='debug_login'),
+        url(r'^debug/user/delete$', 'urlannotator.main.views.debug_user_delete',
+            name='debug_user_delete'),
         url(r'^debug/prediction$', 'urlannotator.main.views.debug_prediction',
             name='debug_prediction'),
         url(r'^debug/prediction/complete$', 'urlannotator.main.views.debug_prediction_complete',

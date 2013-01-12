@@ -621,6 +621,17 @@ def debug_prediction(request):
     return redirect('index')
 
 
+@login_required
+def debug_user_delete(request):
+    ''' Debug view that logouts and deletes currently logged in user.
+        Useful when testing workflow or UI on remote instance via selenium.
+    '''
+    user = request.user
+    logout(request)
+    user.delete()
+    return redirect('index')
+
+
 def debug_login(request):
     user = authenticate(username='test', password='test')
     if user is None:
