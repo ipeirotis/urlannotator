@@ -137,15 +137,15 @@
                             <tbody>
                                 <tr>
                                     <td><i class="icon icon-twitter"></i> Twitter</td>
-                                    <td>{% if twitter %}<b>Connected</b>, {{twitter.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a></td>{%endif%}
+                                    <td id="twitter-status">{% if twitter %}<b>Connected</b>, {{twitter.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a></td>{%endif%}
                                 </tr>
                                 <tr>
                                     <td><i class="icon icon-google-plus"></i> Google</td>
-                                    <td>{% if google %}<b>Connected</b>, {{google.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a></td>{%endif%}
+                                    <td id="google-status">{% if google %}<b>Connected</b>, {{google.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a></td>{%endif%}
                                 </tr>
                                 <tr>
                                     <td><i class="icon icon-facebook"></i> Facebook</td>
-                                    <td>{% if facebook %}<b>Connected</b>, {{facebook.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a></td>{%else%}<B>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a></td></td>{%endif%}
+                                    <td  id="facebook-status">{% if facebook %}<b>Connected</b>, {{facebook.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a></td>{%else%}<B>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a></td></td>{%endif%}
                                 </tr>
                             </tbody>
                         </table>
