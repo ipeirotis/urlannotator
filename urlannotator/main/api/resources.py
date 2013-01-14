@@ -1159,8 +1159,9 @@ class SampleResource(resources.ModelResource):
         return bundle.obj.added_on.strftime('%Y-%m-%d %H:%M')
 
     def dehydrate_gold_sample(self, bundle):
-        label = bundle.obj.get_label()
-        return label if label else '---'
+        if bundle.obj.is_gold_sample():
+            return bundle.obj.get_label()
+        return '-' * 3
 
     def dehydrate_votes_yes(self, bundle):
         return bundle.obj.get_yes_votes(cache=True)
