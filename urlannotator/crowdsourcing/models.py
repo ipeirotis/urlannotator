@@ -281,7 +281,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
             return "Error state. It will be verified."
 
     CONF_HIGH_TRESHOLD = 0.8
-    CONF_MEDIUM_TRESHOLD = 0.51
+    CONF_MEDIUM_TRESHOLD = 0.49
     CONF_HIGH = 1
     CONF_MEDIUM = 2
     CONF_LOW = 3
