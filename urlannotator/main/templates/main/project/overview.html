@@ -295,6 +295,13 @@ $(document).ready(function() {
 
 <script type="text/javascript">
 var job = new job();
+job.urls_collected({{ urls_collected }});
+job.votes_gathered({{ votes_gathered }});
+job.budget({{ budget }});
+job.progress_urls({{ progress_urls }});
+job.progress_votes({{ progress_votes }});
+job.no_of_workers({{ no_of_workers }});
+
 var image_cache = {};
 
 function updateAlerts(url){
