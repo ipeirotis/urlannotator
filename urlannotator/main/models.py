@@ -749,7 +749,9 @@ class Job(models.Model):
 
     @cached
     def _get_urls_collected(self, cache):
-        samples = self.sample_set.filter(goldsample__isnull=True).iterator()
+        samples = self.sample_set.filter(
+            goldsample__isnull=True, btm_sample=False
+        ).iterator()
         gold_samples = [gold['url'] for gold in self.gold_samples]
 
         collected = ifilter(
