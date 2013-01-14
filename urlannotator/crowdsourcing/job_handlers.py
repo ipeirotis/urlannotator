@@ -3,7 +3,7 @@
 # They are gathered in this single place for easier modification later on.
 from urlannotator.crowdsourcing.tagasauris_helper import (
     create_btm_voting_job, make_tagapi_client, init_tagasauris_job,
-    create_voting_job, update_voting_job, create_btm, update_voting)
+    create_voting_job, update_btm, create_btm, update_voting)
 from urlannotator.crowdsourcing.odesk_helper import notify_workers
 from urlannotator.crowdsourcing.models import OdeskMetaJob
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
@@ -180,7 +180,7 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
             # Creates sample to mediaobject mapping
             self.init_btm_voting(samples)
         else:
-            update_voting_job(tc, self.job, samples)
+            update_btm(tc, self.job, samples)
 
 
 class OdeskHandler(TagasaurisHandler):
