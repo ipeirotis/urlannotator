@@ -472,20 +472,19 @@ class Job(models.Model):
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
         return BeatTheMachineSample.objects.get_all_ready(job=self)
 
-    def add_btm_verified_sample(self, sample):
+    def add_btm_verified_sample(self, sample_id):
         """
             Should add a BTM-verified sample to the job so it can be included
             in new training sets.
         """
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
 
-        btms = BeatTheMachineSample.objects.get_btm_verified(job=self)
-        samples = [b.sample for b in btms]
-        for sample in samples:
-            sample.training = True
-            sample.save()
+        sample = BeatTheMachineSample.objects.\
+            get(id=sample_id, job=self).sample
+        sample.training = True
+        sample.save()
 
-        return samples
+        return sample
 
     def finish_btm(self):
         Job.objects.filter(pk=self.pk).\
