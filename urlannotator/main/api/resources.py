@@ -1123,6 +1123,9 @@ class SampleResource(resources.ModelResource):
     small_thumb = fields.CharField()
     large_thumb = fields.CharField()
     votes = fields.DictField(title='Voting')
+    votes_yes = fields.IntegerField(title='Voting good')
+    votes_no = fields.IntegerField(title='Voting bad')
+    votes_broken = fields.IntegerField(title='Voting broken')
     gold_sample = fields.CharField(title='Gold Sample')
     added_on = fields.DateTimeField(title='Added on', attribute='added_on')
 
@@ -1132,7 +1135,8 @@ class SampleResource(resources.ModelResource):
         list_allowed_methods = ['get', 'post']
         per_page = [10, 20, 50, 100, 200, 500]
         authorization = OwnerAuthorization(attribute="job.account.user")
-        fields = ['screenshot', 'url', 'added_on', 'votes', 'gold_sample']
+        fields = ['screenshot', 'url', 'added_on', 'votes_yes', 'votes_no',
+            'votes_broken', 'gold_sample']
 
     def apply_authorization_limits(self, request, obj_list):
         if not request.user.is_superuser:
@@ -1158,11 +1162,20 @@ class SampleResource(resources.ModelResource):
         label = bundle.obj.get_label()
         return label if label else '---'
 
+    def dehydrate_votes_yes(self, bundle):
+        return bundle.obj.get_yes_votes(cache=True)
+
+    def dehydrate_votes_no(self, bundle):
+        return bundle.obj.get_no_votes(cache=True)
+
+    def dehydrate_votes_broken(self, bundle):
+        return bundle.obj.get_broken_votes(cache=True)
+
     def dehydrate_votes(self, bundle):
         return {
-            'yes': bundle.obj.get_yes_votes(cache=True),
-            'no': bundle.obj.get_no_votes(cache=True),
-            'broken': bundle.obj.get_broken_votes(cache=True),
+            'yes': self.dehydrate_votes_yes(bundle),
+            'no': self.dehydrate_votes_no(bundle),
+            'broken': self.dehydrate_votes_broken(bundle),
         }
 
     def obj_get_list(self, request, job_id=None, **kwargs):
