@@ -89,6 +89,16 @@
                     that.coreUrl + status_url,
                     {request_id: request_id},
                     function (data) {
+                        // In case response JSON parsing fails
+                        if (typeof(data) === "string") {
+                            try {
+                                data = JSON.parse(data);
+                            } catch (err) {
+                                that.pollStatus(sample, status_url, request_id);
+                                return;
+                            }
+                        }
+
                         if (data.points !== undefined) {
                             sample.points = data.points;
                             sample.max_points = data.max_points;
