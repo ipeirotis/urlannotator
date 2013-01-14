@@ -479,7 +479,7 @@ class Job(models.Model):
         """
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
 
-        btms = BeatTheMachineSample.objects.get_btm_verified(job_id=self)
+        btms = BeatTheMachineSample.objects.get_btm_verified(job=self)
         samples = [b.sample for b in btms]
         for sample in samples:
             sample.training = True
@@ -494,8 +494,7 @@ class Job(models.Model):
         self.btm_status = self.BTMStatus.FINISHED
 
     def is_btm_finished(self):
-        return (self.is_btm_active()
-            and (self.get_btm_gathered() == self.get_btm_to_gather()))
+        return self.btm_status == self.BTMStatus.FINISHED
 
     def is_btm_pending(self):
         return self.btm_status == self.BTMStatus.PENDING
