@@ -233,12 +233,13 @@ class ProcessVotesManager(Task):
 
             quality_algorithm = quality_factory.create_algorithm(job)
             decisions = quality_algorithm.extract_decisions()
+            ts = TrainingSet.objects.create(job=job)
+            can_train = False
             if decisions:
                 log.info(
                     'ProcessVotesManager: Creating training set for job %d.' % job.id
                 )
 
-                ts = TrainingSet.objects.create(job=job)
                 for sample_id, label in decisions:
                     if label == LABEL_BROKEN:
                         log.info(
@@ -255,6 +256,7 @@ class ProcessVotesManager(Task):
                         sample=sample,
                         label=label,
                     )
+                    can_train = True
 
                 for sample in Sample.objects.filter(job=job).iterator():
                     if sample.is_gold_sample():
@@ -262,18 +264,14 @@ class ProcessVotesManager(Task):
                             set=ts,
                             sample=sample,
                         )
+                        can_train = True
+
                         if not created:
                             log.info(
                                 'ProcessVotesManager: Overriden gold sample %d.' % sample.id
                             )
                         ts_sample.label = sample.goldsample.label
                         ts_sample.save()
-
-                send_event(
-                    'EventTrainingSetCompleted',
-                    set_id=ts.id,
-                    job_id=job.id,
-                )
 
             decisions = quality_algorithm.extract_btm_decisions()
             if decisions:
@@ -292,6 +290,22 @@ class ProcessVotesManager(Task):
                         sample__id=sample_id)
                     btms.recalculate_human(label)
 
+                    if btms.sample.training:
+                        can_train = True
+                        TrainingSample.objects.create(
+                            set=ts,
+                            sample=btms.sample,
+                            label=label,
+                        )
+
+            if can_train:
+                send_event(
+                    'EventTrainingSetCompleted',
+                    set_id=ts.id,
+                    job_id=job.id,
+                )
+            else:
+                ts.delete()
 
 process_votes = registry.tasks[ProcessVotesManager.name]
 
