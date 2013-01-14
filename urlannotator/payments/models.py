@@ -243,7 +243,7 @@ class BTMBonusPayment(models.Model):
         tc = make_tagapi_client()
         tc.pay_worker_bonus(
             worker_id=int(self.worker.external_id),
-            amount=self.amount,
+            amount=float(self.amount),
             reason='Bonus for Beat The Machine job no %s' % self.job.id)
 
     def _pay_odesk_bonus(self):

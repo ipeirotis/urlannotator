@@ -1098,13 +1098,14 @@ class WorkerJobAssociationResource(resources.ModelResource):
                 response_class=HttpNotFound,
             )
 
-        workers = request.POST.get('bonus', '[]')
-        workers = json.loads(workers)
+        data = json.loads(request.raw_post_data)
+        workers = data['query']['id__in']
 
         for worker in workers:
             worker_id = sanitize_positive_int(worker)
             worker = Worker.objects.get(id=worker_id)
-            BTMBonusPayment.objects.create_for_worker(worker, job)
+            p = BTMBonusPayment.objects.create_for_worker(worker, job)
+            p.pay_bonus()
 
         return self.create_response(
             request,

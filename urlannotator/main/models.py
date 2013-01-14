@@ -1546,7 +1546,7 @@ class Worker(models.Model):
         """
         return ifilter(
             lambda x: x.sample.job == job and x.worker == self,
-            self.workerqualityvote_set.all().iterator()
+            self.workerqualityvote_set.filter(btm_vote=False).iterator()
         )
 
     def get_earned_for_job(self, job):

@@ -127,7 +127,8 @@ class BeatTheMachineSampleManager(models.Manager):
         return self.filter(job=job)
 
     def get_all_ready(self, job):
-        return self.get_all_btm(job).filter(sample__isnull=False)
+        return self.get_all_btm(job).filter(sample__isnull=False,
+            sample__training=False)
 
     def from_worker(self, worker):
         return self.filter(
