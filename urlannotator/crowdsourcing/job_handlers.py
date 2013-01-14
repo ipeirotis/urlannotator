@@ -9,6 +9,7 @@ from urlannotator.crowdsourcing.models import OdeskMetaJob
 from urlannotator.main.models import (JOB_SOURCE_ODESK_FREE,
     JOB_SOURCE_OWN_WORKFORCE, JOB_SOURCE_ODESK_PAID,
     JOB_SOURCE_MTURK_WORKFORCE)
+from urlannotator.tools.synchronization import POSIXLock
 
 import logging
 log = logging.getLogger(__name__)
@@ -109,78 +110,76 @@ class TagasaurisHandler(CrowdsourcingJobHandler):
         Tagasauris job source handler. Uses Tagasauris for all 3 tasks.
     '''
     def init_job(self, *args, **kwargs):
-        try:
-            tagjob = self.job.tagasaurisjobs
-        except:
-            tagjob = None
+        lock_name = 'job_handler_init_job_%d' % self.job.id
+        with POSIXLock(lock_name):
+            try:
+                tagjob = self.job.tagasaurisjobs
+            except:
+                tagjob = None
 
-        if tagjob and tagjob.sample_gathering_hit is not None:
-            log.info(
-                'Tried to create new sample gathering job, but it already exists'
-            )
-            return True
-        res = init_tagasauris_job(self.job)
-        return res
+            if tagjob and tagjob.sample_gathering_hit is not None:
+                log.info(
+                    'Tried to create new sample gathering job, but it already exists'
+                )
+                return True
+            res = init_tagasauris_job(self.job)
+            return res
 
     def init_voting(self, tc, samples, *args, **kwargs):
-        if self.job.tagasaurisjobs.voting_hit is not None:
-            log.info(
-                'Tried to create new voting job, but it already exists'
-            )
-            return True
-        log.info(
-            'TagasaurisHandler: Creating voting job for job %d' % self.job.id
-        )
-        res = create_voting_job(tc, self.job, samples)
-        if res:
-            log.info(
-                'TagasaurisHandler: Created voting job for job %d' % self.job.id
-            )
-        return res
+        lock_name = 'job_handler_init_vot_%d' % self.job.id
+        with POSIXLock(lock_name):
+            if self.job.tagasaurisjobs.voting_hit is not None:
+                log.info(
+                    'Tried to create new voting job, but it already exists'
+                )
+                return True
+            res = create_voting_job(tc, self.job, samples)
+            return res
 
     def update_voting(self, tc, samples, *args, **kwargs):
-        log.info(
-            'TagasaurisHandler: Updating voting job for job %d' % self.job.id
-        )
-        res = update_voting(tc, self.job, samples)
-        if res:
-            log.info(
-                'TagasaurisHandler: Updating voting job for job %d' % self.job.id
-            )
-        return res
+        lock_name = 'job_handler_upd_vot_%d' % self.job.id
+        with POSIXLock(lock_name):
+            res = update_voting(tc, self.job, samples)
+            return res
 
     def init_btm_gather(self, topic, description, no_of_urls, *args, **kwargs):
-        if self.job.tagasaurisjobs.beatthemachine_hit is not None:
-            log.info(
-                'Tried to create new btm gathering job, but it already exists'
-            )
-            return True
-        tc = make_tagapi_client()
-        key, hit = create_btm(tc, self.job, topic, description, no_of_urls)
-        self.job.tagasaurisjobs.beatthemachine_key = key
-        self.job.tagasaurisjobs.save()
-        return key is not None
+        lock_name = 'job_handler_init_btm_%d' % self.job.id
+        with POSIXLock(lock_name):
+            if self.job.tagasaurisjobs.beatthemachine_hit is not None:
+                log.info(
+                    'Tried to create new btm gathering job, but it already exists'
+                )
+                return True
+            tc = make_tagapi_client()
+            key, hit = create_btm(tc, self.job, topic, description, no_of_urls)
+            self.job.tagasaurisjobs.beatthemachine_key = key
+            self.job.tagasaurisjobs.save()
+            return key is not None
 
     def init_btm_voting(self, samples, *args, **kwargs):
-        if self.job.tagasaurisjobs.voting_btm_hit is not None:
-            log.info(
-                'Tried to create new btm voting job, but it already exists'
-            )
-            return True
-        tc = make_tagapi_client()
-        create_btm_voting_job(tc, self.job, samples)
+        lock_name = 'job_handler_init_btm_vot_%d' % self.job.id
+        with POSIXLock(lock_name):
+            if self.job.tagasaurisjobs.voting_btm_hit is not None:
+                log.info(
+                    'Tried to create new btm voting job, but it already exists'
+                )
+                return True
+            tc = make_tagapi_client()
+            create_btm_voting_job(tc, self.job, samples)
 
     def update_btm(self, btm_samples, *args, **kwargs):
-        tc = make_tagapi_client()
-        samples = (btm.sample for btm in btm_samples)
+        lock_name = 'job_handler_upd_btm_%d' % self.job.id
+        with POSIXLock(lock_name):
+            tc = make_tagapi_client()
+            samples = (btm.sample for btm in btm_samples)
 
-        tag_jobs = self.job.tagasaurisjobs
-        # Job has no BTM key - create a new job
-        if not tag_jobs.voting_btm_key:
-            # Creates sample to mediaobject mapping
-            self.init_btm_voting(samples)
-        else:
-            update_btm(tc, self.job, samples)
+            tag_jobs = self.job.tagasaurisjobs
+            # Job has no BTM key - create a new job
+            if not tag_jobs.voting_btm_key:
+                # Creates sample to mediaobject mapping
+                self.init_btm_voting(samples)
+            else:
+                update_btm(tc, self.job, samples)
 
 
 class OdeskHandler(TagasaurisHandler):
