@@ -17,7 +17,9 @@
         <a href="{% url project_classifier_data project.id %}" class="btn">Export Training Data</a>
         <!--<a class="btn " data-toggle="modal" href="#closeProjectModal">Close project</a>
         <a class="btn " href="#">Settings</a>-->
+        {% if project.is_own_workforce %}
         <a class="btn " data-toggle="modal" href="#workface">Own workforce</a>
+        {% endif %}
       </div>
   {% endif %}
   <h2>{{project.title}} </h2><span class="badge badge-{{project.get_status|lower}}">{{project.get_status|lower}}</span>
