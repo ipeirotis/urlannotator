@@ -113,14 +113,19 @@
       <div class="table-container-anno1">
         <h3>Classifier statistics</h3>
         <div class="table-wrapper">
+          <h5>Classifier Performance</h5>
+          <div class="" id="performanceGraph">
+            Graph
+          </div>
           <table class="table fix" id="classifier-stats">
-            <thead></thead>
-            <tbody>
+            <thead>
               <tr>
-                <td>URLs collected</td>
-                <td data-bind="text: allCount">{{classifier_stats.count}}</td>
-                <td>-</td>
+                <th>URLs collected</th>
+                <th data-bind="text: allCount" style="width:50px;">{{classifier_stats.count}}</th>
+                <th style="width:50px;">-</th>
               </tr>
+            </thead>
+            <tbody>
               <tr>
                 <td>yes class records</td>
                 <td data-bind="text: yesCount">{{classifier_stats.yes_labels.val}}</td>
@@ -133,22 +138,15 @@
               </tr>
             </tbody>
           </table>
-          <div class="" id="performanceGraph">
-            Graph
-          </div>
           <div>
-            <h3>Confusion matrix</h3>
+            <h5>Confusion matrix</h5>
             <table class="table fix">
             <thead>
-              <th>Real label</th>
-              <th colspan="2">Classified label</th>
+                <th></th>
+                <th style="width:50px;">Yes</th>
+                <th style="width:50px;">No</th>
             </thead>
             <tbody>
-              <tr>
-                <td></td>
-                <td>Yes</td>
-                <td>No</td>
-              </tr>
               <tr>
                 <td>Yes</td><td>{{classifier_stats.matrix.yes_yes}}</td><td>{{classifier_stats.matrix.yes_no}}</td>
               </tr>
