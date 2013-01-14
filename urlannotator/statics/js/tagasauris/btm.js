@@ -46,7 +46,8 @@
                         $(".points", $(".instructions")).html(data.gathered_points);
                         $(".pending", $(".instructions")).html(data.pending_verification);
                         that.pollPoints();
-                    }
+                    },
+                    "json"
                 );
             }, 10000);
         },
@@ -89,16 +90,6 @@
                     that.coreUrl + status_url,
                     {request_id: request_id},
                     function (data) {
-                        // In case response JSON parsing fails
-                        if (typeof(data) === "string") {
-                            try {
-                                data = JSON.parse(data);
-                            } catch (err) {
-                                that.pollStatus(sample, status_url, request_id);
-                                return;
-                            }
-                        }
-
                         if (data.points !== undefined) {
                             sample.points = data.points;
                             sample.max_points = data.max_points;
@@ -123,7 +114,8 @@
                         } else {
                             that.pollStatus(sample, status_url, request_id);
                         }
-                    }
+                    },
+                "json"
                 );
             }, 2000);
         },
