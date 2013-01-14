@@ -1,8 +1,9 @@
-from django.db import models
+from django.db import models, IntegrityError
+from django.utils.timezone import now
 
 from urlannotator.main.models import (Worker, Sample, LABEL_CHOICES, Job,
     WorkerJobAssociation, SAMPLE_TAGASAURIS_WORKER, LABEL_YES, LABEL_NO,
-    LABEL_BROKEN, Account, worker_type_to_sample_source)
+    LABEL_BROKEN, Account, worker_type_to_sample_source, make_label)
 from urlannotator.classification.models import (ClassifiedSampleCore,
     CLASSIFIED_SAMPLE_PENDING, CLASSIFIED_SAMPLE_SUCCESS)
 from urlannotator.flow_control import send_event
@@ -14,58 +15,60 @@ log = logging.getLogger(__name__)
 
 
 class WorkerQualityVoteManager(models.Manager):
-    def new_vote(self, *args, **kwargs):
+    def _add_vote(self, worker, sample, label, *args, **kwargs):
         WorkerJobAssociation.objects.associate(
-            job=kwargs['sample'].job,
-            worker=kwargs['worker'],
+            job=sample.job,
+            worker=worker,
         )
+
+        kwargs.update({
+            'worker': worker,
+            'sample': sample,
+            'label': label,
+        })
+
+        try:
+            vote, new = self.get_or_create(**kwargs)
+            return vote
+        except IntegrityError:
+            log.warning('Replacing duplicated vote by worker %d' % worker.id)
+            WorkerQualityVote.objects.filter(sample=sample, worker=worker).\
+                update(is_new=True, label=label, added_on=now())
+            return self.get(sample=sample, worker=worker)
+        except:
+            log.exception(
+                'Exception while adding vote by worker %d.' % worker.id
+            )
+            return None
+
+    def new_vote(self, *args, **kwargs):
+        vote = self._add_vote(**kwargs)
+
+        if not vote:
+            return None
 
         send_event(
             'EventNewVoteAdded',
             worker_id=kwargs['worker'].id,
             sample_id=kwargs['sample'].id,
         )
-        try:
-            vote, new = self.get_or_create(**kwargs)
-            if not new:
-                log.warning(
-                    'Tried to add duplicate vote by worker %d'
-                    % kwargs['worker'].id
-                )
-            return vote
-        except:
-            log.exception(
-                'Exception while adding vote by worker %d.'
-                % kwargs['worker'].id
-            )
-            return None
+
+        return vote
 
     def new_btm_vote(self, *args, **kwargs):
-        WorkerJobAssociation.objects.associate(
-            job=kwargs['sample'].job,
-            worker=kwargs['worker'],
-        )
         kwargs['btm_vote'] = True
+        vote = self._add_vote(**kwargs)
+
+        if not vote:
+            return None
+
         send_event(
             'EventNewBTMVoteAdded',
             worker_id=kwargs['worker'].id,
             sample_id=kwargs['sample'].id,
         )
 
-        try:
-            vote, new = self.get_or_create(**kwargs)
-            if not new:
-                log.warning(
-                    'Tried to add duplicate BTM vote by worker %d'
-                    % kwargs['worker'].id
-                )
-            return vote
-        except:
-            log.exception(
-                'Exception while adding BTM vote by worker %d.'
-                % kwargs['worker'].id
-            )
-            return None
+        return vote
 
 
 class WorkerQualityVote(models.Model):
@@ -370,7 +373,7 @@ class BeatTheMachineSample(ClassifiedSampleCore):
                 self.btm_status = self.BTM_KNOWN_UNSURE
 
         self.update_points(self.btm_status)
-        self.human_label = cat_h
+        self.human_label = make_label(cat_h)
         self.save()
 
     def update_points(self, status):
