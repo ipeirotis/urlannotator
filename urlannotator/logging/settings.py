@@ -14,6 +14,10 @@ LOG_TYPE_SAMPLE_SCREENSHOT_FAIL = 10  # Error while taking screenshot
 LOG_TYPE_SAMPLE_TEXT_FAIL = 11  # Error while getting content
 LOG_TYPE_CLASSIFIER_TRAINING_ERROR = 12  # Error while training. Can retry.
 LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR = 13  # Fatal error while training. Aborted.
+LOG_TYPE_JOB_CHARGE_SUCCEEDED = 14  # Job charge succeeded
+LOG_TYPE_JOB_CHARGE_REFUNDED = 15  # Job charge refunded
+LOG_TYPE_JOB_CHARGE_FAILED = 16  # Job charge failed
+LOG_TYPE_JOB_CHARGE_DISPUTED = 17  # Job charge disputed
 
 # Long action type breakdown:
 LONG_ACTION_TRAINING = 1  # Classifier training
@@ -171,6 +175,46 @@ log_config = {
         'Box_entry': {
             'Title': 'Fatal error',
             'Text': 'Classifier training failed.',
+        },
+    },
+    LOG_TYPE_JOB_CHARGE_SUCCEEDED: {
+        'Console_out': 'Charge succeeded for job %(job_id)d',
+        'Single_text': 'Charge succeeded.',
+        'Plural_text': 'Charges succeeded.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Charge succeeded',
+            'Text': 'Job charge succeeded.',
+        },
+    },
+    LOG_TYPE_JOB_CHARGE_REFUNDED: {
+        'Console_out': 'Charge refunded for job %(job_id)d',
+        'Single_text': 'Charge refunded.',
+        'Plural_text': 'Charges refunded.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Charge refunded',
+            'Text': 'Job charge refunded.',
+        },
+    },
+    LOG_TYPE_JOB_CHARGE_FAILED: {
+        'Console_out': 'Charge failed for job %(job_id)d',
+        'Single_text': 'Charge failed.',
+        'Plural_text': 'Charges failed.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Charge failed',
+            'Text': 'Job charge failed.',
+        },
+    },
+    LOG_TYPE_JOB_CHARGE_DISPUTED: {
+        'Console_out': 'Charge disputed for job %(job_id)d',
+        'Single_text': 'Charge disputed.',
+        'Plural_text': 'Charges disputed.',
+        'Show_users': True,
+        'Box_entry': {
+            'Title': 'Charge disputed',
+            'Text': 'Job charge disputed.',
         },
     },
 }

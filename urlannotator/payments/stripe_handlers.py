@@ -6,6 +6,7 @@ import stripe
 
 from django.conf import settings
 
+from urlannotator.flow_control import send_event
 from urlannotator.payments.models import JobCharge
 
 log = logging.getLogger(__name__)
@@ -52,6 +53,8 @@ class ChargeResource(StripeResource):
             charge.job.initialize()
         elif charge.charge_type == charge.Type.BTM_JOB:
             charge.job.activate_btm()
+        send_event("EventJobChargeSucceeded", job_id=charge.job_id,
+            charge_id=charge.id)
 
     def handle_refunded(self, **event_data):
         charge = self._get_charge(**event_data)
@@ -70,6 +73,8 @@ class ChargeResource(StripeResource):
             'job {job_id} has got refunded! The job has '
             'been stopped.'.format(**data)
         )
+        send_event("EventJobChargeRefunded", job_id=charge.job_id,
+            charge_id=charge.id)
 
     def handle_failed(self, **event_data):
         charge = self._get_charge(**event_data)
@@ -87,6 +92,8 @@ class ChargeResource(StripeResource):
             'Stripe callback: Charge {charge_id} ({charge_type}) for '
             'job {job_id} has failed! The job has been stopped.'.format(**data)
         )
+        send_event("EventJobChargeFailed", job_id=charge.job_id,
+            charge_id=charge.id)
 
     def handle_dispute_created(self, **event_data):
         charge = self._get_charge(**event_data)
@@ -105,6 +112,8 @@ class ChargeResource(StripeResource):
             'job {job_id} was disputed! The job will '
             'be stopped.'.format(**data)
         )
+        send_event("EventJobChargeDisputed", job_id=charge.job_id,
+            charge_id=charge.id)
 
 
 def handlers_for_res(resource, regenerate_cache=False):

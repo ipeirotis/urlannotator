@@ -19,6 +19,10 @@ from urlannotator.logging.settings import (
     LOG_TYPE_SAMPLE_TEXT_FAIL,
     LOG_TYPE_CLASSIFIER_TRAINING_ERROR,
     LOG_TYPE_CLASSIFIER_FATAL_TRAINING_ERROR,
+    LOG_TYPE_JOB_CHARGE_SUCCEEDED,
+    LOG_TYPE_JOB_CHARGE_REFUNDED,
+    LOG_TYPE_JOB_CHARGE_FAILED,
+    LOG_TYPE_JOB_CHARGE_DISPUTED,
 
     LONG_ACTION_TRAINING,
 )
@@ -247,6 +251,40 @@ def log_classifier_critical_train_error(job_id, message, *args, **kwargs):
         *args, **kwargs
     )
 
+
+def log_charge(job_id, charge_id, log_type, *args, **kwargs):
+    job = Job.objects.get(id=job_id)
+    params = {
+        'charge_id': charge_id,
+    }
+    LogEntry.objects.log(
+        log_type=log_type,
+        job=job,
+        params=params,
+        *args, **kwargs
+    )
+
+
+@task(ignore_result=True)
+def log_job_charge_succeeded(*args, **kwargs):
+    log_charge(log_type=LOG_TYPE_JOB_CHARGE_SUCCEEDED, *args, **kwargs)
+
+
+@task(ignore_result=True)
+def log_job_charge_refunded(*args, **kwargs):
+    log_charge(log_type=LOG_TYPE_JOB_CHARGE_REFUNDED, *args, **kwargs)
+
+
+@task(ignore_result=True)
+def log_job_charge_failed(*args, **kwargs):
+    log_charge(log_type=LOG_TYPE_JOB_CHARGE_FAILED, *args, **kwargs)
+
+
+@task(ignore_result=True)
+def log_job_charge_disputed(*args, **kwargs):
+    log_charge(log_type=LOG_TYPE_JOB_CHARGE_DISPUTED, *args, **kwargs)
+
+
 FLOW_DEFINITIONS = [
     (r'^EventNewRawSample$', log_new_sample_start, settings.CELERY_REALTIME_QUEUE),
     (r'^EventNewSample$', log_sample_done, settings.CELERY_REALTIME_QUEUE),
@@ -262,4 +300,8 @@ FLOW_DEFINITIONS = [
     (r'^EventSampleContentDone$', log_sample_text_done, settings.CELERY_REALTIME_QUEUE),
     (r'^EventClassifierTrainError$', log_classifier_train_error, settings.CELERY_REALTIME_QUEUE),
     (r'^EventClassifierCriticalTrainError$', log_classifier_critical_train_error, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventJobChargeSucceeded$', log_job_charge_succeeded, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventJobChargeRefunded$', log_job_charge_refunded, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventJobChargeFailed$', log_job_charge_failed, settings.CELERY_REALTIME_QUEUE),
+    (r'^EventJobChargeDisputed$', log_job_charge_disputed, settings.CELERY_REALTIME_QUEUE),
 ]
