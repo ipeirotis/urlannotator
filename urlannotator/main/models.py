@@ -1579,8 +1579,8 @@ class Worker(models.Model):
             Retuns worker's bonus points gathered on given job.
         """
         from urlannotator.crowdsourcing.models import BeatTheMachineSample
-        points = BeatTheMachineSample.objects.from_worker(self).aggregate(
-            Sum('points'))['points__sum']
+        points = BeatTheMachineSample.objects.from_worker(self).\
+            filter(job=job).aggregate(Sum('points'))['points__sum']
         points = points if points else 0
         return points
 
