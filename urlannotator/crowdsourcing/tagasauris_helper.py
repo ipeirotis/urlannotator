@@ -286,11 +286,9 @@ def create_btm(api_client, job, topic, description, no_of_urls):
     return _create_job(api_client, ext_id, job.get_hit_type(), kwargs)
 
 
-def _create_voting(api_client, job, mediaobjects, notify_url):
+def _create_voting(api_client, job, mediaobjects, notify_url, topic=None,
+        labels=[]):
     task_type = settings.TAGASAURIS_VOTING_WORKFLOW
-    log.debug(
-        'TagasaurisHelper: Creating voting job for %s (%d).' % (job.title, job.id)
-    )
 
     # Unique id for tagasauris job within our tagasauris account.
     ext_id = make_external_id()
@@ -306,7 +304,9 @@ def _create_voting(api_client, job, mediaobjects, notify_url):
         hit_title="Verify web page urls from \"%s\"",
         workers_per_hit=settings.TAGASAURIS_VOTE_WORKERS_PER_HIT,
         media_per_hit=settings.TAGASAURIS_VOTE_MEDIA_PER_HIT,
-        hit_instructions=settings.TAGASAURIS_VOTING_INSTRUCTION_URL)
+        hit_instructions=settings.TAGASAURIS_VOTING_INSTRUCTION_URL,
+        topic=topic,
+        labels=labels)
 
     # Setting callback for notify mechanical task.
     kwargs["workflow"].update({
@@ -324,25 +324,21 @@ def _create_voting(api_client, job, mediaobjects, notify_url):
 
 
 def create_voting_job(api_client, job, samples):
-    log.info('Tagasauris: Creating voting job for job %d' % job.id)
     res = create_voting(api_client, job, samples, 'voting',
         notify_url=TAGASAURIS_VOTING_CALLBACK % job.id)
-    if res:
-        log.info('Tagasauris: Voting job created for job %d' % job.id)
     return res
 
 
 def create_btm_voting_job(api_client, job, samples):
-    log.info('Tagasauris: Creating BTM voting job for job %d' % job.id)
     res = create_voting(api_client, job, samples, 'voting_btm',
-        notify_url=TAGASAURIS_BTM_VOTING_CALLBACK % job.id)
-    if res:
-        log.info('Tagasauris: BTM voting job created for job %d' % job.id)
+        notify_url=TAGASAURIS_BTM_VOTING_CALLBACK % job.id,
+        topic=job.btm_title,
+        labels=["BTM"])
     return res
 
 
 def create_voting(api_client, job, samples, field_name,
-    notify_url):
+        notify_url, topic=None, labels=[]):
     from urlannotator.crowdsourcing.models import SampleMapping
     mediaobjects = samples_to_mediaobjects(samples, caption=job.description)
 
@@ -351,7 +347,7 @@ def create_voting(api_client, job, samples, field_name,
 
     # Creating new job  with mediaobjects
     key, hit = _create_voting(api_client, job, mo_values,
-        notify_url=notify_url)
+        notify_url=notify_url, topic=topic, labels=labels)
 
     # Job creation failed (maximum retries exceeded or other error)
     if not key:
