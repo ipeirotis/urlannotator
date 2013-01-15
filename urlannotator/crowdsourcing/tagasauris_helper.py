@@ -410,7 +410,7 @@ def _update_voting(api_client, job, samples, field_name):
     # would lose that info.
     if not res:
         SampleMapping.objects.filter(
-            sample__in=imap(lambda x: x.id, mediaobjects)
+            external_id__in=imap(lambda x: x['id'], mediaobjects)
         ).delete()
 
     # In case if tagasauris job was created without screenshots earlier.
