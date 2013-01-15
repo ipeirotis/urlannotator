@@ -446,7 +446,8 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
 
         ts = TrainingSet.objects.count()
         send_event('EventProcessVotes')
-        self.assertEqual(TrainingSet.objects.count(), ts)
+        # BTM's sample has `training` == True so we can train on this BTMSample
+        self.assertEqual(TrainingSet.objects.count(), ts + 1)
         self.assertEqual(BeatTheMachineSample.objects.count(), 1)
         self.assertEqual(BeatTheMachineSample.objects.all()[0].btm_status,
             BeatTheMachineSample.BTM_HOLE)

@@ -98,8 +98,9 @@ class TagasaurisInApi(ToolsMockedMixin, TestCase):
         sample_gathering_key, sample_gathering_hit = create_sample_gather(
             self.tc, self.job)
 
-        TagasaurisJobs.objects.create(
-            urlannotator_job=self.job,
+        tj, new = TagasaurisJobs.objects.\
+            get_or_create(urlannotator_job=self.job)
+        TagasaurisJobs.objects.filter(pk=tj.pk).update(
             sample_gathering_key=sample_gathering_key,
             sample_gathering_hit=sample_gathering_hit,
             voting_key=voting_key,
@@ -189,7 +190,7 @@ class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
             ]
         )
 
-        TagasaurisJobs.objects.create(urlannotator_job=self.job)
+        TagasaurisJobs.objects.get_or_create(urlannotator_job=self.job)
 
         for s in Sample.objects.all():
             s.screenshot = "http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
@@ -227,7 +228,8 @@ class TagasaurisJobsModelTest(ToolsMockedMixin, TestCase):
 
     def testJobUrlsGeneration(self):
 
-        tj = TagasaurisJobs.objects.create(urlannotator_job=self.job)
+        tj, new = TagasaurisJobs.objects.\
+            get_or_create(urlannotator_job=self.job)
 
         self.assertEqual(tj.get_sample_gathering_url(), '')
         self.assertEqual(tj.get_voting_url(), '')
@@ -270,7 +272,7 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
             ]
         )
 
-        TagasaurisJobs.objects.create(urlannotator_job=self.job)
+        TagasaurisJobs.objects.get_or_create(urlannotator_job=self.job)
 
         self.btm_sample = BeatTheMachineSample.objects.create_by_worker(
             job=self.job,
@@ -512,7 +514,7 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
             ]
         )
 
-        TagasaurisJobs.objects.create(urlannotator_job=self.job)
+        TagasaurisJobs.objects.get_or_create(urlannotator_job=self.job)
 
         for s in Sample.objects.all():
             s.screenshot = "http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"

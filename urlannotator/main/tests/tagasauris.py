@@ -445,9 +445,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
             gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
 
-        TagasaurisJobs.objects.create(
-            urlannotator_job=job,
-        )
+        TagasaurisJobs.objects.get_or_create(urlannotator_job=job)
         self.assertEqual(1, TagasaurisJobs.objects.count())
 
         job.start_btm("test topic", "test desc", 10, 5000)

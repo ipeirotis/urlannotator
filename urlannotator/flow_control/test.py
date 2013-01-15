@@ -95,7 +95,7 @@ def init_job(self, *args, **kwargs):
     if job is None:
         return False
 
-    TagasaurisJobs.objects.create(urlannotator_job=job)
+    tj, new = TagasaurisJobs.objects.get_or_create(urlannotator_job=job)
     return True
 
 # Mocks:
