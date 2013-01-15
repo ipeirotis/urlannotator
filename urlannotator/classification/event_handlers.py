@@ -268,7 +268,7 @@ class ProcessVotesManager(Task):
 
                         if not created:
                             log.info(
-                                'ProcessVotesManager: Overriden gold sample %d.' % sample.id
+                                'ProcessVotesManager: Overridden gold sample %d.' % sample.id
                             )
                         ts_sample.label = sample.goldsample.label
                         ts_sample.save()

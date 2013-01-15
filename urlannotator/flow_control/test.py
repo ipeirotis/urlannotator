@@ -88,6 +88,16 @@ def eager_train(kwargs, *args, **kwds):
     train(set_id=kwargs['set_id'])
 
 
+def init_job(self, *args, **kwargs):
+    from urlannotator.crowdsourcing.models import TagasaurisJobs
+    job = getattr(self, 'job', None)
+
+    if job is None:
+        return False
+
+    TagasaurisJobs.objects.create(urlannotator_job=job)
+    return True
+
 # Mocks:
 # - website screenshot and content extraction to do nothing,
 # - classifier training to be eager, not in separate process,
@@ -105,8 +115,8 @@ hardcoded_mocks = [
     ('urlannotator.main.factories.web_content_extraction', mocked_web_resource),
     ('urlannotator.main.factories.web_screenshot_extraction', mocked_web_resource),
     ('urlannotator.classification.event_handlers.process_execute', eager_train),
-    ('urlannotator.crowdsourcing.job_handlers.TagasaurisHandler.init_job', mock.Mock()),
-    ('urlannotator.crowdsourcing.job_handlers.OdeskHandler.init_job', mock.Mock()),
+    ('urlannotator.crowdsourcing.job_handlers.TagasaurisHandler.init_job', init_job),
+    ('urlannotator.crowdsourcing.job_handlers.OdeskHandler.init_job', init_job),
 ]
 
 

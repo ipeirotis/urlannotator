@@ -385,6 +385,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
             account=self.user.get_profile(),
             gold_samples=json.dumps([{'url': 'google.com', 'label': LABEL_YES}]),
         )
+
         classified_sample = BeatTheMachineSample.objects.create_by_worker(
             job=job,
             url='google.com',
