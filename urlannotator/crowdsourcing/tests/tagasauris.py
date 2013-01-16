@@ -1,3 +1,4 @@
+import mock
 import json
 
 from django.test import TestCase
@@ -521,8 +522,23 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
             s.save()
 
     def testBTMSampleIsNoVoting(self):
+        # Mock Tagasauris connection to speed this test up
+        mocks = []
+        m = mock.patch('urlannotator.crowdsourcing.tagasauris_helper._create_job', mock.MagicMock(return_value=('1', '2')))
+        mocks.append(m)
+
+        m = mock.patch('urlannotator.crowdsourcing.tagasauris_helper.update_voting_job', mock.MagicMock(return_value=True))
+        mocks.append(m)
+
+        map(lambda x: x.start(), mocks)
+
         self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
         self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 0)
+
+        send_event('EventSamplesVoting')
+
+        # Only 3 gold samples! No BTM Samples!
+        self.assertEqual(SampleMapping.objects.count(), 3)
 
         BeatTheMachineSample.objects.create_by_worker(
             job=self.job,
@@ -542,10 +558,8 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
         self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
         self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 2)
 
-        send_event('EventSamplesVoting')
-
-        # Only 5 gold samples 3! No BTM Samples!
-        self.assertEqual(SampleMapping.objects.count(), 3)
+        # BTM samples should be considered as BTM_HUMAN - sent to verification
+        self.assertEqual(SampleMapping.objects.count(), 5)
 
         Sample.objects.filter(btm_sample=True).update(vote_sample=True)
 
