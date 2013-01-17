@@ -1,3 +1,4 @@
+from itertools import ifilter, imap
 from multiprocessing.pool import Process
 
 from celery import task, Task, registry
@@ -240,38 +241,35 @@ class ProcessVotesManager(Task):
                     'ProcessVotesManager: Creating training set for job %d.' % job.id
                 )
 
-                for sample_id, label in decisions:
-                    if label == LABEL_BROKEN:
-                        log.info(
-                            'ProcessVotesManager: Omitted broken label of sample %d.' % sample_id
-                        )
-                        continue
+                dict_decisions = dict(decisions)
+                samples = Sample.objects.filter(id__in=imap(lambda x: x[0],
+                    ifilter(
+                        lambda x: x[1] != LABEL_BROKEN, decisions
+                    )), training=True).defer('id')
 
-                    sample = Sample.objects.get(id=sample_id)
-                    if not sample.training:
-                        continue  # Skipping (BTM non trainable sample)
-
+                for sample in samples:
                     TrainingSample.objects.create(
                         set=ts,
                         sample=sample,
-                        label=label,
+                        label=dict_decisions[sample.id],
                     )
                     can_train = True
 
-                for sample in Sample.objects.filter(job=job).iterator():
-                    if sample.is_gold_sample():
-                        ts_sample, created = TrainingSample.objects.get_or_create(
-                            set=ts,
-                            sample=sample,
-                        )
-                        can_train = True
+                for sample in Sample.objects.\
+                        filter(job=job, goldsample__isnull=False).\
+                        select_related('goldsample').iterator():
+                    ts_sample, created = TrainingSample.objects.get_or_create(
+                        set=ts,
+                        sample=sample,
+                    )
+                    can_train = True
 
-                        if not created:
-                            log.info(
-                                'ProcessVotesManager: Overridden gold sample %d.' % sample.id
-                            )
-                        ts_sample.label = sample.goldsample.label
-                        ts_sample.save()
+                    if not created:
+                        log.info(
+                            'ProcessVotesManager: Overridden gold sample %d.' % sample.id
+                        )
+                    ts_sample.label = sample.goldsample.label
+                    ts_sample.save()
 
             decisions = quality_algorithm.extract_btm_decisions()
             if decisions:

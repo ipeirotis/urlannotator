@@ -323,6 +323,24 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
             password='test')
         self.c = Client()
 
+        self.mocks = []
+        m = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper._create_job',
+            mock.MagicMock(return_value=('1', '2'))
+        )
+        self.mocks.append(m)
+
+        m = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper.update_voting_job',
+            mock.MagicMock(return_value=True)
+        )
+        self.mocks.append(m)
+
+        map(lambda x: x.start(), self.mocks)
+
+    def tearDown(self):
+        map(lambda x: x.stop(), self.mocks)
+
     def testAddBTMErrors(self):
         job = Job.objects.create_active(
             account=self.user.get_profile(),

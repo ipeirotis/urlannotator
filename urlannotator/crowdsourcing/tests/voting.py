@@ -1,10 +1,11 @@
 from django.contrib.auth.models import User
 from django.test import TestCase
 
+from urlannotator.crowdsourcing.models import WorkerQualityVote
 from urlannotator.crowdsourcing.quality.algorithms import (MajorityVoting,
     DBVotesStorage, VotesStorage, ChainedVotesStorage)
 from urlannotator.main.models import (LABEL_YES, LABEL_NO, Job, Worker, Sample,
-    LABEL_BROKEN)
+    LABEL_BROKEN, GoldSample, WORKER_TYPE_TAGASAURIS, WorkerJobAssociation)
 from urlannotator.flow_control.test import ToolsMockedMixin
 
 
@@ -12,15 +13,29 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
 
-        self.job = Job.objects.create_active(
+        self.job = Job.objects.create(
             account=self.u.get_profile(),
             gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
-        self.workers = [Worker.objects.create_tagasauris(external_id=x)
-            for x in xrange(20)]
-        self.sample = Sample.objects.all()[0]
+        Worker.objects.bulk_create(
+            Worker(external_id=x, worker_type=WORKER_TYPE_TAGASAURIS)
+            for x in xrange(20)
+        )
+        self.workers = Worker.objects.all()
+        WorkerJobAssociation.objects.bulk_create(
+            WorkerJobAssociation(job=self.job, worker=w)
+            for w in self.workers
+        )
+
+        self.sample = Sample.objects.create(
+            job=self.job,
+            url='10clouds.com')
+        GoldSample.objects.create(sample=self.sample, label=LABEL_YES)
 
     def test_(self):
+        def new_vote(worker, sample, label):
+            return WorkerQualityVote(worker=worker, sample=sample, label=label)
+
         mv = MajorityVoting(
             job_id=self.job.id,
             votes_storage=DBVotesStorage(storage_id=self.job.id),
@@ -28,42 +43,47 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
         mv.add_votes([])
         self.assertEqual([], mv.extract_decisions())
 
-        mv.add_vote(
-            worker_id=self.workers[2].id,
-            object_id=self.sample.id,
+        WorkerQualityVote.objects.create(
+            worker=self.workers[2],
+            sample=self.sample,
             label=LABEL_YES,
         )
         self.assertEqual(LABEL_YES, mv.extract_decisions()[0][1])
 
-        mv.add_votes([
-            (self.workers[0].id, self.sample.id, LABEL_NO),
-            (self.workers[1].id, self.sample.id, LABEL_NO)
+        WorkerQualityVote.objects.bulk_create([
+            new_vote(self.workers[0], self.sample, LABEL_NO),
+            new_vote(self.workers[1], self.sample, LABEL_NO)
         ])
         self.assertEqual(LABEL_NO, mv.extract_decisions()[0][1])
 
         mv.reset()
         self.assertEqual([], mv.extract_decisions())
 
-        mv.add_votes([
-            (self.workers[0].id, self.sample.id, LABEL_YES),
-            (self.workers[1].id, self.sample.id, LABEL_YES),
-            (self.workers[2].id, self.sample.id, LABEL_NO),
-            (self.workers[3].id, self.sample.id, LABEL_NO),
-            (self.workers[4].id, self.sample.id, LABEL_BROKEN),
-            (self.workers[5].id, self.sample.id, LABEL_BROKEN),
-            (self.workers[6].id, self.sample.id, LABEL_NO),
-            (self.workers[7].id, self.sample.id, LABEL_NO),
-            (self.workers[8].id, self.sample.id, LABEL_NO),
+        WorkerQualityVote.objects.bulk_create([
+            new_vote(self.workers[0], self.sample, LABEL_YES),
+            new_vote(self.workers[1], self.sample, LABEL_YES),
+            new_vote(self.workers[2], self.sample, LABEL_NO),
+            new_vote(self.workers[3], self.sample, LABEL_NO),
+            new_vote(self.workers[4], self.sample, LABEL_BROKEN),
+            new_vote(self.workers[5], self.sample, LABEL_BROKEN),
+            new_vote(self.workers[6], self.sample, LABEL_NO),
+            new_vote(self.workers[7], self.sample, LABEL_NO),
+            new_vote(self.workers[8], self.sample, LABEL_NO),
         ])
         self.assertEqual(LABEL_NO, mv.extract_decisions()[0][1])
 
     def testProcessingVotes(self):
+        def new_vote(worker, sample, label):
+            return WorkerQualityVote(worker=worker, sample=sample, label=label)
+
         mv = MajorityVoting(
             job_id=self.job.id,
             votes_storage=DBVotesStorage(storage_id=self.job.id),
         )
 
-        worker = Worker.objects.create_odesk(external_id=1)
+        worker = Worker.objects.create_tagasauris(external_id=21)
+        WorkerJobAssociation.objects.create(job=self.job, worker=worker)
+
         Sample.objects.create_by_worker(
             url="http://google.com",
             source_val=self.workers[0].id,
@@ -71,50 +91,53 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
         )
         sample = Sample.objects.get(job=self.job, url='http://google.com')
 
-        mv.add_votes([
-            (self.workers[0].id, self.sample.id, LABEL_YES),
-            (self.workers[1].id, self.sample.id, LABEL_YES),
-            (self.workers[2].id, self.sample.id, LABEL_NO),
-            (self.workers[3].id, self.sample.id, LABEL_NO),
-            (self.workers[4].id, self.sample.id, LABEL_BROKEN),
-            (self.workers[5].id, self.sample.id, LABEL_BROKEN),
-            (self.workers[6].id, self.sample.id, LABEL_NO),
-            (self.workers[7].id, self.sample.id, LABEL_NO),
-            (self.workers[8].id, self.sample.id, LABEL_NO),
+        WorkerQualityVote.objects.bulk_create([
+            new_vote(self.workers[0], self.sample, LABEL_YES),
+            new_vote(self.workers[1], self.sample, LABEL_YES),
+            new_vote(self.workers[2], self.sample, LABEL_NO),
+            new_vote(self.workers[3], self.sample, LABEL_NO),
+            new_vote(self.workers[4], self.sample, LABEL_BROKEN),
+            new_vote(self.workers[5], self.sample, LABEL_BROKEN),
+            new_vote(self.workers[6], self.sample, LABEL_NO),
+            new_vote(self.workers[7], self.sample, LABEL_NO),
+            new_vote(self.workers[8], self.sample, LABEL_NO),
         ])
         self.assertEqual(LABEL_NO, mv.extract_decisions()[0][1])
 
-        votes = [
-            (worker.id, sample.id, LABEL_YES),
-            (self.workers[9].id, sample.id, LABEL_YES),
-            (self.workers[10].id, sample.id, LABEL_YES),
-        ]
-        mv.add_votes(votes)
+        WorkerQualityVote.objects.bulk_create([
+            new_vote(worker, sample, LABEL_YES),
+            new_vote(self.workers[9], sample, LABEL_YES),
+            new_vote(self.workers[10], sample, LABEL_YES),
+        ])
+
         self.assertEqual(mv.extract_decisions()[1][1], LABEL_YES)
         self.assertEqual(LABEL_NO, mv.extract_decisions()[0][1])
 
-        votes = [
-            (self.workers[11].id, sample.id, LABEL_NO),
-            (self.workers[12].id, sample.id, LABEL_YES),
-            (self.workers[13].id, sample.id, LABEL_YES),
-        ]
-        mv.add_votes(votes)
+        WorkerQualityVote.objects.bulk_create([
+            new_vote(self.workers[11], sample, LABEL_NO),
+            new_vote(self.workers[12], sample, LABEL_YES),
+            new_vote(self.workers[13], sample, LABEL_YES),
+        ])
+
         self.assertEqual(mv.extract_decisions()[1][1], LABEL_YES)
         self.assertEqual(LABEL_NO, mv.extract_decisions()[0][1])
 
-        votes = [
-            (self.workers[14].id, sample.id, LABEL_NO),
-            (self.workers[15].id, sample.id, LABEL_NO),
-            (self.workers[16].id, sample.id, LABEL_YES),
-            (self.workers[17].id, sample.id, LABEL_YES),
-            (self.workers[18].id, sample.id, LABEL_YES),
-            (self.workers[19].id, sample.id, LABEL_YES),
-        ]
-        mv.add_votes(votes)
+        WorkerQualityVote.objects.bulk_create([
+            new_vote(self.workers[14], sample, LABEL_NO),
+            new_vote(self.workers[15], sample, LABEL_NO),
+            new_vote(self.workers[16], sample, LABEL_YES),
+            new_vote(self.workers[17], sample, LABEL_YES),
+            new_vote(self.workers[18], sample, LABEL_YES),
+            new_vote(self.workers[19], sample, LABEL_YES),
+        ])
+
         self.assertEqual(mv.extract_decisions()[1][1], LABEL_YES)
         self.assertEqual(LABEL_NO, mv.extract_decisions()[0][1])
 
     def testQualityComputing(self):
+        def new_vote(worker, sample, label):
+            return WorkerQualityVote(worker=worker, sample=sample, label=label)
+
         worker = Worker.objects.create_tagasauris(external_id=20)
         Sample.objects.create_by_worker(
             url="http://google.com",
@@ -137,19 +160,21 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
         for worker in self.workers:
             res = worker.id % 3
             if res == 0:
-                votes.append((worker.id, sample1.id, LABEL_YES))
-                votes.append((worker.id, sample2.id, LABEL_NO))
+                votes.append(new_vote(worker, sample1, LABEL_YES))
+                votes.append(new_vote(worker, sample2, LABEL_NO))
             elif res == 1:
-                votes.append((worker.id, sample1.id, LABEL_YES))
-                votes.append((worker.id, sample2.id, LABEL_NO))
+                votes.append(new_vote(worker, sample1, LABEL_YES))
+                votes.append(new_vote(worker, sample2, LABEL_NO))
             elif res == 2:
-                votes.append((worker.id, sample1.id, LABEL_NO))
-                votes.append((worker.id, sample2.id, LABEL_YES))
+                votes.append(new_vote(worker, sample1, LABEL_NO))
+                votes.append(new_vote(worker, sample2, LABEL_YES))
+
         mv = MajorityVoting(
             job_id=self.job.id,
             votes_storage=DBVotesStorage(storage_id=self.job.id),
         )
-        mv.add_votes(votes)
+
+        WorkerQualityVote.objects.bulk_create(votes)
         mv.extract_decisions()
         for worker in self.workers:
             res = worker.id % 3
@@ -179,19 +204,21 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
         for worker in self.workers:
             res = worker.id % 3
             if res == 2:
-                votes.append((worker.id, sample1.id, LABEL_YES))
-                votes.append((worker.id, sample2.id, LABEL_NO))
+                votes.append(new_vote(worker, sample1, LABEL_YES))
+                votes.append(new_vote(worker, sample2, LABEL_NO))
             elif res == 1:
-                votes.append((worker.id, sample1.id, LABEL_YES))
-                votes.append((worker.id, sample2.id, LABEL_NO))
+                votes.append(new_vote(worker, sample1, LABEL_YES))
+                votes.append(new_vote(worker, sample2, LABEL_NO))
             elif res == 0:
-                votes.append((worker.id, sample1.id, LABEL_NO))
-                votes.append((worker.id, sample2.id, LABEL_YES))
+                votes.append(new_vote(worker, sample1, LABEL_NO))
+                votes.append(new_vote(worker, sample2, LABEL_YES))
+
         mv = MajorityVoting(
             job_id=self.job.id,
             votes_storage=DBVotesStorage(storage_id=self.job.id),
         )
-        mv.add_votes(votes)
+
+        WorkerQualityVote.objects.bulk_create(votes)
         mv.extract_decisions()
         for worker in self.workers:
             res = worker.id % 3
@@ -212,6 +239,24 @@ class MajorityVotingTest(ToolsMockedMixin, TestCase):
                 )
 
 
+class DBStorageTest(ToolsMockedMixin, TestCase):
+    def test_storage(self):
+        worker = Worker.objects.create(external_id=1,
+            worker_type=WORKER_TYPE_TAGASAURIS)
+        u = User.objects.create_user(username='testing', password='test')
+
+        job = Job.objects.create_active(
+            account=u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
+
+        sample = Sample.objects.create(job=job, url='10clouds.com')
+
+        storage = DBVotesStorage(storage_id=job.id)
+        storage.add_votes([(worker.id, sample.id, LABEL_YES)])
+
+        self.assertEqual(WorkerQualityVote.objects.all().count(), 1)
+
+
 class ChainedVotesStorageTests(ToolsMockedMixin, TestCase):
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
@@ -220,9 +265,20 @@ class ChainedVotesStorageTests(ToolsMockedMixin, TestCase):
             account=self.u.get_profile(),
             gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
 
-        self.workers = [Worker.objects.create_tagasauris(external_id=x)
-            for x in xrange(20)]
-        self.sample = Sample.objects.all()[0]
+        Worker.objects.bulk_create(
+            Worker(external_id=x, worker_type=WORKER_TYPE_TAGASAURIS)
+            for x in xrange(20)
+        )
+        self.workers = Worker.objects.all()
+        WorkerJobAssociation.objects.bulk_create(
+            WorkerJobAssociation(job=self.job, worker=w)
+            for w in self.workers
+        )
+
+        self.sample = Sample.objects.create(
+            job=self.job,
+            url='10clouds.com')
+        GoldSample.objects.create(sample=self.sample, label=LABEL_YES)
 
     def testChained(self):
         class RareFaultStorage(VotesStorage):
@@ -288,4 +344,5 @@ class ChainedVotesStorageTests(ToolsMockedMixin, TestCase):
         for storage in storages:
             for vote in storage.get_all_votes():
                 all_votes.add(vote)
+
         self.assertEqual(list(all_votes), cvs.get_all_votes())

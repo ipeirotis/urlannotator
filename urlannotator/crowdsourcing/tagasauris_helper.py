@@ -5,7 +5,7 @@ import math
 
 from django.conf import settings
 from itertools import imap
-from tagapi.api import TagasaurisClient
+from tagapi.api import TagasaurisClient, combined_exponential_backoff
 from tagapi.error import TagasaurisApiException, TagasaurisApiMaxRetries
 from urlannotator.tools.utils import setting
 
@@ -31,6 +31,8 @@ TAGASAURIS_GATHER_SAMPLES_PER_JOB = setting(
 
 TAGASAURIS_GOAL_MULTIPLICATION = setting(
     'TAGASAURIS_GOAL_MULTIPLICATION', 1.2)
+
+BACKOFF_GENERATOR = combined_exponential_backoff
 
 
 def get_hit_url(hit_type):
@@ -80,7 +82,7 @@ def samples_to_mediaobjects(samples, caption=""):
 def stop_job(external_id):
     tc = make_tagapi_client()
     res = tc.stop_job(external_id=external_id)
-    tc.wait_for_complete(res['task_id'])
+    tc.wait_for_complete(res['task_id'], BACKOFF_GENERATOR)
 
 
 def get_gather_goal(no_of_urls):
@@ -450,7 +452,7 @@ def get_hit(api_client, job_ext_id, hit_type):
 def update_voting_job(api_client, mediaobjects, ext_id):
     try:
         res = api_client.mediaobject_send(mediaobjects)
-        api_client.wait_for_complete(res)
+        api_client.wait_for_complete(res, BACKOFF_GENERATOR)
 
         res = api_client.job_add_media(
             external_ids=[mo['id'] for mo in mediaobjects],
@@ -478,7 +480,7 @@ def _create_job(api_client, ext_id, hit_type, kwargs):
 
         # media_import_key = result[0]
         job_creation_key = result[1]
-        api_client.wait_for_complete(job_creation_key)
+        api_client.wait_for_complete(job_creation_key, BACKOFF_GENERATOR)
         hit = get_hit(api_client, ext_id, hit_type)
         return ext_id, hit
     except TagasaurisApiMaxRetries, e:

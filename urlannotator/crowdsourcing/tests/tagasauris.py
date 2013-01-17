@@ -21,6 +21,12 @@ from urlannotator.classification.event_handlers import (train,
 from urlannotator.crowdsourcing.event_handlers import WorkerBTMNotification
 
 
+def backoff(*args, **kwargs):
+    for _ in xrange(30):
+        yield 2
+    yield 0
+
+
 class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
 
     def setUp(self):
@@ -33,7 +39,15 @@ class TagasaurisHelperTest(ToolsMockedMixin, TestCase):
             gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
         self.sample = Sample.objects.all()[0]
 
+        self.mock = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper.BACKOFF_GENERATOR',
+            backoff
+        )
+        self.mock.start()
         self.tc = make_tagapi_client()
+
+    def tearDown(self):
+        self.mock.stop()
 
     def testCreateJob(self):
         voting_key, voting_hit = create_sample_gather(self.tc, self.job)
@@ -83,6 +97,11 @@ class TagasaurisInApi(ToolsMockedMixin, TestCase):
         self.user.save()
 
         self.c = Client()
+        self.mock = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper.BACKOFF_GENERATOR',
+            backoff
+        )
+        self.mock.start()
         self.tc = make_tagapi_client()
 
         self.job = Job.objects.create_active(
@@ -91,6 +110,9 @@ class TagasaurisInApi(ToolsMockedMixin, TestCase):
             no_of_urls=2,
             account=self.user.get_profile(),
             gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
+
+    def tearDown(self):
+        self.mock.stop()
 
     def testCreateAndStop(self):
         # From closing tagasauris job view there is no difference between those
@@ -142,6 +164,14 @@ class TagasaurisJobCreationChain(TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
+        self.mock = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper.BACKOFF_GENERATOR',
+            backoff
+        )
+        self.mock.start()
+
+    def tearDown(self):
+        self.mock.stop()
 
     def testSampleGatherOnJobCreation(self):
 
@@ -193,9 +223,17 @@ class TagasaurisSampleVotingTest(ToolsMockedMixin, TestCase):
 
         TagasaurisJobs.objects.get_or_create(urlannotator_job=self.job)
 
-        for s in Sample.objects.all():
-            s.screenshot = "http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
-            s.save()
+        Sample.objects.all().update(
+            screenshot="http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
+        )
+        self.mock = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper.BACKOFF_GENERATOR',
+            backoff
+        )
+        self.mock.start()
+
+    def tearDown(self):
+        self.mock.stop()
 
     def testEventSamplesVoting(self):
         self.assertEqual(TagasaurisJobs.objects.count(), 1)
@@ -220,7 +258,7 @@ class TagasaurisJobsModelTest(ToolsMockedMixin, TestCase):
 
     def setUp(self):
         self.u = User.objects.create_user(username='testing', password='test')
-        self.job = Job.objects.create_active(
+        self.job = Job.objects.create(
             title='urlannotator_test_tagapi_client',
             description='test_description',
             no_of_urls=2,
@@ -275,6 +313,21 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
 
         TagasaurisJobs.objects.get_or_create(urlannotator_job=self.job)
 
+        self.mocks = []
+        m = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper._create_job',
+            mock.MagicMock(return_value=('1', '2'))
+        )
+        self.mocks.append(m)
+
+        m = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper.update_voting_job',
+            mock.MagicMock(return_value=True)
+        )
+        self.mocks.append(m)
+
+        map(lambda x: x.start(), self.mocks)
+
         self.btm_sample = BeatTheMachineSample.objects.create_by_worker(
             job=self.job,
             url='google.com/1',
@@ -285,6 +338,9 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
         # Now with sample pinned.
         self.btm_sample = BeatTheMachineSample.objects.get(
             id=self.btm_sample.id)
+
+    def tearDown(self):
+        map(lambda x: x.stop(), self.mocks)
 
     def testSampleCreation(self):
         samples = Sample.objects.count()
@@ -450,6 +506,7 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
     def testBTMWorkerNotification(self):
         worker_id = 41  # Mturk worker - notification should work
         Worker.objects.create_tagasauris(external_id=worker_id)
+
         btm = BeatTheMachineSample.objects.create_by_worker(
             job=self.job,
             url='google.com/321',
@@ -459,6 +516,7 @@ class TagasaurisBTMSampleModel(ToolsMockedMixin, TestCase):
             points_change=True,
         )
         WorkerBTMNotification.delay()
+
         self.assertFalse(
             BeatTheMachineSample.objects.get(id=btm.id).points_change)
 
@@ -517,21 +575,29 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
 
         TagasaurisJobs.objects.get_or_create(urlannotator_job=self.job)
 
-        for s in Sample.objects.all():
-            s.screenshot = "http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
-            s.save()
+        Sample.objects.all().update(
+            screenshot="http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
+        )
+
+        self.mocks = []
+        m = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper._create_job',
+            mock.MagicMock(return_value=('1', '2'))
+        )
+        self.mocks.append(m)
+
+        m = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper.update_voting_job',
+            mock.MagicMock(return_value=True)
+        )
+        self.mocks.append(m)
+
+        map(lambda x: x.start(), self.mocks)
+
+    def tearDown(self):
+        map(lambda x: x.stop(), self.mocks)
 
     def testBTMSampleIsNoVoting(self):
-        # Mock Tagasauris connection to speed this test up
-        mocks = []
-        m = mock.patch('urlannotator.crowdsourcing.tagasauris_helper._create_job', mock.MagicMock(return_value=('1', '2')))
-        mocks.append(m)
-
-        m = mock.patch('urlannotator.crowdsourcing.tagasauris_helper.update_voting_job', mock.MagicMock(return_value=True))
-        mocks.append(m)
-
-        map(lambda x: x.start(), mocks)
-
         self.assertEqual(Sample.objects.filter(btm_sample=False).count(), 3)
         self.assertEqual(Sample.objects.filter(btm_sample=True).count(), 0)
 
@@ -564,17 +630,14 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
         Sample.objects.filter(btm_sample=True).update(vote_sample=True)
 
         # Sample must have screenshot
-        for s in Sample.objects.all():
-            s.screenshot = "http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
-            s.save()
+        Sample.objects.all().update(
+            screenshot="http://www.10clouds.com/media/v1334047194.07/10c/images/10c_logo.png"
+        )
 
         send_event('EventSamplesVoting')
 
         # 5 - incude added BTM Samples.
         self.assertEqual(SampleMapping.objects.count(), 5)
-        
-        # Turn off mocks
-        map(lambda x: x.stop(), mocks)
 
     def testBTMSampleFrozen(self):
         btm = BeatTheMachineSample.objects.create_by_worker(

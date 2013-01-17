@@ -6,7 +6,9 @@ from django.test import TestCase, TransactionTestCase
 from django.test.utils import override_settings
 from django.contrib.auth.models import User
 
-from urlannotator.main.models import Sample, Job, Worker, LABEL_YES, LABEL_NO
+from urlannotator.main.models import (Sample, Job, Worker, LABEL_YES, LABEL_NO,
+    JOB_STATUS_ACTIVE, WorkerJobAssociation)
+from urlannotator.main.factories import JobFactory
 from urlannotator.classification.classifiers import (Classifier247,
     Classifier as ClassifierObject, ClassifierTrainingCriticalError,
     ClassifierTrainingError, CLASS_TRAIN_STATUS_DONE,
@@ -346,19 +348,45 @@ class ClassifierFactoryTests(ToolsMockedMixin, TestCase):
         self.assertTrue(factory.classify(cs))
 
 
-class LongTrainingTest(FlowControlMixin, TransactionTestCase):
+class LongTrainingTest(FlowControlMixin, ToolsMockedMixin,
+        TransactionTestCase):
+
     def setUp(self):
         self.u = User.objects.create_user(username='test', password='test')
+
+    def _fixture_setup(self):
+        """ Ported from TransactionTestCase without the `flush` command call.
+        We will leave the DB clean in tearDown """
+        from django.test.testcases import (connections, DEFAULT_DB_ALIAS,
+            call_command)
+
+        # If the test case has a multi_db=True flag, flush all databases.
+        # Otherwise, just flush default.
+        if getattr(self, 'multi_db', False):
+            databases = connections
+        else:
+            databases = [DEFAULT_DB_ALIAS]
+        for db in databases:
+
+            if hasattr(self, 'fixtures'):
+                # We have to use this slightly awkward syntax due to the fact
+                # that we're using *args and **kwargs together.
+                call_command('loaddata', *self.fixtures,
+                             **{'verbosity': 0, 'database': db})
 
     def get_flow_definition(self):
         old = super(LongTrainingTest, self).get_flow_definition()
         return [entry for entry in old if entry[1] != initialize_external_job]
 
     def testLongTraining(self):
-        job = Job.objects.create_active(
+        job = Job.objects.create(
             account=self.u.get_profile(),
-            gold_samples=[{'url': '10clouds.com', 'label': LABEL_YES}])
-        time.sleep(2)
+            status=JOB_STATUS_ACTIVE)
+        ts = TrainingSet.objects.create(job=job)
+        JobFactory().create_classifier(job)
+        send_event('EventTrainingSetCompleted',
+            set_id=ts.id, job_id=job.id)
+        time.sleep(1)
 
         # Refresh our job object
         job = Job.objects.get(id=job.id)
@@ -368,11 +396,32 @@ class LongTrainingTest(FlowControlMixin, TransactionTestCase):
         self.u.delete()
 
 
-class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
+class ProcessVotesTest(FlowControlMixin, ToolsMockedMixin,
+        TransactionTestCase):
 
     flow_definition = [
         (r'^EventProcessVotes$', process_votes),
     ]
+
+    def _fixture_setup(self):
+        """ Ported from TransactionTestCase without the `flush` command call.
+        We will leave the DB clean in tearDown """
+        from django.test.testcases import (connections, DEFAULT_DB_ALIAS,
+            call_command)
+
+        # If the test case has a multi_db=True flag, flush all databases.
+        # Otherwise, just flush default.
+        if getattr(self, 'multi_db', False):
+            databases = connections
+        else:
+            databases = [DEFAULT_DB_ALIAS]
+        for db in databases:
+
+            if hasattr(self, 'fixtures'):
+                # We have to use this slightly awkward syntax due to the fact
+                # that we're using *args and **kwargs together.
+                call_command('loaddata', *self.fixtures,
+                             **{'verbosity': 0, 'database': db})
 
     def setUp(self):
         self.user = User.objects.create_user(username='test', password='test')
@@ -380,8 +429,18 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
             account=self.user.get_profile()
         )
         self.job.activate()
+
+        self.mock = mock.patch('urlannotator.main.models.Worker.get_name',
+            mock.MagicMock(return_value=''))
+        self.mock.start()
+
         self.workers = [Worker.objects.create_odesk(external_id=x)
             for x in xrange(10)]
+        WorkerJobAssociation.objects.bulk_create(
+            WorkerJobAssociation(job=self.job, worker=self.workers[x])
+            for x in xrange(10)
+        )
+
         self.sample = Sample.objects.create(
             source_val='asd',
             job=self.job,
@@ -400,15 +459,15 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
     def testVotesProcess(self):
 
         def newVote(worker, label):
-            return WorkerQualityVote.objects.new_vote(
+            return WorkerQualityVote(
                 sample=self.sample,
                 worker=worker,
-                label=label
+                label=label,
             )
 
-        newVote(self.workers[0], LABEL_YES)
-        newVote(self.workers[1], LABEL_YES)
-        newVote(self.workers[2], LABEL_YES)
+        WorkerQualityVote.objects.bulk_create(
+            newVote(self.workers[x], LABEL_YES) for x in xrange(3)
+        )
 
         send_event('EventProcessVotes')
 
@@ -418,10 +477,9 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
         training_sample = ts.training_samples.all()[0]
         self.assertEqual(training_sample.label, LABEL_YES)
 
-        newVote(self.workers[3], LABEL_NO)
-        newVote(self.workers[4], LABEL_NO)
-        newVote(self.workers[5], LABEL_NO)
-        newVote(self.workers[6], LABEL_NO)
+        WorkerQualityVote.objects.bulk_create(
+            newVote(self.workers[x], LABEL_NO) for x in xrange(3, 7)
+        )
 
         send_event('EventProcessVotes')
 
@@ -434,15 +492,16 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
     def testBTMVotesProcess(self):
 
         def newVote(worker, label):
-            return WorkerQualityVote.objects.new_btm_vote(
+            return WorkerQualityVote(
                 sample=self.btm_sample.sample,
                 worker=worker,
-                label=label
+                label=label,
+                btm_vote=True
             )
 
-        newVote(self.workers[0], LABEL_YES)
-        newVote(self.workers[1], LABEL_YES)
-        newVote(self.workers[2], LABEL_YES)
+        WorkerQualityVote.objects.bulk_create(
+            newVote(self.workers[x], LABEL_YES) for x in xrange(3)
+        )
 
         ts = TrainingSet.objects.count()
         send_event('EventProcessVotes')
@@ -458,6 +517,7 @@ class ProcessVotesTest(FlowControlMixin, TransactionTestCase):
             w.delete()
         self.job.delete()
         self.sample.delete()
+        self.mock.stop()
 
 
 class GooglePredictionTests(ToolsMockedMixin, TestCase):
