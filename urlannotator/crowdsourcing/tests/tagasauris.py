@@ -572,6 +572,9 @@ class TagasaurisBTMSideEffects(ToolsMockedMixin, TestCase):
 
         # 5 - incude added BTM Samples.
         self.assertEqual(SampleMapping.objects.count(), 5)
+        
+        # Turn off mocks
+        map(lambda x: x.stop(), mocks)
 
     def testBTMSampleFrozen(self):
         btm = BeatTheMachineSample.objects.create_by_worker(
