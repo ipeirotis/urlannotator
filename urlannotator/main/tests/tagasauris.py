@@ -1,3 +1,4 @@
+import mock
 import json
 
 from django.test import TestCase
@@ -480,23 +481,23 @@ class TagasaurisWorker(ToolsMockedMixin, TestCase):
         self.mturk_worker = Worker.objects.create_tagasauris(external_id=41)
 
     def testMessageSending(self):
-        # Basic tagasauris message notification
-        with self.assertRaises(TagasaurisApiException):
-            self.twitter_worker._send_tagasauris_message("subject", "content")
+        mocks = mock.patch('urlannotator.main.models.Worker._send_tagasauris_message',
+            mock.MagicMock(side_effect=TagasaurisApiException('test')))
 
-        # Should invoke _send_tagasauris_message
-        with self.assertRaises(TagasaurisApiException):
-            self.twitter_worker.send_message("subject", "content")
+        with mocks:
+            # Should invoke _send_tagasauris_message
+            with self.assertRaises(TagasaurisApiException):
+                self.twitter_worker.send_message("subject", "content")
 
-        # Basic tagasauris message notification
-        self.mturk_worker._send_tagasauris_message("test_subject",
-            "test_content")
+        mocks = mock.patch('urlannotator.main.models.Worker._send_tagasauris_message',
+            mock.MagicMock())
 
-        # Should invoke _send_tagasauris_message
-        self.mturk_worker.send_message("test_subject", "test_content")
+        with mocks:
+            # Should invoke _send_tagasauris_message
+            self.mturk_worker.send_message("test_subject", "test_content")
 
-        # Checks if message contains all important data
-        self.mturk_worker._prepare_bonus_notification(self.job)
+            # Checks if message contains all important data
+            self.mturk_worker._prepare_bonus_notification(self.job)
 
-        # Only prep + send.
-        self.mturk_worker.send_bonus_notification(self.job)
+            # Only prep + send.
+            self.mturk_worker.send_bonus_notification(self.job)
