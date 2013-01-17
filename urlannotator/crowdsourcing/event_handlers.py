@@ -75,7 +75,7 @@ def update_job_votes_gathered(sample_id, worker_id):
 
     sample = sample[0]
     sample.update_votes_cache()
-    sample.job.get_progress_votes(cache=False)
+    sample.job.get_progress(cache=False)
     sample.job.get_btm_votes(cache=False)
 
     worker = Worker.objects.get(id=worker_id)

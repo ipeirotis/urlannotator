@@ -86,7 +86,7 @@ def update_job_urls_gathered(job_id, sample_id):
     sample = Sample.objects.get(id=sample_id)
 
     # A sample has been created.
-    job.get_progress_urls(cache=False)
+    job.get_progress(cache=False)
     # If it was created by a worker - update top workers too.
     job.get_top_workers(cache=False)
     job.get_display_samples(cache=False)

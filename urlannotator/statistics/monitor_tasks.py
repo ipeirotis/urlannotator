@@ -19,7 +19,7 @@ class ProgressMonitor(JobMonitor, Task):
         )
 
     def get_value(self, job):
-        return job.get_progress()
+        return job.get_progress(cache=False)
 
     def after_handle(self, obj_set):
         for job, latest in obj_set:
@@ -123,7 +123,7 @@ class VotesMonitor(JobMonitor, Task):
         )
 
     def get_value(self, job):
-        return job.get_votes_gathered()
+        return job.get_votes_gathered(cache=False)
 
     def after_handle(self, obj_set):
         for job, latest in obj_set:
