@@ -105,7 +105,7 @@ class WorkerJobURLMonitor(WorkerJobMonitor, Task):
         )
 
     def get_value(self, worker_assoc):
-        return worker_assoc.get_url_collected(cache=False)
+        return worker_assoc.get_urls_collected(cache=False)
 
 worker_job_url_monitor = registry.tasks[WorkerJobURLMonitor.name]
 
