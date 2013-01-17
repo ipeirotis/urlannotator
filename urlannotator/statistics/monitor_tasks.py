@@ -22,7 +22,7 @@ class ProgressMonitor(JobMonitor, Task):
         return job.get_progress(cache=False)
 
     def after_handle(self, obj_set):
-        for job, latest in obj_set:
+        for job in obj_set:
             job.get_progress_stats(cache=False)
 
 progress_monitor = registry.tasks[ProgressMonitor.name]
@@ -44,7 +44,7 @@ class SpentMonitor(JobMonitor, Task):
         return job.budget
 
     def after_handle(self, obj_set):
-        for job, latest in obj_set:
+        for job in obj_set:
             job.get_spent_stats(cache=False)
 
 
@@ -67,7 +67,7 @@ class URLMonitor(JobMonitor, Task):
         return job.get_urls_collected()
 
     def after_handle(self, obj_set):
-        for job, latest in obj_set:
+        for job in obj_set:
             job.get_urls_stats(cache=False)
 
 
@@ -107,6 +107,10 @@ class WorkerJobURLMonitor(WorkerJobMonitor, Task):
     def get_value(self, worker_assoc):
         return worker_assoc.get_urls_collected(cache=False)
 
+    def after_handle(self, obj_list):
+        for assoc in obj_list:
+            assoc.get_url_collected_stats(cache=False)
+
 worker_job_url_monitor = registry.tasks[WorkerJobURLMonitor.name]
 
 
@@ -126,7 +130,7 @@ class VotesMonitor(JobMonitor, Task):
         return job.get_votes_gathered(cache=False)
 
     def after_handle(self, obj_set):
-        for job, latest in obj_set:
+        for job in obj_set:
             job.get_votes_stats(cache=False)
 
 

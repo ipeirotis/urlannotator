@@ -1698,8 +1698,7 @@ class WorkerJobAssociation(models.Model):
         model = WorkerJobURLStatistics
         models = model.objects.filter(job=self.job, worker=self.worker).\
             order_by('date')
-        return extract_stat(models, interval=datetime.timedelta(days=1),
-            time=False)
+        return extract_stat(models, hours=False, minutes=False, seconds=False)
 
     def get_url_collected_stats(self, cache=True):
         cache_key = 'worker_job_assoc-{0}-urls-collected-stats'.format(self.pk)
@@ -1735,7 +1734,6 @@ class ProgressStatistics(models.Model):
     job = models.ForeignKey(Job)
     date = models.DateTimeField(auto_now_add=True)
     value = models.IntegerField(default=0)
-    delta = models.IntegerField(default=0)
 
     objects = ProgressManager()
 
@@ -1760,7 +1758,6 @@ class SpentStatistics(models.Model):
     job = models.ForeignKey(Job)
     date = models.DateTimeField(auto_now_add=True)
     value = models.IntegerField(default=0)
-    delta = models.IntegerField(default=0)
 
     objects = SpentManager()
 
@@ -1785,7 +1782,6 @@ class URLStatistics(models.Model):
     job = models.ForeignKey(Job)
     date = models.DateTimeField(auto_now_add=True)
     value = models.IntegerField(default=0)
-    delta = models.IntegerField(default=0)
 
     objects = URLStatManager()
 
@@ -1810,7 +1806,6 @@ class VotesStatistics(models.Model):
     job = models.ForeignKey(Job)
     date = models.DateTimeField(auto_now_add=True)
     value = models.IntegerField(default=0)
-    delta = models.IntegerField(default=0)
 
     objects = VotesStatManager()
 
@@ -1833,7 +1828,6 @@ class LinksStatistics(models.Model):
     worker = models.ForeignKey(Worker)
     date = models.DateTimeField(auto_now_add=True)
     value = models.IntegerField(default=0)
-    delta = models.IntegerField(default=0)
 
     objects = LinksStatManager()
 
@@ -1858,18 +1852,6 @@ class WorkerJobURLStatistics(models.Model):
     value = models.IntegerField(default=0)
 
     objects = WorkerJobManager()
-
-def create_stats(sender, instance, created, raw, **kwargs):
-    """
-        Creates a brand new statistics' entry for new job.
-    """
-    if created and not raw:
-        ProgressStatistics.objects.create(job=instance, value=0)
-        SpentStatistics.objects.create(job=instance, value=0)
-        URLStatistics.objects.create(job=instance, value=0)
-        VotesStatistics.objects.create(job=instance, value=0)
-
-post_save.connect(create_stats, sender=Job)
 
 
 class FillSample(models.Model):

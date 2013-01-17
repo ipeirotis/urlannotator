@@ -1,7 +1,5 @@
 import datetime
 
-from django.utils.timezone import now
-
 from urlannotator.main.models import Job, Worker, WorkerJobAssociation
 
 
@@ -25,11 +23,9 @@ class StatsMonitor(object):
             a list of 2-tuples (obj, old statistic entry).
         """
         new_stats = []
-        for obj, old_entry in obj_set:
-            old_value = old_entry.value
+        for obj in obj_set:
             new_value = self.get_value(obj)
-            delta = new_value - old_value
-            new_stats.append(self.new_stats(obj, new_value, delta))
+            new_stats.append(self.new_stats(obj, new_value))
 
         if new_stats:
             self.model_cls.objects.bulk_create(new_stats)
@@ -65,50 +61,32 @@ class StatsMonitor(object):
             Scans all active objects for the ones that require stats
             recomputation.
         """
-        objects = self.get_objects()
-        to_handle = []
-        for obj in objects:
-            latest = self.get_latest(obj)
-            if not latest:
-                continue
-            handle_time = latest.date + interval
-            if handle_time <= now():
-                to_handle.append((obj, latest))
-
-        if to_handle:
-            self.handle(to_handle)
+        self.handle(self.get_objects())
 
 
 class JobMonitor(StatsMonitor):
 
-    def get_latest(self, obj):
-        return self.model_cls.objects.latest_for_job(obj)
-
     def get_objects(self):
         return Job.objects.get_active()
 
-    def new_stats(self, obj, value, delta):
+    def new_stats(self, obj, value):
         return self.model_cls(
             job=obj,
             value=value,
-            delta=delta
         )
 
 
 class WorkerJobMonitor(StatsMonitor):
 
-    def get_latest(self, obj):
-        return self.model_cls.objects.latest_for_assoc(obj)
-
     def get_objects(self):
         return WorkerJobAssociation.objects.filter(
             job__in=Job.objects.get_active())
 
-    def new_stats(self, obj, value, delta):
+    def new_stats(self, obj, value):
         return self.model_cls(
-            job=obj,
+            job=obj.job,
+            worker=obj.worker,
             value=value,
-            delta=delta
         )
 
 
@@ -116,15 +94,11 @@ class WorkerMonitor(StatsMonitor):
     """ Similar to JobMonitor.
     """
 
-    def get_latest(self, obj):
-        return self.model_cls.objects.latest_for_worker(obj)
-
     def get_objects(self):
         return Worker.objects.all()
 
-    def new_stats(self, obj, value, delta):
+    def new_stats(self, obj, value):
         return self.model_cls(
             worker=obj,
             value=value,
-            delta=delta
         )

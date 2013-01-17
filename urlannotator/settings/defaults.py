@@ -2,6 +2,8 @@ import datetime
 import os
 import tempfile
 import sys
+
+from celery.schedules import crontab
 from django.core.urlresolvers import reverse_lazy
 
 DEBUG = not 'celery' in sys.argv
@@ -324,8 +326,8 @@ def register_to_queues(tasks, queue_name):
 register_to_queues(long_common, 'long-common-tasks')
 
 # Interval between a job monitor check. Defaults to 15 minutes.
-JOB_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
-WORKER_MONITOR_INTERVAL = datetime.timedelta(seconds=15 * 60)
+JOB_MONITOR_INTERVAL = crontab(minute=0, hour='*')
+WORKER_MONITOR_INTERVAL = crontab(minute=0, hour=0)
 
 # Interval between statistics entries, to store a new one.
 JOB_MONITOR_ENTRY_INTERVAL = datetime.timedelta(hours=1)
@@ -334,7 +336,6 @@ CELERYBEAT_SCHEDULE = {
     'spent_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.SpentMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
         'options': {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
@@ -342,7 +343,6 @@ CELERYBEAT_SCHEDULE = {
     'url_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.URLMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
         'options': {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
@@ -350,7 +350,6 @@ CELERYBEAT_SCHEDULE = {
     'progress_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.ProgressMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
         'options': {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
@@ -358,7 +357,6 @@ CELERYBEAT_SCHEDULE = {
     'votes_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.VotesMonitor',
         'schedule': JOB_MONITOR_INTERVAL,
-        'kwargs': {'interval': JOB_MONITOR_ENTRY_INTERVAL},
         'options': {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
@@ -366,7 +364,6 @@ CELERYBEAT_SCHEDULE = {
     'links_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.LinksMonitor',
         'schedule': WORKER_MONITOR_INTERVAL,
-        'kwargs': {'interval': datetime.timedelta(days=1)},
         'options': {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
@@ -374,14 +371,13 @@ CELERYBEAT_SCHEDULE = {
     'worker_job_url_monitor': {
         'task': 'urlannotator.statistics.monitor_tasks.WorkerJobURLMonitor',
         'schedule': WORKER_MONITOR_INTERVAL,
-        'kwargs': {'interval': datetime.timedelta(days=1)},
         'options': {
             'queue': CELERY_LONGSCARCE_QUEUE,
         },
     },
     'worker_btm_notification': {
         'task': 'urlannotator.crowdsourcing.event_handlers.WorkerBTMNotification',
-        'schedule': WORKER_MONITOR_INTERVAL,
+        'schedule': datetime.timedelta(seconds=15 * 60),
         'kwargs': {'interval': datetime.timedelta(days=1)},
         'options': {
             'queue': CELERY_LONGSCARCE_QUEUE,

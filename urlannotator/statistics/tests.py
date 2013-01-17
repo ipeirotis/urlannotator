@@ -39,9 +39,9 @@ class testJobMonitors(ToolsMockedMixin, TestCase):
             (VotesStatistics, votes_monitor)
         ]
         for cls, mon in monitor_list:
+            self.assertEqual(cls.objects.filter(job=self.job).count(), 0)
+            mon.delay()
             self.assertEqual(cls.objects.filter(job=self.job).count(), 1)
-            mon.delay(interval=datetime.timedelta(seconds=0))
-            self.assertEqual(cls.objects.filter(job=self.job).count(), 2)
 
 
 class testStatExtraction(ToolsMockedMixin, TestCase):
@@ -73,6 +73,15 @@ class testStatExtraction(ToolsMockedMixin, TestCase):
             (extract_progress_stats, 'progress_stats'),
             (extract_votes_stats, 'votes_stats'),
         ]
+        monitor_list = [
+            (SpentStatistics, spent_monitor),
+            (URLStatistics, url_monitor),
+            (ProgressStatistics, progress_monitor),
+            (VotesStatistics, votes_monitor)
+        ]
+        for cls, mon in monitor_list:
+            mon.delay()
+
         for ex in extractors:
             ex[0](self.job, context)
             self.assertIn('Date.UTC', context.get(ex[1], ''))

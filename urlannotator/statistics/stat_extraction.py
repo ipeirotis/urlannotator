@@ -1,32 +1,33 @@
 import datetime
 import json
 
-from django.utils.timezone import now
-
 from urlannotator.main.models import (SpentStatistics, ProgressStatistics,
     URLStatistics, LinksStatistics, LABEL_YES, LABEL_NO, VotesStatistics)
 from urlannotator.classification.models import ClassifierPerformance
 
 
-def format_date_val(val, time=True):
+def format_date_val(val, hours=True, minutes=False, seconds=False):
     """
         Formats a date statistics value into a Date.UTC(y,m,j,H,i,s) format.
     """
     date_string = '%Y,%m-1,%d'
-    if time:
-        date_string += ',%H,%M,%S'
+    seconds = '%S' if seconds else '0'
+    minutes = '%M' if minutes else '0'
+    hours = '%H' if hours else '0'
+
+    if any([seconds, minutes, hours]):
+        date_string += ',%s,%s,%s' % (hours, minutes, seconds)
+
     arg_string = val['date'].strftime(date_string)
     return '[Date.UTC(%s),%f]' % (arg_string, val['value'])
 
 
-def extract_stat(stats, interval=datetime.timedelta(hours=1), time=True):
+def extract_stat(stats, interval=datetime.timedelta(hours=1), **kwargs):
     """
         Returns a string representing a list of statistics samples formatted
         for use in Highcharts. The closest, earliest value is always used.
-
-        If `time` is set, stat's time is also insert alongside to date.
     """
-    return extract_stat_by_val(stats, lambda x: x.value, interval, time)
+    return extract_stat_by_val(stats, lambda x: x.value, **kwargs)
 
 
 def extract_progress_stats(job, context):
@@ -69,46 +70,20 @@ def extract_workerlinks_stats(worker, context):
     context['workerlinks_stats'] = extract_stat(stats)
 
 
-def extract_stat_by_val(stats, val_fun, interval=datetime.timedelta(hours=1),
-        time=True):
+def extract_stat_by_val(stats, val_fun, **kwargs):
     '''
         Extracts stat using a val_fun to take value from entry.
     '''
     stats = list(stats)
-    stats_count = len(stats)
-    now_time = now()
-    idx = 1
-    actual_time = datetime.datetime(
-        year=stats[0].date.year,
-        month=stats[0].date.month,
-        day=stats[0].date.day,
-        hour=stats[0].date.hour,
-        minute=0,
-        second=0,
-        microsecond=0,
-        tzinfo=stats[0].date.tzinfo,
-    )
-    actual_time += interval
     list_stats = []
 
-    # Do-until-loop
-    while True:
-        # Find next closest sample
-        while idx < stats_count:
-            if stats[idx].date > actual_time:
-                break
-            idx += 1
-
-        stat = stats[idx - 1]
+    for stat in stats:
         list_stats.append({
-            'date': actual_time,
+            'date': stat.date,
             'value': val_fun(stat)
         })
-        actual_time += interval
-        if actual_time > now_time:
-            break
 
-    stats = ','.join([format_date_val(v, time) for v in list_stats])
+    stats = ','.join([format_date_val(v, **kwargs) for v in list_stats])
     return stats
 
 
