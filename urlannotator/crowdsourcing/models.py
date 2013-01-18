@@ -103,8 +103,9 @@ class BeatTheMachineSampleManager(models.Manager):
         btm_sample = self.create(**kwargs)
         # If sample exists, step immediately to classification
         if 'sample' in kwargs:
-            send_event('EventNewClassifyBTMSample',
-                sample_id=btm_sample.id)
+            send_event('EventNewBTMSample',
+                sample_id=kwargs['sample'].id,
+                job_id=kwargs['job'].id)
         else:
             Sample.objects.create_by_btm(
                 job_id=kwargs['job'].id,

@@ -427,6 +427,7 @@ class Job(models.Model):
             'btm_description': description,
             'btm_to_gather': no_of_urls,
             'btm_points_to_cash': points_to_cash,
+            'status': JOB_STATUS_ACTIVE,
         }
 
         Job.objects.filter(pk=self.pk).update(**kwargs)
@@ -529,6 +530,9 @@ class Job(models.Model):
             return
 
         self.finish_btm()
+        if self.get_progress() == 100:
+            Job.objects.filter(pk=self.pk).update(status=JOB_STATUS_COMPLETED)
+            self.status = JOB_STATUS_COMPLETED
 
     def get_btm_progress(self):
         to_gather = self.get_btm_to_gather() or 1
@@ -678,6 +682,9 @@ class Job(models.Model):
 
     def is_draft(self):
         return self.status == JOB_STATUS_DRAFT
+
+    def is_finished(self):
+        return self.status == JOB_STATUS_COMPLETED
 
     def is_active(self):
         return self.status == JOB_STATUS_ACTIVE
@@ -835,8 +842,15 @@ class Job(models.Model):
 
     @cached
     def _get_progress(self, cache):
-        return (self.get_progress_urls(cache=cache)
+        progress = (self.get_progress_urls(cache=cache)
             + self.get_progress_votes(cache=cache)) / 2.0
+
+        if progress == 100 and \
+            (self.btm_status == self.BTMStatus.NOT_ACTIVE or
+             self.btm_status == self.BTMStatus.FINISHED):
+            Job.objects.filter(pk=self.pk).update(status=JOB_STATUS_COMPLETED)
+            self.status = JOB_STATUS_COMPLETED
+        return progress
 
     def get_progress(self, cache=True):
         """

@@ -2,6 +2,7 @@ import re
 import urllib2
 import json
 import os
+import mock
 
 from django.test import TestCase
 from django.test.client import Client
@@ -13,12 +14,93 @@ from django.conf import settings
 from social_auth.models import UserSocialAuth
 
 from urlannotator.main.models import (Account, Job, Worker, Sample, GoldSample,
-    LABEL_YES, JOB_DATA_SOURCE_CHOICES)
+    LABEL_YES, JOB_DATA_SOURCE_CHOICES, WORKER_TYPE_TAGASAURIS)
 from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.factories import SampleFactory
 from urlannotator.main.api.resources import (sanitize_positive_int,
     paginate_list, ClassifiedSampleResource)
+from urlannotator.crowdsourcing.models import (WorkerQualityVote,
+    BeatTheMachineSample)
 from urlannotator.flow_control.test import ToolsMockedMixin, ToolsMocked
+
+
+class JobTests(ToolsMockedMixin, TestCase):
+    def setUp(self):
+        self.mocks = []
+        m = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper._create_job',
+            mock.MagicMock(return_value=('1', '2'))
+        )
+        self.mocks.append(m)
+
+        m = mock.patch(
+            'urlannotator.crowdsourcing.tagasauris_helper.update_voting_job',
+            mock.MagicMock(return_value=True)
+        )
+        self.mocks.append(m)
+
+        map(lambda x: x.start(), self.mocks)
+
+        self.u = User.objects.create_user(username='test', password='test')
+        self.job = Job.objects.create_active(
+            account=self.u.get_profile(),
+            gold_samples=[{'url': '10clouds.com', 'label': 'Yes'}])
+
+        Worker.objects.bulk_create(
+            Worker(external_id=x, worker_type=WORKER_TYPE_TAGASAURIS)
+            for x in xrange(3)
+        )
+
+        sample = Sample.objects.all()[0]
+
+        WorkerQualityVote.objects.bulk_create(
+            WorkerQualityVote(worker=w, sample=sample, label=LABEL_YES)
+            for w in Worker.objects.all()
+        )
+
+    def tearDown(self):
+        map(lambda x: x.stop(), self.mocks)
+
+    def test_finishing(self):
+        job = Job.objects.all()[0]
+        worker = Worker.objects.all()[0]
+
+        self.assertTrue(job.is_active())
+        self.assertEqual(job.get_progress(cache=False), 50)
+        self.assertFalse(job.is_btm_active())
+        self.assertFalse(job.is_btm_finished())
+
+        Sample.objects.create_by_worker(url='10clouds.com/1',
+            source_val=worker.external_id, job_id=job.id)
+
+        sample = Sample.objects.get(source_val=worker.external_id)
+
+        WorkerQualityVote.objects.bulk_create(
+            WorkerQualityVote(worker=w, sample=sample, label=LABEL_YES)
+            for w in Worker.objects.all().exclude(pk=worker.pk)
+        )
+
+        job = Job.objects.all()[0]
+        self.assertEqual(job.get_progress(), 100)
+        self.assertFalse(job.is_active())
+        self.assertTrue(job.is_finished())
+
+        # Now we are starting BTM. The job should be active again.
+        job.start_btm(
+            title='test',
+            description='test',
+            no_of_urls=1,
+            points_to_cash=1,
+        )
+        job.activate_btm()
+        self.assertTrue(job.is_active())
+
+        BeatTheMachineSample.objects.create_by_worker(url='10clouds.com',
+            worker_id=worker.id, job=job)
+
+        job = Job.objects.all()[0]
+        self.assertTrue(job.is_btm_finished())
+        self.assertTrue(job.is_finished())
 
 
 class SampleFactoryTest(TestCase):

@@ -111,11 +111,12 @@ def vote_on_new_btm_sample(sample_id, job_id):
         Creates a LABEL_YES vote on the brand-new btm sample by the sample
         sender.
     '''
+    res = _vote_on_new_sample(sample_id, job_id,
+        WorkerQualityVote.objects.new_btm_vote)
+
     job = Job.objects.get(id=job_id)
     job.update_btm_progress()
-
-    return _vote_on_new_sample(sample_id, job_id,
-        WorkerQualityVote.objects.new_btm_vote)
+    return res
 
 
 @task(ignore_result=True)
