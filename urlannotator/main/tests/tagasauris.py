@@ -467,6 +467,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         TagasaurisJobs.objects.get_or_create(urlannotator_job=job)
         self.assertEqual(1, TagasaurisJobs.objects.count())
 
+        map(lambda x: x.stop(), self.mocks)
         job.start_btm("test topic", "test desc", 10, 5000)
         job.activate_btm()
         job = Job.objects.get(id=job.id)
@@ -479,6 +480,7 @@ class TagasaurisBTMResourceTests(ToolsMockedMixin, TestCase):
         self.assertEqual(1, TagasaurisJobs.objects.count())
         tj = TagasaurisJobs.objects.all()[0]
         self.assertEqual(32, len(tj.beatthemachine_key))
+        map(lambda x: x.start(), self.mocks)
 
 
 class TagasaurisWorker(ToolsMockedMixin, TestCase):
