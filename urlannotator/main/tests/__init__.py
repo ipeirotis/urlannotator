@@ -1,3 +1,3 @@
 from selenium_tests import *
-from unittest import *
+from unittests import *
 from tagasauris import *
