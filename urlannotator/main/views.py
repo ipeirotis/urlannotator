@@ -751,9 +751,8 @@ def project_worker_view(request, id, worker_id):
     projects = (w.job.get_link_with_title() for w in assocs)
 
     recent_samples = worker.get_urls_collected_for_job(job, cache=True)
-    offset = len(recent_samples) - num_recent_samples
+    offset = max(len(recent_samples) - num_recent_samples, 0)
     context['recent_samples'] = recent_samples[offset:len(recent_samples)]
-    print context['recent_samples']
 
     context['url_stats'] = assoc.get_url_collected_stats(cache=True)
 
