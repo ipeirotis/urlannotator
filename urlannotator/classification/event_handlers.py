@@ -4,6 +4,7 @@ from multiprocessing.pool import Process
 from celery import task, Task, registry
 from celery.task import current
 from django.conf import settings
+from django.db.models import Count
 
 from urlannotator.flow_control import send_event
 from urlannotator.classification.models import (TrainingSet, ClassifiedSample,
@@ -226,12 +227,11 @@ def btm_voting_hit_change(job_id, old_hit, new_hit, **kwargs):
 class ProcessVotesManager(Task):
     @singleton(name='process-votes')
     def run(*args, **kwargs):
-        active_jobs = Job.objects.get_active()
+        active_jobs = Job.objects.\
+            filter(sample__workerqualityvote__is_new=True).\
+            annotate(Count('sample__workerqualityvote__is_new'))
 
         for job in active_jobs:
-            if not job.has_new_votes():
-                continue
-
             quality_algorithm = quality_factory.create_algorithm(job)
             decisions = quality_algorithm.extract_decisions()
             ts = TrainingSet.objects.create(job=job)
@@ -432,6 +432,7 @@ def classify(sample_id, from_name='', *args, **kwargs):
 
     classifier = classifier_factory.create_classifier(job.id)
     label = classifier.classify(class_sample)
+
     if label is None:
         # Something went wrong
         log.warning(
