@@ -94,6 +94,12 @@ local_settings = os.path.join(os.path.dirname(__file__), 'local.py')
 if os.path.isfile(local_settings):
     from local import *
 
+# 5 urls, 15c each
+TAGASAURIS_GATHER_PRICE = "0.75"
+
+# 10 urls, 5c each
+TAGASAURIS_VOTE_PRICE = "0.50"
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',

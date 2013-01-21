@@ -274,11 +274,15 @@ class Job(models.Model):
 
     @cached
     def _get_confusion_matrix(self, cache):
-        val = self.classifierperformance_set.order_by('-id')[0]
-        matrix = val.value.get('matrix', {
+        val = self.classifierperformance_set.order_by('-id')
+        matrix = {
             LABEL_YES: {LABEL_YES: 0.0, LABEL_NO: 0.0},
             LABEL_NO: {LABEL_YES: 0.0, LABEL_NO: 0.0}
-        })
+        }
+        if not val:
+            return matrix
+
+        matrix = val[0].value.get('matrix', matrix)
         return matrix
 
     def get_confusion_matrix(self, cache=True):
@@ -644,7 +648,11 @@ class Job(models.Model):
             Returns classifier performance as a dict with keys 'TPR', 'TNR',
             'AUC'.
         """
-        performances = self.classifierperformance_set.all().order_by('-id')[:1]
+        performances = self.classifierperformance_set.all().order_by('-id')
+        ret = 0.00
+        if not performances:
+            return ret
+
         ret = performances[0]
         return round(ret.value.get('AUC', 0), 2)
 

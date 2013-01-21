@@ -107,9 +107,9 @@ class testStatExtraction(ToolsMockedMixin, TestCase):
         classifier.analyze = new_analyze
         update_classifier_stats(classifier, self.job)
 
-        # 1 is initial entry, 1 is from SimpleClassifier train on create,
+        # 1 is from SimpleClassifier train on create,
         # 1 is from update_classifier_stats above
-        self.assertEqual(ClassifierPerformance.objects.count(), 3)
+        self.assertEqual(ClassifierPerformance.objects.count(), 2)
         cp = ClassifierPerformance.objects.filter(job=self.job).order_by('-id')
         cp = cp[0]
 
