@@ -38,6 +38,15 @@ PIPELINE_CSS = {
             'rel': 'stylesheet/less',
         },
     },
+    'project_list': {
+        'source_filenames': (
+            'less/project/list.less',
+        ),
+        'output_filename': 'css/project_list.css',
+        'extra_context': {
+            'rel': 'stylesheet/less',
+        },
+    },
     'wizard': {
         'source_filenames': (
             'less/base/wizard.less',
@@ -139,6 +148,4 @@ PIPELINE_CSS = {
             'rel': 'stylesheet/less',
         },
     },
-
-
 }

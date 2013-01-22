@@ -1,7 +1,13 @@
 {% extends 'base.html' %}
+{% load compressed %}
 
 {% block header %}
   <h2>Projects</h2>
+{% endblock %}
+
+{% block css %}
+    {{ block.super }}
+    {% compressed_css 'project_list' %}
 {% endblock %}
 
 {% block main %}
@@ -25,7 +31,7 @@
             <tbody>
             {% for p in projects %}
               <tr>
-                <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <a rel="tooltip" href="#" data-original-title="{{p.description}}" data-placement="bottom">&nbsp;<i class="icon-info-sign"></i></a></td>
+                <td><a href="{% url project_view id=p.id %}">{{p.title}}</a> <br/> <p class="projectDescription">{{p.description}}</p></td>
                 <td class="statusCol">{{p.get_status}}</td>
                 <td class="dataSourceCol">{{p.get_data_source}}</td>
                 <td class="beatMachineCol">{{p.get_btm_status}}</td>
