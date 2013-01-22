@@ -15,146 +15,92 @@
 {% endblock %}
 
 {% block main %}
+
 <div class="container">
+
     <div class="row">
-        <div class="accordion well span7 offset2" id="accordion1">
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-parent="#accordion1" data-href="#collapseOne" data-toggle="" >
-                        <i class="pull-right icon-arrow-up"></i>
-                        <h4>General</h4>
-                        <h5>Change your full name.</h5>
-                    </a>
+
+        <div class="well span6 offset3" style="background:none;">
+
+            <h2>Settings</h2>
+
+            <hr>
+            
+            <h3>General</h3>
+            <h5>Change your full name</h5>
+            <br>
+
+            <form method="POST" action="#" class="form form-horizontal">
+                <fieldset>
+                {% csrf_token %}
+                {% include 'form.html' with form=general_form %}
+                <div class="form-actions">
+                    <button class="btn" type="submit" name="submit" value="general">Save Changes</button>
                 </div>
-                <div id="collapseOne" class="accordion-body collapse in">
-                    <div class="accordion-inner">
-                        <form method="POST" action="#" class="form form-horizontal">
-                            <fieldset>
-                            {% csrf_token %}
-                            {% include 'form.html' with form=general_form %}
-                            <div class="form-actions">
-                                <button class="btn btn-primary" type="submit" name="submit" value="general">Save Changes</button>
-                                <a href="/" class="cancel">Cancel</a>
-                            </div>
-                            </fieldset>
-                        </form>
-                    </div>
+                </fieldset>
+            </form>
+
+            {% if password_form %}
+
+            <h3>Password</h3>
+            <h5>Change your password. This functionality can be disabled when you are logged via google or other social services.</h5>
+            <br>
+
+            <form method="POST" action="#" class="form form-horizontal">
+                <fieldset>
+                {% csrf_token %}
+                {% include 'form.html' with form=password_form %}
+                <div class="form-actions">
+                  <button class="btn" type="submit" name="submit" value="password">Save Changes</button>
                 </div>
-            </div>
-        {% if password_form %}
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle"data-parent="#accordion1" data-href="#collapseTwo" data-toggle="" >
-                        <i class="pull-right icon-arrow-down"></i>
-                        <h4>Password</h4>
-                        <h5>Change your password. This functionality can be disabled when you are logged via google or other social services.</h5>
-                    </a>
+                </fieldset>
+            </form>
+
+            {% endif %}
+
+            <h3>Alerts setup</h3>
+            <h5>Change the way you will be informed about changes.</h5>
+            <br>
+
+            <form method="POST" action="#" class="form form-horizontal">
+                <fieldset>
+                {% csrf_token %}
+                {% include 'form.html' with form=alerts_form %}
+                <div class="form-actions">
+                    <button class="btn" type="submit" name="submit" value="alerts">Save Changes</button>
                 </div>
-                <div id="collapseTwo" class="accordion-body collapse in">
-                    <div class="accordion-inner">
-                        <form method="POST" action="#" class="form form-horizontal">
-                            <fieldset>
-                            {% csrf_token %}
-                            {% include 'form.html' with form=password_form %}
-                            <div class="form-actions">
-                              <button class="btn btn-primary" type="submit" name="submit" value="password">Save Changes</button>
-                              <a href="/" class="cancel">Cancel</a>
-                            </div>
-                            </fieldset>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-parent="#accordion1" data-href="#collapseThree" data-toggle="">
-                        <i class="pull-right icon-arrow-down"></i>
-                        <h4>Alerts setup</h4>
-                        <h5>Change the way you will be informed about changes.</h5>
-                    </a>
-                </div>
-                <div id="collapseThree" class="accordion-body collapse in">
-                    <div class="accordion-inner">
-                        <form method="POST" action="#" class="form form-horizontal">
-                            <fieldset>
-                            {% csrf_token %}
-                            {% include 'form.html' with form=alerts_form %}
-                            <div class="form-actions">
-                                <button class="btn btn-primary" type="submit" name="submit" value="alerts">Save Changes</button>
-                                <a href="/" class="cancel">Cancel</a>
-                            </div>
-                            </fieldset>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-parent="#accordion1" data-href="#collapseFour" data-toggle="">
-                        <i class="pull-right icon-arrow-down"></i>
-                        <h4>Odesk integration</h4>
-                        <h5>Connect your account with Odesk and gain free quota (<span>read more</span>)</h5>
-                    </a>
-                </div>
-                <div id="collapseFour" class="accordion-body collapse in">
-                    <div class="accordion-inner">
-                        {% if odesk %}
-                            <p>Status: Connected as <b>{{ odesk.name }}</b>, <a href="https://www.odesk.com/UserSettings/linked-accounts">administrate</a>, <a href="{% url odesk_disconnect %}">disconnect</a></p>
-                        {% else %}
-                        <form method="" action="" class="form form-horizontal">
-                            <fieldset>
-                                <div class="control-group">
-                                    <label class="control-label">&nbsp;</label>
-                                    <div class="controls">
-                                        <a class="btn btn-primary" href="{% url odesk_login %}">Connect to Odesk</a>
-                                        <a style="padding:0px" onclick="$('#oDeskModal').modal('show')">(?) What will I gain by connecting to Odesk service.</a></br>
-                                    </div>
-                                </div>
-                            </fieldset>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="accordion-group">
-                <div class="accordion-heading">
-                    <a class="accordion-toggle" data-parent="#accordion1" data-href="#collapseFive" data-toggle="">
-                        <i class="pull-right icon-arrow-down"></i>
-                        <h4>Other applications</h4>
-                        <h5>Connect with social application to make log in easier</h5>
-                    </a>
-                </div>
-                <div id="collapseFive" class="accordion-body collapse in">
-                    <div class="accordion-inner">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <td>Application</td>
-                                    <td>Status</td>
-                                    <td>Action</td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><i class="icon icon-twitter"></i> Twitter</td>
-                                    <td id="twitter-status">{% if twitter %}<b>Connected</b>, {{twitter.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a></td>{%endif%}
-                                </tr>
-                                <tr>
-                                    <td><i class="icon icon-google-plus"></i> Google</td>
-                                    <td id="google-status">{% if google %}<b>Connected</b>, {{google.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a></td>{%endif%}
-                                </tr>
-                                <tr>
-                                    <td><i class="icon icon-facebook"></i> Facebook</td>
-                                    <td  id="facebook-status">{% if facebook %}<b>Connected</b>, {{facebook.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a></td>{%else%}<B>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a></td></td>{%endif%}
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+                </fieldset>
+            </form>
+
+            <h3>Connected applications</h3>
+            <h5>Connect with social application to make log in easier</h5>
+            <br>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <td>Application</td>
+                        <td>Status</td>
+                        <td>Action</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><i class="icon icon-twitter"></i> Twitter</td>
+                        <td id="twitter-status">{% if twitter %}<b>Connected</b>, {{twitter.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'twitter' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'twitter' %}">Connect</a></td>{%endif%}
+                    </tr>
+                    <tr>
+                        <td><i class="icon icon-google-plus"></i> Google</td>
+                        <td id="google-status">{% if google %}<b>Connected</b>, {{google.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'google-oauth2' %}">Disconnect</a></td>{%else%}<b>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'google-oauth2' %}">Connect</a></td>{%endif%}
+                    </tr>
+                    <tr>
+                        <td><i class="icon icon-facebook"></i> Facebook</td>
+                        <td  id="facebook-status">{% if facebook %}<b>Connected</b>, {{facebook.uid}}</td><td><a style="padding:0px" href="{% url socialauth_disconnect 'facebook' %}">Disconnect</a></td>{%else%}<B>Not connected</b></td><td><a style="padding:0px" href="{% url socialauth_begin 'facebook' %}">Connect</a></td></td>{%endif%}
+                    </tr>
+                </tbody>
+            </table>
+
+</div></div>
 
 {% endblock %}
 

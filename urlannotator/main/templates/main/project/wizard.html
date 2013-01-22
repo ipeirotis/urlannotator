@@ -8,11 +8,8 @@
 
 {% block body-class %}{{ block.super }} body-wizard{% endblock %}
 
-    {% block header %}
-      <h2>Project creator</h2>
-    {% endblock %}
-
 {% block main %}
+
 <div class="container">
   <div class="row alert-container">
     <div class="span12">
@@ -41,53 +38,41 @@
   </div>
   <form method="POST" action="#" class="form form-horizontal" enctype="multipart/form-data">
     {% csrf_token %}
+
     <div class="row">
-      <div class="span12">
-        <h4>Topic</h4>
-        <hr/>
-      </div>
-    </div>
-    <div class="row">
-      <div class="offset1 span11">
+    <div class="well span6 offset3" style="background:none;">
+
+      <h2>Project creator</h2>
+      <hr>
+
+      <h3>Topic</h3>
+      <h5>Please provide job topic and description</h5>
+      <br>
+
         <fieldset>
           {% include 'form.html' with form=topic_form %}
         </fieldset>
-      </div>
-    </div>
-    <div class="row">
-      <div class="span12">
-         <h4>Attributes</h4>
-        <hr/>
-       </div>
-    </div>
-    <div class="row">
-      <div class="offset1 span11">
+
+        <h3>Attributes</h3>
+        <h5>Please choose source and number of URLs to collect</h5>
+        <br>
+
         <fieldset>
           {% include 'form.html' with form=attributes_form %}
         </fieldset>
-      </div>
-    </div>
-    <div class="row">
-      <div class="span12">
-        <h4>Additional attributes</h4>
-        <hr/>
-      </div>
-    </div>
-    <div class="row">
-      <div class="offset1 span11">
+
+        <h3>Additional attributes</h3>
+        <h5>Please set additional attributes for better quality of gathered URLs</h5>
+        <br>
+
         <fieldset>
           {% include 'form.html' with form=additional_form %}
         </fieldset>
-      </div>
-    </div>
-    <div class="row">
-      <div class="span12">
-        <h4>Cost and payment</h4>
-        <hr/>
-      </div>
-    </div>
-    <div class="row">
-      <div class="offset1 span11">
+
+        <h3>Cost and payment</h3>
+        <h5>Paiment is necessary to start new job</h5>
+        <br>
+
         <fieldset>
           <div class="control-group ">
             <label class="control-label">
@@ -144,9 +129,7 @@
             </div>
           </div>
         </fieldset>
-      </div>
-    </div>
-    <div class="row">
+
       <div class="form-actions">
         <div class="gradient"></div>
         <div class="custom-offset">
@@ -154,7 +137,6 @@
             name="submit" value="active" disabled="disabled">Activate & Create Project</button>
         </div>
       </div>
-    </div>
   <div class="modal hide" id="oDeskModal">
     <div class="modal-body">Marketing stuff</div>
     <div class="modal-footer">
