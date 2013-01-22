@@ -1,7 +1,7 @@
 Django==1.4.3
 python-memcached
 South
-django-pipeline>=1.2
+django-pipeline==1.2.24
 ipdb
 ipython
 django-social-auth
