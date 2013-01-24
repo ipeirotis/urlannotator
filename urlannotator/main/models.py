@@ -1575,8 +1575,18 @@ class Worker(models.Model):
             Returns total amount of money earned by the given worker during
             given job.
         """
-        # FIXME: Proper billing query.
-        return 0
+        votes_gathered = self.get_votes_added_count_for_job(job, cache=True)
+        urls_gathered = self.get_urls_collected_count_for_job(job, cache=True)
+        btm_bonus = self.get_btm_bonus_paid(job)
+
+        vote_earned = float(votes_gathered)
+        vote_earned /= float(settings.TAGASAURIS_VOTE_MEDIA_PER_HIT)
+        vote_earned *= float(settings.TAGASAURIS_VOTE_PRICE)
+
+        urls_earned = float(urls_gathered)
+        urls_earned /= 5.0
+        urls_earned *= float(settings.TAGASAURIS_GATHER_PRICE)
+        return btm_bonus + vote_earned + urls_earned
 
     def get_job_start_time(self, job):
         '''

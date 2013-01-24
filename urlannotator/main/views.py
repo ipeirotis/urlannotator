@@ -744,27 +744,15 @@ def project_worker_view(request, id, worker_id):
     context = {'project': job}
     num_recent_samples = 5
 
-    account = request.user.get_profile()
-    assoc = worker.workerjobassociation_set.get(job=job)
-    assocs = worker.workerjobassociation_set.all()
-    assocs = ifilter(lambda x: x.job.account == account, assocs)
-    projects = (w.job.get_link_with_title() for w in assocs)
-
     recent_samples = worker.get_urls_collected_for_job(job, cache=True)
     offset = max(len(recent_samples) - num_recent_samples, 0)
     context['recent_samples'] = recent_samples[offset:len(recent_samples)]
-
-    context['url_stats'] = assoc.get_url_collected_stats(cache=True)
 
     context['worker'] = {
         'name': worker.get_name(),
         'urls_collected': worker.get_urls_collected_count_for_job(job),
         'votes_added': worker.get_votes_added_count_for_job(job),
-        'hours_spent': worker.get_hours_spent_for_job(job),
-        'quality': worker.get_estimated_quality_for_job(job),
         'earned': worker.get_earned_for_job(job),
-        'work_started': worker.get_job_start_time(job),
-        'projects': projects,
     }
     return render(request, 'main/project/worker.html',
         RequestContext(request, context))
