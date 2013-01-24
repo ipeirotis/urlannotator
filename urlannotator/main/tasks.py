@@ -1,15 +1,19 @@
 import subprocess
+import logging
 
 from celery import task
 from celery.task import current
 from django.db import DatabaseError, IntegrityError
+from django.db.models import F
 
-from urlannotator.classification.models import ClassifiedSample
+from urlannotator.classification.models import ClassifiedSample, TrainingSet
 from urlannotator.main.models import Sample, GoldSample, Job
-from urlannotator.tools.web_extractors import (get_web_text, get_web_screenshot,
-    is_proper_url)
+from urlannotator.tools.web_extractors import (get_web_text,
+    get_web_screenshot, is_proper_url)
 from urlannotator.flow_control import send_event
 from urlannotator.tools.webkit2png import BaseWebkitException
+
+log = logging.getLogger(__name__)
 
 
 @task()
@@ -100,9 +104,9 @@ def create_sample(extraction_result, sample_id, job_id, url,
 
     extracted = all([x is True for x in extraction_result])
 
+    job = Job.objects.get(id=job_id)
     # Checking if all previous tasks succeeded.
     if extracted:
-        job = Job.objects.get(id=job_id)
 
         # Proper sample entry
         Sample.objects.filter(id=sample_id).update(
@@ -140,6 +144,9 @@ def create_sample(extraction_result, sample_id, job_id, url,
     else:
         # Extraction failed, cleanup.
         Sample.objects.filter(id=sample_id).delete()
+        if label is not None:
+            Job.objects.filter(id=job.id, gold_left__gte=0)\
+                .update(gold_left=F('gold_left') - 1)
 
     return (extracted, sample_id)
 
@@ -268,3 +275,26 @@ def copy_sample_to_job(sample_id, job_id, source_type, label='', source_val='',
             countdown=min(60 * 2 ** current.request.retries, 60 * 60 * 24))
 
     return (True, new_sample.id)
+
+
+@task(ignore_result=True)
+def watch_gold_status(job_id):
+    job = Job.objects.get(id=job_id)
+
+    if job.is_gold_samples_done():
+        log.info('watch_gold_status: Job %d has gold samples done.' % job_id)
+        return
+
+    if job.gold_left != 0:
+        # If some golds are in progress, retry in 2 minutes. Indefinetly
+        watch_gold_status.retry(countdown=2 * 60, max_retries=None)
+
+    # Job samples are not done and job.gold_left == 0
+    job.set_gold_samples_done()
+
+    training_set = TrainingSet.objects.newest_for_job(job)
+    send_event(
+        "EventTrainingSetCompleted",
+        set_id=training_set.id,
+        job_id=job.id
+    )

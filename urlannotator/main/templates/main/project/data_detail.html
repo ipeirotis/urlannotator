@@ -16,6 +16,7 @@
     </div>
     <div class="span10">
       <h3 class="data-url">{{sample.url}}</h3>
+      <a href="{{sample.url}}">go to url</a>
     </div>
   </div>
   <div class="row">
@@ -27,18 +28,17 @@
       <div class="table-wrapper">
         <span>Added on: </span><em>{{sample.added_on|date:"Y-m-d H:i"}}</em>
         {% if sample.get_source_worker %}
-        <span>Uploaded by: </span><em>{{sample.get_source_worker}}</em>
+        <br/><span>Uploaded by: </span><em>{{sample.get_source_worker}}</em>
         {% endif %}
-        <p><a href="{{sample.url}}">Go to url</a></p>
         <p><h3>Voting stats</h3></p>
         <span class="badge badge-info badge-yes">
           <i class="icon icon-o"></i>
           <p>{{sample.get_yes_votes}}</p>
-        </span>
+        </span><br/>
         <span class="badge badge-info badge-no">
           <i class="icon icon-n"></i>
           <p>{{sample.get_no_votes}}</p>
-        </span>
+        </span><br/>
         <span class="badge badge-info badge-broken">
           <i class="icon icon-b"></i>
           <p>{{sample.get_broken_votes}}</p>
