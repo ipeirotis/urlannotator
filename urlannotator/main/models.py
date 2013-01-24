@@ -1,3 +1,4 @@
+import math
 import json
 import datetime
 import hashlib
@@ -1581,11 +1582,16 @@ class Worker(models.Model):
 
         vote_earned = float(votes_gathered)
         vote_earned /= float(settings.TAGASAURIS_VOTE_MEDIA_PER_HIT)
-        vote_earned *= float(settings.TAGASAURIS_VOTE_PRICE)
+        # Workers are paid for full HITs done
+        vote_earned = math.floor(vote_earned) * \
+            float(settings.TAGASAURIS_VOTE_PRICE)
 
         urls_earned = float(urls_gathered)
         urls_earned /= 5.0
-        urls_earned *= float(settings.TAGASAURIS_GATHER_PRICE)
+        # Workers are paid for full HITs done
+        urls_earned = math.floor(urls_earned) * \
+            float(settings.TAGASAURIS_GATHER_PRICE)
+
         return btm_bonus + vote_earned + urls_earned
 
     def get_job_start_time(self, job):
