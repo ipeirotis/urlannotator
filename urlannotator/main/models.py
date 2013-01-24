@@ -127,14 +127,6 @@ JOB_STATUS_CHOICES = (
     (JOB_STATUS_INIT, 'Initializing')
 )
 
-# Job initialization progress flags. Set flags means the step is done.
-JOB_FLAGS_TRAINING_SET_CREATED = 1  # Training set creation
-JOB_FLAGS_GOLD_SAMPLES_DONE = 2  # Gold samples have been extracted
-JOB_FLAGS_CLASSIFIER_CREATED = 4  # Classifier has been created
-JOB_FLAGS_CLASSIFIER_TRAINED = 8  # Classifier has been trained
-
-JOB_FLAGS_ALL = 1 + 2 + 4 + 8
-
 
 class JobManager(models.Manager):
     def create_active(self, **kwargs):
@@ -176,6 +168,17 @@ class Job(models.Model):
         # Stopped
         STOPPED = 'stopped'
 
+    # Job initialization progress flags. Set flags means the step is done.
+    class Flags:
+        TRAINING_SET_CREATED = 1  # Training set creation
+        GOLD_SAMPLES_DONE = 2  # Gold samples have been extracted
+        CLASSIFIER_CREATED = 4  # Classifier has been created
+        CLASSIFIER_TRAINED = 8  # Classifier has been trained
+
+        ALL = TRAINING_SET_CREATED + GOLD_SAMPLES_DONE + CLASSIFIER_CREATED \
+            + CLASSIFIER_TRAINED
+        ACTIVE = TRAINING_SET_CREATED + GOLD_SAMPLES_DONE
+
     BTMSTATUS_CHOICES = (
         (BTMStatus.NOT_ACTIVE, 'Not active'),
         (BTMStatus.PENDING, 'Pending'),
@@ -197,6 +200,7 @@ class Job(models.Model):
     hourly_rate = models.DecimalField(default=0, decimal_places=2,
         max_digits=10)
     gold_samples = JSONField(default='[]')
+    gold_left = models.PositiveIntegerField(default=0)
     classify_urls = JSONField(default='[]')
     budget = models.DecimalField(default=0, decimal_places=2, max_digits=10)
     remaining_urls = models.PositiveIntegerField(default=0)
@@ -968,7 +972,10 @@ class Job(models.Model):
             job = Job.objects.get(id=self.id)
             self.initialization_status = job.initialization_status
 
-            if self.initialization_status != JOB_FLAGS_ALL:
+            if self.initialization_status & self.Flags.ACTIVE == 0:
+                return
+
+            if job.is_active():
                 return
 
         self.activate()
@@ -984,35 +991,35 @@ class Job(models.Model):
         return self.initialization_status & flag != 0
 
     def set_training_set_created(self):
-        self.set_flag(JOB_FLAGS_TRAINING_SET_CREATED)
+        self.set_flag(self.Flags.TRAINING_SET_CREATED)
 
     def is_training_set_created(self):
-        return self.is_flag_set(JOB_FLAGS_TRAINING_SET_CREATED)
+        return self.is_flag_set(self.Flags.TRAINING_SET_CREATED)
 
     def set_gold_samples_done(self):
-        self.set_flag(JOB_FLAGS_GOLD_SAMPLES_DONE)
+        self.set_flag(self.Flags.GOLD_SAMPLES_DONE)
         send_event(
             'EventGoldSamplesDone',
             job_id=self.id,
         )
 
     def is_gold_samples_done(self):
-        return self.is_flag_set(JOB_FLAGS_GOLD_SAMPLES_DONE)
+        return self.is_flag_set(self.Flags.GOLD_SAMPLES_DONE)
 
     def set_classifier_created(self):
-        self.set_flag(JOB_FLAGS_CLASSIFIER_CREATED)
+        self.set_flag(self.Flags.CLASSIFIER_CREATED)
 
     def is_classifier_created(self):
-        return self.is_flag_set(JOB_FLAGS_CLASSIFIER_CREATED)
+        return self.is_flag_set(self.Flags.CLASSIFIER_CREATED)
 
     def set_classifier_trained(self):
-        self.set_flag(JOB_FLAGS_CLASSIFIER_TRAINED)
+        self.set_flag(self.Flags.CLASSIFIER_TRAINED)
 
     def unset_classifier_trained(self):
-        self.unset_flag(JOB_FLAGS_CLASSIFIER_TRAINED)
+        self.unset_flag(self.Flags.CLASSIFIER_TRAINED)
 
     def is_classifier_trained(self):
-        return self.is_flag_set(JOB_FLAGS_CLASSIFIER_TRAINED)
+        return self.is_flag_set(self.Flags.CLASSIFIER_TRAINED)
 
     @staticmethod
     def is_odesk_required_for_source(source):

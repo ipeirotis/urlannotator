@@ -9,7 +9,7 @@ from urlannotator.classification.factories import classifier_factory
 from urlannotator.main.models import Job, Sample, FillSample, LABEL_NO
 from urlannotator.main.tasks import (web_content_extraction,
     web_screenshot_extraction, create_sample, create_classify_sample,
-    copy_sample_to_job)
+    copy_sample_to_job, watch_gold_status)
 from urlannotator.tools.utils import setting
 
 import logging
@@ -109,7 +109,8 @@ class JobFactory(object):
                     'url': filler.url,
                     'label': LABEL_NO,
                 })
-            job.save()
+        job.gold_left = len(job.gold_samples)
+        job.save()
 
         for gold_sample in job.gold_samples:
             Sample.objects.create_by_owner(
@@ -169,3 +170,4 @@ class JobFactory(object):
         self.init_quality(job_id)
 
         job.update_cache()
+        watch_gold_status.apply_async(kwargs={'job_id': job_id})

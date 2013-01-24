@@ -1,6 +1,8 @@
 from celery import task, Task, registry
 from factories import SampleFactory, JobFactory
 
+from django.db.models import F
+
 from urlannotator.classification.models import TrainingSample, TrainingSet
 from urlannotator.main.models import GoldSample, LABEL_BROKEN, Job, Sample
 from urlannotator.flow_control import send_event
@@ -61,21 +63,8 @@ class GoldSamplesMonitor(Task):
                 label=gold_sample.label
             )
 
-        lock_key = 'TrainingSampleLock-%d' % job.id
-        # Send training set completed event. Used here as we are certain no
-        # new samples will come in the mean time. In general, you can't
-        # assume that!
-        with POSIXLock(name=lock_key):
-            if not job.is_gold_samples_done():
-                all_golds = len(job.gold_samples)
-                current_golds = training_set.training_samples.count()
-                if all_golds == current_golds:
-                    job.set_gold_samples_done()
-                    send_event(
-                        "EventTrainingSetCompleted",
-                        set_id=training_set.id,
-                        job_id=job.id
-                    )
+        Job.objects.filter(id=job.id, gold_left__gte=0)\
+            .update(gold_left=F('gold_left') - 1)
 
 new_gold_sample_task = registry.tasks[GoldSamplesMonitor.name]
 
