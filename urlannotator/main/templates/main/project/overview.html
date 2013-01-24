@@ -131,7 +131,8 @@
               </tbody>
               <tbody data-bind="ifnot: has_newest_votes">
                 <tr>
-                  <td colspan="3">No data</td>
+                  <td data-bind="visible: !loading()" colspan="3">No data</td>
+                  <td data-bind="visible: loading()" style="text-align: center" colspan="3"><img src="{{STATIC_URL}}img/spinner-big.gif" style="background: none 0 0 repeat scroll transparent; width: 32px !important; height: 32px !important;"></td>
                 </tr>
               </tbody>
             </table>
@@ -158,7 +159,8 @@
               </tbody>
               <tbody data-bind="ifnot: has_top_workers">
                 <tr>
-                  <td colspan="3">No data</td>
+                  <td data-bind="visible: !loading()" colspan="3">No data</td>
+                  <td data-bind="visible: loading" style="text-align: center" colspan="3"><img src="{{STATIC_URL}}img/spinner-big.gif" style="background: none 0 0 repeat scroll transparent; width: 32px !important; height: 32px !important;"></td>
                 </tr>
               </tbody>
             </table>
@@ -384,6 +386,7 @@ function updateJob(){
     job.progress_urls(data['progress_urls']);
     job.progress_votes(data['progress_votes']);
     job.votes_gathered(data['votes_gathered']);
+    job.loading(false);
     updateAlerts(data['feed']);
     updateTopWorkers(data['top_workers']);
     updateNewestVotes(data['newest_votes']);
@@ -391,6 +394,7 @@ function updateJob(){
 }
 
 $(document).ready(function(){
+  job.loading(true);
   ko.applyBindings(job);
   updateJob();
   setInterval(updateJob, 10 * 1000);

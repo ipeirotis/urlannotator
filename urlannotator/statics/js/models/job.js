@@ -118,6 +118,7 @@ function job(){
   this.progress_urls = ko.observable();
   this.progress_votes = ko.observable();
   this.votes_gathered = ko.observable();
+  this.loading = ko.observable();
 
 
   this.gathering_url = ko.computed(function(){

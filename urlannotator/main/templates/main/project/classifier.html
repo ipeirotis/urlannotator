@@ -102,7 +102,8 @@
             </tbody>
             <tbody data-bind="ifnot: has_entries">
                 <tr>
-                  <td colspan="4">No data</td>
+                  <td data-bind="visible: !loading()" colspan="4">No data</td>
+                  <td data-bind="visible: loading()" style="text-align: center" colspan="4"><img src="{{STATIC_URL}}img/spinner-big.gif" style="background: none 0 0 repeat scroll transparent; width: 32px !important; height: 32px !important;"></td>
                 </tr>
             </tbody>
           </table>
@@ -305,6 +306,7 @@ function updateClassifierHistory(){
     image_cache = new_cache;
 
     toggleClassifyButton(true);
+    history.loading(false);
     history.entries(new_entries);
   })
 }
@@ -340,6 +342,7 @@ function submitClassify(){
 
 $(document).ready(function(){
   ko.applyBindings(classifierStats, $('#classifier-stats')[0]);
+  history.loading(true);
   ko.applyBindings(history, $('#classifier-history')[0]);
   updateClassifierStats();
   updateClassifierHistory();

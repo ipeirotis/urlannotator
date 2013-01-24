@@ -31,6 +31,8 @@ var classifier_history_entry = function(screenshot, url, label, yes_prob, no_pro
 
 function classifier_history(){
   this.entries = ko.observableArray();
+  this.loading = ko.observable();
+
   this.has_entries = ko.computed(function(){
     return this.entries().length > 0;
   }, this);
