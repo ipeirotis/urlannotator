@@ -30,10 +30,10 @@
     <div class="span12">
       <ul class="nav nav-tabs">
         <li class="{%block overview_active%}{%endblock%}"><a href="{% url project_view id=project.id %}">Overview</a></li>
-        <li class="{%block workers_active%}{%endblock%}"><a href="{% url project_workers_view id=project.id %}">Workers</a></li>
-        <li class="{%block data_active%}{%endblock%}"><a href="{% url project_data_view id=project.id %}">Data</a></li>
-        <li class="{%block classifier_active%}{%endblock%}"><a href="{% url project_classifier_view id=project.id %}">Classifier</a></li>
-        <li class="{%block btm_active%}{%endblock%}"><a href="{% url project_btm_view id=project.id %}">Beat the Machine</a></li>
+        <li class="{%if project.is_draft%}disabled{%endif%} {%block workers_active%}{%endblock%}"><a href="{%if project.is_draft%}#{%else%}{% url project_workers_view id=project.id %}{%endif%}" {%if project.is_draft%}style="background: none repeat scroll 0 0 transparent; border: 1px solid transparent; color: #999999; text-decoration: none; cursor: default;"{%endif%}>Workers</a></li>
+        <li class="{%if project.is_draft%}disabled{%endif%} {%block data_active%}{%endblock%}"><a href="{%if project.is_draft%}#{%else%}{% url project_data_view id=project.id %}{%endif%}" {%if project.is_draft%}style="background: none repeat scroll 0 0 transparent; border: 1px solid transparent; color: #999999; text-decoration: none; cursor: default;"{%endif%}>Data</a></li>
+        <li class="{%if project.is_draft%}disabled{%endif%} {%block classifier_active%}{%endblock%}"><a href="{%if project.is_draft%}#{%else%}{% url project_classifier_view id=project.id %}{%endif%}" {%if project.is_draft%}style="background: none repeat scroll 0 0 transparent; border: 1px solid transparent; color: #999999; text-decoration: none; cursor: default;"{%endif%}>Classifier</a></li>
+        <li class="{%if project.is_draft%}disabled{%endif%} {%block btm_active%}{%endblock%}"><a href="{%if project.is_draft%}#{%else%}{% url project_btm_view id=project.id %}{%endif%}" {%if project.is_draft%}style="background: none repeat scroll 0 0 transparent; border: 1px solid transparent; color: #999999; text-decoration: none; cursor: default;"{%endif%}>Beat the Machine</a></li>
       </ul>
     </div>
   </div>
