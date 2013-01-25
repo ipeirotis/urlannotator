@@ -127,7 +127,7 @@ def TrueNegativeMetric(classifier, job, matrix):
     '''
     no = matrix.get(LABEL_NO, {LABEL_YES: 0.0, LABEL_NO: 0.0})
     yesCount = no.get(LABEL_YES, 0.0)
-    noCount = no.get(LABEL_YES, 0.0)
+    noCount = no.get(LABEL_NO, 0.0)
     div = (yesCount + noCount) or 1.0
     return ('TNR', round(100.0 * noCount / div, 4))
 
